@@ -1,0 +1,64 @@
+{
+  "$comment": "Canonical message catalog. Both runtimes' protocol modules implement exactly these messages. JSON encoding for MVP; this file is the seam a binary encoding swaps in behind. Field types: s=string n=number b=bool o=object a=array ?=optional.",
+  "version": 1,
+
+  "http": {
+    "POST /api/register": { "req": { "username": "s", "password": "s" }, "res": { "ok": "b" } },
+    "POST /api/login": { "req": { "username": "s", "password": "s" }, "res": { "token": "s", "account": { "id": "s", "username": "s", "roles": "a<s>" } } },
+    "GET /api/characters": { "auth": "Bearer token", "res": { "characters": "a<Character>" } },
+    "POST /api/characters": { "auth": "Bearer token", "req": { "name": "s" }, "res": { "character": "Character" } },
+    "POST /api/enter": { "auth": "Bearer token", "req": { "characterId": "s" }, "res": { "wsUrl": "s", "roomId": "s", "ticket": "s" } }
+  },
+
+  "control": {
+    "$comment": "Shard host <-> master WS at /control. First message must be register with the shared secret.",
+    "shardToMaster": {
+      "register": { "shardId": "s", "gameHost": "s", "capacity": "n", "secret": "s" },
+      "heartbeat": { "rooms": "a<{roomId:s,port:n,players:n,status:s}>" },
+      "roomOpened": { "roomId": "s", "port": "n" },
+      "roomClosed": { "roomId": "s", "reason": "s" },
+      "report": { "roomId": "s", "characters": "a<CharacterPatch>", "roomState": "RoomState?" },
+      "requestTransfer": { "$comment": "portal use: persist live state, then mint a ticket to the target room", "roomId": "s", "characterId": "s", "targetRoomId": "s", "patch": "CharacterPatch" }
+    },
+    "masterToShard": {
+      "registered": { "ok": "b" },
+      "openRoom": { "roomId": "s", "snapshot": "RoomState|null" },
+      "closeRoom": { "roomId": "s", "reason": "s" },
+      "ticket": { "roomId": "s", "ticket": "s", "expiresAt": "n", "character": "CharacterSnapshot" },
+      "transferGrant": { "roomId": "s", "characterId": "s", "targetRoomId": "s", "wsUrl": "s", "ticket": "s" },
+      "transferDeny": { "roomId": "s", "characterId": "s", "reason": "s" }
+    }
+  },
+
+  "game": {
+    "$comment": "Client <-> RoomHost gameplay WS.",
+    "clientToServer": {
+      "hello": { "v": "n", "ticket": "s" },
+      "move": { "seq": "n", "x": "n", "y": "n", "z": "n", "yaw": "n", "anim": "s" },
+      "usePortal": { "portalId": "s" },
+      "ping": { "n": "n" },
+      "leave": {}
+    },
+    "serverToClient": {
+      "welcome": { "roomId": "s", "selfId": "n", "name": "s", "spawn": { "x": "n", "y": "n", "z": "n", "yaw": "n" }, "timeOfDay": "n", "ents": "a<EntityFull>" },
+      "terrain": { "$comment": "sent right after welcome; heights = int16 centimetres LE base64 over the (w+1)x(h+1) vertex grid, types = uint8 ground ids (0 grass, 1 dirt, 2 stone, 3 sand)", "w": "n", "h": "n", "heightsB64": "s", "typesB64": "s", "waterLevel": "n|null" },
+      "props": { "props": "a<{id:n,type:s,x:n,z:n,r:n,s:n}>", "walls": "a<{x0:n,z0:n,x1:n,z1:n,type:s}>" },
+      "portals": { "portals": "a<{id:s,label:s,target:s,x:n,z:n,r:n}>" },
+      "transferFailed": { "reason": "s" },
+      "reject": { "reason": "s" },
+      "snap": { "tick": "n", "ents": "a<EntityDelta>", "enter": "a<EntityFull>", "leave": "a<n>" },
+      "correct": { "seq": "n", "x": "n", "y": "n", "z": "n" },
+      "pong": { "n": "n", "timeOfDay": "n" },
+      "transfer": { "wsUrl": "s", "roomId": "s", "ticket": "s" },
+      "evict": { "reason": "s" }
+    }
+  },
+
+  "types": {
+    "Character": { "id": "s", "name": "s", "level": "n", "xp": "n", "gold": "n", "roomId": "s" },
+    "CharacterSnapshot": { "id": "s", "name": "s", "level": "n", "xp": "n", "gold": "n", "inventory": "a", "x": "n", "y": "n", "z": "n", "yaw": "n", "roles": "a<s>" },
+    "CharacterPatch": { "id": "s", "$comment": "partial CharacterSnapshot fields to persist" },
+    "EntityFull": { "id": "n", "kind": "s", "name": "s?", "sprite": "s?", "x": "n", "y": "n", "z": "n", "yaw": "n", "anim": "s" },
+    "EntityDelta": { "id": "n", "$comment": "id plus only changed fields of EntityFull" }
+  }
+}

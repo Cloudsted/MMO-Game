@@ -1,0 +1,28 @@
+{
+  "movement": {
+    "walkSpeed": 4.5,
+    "gravity": -22.0,
+    "jumpVelocity": 7.5,
+    "playerRadius": 0.35,
+    "playerHeight": 1.7,
+    "eyeHeight": 1.55,
+    "swimSpeed": 2.5
+  },
+  "net": {
+    "protocolVersion": 1,
+    "simTickHz": 10,
+    "snapshotHz": 12,
+    "clientInputHz": 20,
+    "interestRadius": 64,
+    "keyframeEveryNSnapshots": 40,
+    "moveToleranceM": 0.75,
+    "ticketTtlMs": 30000
+  },
+  "world": {
+    "cellSizeM": 1.0,
+    "chunkCells": 32,
+    "dayLengthSec": 1200,
+    "maxStandableSlope": 1.6,
+    "terrainYToleranceM": 3.0
+  }
+}

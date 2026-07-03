@@ -1,0 +1,23 @@
+{
+  "id": "hub",
+  "name": "Hub City",
+  "type": "hub",
+  "biome": "grass",
+  "persistence": "stateful",
+  "size": { "w": 128, "h": 128 },
+  "spawn": { "x": 64, "z": 64, "yaw": 3.14159 },
+  "terrain": {
+    "kind": "heightmap",
+    "seed": 20260702,
+    "amplitude": 1.6,
+    "frequency": 0.045,
+    "plateauRadius": 46
+  },
+  "map": "hub.map.json",
+  "flags": { "safeZone": true, "buildingEnabled": false, "pvp": false },
+  "portals": [
+    { "id": "hub-forest", "label": "Whispering Forest", "target": "forest", "x": 64, "z": 99, "r": 2.2 }
+  ],
+  "spawnTables": [],
+  "npcs": []
+}

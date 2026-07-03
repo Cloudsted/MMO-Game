@@ -1,0 +1,5 @@
+plugins {
+    // Auto-downloads JDK 21 for the toolchain (this machine only has JDK 19)
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+rootProject.name = 'fantasy-mmo-client'

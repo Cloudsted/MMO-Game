@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    gdxVersion = '1.13.1'
+}
+
+dependencies {
+    implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    implementation 'org.java-websocket:Java-WebSocket:1.5.7'
+    implementation 'com.google.code.gson:gson:2.11.0'
+}
+
+application {
+    mainClass = 'mmo.client.Main'
+}
+
+tasks.named('run') {
+    // assets/ and ../shared resolve relative to client/
+    workingDir = projectDir
+}

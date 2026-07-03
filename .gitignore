@@ -1,0 +1,28 @@
+# Commercial assets — NEVER commit or publish (licensing)
+assets/
+
+# Pipeline outputs (built from commercial assets — also never published)
+client/assets/
+tools/out/
+
+# Node
+node_modules/
+*.tsbuildinfo
+
+# Java / Gradle
+client/.gradle/
+client/build/
+client/**/build/
+client/.idea/
+*.class
+
+# Runtime state + local tooling
+.env
+data/
+.tools/
+logs/
+*.log
+
+# OS
+Thumbs.db
+.DS_Store

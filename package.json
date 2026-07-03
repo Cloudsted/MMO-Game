@@ -1,0 +1,24 @@
+{
+  "name": "fantasy-mmo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "server/common",
+    "server/master",
+    "server/shard",
+    "tools",
+    "scripts"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "typecheck": "tsc -b server/common server/master server/shard",
+    "test": "vitest run",
+    "bots": "node scripts/bots.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vitest": "^2.1.0",
+    "tsx": "^4.19.0"
+  }
+}
