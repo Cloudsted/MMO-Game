@@ -90,18 +90,17 @@ npm test               # vitest
 - Rooms defined in `shared/rooms/*.json`; loaded through RegistryService
   (hot-reloadable), never imported as constants.
 
-## Debug toolkit (client env vars)
+## Testing
 
-- `MMO_AUTOLOGIN=user:pass` — register (best-effort) + login + enter on launch.
-- `MMO_TIME_OFFSET=0.25` — shift the day/night clock (0.25 = quarter day);
-  N key in-game does the same. Server sync stays authoritative underneath.
-- `MMO_LOOK_AT=x,z` — aim the camera at a world position after welcome.
-- `MMO_DEBUG_NO_PROPS / NO_SHADOWS / SINGLE_QUAD / QUADZ_ONLY` — pass isolation.
-- `MMO_DEBUG_UV=1` — props render interpolated UVs as color (r=u, g=v).
-- `MMO_DEBUG_DUMP_PROPS=1` — writes client/props-dump.txt with every prop quad.
-- Screenshots of the running client: scripts in the session scratchpad use
-  Win32 `PrintWindow` with `PW_RENDERFULLCONTENT` (2) against the process
-  MainWindowHandle — captures GL content without stealing focus.
+**Read `TESTING.md` before verifying anything** — it documents the whole
+pipeline: the test layers (vitest → bot scripts → client screenshots), how to
+launch the game client unattended (`MMO_AUTOLOGIN`, `MMO_TIME_LOCK`,
+`MMO_LOOK_AT`, `MMO_DEBUG_*` env vars), how to screenshot its GL window
+without stealing focus (`tools/capture-window.ps1`), how to read the HUD as
+an instrument panel, the visual-debugging ladder (isolate → zoom → UV
+visualize → dump), and the process discipline (dedicated `claude_test`
+account, background tasks, the user shares this machine). Rendering claims
+require screenshots; server claims require a passing script or test.
 
 ## Known traps
 
