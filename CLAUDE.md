@@ -6,6 +6,14 @@ instructions, decisions, conventions, known traps. The full product spec is
 locked). PoC-derived asset/engine knowledge lives in `prompt.md`'s appendix and
 `reference/poc-CLAUDE.md`.
 
+Sibling docs — read both before working:
+- **`TESTING.md`** — the verification pipeline: test layers, unattended client
+  launches, screenshot workflow, debugging ladder. Rendering claims need
+  screenshots; server claims need a passing script/test.
+- **`LESSONS.md`** — mistakes already paid for (Symptom → Cause → Rule).
+  Skim it before debugging anything; **add an entry** whenever a bug hunt
+  costs >30 min or a wrong assumption survives more than one test cycle.
+
 ## What this is
 
 A WoW-style online RPG: first-person 3D world, smooth heightmap terrain (no
@@ -68,6 +76,15 @@ npm test               # vitest
   elevation) — ignore it; dev.mjs skips 8.x installs.
 - 2026-07-02 Client dev/test hook: env `MMO_AUTOLOGIN=user:pass` registers
   (best-effort) + logs in + enters world automatically on launch.
+- 2026-07-02 **Mouse-look accumulates deltas, never polls `getDeltaX()`**: the
+  LWJGL3 cursor callback OVERWRITES `deltaX` per cursor event, but the render
+  loop reads it once a frame — so a fast move (many events/frame) keeps only the
+  last sub-frame segment and drops the rest → feels low-sensitivity + jitters/
+  snaps. `WorldScreen` now sums `mouseMoved`/`touchDragged` deltas via an
+  `InputProcessor`, enables GLFW raw mouse motion (no OS accel), and discards
+  warp-sized single steps (focus loss/regain). Sensitivity is `MMO_MOUSE_SENS`
+  (default 0.0035 rad/count). Main.java FPS cap 120→240 so it can't fight vsync
+  pacing (a cap below refresh adds a second sleep-throttle that jitters look).
 
 ## Conventions
 
@@ -104,6 +121,9 @@ require screenshots; server claims require a passing script or test.
 
 ## Known traps
 
+Quick reference only — the stories behind these (and more) live in
+`LESSONS.md` with symptoms and reasoning errors spelled out.
+
 - PowerShell `Out-File`/`Set-Content` write UTF-8 **with BOM** → breaks naive
   `JSON.parse`. Use the shared BOM-tolerant readers.
 - Billboard row selection sign error mirrors all profile views — verify with an
@@ -125,6 +145,15 @@ require screenshots; server claims require a passing script or test.
 - GLSL uniforms eliminated by dead code make libGDX `ShaderProgram` throw on
   `setUniformf` unless `ShaderProgram.pedantic = false`.
 - libGDX `fieldOfView` is the VERTICAL fov.
+- **Never poll `Gdx.input.getDeltaX()/getDeltaY()` for mouse-look.** The LWJGL3
+  cursor callback OVERWRITES the delta per event (it does not sum), so a
+  once-a-frame read keeps only the last of however many cursor events GLFW
+  batched that frame — most of a fast move is lost, nondeterministically, which
+  reads as low sensitivity + jitter/snap. Accumulate from an `InputProcessor`'s
+  `mouseMoved`/`touchDragged` instead (handle BOTH — dragged fires while a
+  button is held). Also enable GLFW raw mouse motion so OS accel can't warp the
+  feel. Mouse motion can't be injected into the GLFW window from a background
+  process, so this is only verifiable by a human at the mouse.
 - **Dense TF sheets weld clutter onto sprites**: farm-and-fort packs kit
   pieces so tightly that both rect windows AND flood-fill components catch
   neighbours (items physically touch buildings). Pipeline answers: component

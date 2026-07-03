@@ -2,7 +2,9 @@ package mmo.client.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Pixmap;
@@ -32,6 +34,7 @@ import mmo.client.world.RemotePlayer;
 import mmo.client.world.TerrainData;
 import mmo.client.world.TerrainRenderer;
 import mmo.client.world.WaterRenderer;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,6 +81,19 @@ public class WorldScreen extends ScreenAdapter {
     private float velY = 0;
     private boolean onGround = true;
     private float yaw = 0, pitch = 0;
+
+    // Mouse-look. Deltas are ACCUMULATED from every queued cursor event (see the
+    // input processor in the ctor) — NOT polled via Gdx.input.getDeltaX(). In
+    // the LWJGL3 backend that callback OVERWRITES (not sums) deltaX per cursor
+    // event, but getDeltaX() is read once a frame, so only the last sub-frame
+    // segment survives and the rest of a fast move is dropped — reading as low
+    // sensitivity and erratic jitter/snapping. Summing every event fixes both.
+    private static final float MAX_MOUSE_STEP = 1500f; // drop focus/warp spikes
+    private final float mouseSens;
+    private float accumDX = 0, accumDY = 0;
+    private int lastMouseX, lastMouseY;
+    private boolean haveMouseBaseline = false;
+
     private int selfId = -1;
     private String roomName = "";
     private boolean welcomed = false;
@@ -130,8 +146,22 @@ public class WorldScreen extends ScreenAdapter {
         font = game.ui.font;
         shapes = new ShapeRenderer();
 
-        Gdx.input.setInputProcessor(null);
+        float sens = 0.0035f;
+        String sensEnv = System.getenv("MMO_MOUSE_SENS");
+        if (sensEnv != null) {
+            try { sens = Float.parseFloat(sensEnv.trim()); } catch (NumberFormatException ignored) {}
+        }
+        mouseSens = sens;
+
+        // Sum mouse-look from EVERY queued cursor event (mouseMoved when no
+        // button is down, touchDragged while one is) instead of polling
+        // getDeltaX() once a frame — see the mouse-look fields above for why.
+        Gdx.input.setInputProcessor(new InputAdapter() {
+            @Override public boolean mouseMoved(int x, int y) { accumulateMouse(x, y); return false; }
+            @Override public boolean touchDragged(int x, int y, int pointer) { accumulateMouse(x, y); return false; }
+        });
         Gdx.input.setCursorCatched(true);
+        tryEnableRawMouseMotion();
     }
 
     // ---------- networking ----------
@@ -330,6 +360,36 @@ public class WorldScreen extends ScreenAdapter {
         return null;
     }
 
+    /**
+     * Sum raw cursor motion between frames. Dispatched for every queued cursor
+     * event (see the input processor in the ctor), so nothing is dropped the
+     * way once-a-frame getDeltaX() polling drops it.
+     */
+    private void accumulateMouse(int x, int y) {
+        if (!Gdx.input.isCursorCatched()) { haveMouseBaseline = false; return; }
+        if (!haveMouseBaseline) { lastMouseX = x; lastMouseY = y; haveMouseBaseline = true; return; }
+        int dx = x - lastMouseX, dy = y - lastMouseY;
+        lastMouseX = x;
+        lastMouseY = y;
+        // A single hardware report never jumps this far; a big step means a
+        // cursor warp (focus loss/regain, catch toggle) — drop it, don't snap.
+        if (Math.abs(dx) > MAX_MOUSE_STEP || Math.abs(dy) > MAX_MOUSE_STEP) return;
+        accumDX += dx;
+        accumDY += dy;
+    }
+
+    /** GLFW raw mouse motion: linear 1:1 response, no OS pointer acceleration. */
+    private void tryEnableRawMouseMotion() {
+        try {
+            if (Gdx.graphics instanceof Lwjgl3Graphics g && GLFW.glfwRawMouseMotionSupported()) {
+                long handle = g.getWindow().getWindowHandle();
+                GLFW.glfwSetInputMode(handle, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_TRUE);
+            }
+        } catch (Throwable ignored) {
+            // backend/driver without raw motion — harmless, keep default motion
+        }
+    }
+
     private void updateMovement(float dt) {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
@@ -338,12 +398,13 @@ public class WorldScreen extends ScreenAdapter {
             dayNight.addDebugOffset(0.25f);
         }
         if (Gdx.input.isCursorCatched()) {
-            float sens = 0.0028f;
-            yaw -= Gdx.input.getDeltaX() * sens;
-            pitch -= Gdx.input.getDeltaY() * sens;
+            yaw -= accumDX * mouseSens;
+            pitch -= accumDY * mouseSens;
             pitch = MathUtils.clamp(pitch, -1.45f, 1.45f);
             yaw = RemotePlayer.wrapPi(yaw);
         }
+        accumDX = 0;
+        accumDY = 0;
         if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
             Portal p = nearestPortalInRange();
             if (p != null) {
@@ -436,6 +497,9 @@ public class WorldScreen extends ScreenAdapter {
             updateMovement(dt);
             sendMoves(dt);
             sendPings(dt);
+        } else {
+            accumDX = 0; // don't bank pre-welcome motion into a first-frame snap
+            accumDY = 0;
         }
         dayNight.update(dt);
         if (statusFlashT > 0) statusFlashT -= dt;

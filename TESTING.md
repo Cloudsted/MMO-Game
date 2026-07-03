@@ -4,7 +4,9 @@ How this project is actually tested, layer by layer — including the exact
 workflow an agent (or human) uses to launch the game client unattended,
 screenshot it, and verify rendering claims with their own eyes. Everything
 here was developed and battle-tested during phases 1–3; follow it rather than
-reinventing it. CLAUDE.md links here; keep both updated.
+reinventing it. CLAUDE.md links here; keep both updated. The mistakes that
+shaped this pipeline are written up in `LESSONS.md` (Symptom → Cause → Rule) —
+skim it before any debugging session, and add to it when you pay for a new one.
 
 The prime directive from prompt.md: **"The Java client is verified by running
 it (screenshots for rendering claims)."** Never claim a visual feature works
@@ -92,6 +94,7 @@ Run it as a **background task**. First-ever build downloads Gradle + JDK 21
 | `MMO_AUTOLOGIN=user:pass` | skip the login screen entirely |
 | `MMO_TIME_LOCK=0..1` | pin timeOfDay (0.25 sunrise, 0.42 midday, 0.55 afternoon, 0.9 night). Prefer this over `MMO_TIME_OFFSET` — the server clock drifts, offsets keep missing daylight |
 | `MMO_LOOK_AT=x,z` | deterministic camera aim at spawn — **the only way to point the camera**; synthetic mouse/keyboard injection does NOT reach the GLFW window from a background process (Windows blocks focus-stealing; don't waste time retrying it) |
+| `MMO_MOUSE_SENS=0.0035` | mouse-look sensitivity, radians per mouse count (default 0.0035). Feel-tuning only — because mouse motion can't be injected from a background process (row above), sensitivity/smoothness **cannot be auto-verified**; a human at the mouse is the only check |
 | `MMO_DEBUG_NO_PROPS=1` / `NO_SHADOWS=1` / `SINGLE_QUAD=1` / `QUADZ_ONLY=1` | render-pass isolation (see 3.5) |
 | `MMO_DEBUG_UV=1` | props render interpolated UVs as color (r=u, g=v) — the tool that cracks "what is this quad sampling?" mysteries |
 | `MMO_DEBUG_DUMP_PROPS=1` | writes `client/props-dump.txt`, every prop quad's vertices+UVs, for offline analysis |
