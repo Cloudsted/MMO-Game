@@ -23,9 +23,10 @@ npm test              # vitest: server/*/test/*.test.ts
 ```
 
 - Unit tests live in `server/common/test/` (protocol encode/decode/validation)
-  and `server/shard/test/` (RoomSim: movement validation, interest management,
-  deltas, duplicate login, portals, terrain determinism, wall collision, room
-  clock snapshots).
+  and `server/shard/test/` (RoomSim: voxel movement validation (AABB, jump,
+  ascent cap), interest management, deltas, duplicate login, portals, voxel
+  world determinism, city-wall collision + gate gap, block place/break rules,
+  block-edit persistence, room clock snapshots).
 - `RoomSim` is directly instantiable in tests — no sockets needed. Sessions
   are joined with a `send` callback that records messages; assert on those.
 - **Wall-time caveat**: movement speed validation uses `Date.now()` deltas.
@@ -50,15 +51,36 @@ exits nonzero on failure:
 
 | Script | Proves | Typical use |
 |---|---|---|
-| `bots.mjs --n 50 --seconds 300` | login→ticket→WS flow, interest-managed snapshots, terrain-legal movement at scale | load/soak; also populates the world for client screenshots |
+| `bots.mjs --n 50 --seconds 300 [--room forest]` | login→ticket→WS flow, interest-managed snapshots, terrain-legal movement at scale; `--room` pre-stages character rows so the batch lands in that room (run 3 batches in parallel for the multi-room load test) | load/soak; also populates the world for client screenshots |
 | `cheat-bot.mjs` | server authority: a 50 m teleport gets `correct`ed back | regression after touching movement validation |
 | `greeter-bot.mjs --target <Name>` | — | summons a bot that walks up to a player and stands there; for eyeballing billboards/name tags without a second human |
 | `travel-bot.mjs` | full portal transfer round trip hub→forest→hub | after touching portals/tickets/control channel |
-| `kill-test.mjs` | kill -9 a RoomHost with a player inside → player re-enters and lands in the hub, master reopens the room from snapshot (clock resumes) | after touching recovery/persistence |
+| `kill-test.mjs` | kill -9 a RoomHost with a player inside → player re-enters and lands in the hub, master reopens the room from snapshot (clock resumes, **loot drops restored**) | after touching recovery/persistence |
+| `combat-bot.mjs` | the whole gameplay loop: travel to the forest, find a mob, kill it with the starter sword, receive the XP event, loot the bag, chat round trip | after touching combat/FSM/loot/XP |
+| `lifecycle-bot.mjs` | the ephemeral-dungeon arc: enter → `/expire 15` → collapse warning → eviction → reconnect lands in hub → portal sealed during downtime → fresh reopen (restart the stack with `MMO_DOWNTIME_OVERRIDE_SEC=20` first; needs admin) | after touching lifecycle/room status |
+| `build-bot.mjs` | block building over the wire: /give block items, place a plank platform + pillar + torch (blockPlace), break one back off (blockBreak, refund) — every blockSet replicates and the tracked world bytes match; the build persists for client eyeballing | after touching the block/building system |
+| `shard2.mjs` | boots a second shard host; follow with `kill-test.mjs` and check `/api/status` — the killed room reopens on shard2 (multi-shard proof) | after touching master room assignment |
+| `make-admin.mjs <user>` | — | grants the admin role (god panel, /give /tp /spawnmob /time /level /reload /clearblocks /expire); `claude_test` is already admin |
+
+**Bot navigation** (block world): bots receive the whole voxel grid
+(`makeWorldTracker` decodes `world`+`chunks`+`blockSet`), so travel uses real
+BFS pathfinding — `goTo(ws, state, x, z)` in scripts/lib.mjs plans over the
+stand-height grid (steps ≤1 block walkable) and walks waypoint centers with
+footprint-max feet height (see LESSONS.md: greedy walkers stall in tree
+mazes, and center-height feet clip step blocks mid-crossing). The old gate
+waypoints still exist in travel/build bots but BFS would route through the
+gate anyway. Combat-style bots must also refresh yaw with a zero-move packet
+when attacking — the server takes fire-time aim from `pos.yaw`, not the
+attack packet.
 
 Interpreting bot output: `done: saw N others, M snaps, K corrections` — a
-handful of corrections per bot is normal (they blindly walk into prop/wall
-colliders); a flood of corrections means validation and prediction disagree.
+handful of corrections per bot is normal (wander bots blindly bump into tree
+columns); a flood of corrections means validation and prediction disagree.
+
+**Voxel world debug renderer**: `npx tsx tools/render-voxel.mts` writes
+top-down height-shaded maps of every room to `tools/out/voxel-<room>.png` +
+prints gen time / chunk count / wire size — the fast way to iterate on
+terrain gen and block structures without booting anything.
 
 **Server code changes require a stack restart** (stop the dev task, rerun
 `npm run dev`). Anyone connected gets kicked; the client auto-reconnects
@@ -69,6 +91,10 @@ Logs: stack process output (master/shard/roomhost prefixes) in the dev task's
 console; mongod writes to `logs/mongod.log`. Grep the stack log for `ERROR`,
 `WARN`, `resumed room clock`, `transfer granted`, etc. — key flows log
 one-liners deliberately so tests can grep them.
+
+**Admin panel**: `http://127.0.0.1:4000/admin` (ADMIN_KEY from .env, entered
+in-page) — live shard/room/player table, per-room restart buttons, master
+log tail. Handy for eyeballing the stack during load tests without grepping.
 
 ## Layer 3 — Client visual verification (the screenshot loop)
 
@@ -95,6 +121,9 @@ Run it as a **background task**. First-ever build downloads Gradle + JDK 21
 | `MMO_TIME_LOCK=0..1` | pin timeOfDay (0.25 sunrise, 0.42 midday, 0.55 afternoon, 0.9 night). Prefer this over `MMO_TIME_OFFSET` — the server clock drifts, offsets keep missing daylight |
 | `MMO_LOOK_AT=x,z` | deterministic camera aim at spawn — **the only way to point the camera**; synthetic mouse/keyboard injection does NOT reach the GLFW window from a background process (Windows blocks focus-stealing; don't waste time retrying it) |
 | `MMO_MOUSE_SENS=0.0035` | mouse-look sensitivity, radians per mouse count (default 0.0035). Feel-tuning only — because mouse motion can't be injected from a background process (row above), sensitivity/smoothness **cannot be auto-verified**; a human at the mouse is the only check |
+| `MMO_MUTE=1` | **set on every unattended launch** — the client has full audio now, and a forgotten mute plays combat sounds and music on the user's speakers while they work |
+| `MMO_SHOT=<pathPrefix>` | **the reliable capture path**: writes `<prefix>-1.png` … `<prefix>-8.png` from inside the render loop (glReadPixels), one every ~6 s after entering the world. Immune to the white-frame problem below |
+| `MMO_UI=inventory\|god\|talk\|shop` | opens that UI window on entry (talk/shop auto-talk to the nearest NPC — stage the character within ~4 m of one) |
 | `MMO_DEBUG_NO_PROPS=1` / `NO_SHADOWS=1` / `SINGLE_QUAD=1` / `QUADZ_ONLY=1` | render-pass isolation (see 3.5) |
 | `MMO_DEBUG_UV=1` | props render interpolated UVs as color (r=u, g=v) — the tool that cracks "what is this quad sampling?" mysteries |
 | `MMO_DEBUG_DUMP_PROPS=1` | writes `client/props-dump.txt`, every prop quad's vertices+UVs, for offline analysis |
@@ -109,34 +138,41 @@ at the login screen = empty capture.)
 
 ### 3.2 Capture without stealing focus
 
+**Prefer the in-app hook**: launch with `MMO_SHOT=<absolute path prefix>` and
+poll for `<prefix>-2.png` — it reads the GL framebuffer directly, so it works
+no matter what the window/session is doing. The external fallback:
+
 ```powershell
 powershell tools/capture-window.ps1 -Title "fantasy-mmo" -Out shot.png
 ```
 
 Uses Win32 `PrintWindow` with `PW_RENDERFULLCONTENT` on the process
 `MainWindowHandle` — captures the GL framebuffer even when the window is
-buried behind the user's other apps. Never take full-desktop screenshots:
-they capture whatever the user is doing instead of the game, and they're a
-privacy problem. Then **view the PNG** (agents: Read the file) — that's the
+buried behind the user's other apps. **Caveat (cost us a debugging cycle):
+when the interactive session is idle/locked or DWM stops composing the GL
+swapchain, PrintWindow returns a pure-white frame while the app renders
+fine** — a white capture means "capture path broken", not "game broken";
+switch to `MMO_SHOT`. Never take full-desktop screenshots: they capture
+whatever the user is doing instead of the game, and they're a privacy
+problem. Then **view the PNG** (agents: Read the file) — that's the
 verification, not the fact that the capture succeeded.
 
-Sequence pattern (each its own background task or one chained command):
-launch client → sleep ~40 s → capture → read image. Poll for the output file
-with a monitor loop rather than fixed long sleeps when timing is uncertain.
+Sequence pattern: launch client (background task) → poll for the shot file →
+read image. Poll files with a monitor loop rather than fixed long sleeps.
 
 ### 3.3 Read the HUD like an instrument panel
 
 The top-left HUD line is deliberately information-dense for exactly this:
 
 ```
-Claude_test @ forest   pos 80.0, 146.0   players nearby: 20   75 fps   10:04
+Claude_test @ forest   pos 80.0, 146.0   players nearby: 20   mobs: 12   75 fps   10:04
 ```
 
 name @ **room** (transfers verified), **pos** (movement/teleport verified —
 also tells you if the *user* grabbed the keyboard mid-test; it happens),
-**players nearby** (replication count vs. connected bots), **fps** (perf
-check — expect ~75 on this machine with vsync), **clock** (day/night state).
-Assert against these numbers, don't guess from pixels.
+**players nearby** (replication count vs. connected bots), **mobs**
+(spawn-table/interest check), **fps** (perf check), **clock** (day/night
+state). Assert against these numbers, don't guess from pixels.
 
 ### 3.4 Stage the scene
 
@@ -145,7 +181,14 @@ Assert against these numbers, don't guess from pixels.
 - Character in the wrong place? Edit its row in Mongo
   (`characters`: set `roomId`, null out `x/y/z` → respawns at room spawn) —
   but **disconnect that client first**: connected clients report state every
-  30 s and on disconnect, silently overwriting manual DB edits.
+  30 s and on disconnect, silently overwriting manual DB edits. If you set
+  explicit coordinates, `y` must be a **number** (0 is fine — spawn snaps to
+  terrain); a null `y` with non-null `x` fails the ticket's zod validation.
+- **Staged characters near spawn tables get eaten.** Mobs aggro AFK
+  characters (slimes killed one in ~30 s during a screenshot session).
+  Stage outside aggro radius (~8 m+) — or lean into it: parking a character
+  at a mob camp with `MMO_SHOT` produces combat frames and eventually a
+  death-screen frame, unattended.
 - Two captures ~6 s apart distinguish moving artifacts (entities) from static
   ones (geometry) — cheap and surprisingly decisive.
 

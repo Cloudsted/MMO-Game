@@ -7,7 +7,7 @@
  *   node tools/build-assets.mjs
  */
 import { PNG } from "pngjs";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -117,21 +117,315 @@ function buildAtlas(sprites) {
   return { atlas, regions };
 }
 
-// ---------- player walk sheet (single character, 3 cols x 4 rows) ----------
+// ---------- character/mob/NPC walk sheets (RPG-Maker 3x4 layout) ----------
+// Multi-character sheets hold 8 characters (4 across x 2 down); char: [cx,cy]
+// picks one. Frames are trimmed to the union bbox across all 12 frames
+// (symmetric about the horizontal center, bottom-anchored) so billboards
+// don't jitter between frames. Mappings proven by the PoC — see
+// reference/build-assets.mjs MOB_SHEETS.
 {
-  const sheet = loadPng(resolve(SRC, "Characters", "Player.png"));
-  savePng(sheet, "sprites/player.png");
+  const MOBS = resolve(SRC, "Characters", "TimeFantasy_Monsters", "1x");
+  const CHARS = resolve(SRC, "Characters", "timefantasy_characters", "sheets");
+  const SHEETS = {
+    // the player sheet goes through the same trim as everyone else — the raw
+    // 26x36 cell carries 7 px of empty headroom that made players render
+    // ~20% shorter than their nominal height
+    player: { file: resolve(SRC, "Characters", "Player.png"), single: true },
+    slime: { file: resolve(MOBS, "monster1.png"), char: [0, 0] },
+    wolf: { file: resolve(MOBS, "monster_wolf1.png"), single: true },
+    bandit: { file: resolve(MOBS, "npc5.png"), char: [2, 1] }, // flat-cap burglar
+    npc_smith: { file: resolve(CHARS, "npc3.png"), char: [1, 1] }, // red-haired smith
+    npc_provisioner: { file: resolve(CHARS, "npc2.png"), char: [0, 0] }, // red-dress woman
+    // wizard.png trap: walk grids ONLY in the top half; [0,0] is safe
+    npc_arcanist: { file: resolve(MOBS, "wizard.png"), char: [0, 0] },
+    npc_guard: { file: resolve(CHARS, "military1.png"), char: [2, 0] }, // plate knight
+    villager1: { file: resolve(CHARS, "npc1.png"), char: [3, 1] }, // straw-hat farmer
+    villager2: { file: resolve(CHARS, "npc2.png"), char: [1, 0] },
+    villager3: { file: resolve(CHARS, "npc1.png"), char: [0, 0] },
+    // phase 5: desert + dungeon roster
+    skeleton: { file: resolve(MOBS, "monster4.png"), char: [3, 0] }, // armored skeleton
+    cacto: { file: resolve(MOBS, "monster_cacto.png"), single: true },
+    raptor: { file: resolve(MOBS, "monster_raptor1.png"), single: true },
+    minotaur: { file: resolve(MOBS, "monster_minotaur.png"), single: true },
+  };
+  const manifest = {};
+  for (const [key, spec] of Object.entries(SHEETS)) {
+    const png = loadPng(spec.file);
+    const frameW = Math.floor(png.width / (spec.single ? 3 : 12));
+    const frameH = Math.floor(png.height / (spec.single ? 4 : 8));
+    const bx = spec.single ? 0 : spec.char[0] * 3 * frameW;
+    const by = spec.single ? 0 : spec.char[1] * 4 * frameH;
+    // union bbox of visible pixels across all 12 frames
+    let minX = frameW, maxX = -1, minY = frameH, maxY = -1;
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 3; c++) {
+        for (let y = 0; y < frameH; y++) {
+          for (let x = 0; x < frameW; x++) {
+            const a = png.data[((by + r * frameH + y) * png.width + bx + c * frameW + x) * 4 + 3];
+            if (a > 16) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+      }
+    }
+    if (maxX < 0) throw new Error(`sheet ${key}: empty character cell`);
+    // symmetric about the horizontal center, bottom-anchored
+    const half = Math.max(maxX - Math.floor(frameW / 2), Math.floor(frameW / 2) - minX, 1);
+    const tx = Math.max(0, Math.floor(frameW / 2) - half);
+    const tw = Math.min(frameW - tx, half * 2 + 1);
+    const th = maxY - minY + 1;
+    const out = new PNG({ width: tw * 3, height: th * 4 });
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 3; c++) {
+        PNG.bitblt(png, out, bx + c * frameW + tx, by + r * frameH + minY, tw, th, c * tw, r * th);
+      }
+    }
+    savePng(out, `sprites/${key}.png`);
+    manifest[key] = { cols: 3, rows: 4, frameW: tw, frameH: th };
+    console.log(`  ${key}: frame ${tw}x${th}`);
+  }
   saveJson(
-    {
-      cols: 3,
-      rows: 4,
-      frameW: sheet.width / 3,
-      frameH: sheet.height / 4,
-      rowOrder: ["down", "left", "right", "up"],
-      walkCycle: [0, 1, 2, 1],
-    },
-    "sprites/player.json"
+    { rowOrder: ["down", "left", "right", "up"], walkCycle: [0, 1, 2, 1], sheets: manifest },
+    "sprites/sprites.json"
   );
+}
+
+// ---------- block tile atlas (voxel world faces; recipes proven in the PoC) ----------
+// Every tile is 16x16. tiles.json maps name -> {index, avgColor}; the client
+// mesher UVs into a 16-column grid atlas. avgColor drives the minimap.
+const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
+{
+  const terrain = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "terrain.png"));
+  const dungeonSheet = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "dungeon.png"));
+  const castle = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "castle.png"));
+  const desertSheet = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "desert.png"));
+  const house = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "house.png"));
+  const waterSheet = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "water.png"));
+  const ff = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "farm and fort.png"));
+  const outsideSheet = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "outside.png"));
+  const icons16 = loadPng(resolve(SRC, "IconSet", "tf_icon_16.png"));
+
+  const t16 = (sheet, x, y) => grab(sheet, x, y, 16, 16);
+  // remove background pixels close to a set of key colors (sand behind plants)
+  const chromaKey = (png, keys, tol = 34) => {
+    for (let i = 0; i < png.data.length; i += 4) {
+      if (png.data[i + 3] === 0) continue;
+      for (const [kr, kg, kb] of keys) {
+        if (
+          Math.abs(png.data[i] - kr) < tol &&
+          Math.abs(png.data[i + 1] - kg) < tol &&
+          Math.abs(png.data[i + 2] - kb) < tol
+        ) {
+          png.data[i + 3] = 0;
+          break;
+        }
+      }
+    }
+    return png;
+  };
+  // luminance-driven recolor
+  const tint = (png, [tr, tg, tb], strength = 1) => {
+    const out = new PNG({ width: png.width, height: png.height });
+    png.data.copy(out.data);
+    for (let i = 0; i < out.data.length; i += 4) {
+      if (out.data[i + 3] === 0) continue;
+      const l = (out.data[i] * 0.35 + out.data[i + 1] * 0.5 + out.data[i + 2] * 0.15) / 255;
+      out.data[i] = Math.min(255, Math.round(tr * l * 1.35 * strength + out.data[i] * (1 - strength)));
+      out.data[i + 1] = Math.min(255, Math.round(tg * l * 1.35 * strength + out.data[i + 1] * (1 - strength)));
+      out.data[i + 2] = Math.min(255, Math.round(tb * l * 1.35 * strength + out.data[i + 2] * (1 - strength)));
+    }
+    return out;
+  };
+  // lay the top rows of src over dst (grass lip on dirt for block sides)
+  const topStrip = (dst, src, rows = 5) => {
+    const out = new PNG({ width: 16, height: 16 });
+    dst.data.copy(out.data);
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < 16; x++) {
+        if (y === rows - 1 && (x * 7 + 3) % 3 === 0) continue; // ragged edge
+        const i = (y * 16 + x) * 4;
+        out.data[i] = src.data[i];
+        out.data[i + 1] = src.data[i + 1];
+        out.data[i + 2] = src.data[i + 2];
+        out.data[i + 3] = 255;
+      }
+    }
+    return out;
+  };
+  const SAND_KEY = [
+    [222, 206, 148], [231, 217, 166], [207, 190, 135], [237, 226, 182], [214, 198, 141],
+  ];
+
+  const grassTop = t16(terrain, 80, 16);
+  const dirt = t16(terrain, 32, 96);
+  const logSide = t16(house, 176, 144);
+  const planks = t16(ff, 528, 624);
+
+  // painted glass: light frame + diagonal streaks over a transparent pane
+  const glass = new PNG({ width: 16, height: 16 });
+  for (let y = 0; y < 16; y++) {
+    for (let x = 0; x < 16; x++) {
+      const i = (y * 16 + x) * 4;
+      const edge = x === 0 || y === 0 || x === 15 || y === 15;
+      const streak = (x + y === 18 || x + y === 19 || x + y === 8);
+      if (edge) {
+        glass.data[i] = 168; glass.data[i + 1] = 192; glass.data[i + 2] = 204; glass.data[i + 3] = 255;
+      } else if (streak) {
+        glass.data[i] = 225; glass.data[i + 1] = 242; glass.data[i + 2] = 250; glass.data[i + 3] = 90;
+      }
+    }
+  }
+
+  // log cross-section: warm-tinted planks core inside the bark ring
+  const logTop = new PNG({ width: 16, height: 16 });
+  logSide.data.copy(logTop.data);
+  const rings = tint(planks, [205, 160, 100], 0.7);
+  for (let y = 2; y < 14; y++) {
+    for (let x = 2; x < 14; x++) {
+      const i = (y * 16 + x) * 4;
+      logTop.data[i] = rings.data[i];
+      logTop.data[i + 1] = rings.data[i + 1];
+      logTop.data[i + 2] = rings.data[i + 2];
+      logTop.data[i + 3] = 255;
+    }
+  }
+
+  const recipes = {
+    grass_top: () => grassTop,
+    grass_side: () => topStrip(dirt, grassTop),
+    dirt: () => dirt,
+    stone: () => t16(dungeonSheet, 96, 16),
+    sand: () => t16(terrain, 32, 144),
+    // autotile trap: (32,64)/(528,64) are the known fully-opaque water/lava cells
+    water: () => t16(waterSheet, 32, 64),
+    lava: () => t16(waterSheet, 528, 64),
+    log: () => logSide,
+    log_top: () => logTop,
+    leaves: () => t16(outsideSheet, 576, 48),
+    planks: () => planks,
+    cobblestone: () => t16(castle, 144, 16),
+    mossy_cobblestone: () => t16(castle, 160, 32),
+    stone_bricks: () => t16(castle, 272, 32),
+    sandstone: () => t16(desertSheet, 128, 336),
+    sandstone_top: () => t16(desertSheet, 128, 304),
+    thatch: () => t16(ff, 400, 256),
+    roof: () => t16(house, 475, 156),
+    path: () => t16(terrain, 16, 128),
+    bedrock: () => t16(dungeonSheet, 432, 224),
+    torch: () => t16(icons16, 6 * 16, 12 * 16),
+    tall_grass: () => chromaKey(t16(terrain, 96, 160), SAND_KEY),
+    flower_red: () => chromaKey(t16(terrain, 176, 160), SAND_KEY),
+    flower_yellow: () => chromaKey(t16(terrain, 144, 160), SAND_KEY),
+    mushroom_red: () => tint(t16(icons16, 12 * 16, 15 * 16), [225, 70, 60], 0.55),
+    mushroom_brown: () => tint(t16(icons16, 13 * 16, 15 * 16), [195, 145, 85], 0.5),
+    crystal: () => t16(dungeonSheet, 496, 224),
+    glass: () => glass,
+  };
+
+  const names = Object.keys(recipes);
+  const cols = 16;
+  const rows = 16; // square 16x16-tile atlas — the mesher's UV math needs it
+  if (names.length > cols * rows) throw new Error("tile atlas full");
+  const atlas = new PNG({ width: cols * 16, height: rows * 16 });
+  const index = {};
+  names.forEach((name, i) => {
+    const tile = recipes[name]();
+    TILE_PNGS[name] = tile;
+    PNG.bitblt(tile, atlas, 0, 0, 16, 16, (i % cols) * 16, Math.floor(i / cols) * 16);
+    // average opaque color for the minimap
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let p = 0; p < tile.data.length; p += 4) {
+      if (tile.data[p + 3] < 128) continue;
+      r += tile.data[p]; g += tile.data[p + 1]; b += tile.data[p + 2]; n++;
+    }
+    index[name] = {
+      index: i,
+      avgColor: n ? [Math.round(r / n), Math.round(g / n), Math.round(b / n)] : [0, 0, 0],
+    };
+  });
+  savePng(atlas, "blocks/tiles.png");
+  saveJson({ tileSize: 16, atlasCols: cols, tiles: index }, "blocks/tiles.json");
+}
+
+// ---------- item icons (whole 16px IconSet; client addresses (col,row)) ----------
+{
+  const icons = loadPng(resolve(SRC, "IconSet", "tf_icon_16.png"));
+  // append one extra row of icons for block items: their icon IS their tile.
+  // items.json references these as (col, <original rows>) — currently row 21.
+  const BLOCK_ITEM_TILES = ["planks", "log", "cobblestone", "stone_bricks", "thatch", "glass", "torch"];
+  const baseRows = Math.floor(icons.height / 16);
+  const extended = new PNG({ width: icons.width, height: (baseRows + 1) * 16 });
+  PNG.bitblt(icons, extended, 0, 0, icons.width, icons.height, 0, 0);
+  BLOCK_ITEM_TILES.forEach((tileName, i) => {
+    const tile = TILE_PNGS[tileName];
+    if (!tile) throw new Error(`block item icon: no tile ${tileName}`);
+    PNG.bitblt(tile, extended, 0, 0, 16, 16, i * 16, baseRows * 16);
+  });
+  savePng(extended, "ui/icons.png");
+  saveJson({ cell: 16, cols: Math.floor(extended.width / 16), rows: baseRows + 1 }, "ui/icons.json");
+
+  // 32px icon variants for world/viewmodel use (same grid, 32px cells)
+  const icons32 = loadPng(resolve(SRC, "IconSet", "tf_icon_32.png"));
+  // loot bag billboard: the brown sack at (13,12)
+  savePng(trim(grab(icons32, 13 * 32, 12 * 32, 32, 32)), "sprites/loot_bag.png");
+  // first-person held-item viewmodels: EVERY item gets one, extracted at the
+  // same grid cell as its inventory icon — the hand always matches the bag
+  // (weapons, potions, bread, building pieces alike)
+  const itemsJson = JSON.parse(
+    readFileSync(resolve(ROOT, "shared", "items.json"), "utf8").replace(/^﻿/, "")
+  );
+  for (const [id, def] of Object.entries(itemsJson.items)) {
+    if (def.block) {
+      // block items: the hand shows the block tile (2x nearest-neighbour)
+      const tile = TILE_PNGS[def.block];
+      if (!tile) throw new Error(`held sprite: no tile for block ${def.block}`);
+      const big = new PNG({ width: 32, height: 32 });
+      for (let y = 0; y < 32; y++) {
+        for (let x = 0; x < 32; x++) {
+          const s = ((y >> 1) * 16 + (x >> 1)) * 4;
+          const d = (y * 32 + x) * 4;
+          for (let k = 0; k < 4; k++) big.data[d + k] = tile.data[s + k];
+        }
+      }
+      savePng(big, `ui/held_${id}.png`);
+      continue;
+    }
+    const [c, r] = def.icon;
+    savePng(trim(grab(icons32, c * 32, r * 32, 32, 32)), `ui/held_${id}.png`);
+  }
+}
+
+// ---------- FX flipbooks (pixel animation pack, 64x64 frames -> strips) ----------
+{
+  const FX_DIR = resolve(SRC, "Time Fantasy", "pixel_animations_gfxpack", "individual_frames");
+  const FX = {
+    slash: { dir: "sword", prefix: "sword1", fps: 24 },
+    firebolt: { dir: "fire", prefix: "fire1", fps: 20 },
+    frost: { dir: "ice", prefix: "ice1", fps: 20 },
+    heal: { dir: "heal", prefix: "heal1", fps: 18 },
+    hit: { dir: "impact", prefix: "impact1", fps: 24 },
+    arrow: { dir: "arrow", prefix: "arrow1", fps: 24 },
+  };
+  const manifest = {};
+  for (const [key, spec] of Object.entries(FX)) {
+    const dir = resolve(FX_DIR, spec.dir);
+    const files = readdirSync(dir)
+      .filter((f) => f.startsWith(spec.prefix + "_"))
+      .sort((a, b) => parseInt(a.split("_")[1]) - parseInt(b.split("_")[1]));
+    if (files.length === 0) throw new Error(`fx ${key}: no frames for ${spec.prefix}`);
+    const frames = files.map((f) => loadPng(resolve(dir, f)));
+    const fw = frames[0].width, fh = frames[0].height;
+    const strip = new PNG({ width: fw * frames.length, height: fh });
+    frames.forEach((f, i) => PNG.bitblt(f, strip, 0, 0, fw, fh, i * fw, 0));
+    savePng(strip, `fx/${key}.png`);
+    manifest[key] = { frames: frames.length, frameW: fw, frameH: fh, fps: spec.fps };
+    console.log(`  fx ${key}: ${frames.length} frames`);
+  }
+  saveJson(manifest, "fx/fx.json");
 }
 
 // ---------- ground tiles (known-good coords from the PoC pipeline) ----------
@@ -147,10 +441,19 @@ function buildAtlas(sprites) {
   savePng(grab(water, 32, 64), "tiles/water.png");
 }
 
-// ---------- wall panel (tiles horizontally along wall runs) ----------
+// ---------- wall panels (tile horizontally along wall runs) ----------
 {
   const castle = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "castle.png"));
   savePng(grab(castle, 160, 145, 90, 60), "props/wall.png");
+
+  // wood building panel: tiled planks (player-built walls)
+  const ff = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "farm and fort.png"));
+  const plank = grab(ff, 528, 624, 16, 16);
+  savePng(plank, "tiles/planks.png");
+  const woodPanel = new PNG({ width: 64, height: 48 });
+  for (let ty = 0; ty < 3; ty++)
+    for (let tx = 0; tx < 4; tx++) PNG.bitblt(plank, woodPanel, 0, 0, 16, 16, tx * 16, ty * 16);
+  savePng(woodPanel, "props/wood_wall.png");
 }
 
 // ---------- prop atlas (trees, rocks, buildings, market, arch) ----------
@@ -158,7 +461,20 @@ function buildAtlas(sprites) {
   const outside = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "outside.png"));
   const castle = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "castle.png"));
   const farmfort = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "farm and fort.png"));
+  const desert = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "desert.png"));
+  const icons16 = loadPng(resolve(SRC, "IconSet", "tf_icon_16.png"));
   const defs = [
+    // standing torch (icon torch, proven in the PoC); flame + light are client-side
+    { sheet: icons16, name: "torch", x: 6 * 16, y: 12 * 16, w: 16, h: 16 },
+    // ---- phase 5: desert / dungeon / pvp dressing ----
+    { sheet: desert, name: "dead_tree_big", seed: [60, 240] }, // big gray skeleton tree
+    { sheet: desert, name: "dead_tree", seed: [28, 275] }, // small gray tree
+    // cacti + bones sit on opaque sand tiles: rect + erase the sand band
+    { sheet: desert, name: "cactus", x: 110, y: 196, w: 34, h: 28, eraseSand: true },
+    { sheet: desert, name: "bone_pile", x: 110, y: 163, w: 36, h: 15 },
+    { sheet: desert, name: "desert_rock", seed: [148, 73] }, // rock cluster
+    { sheet: castle, name: "banner_purple", seed: [166, 235], flat: true },
+    { sheet: castle, name: "banner_red", seed: [200, 235], flat: true },
     { sheet: outside, name: "tree1", x: 528, y: 12, w: 82, h: 100 }, // big landmark tree (sheet has a tile band at y123+)
     { sheet: outside, name: "tree2", x: 312, y: 114, w: 40, h: 66 }, // pine
     { sheet: outside, name: "tree3", x: 272, y: 114, w: 36, h: 66 }, // round green
@@ -198,6 +514,16 @@ function buildAtlas(sprites) {
       }
       png = trim(png); // retighten after erasing
     }
+    if (d.eraseSand) {
+      // sprites drawn over an opaque sand tile: key out sandy pixels
+      for (let i = 0; i < png.data.length; i += 4) {
+        const r = png.data[i], g = png.data[i + 1], b = png.data[i + 2];
+        if (r > 190 && g > 150 && b > 100 && r > b + 40 && g > b + 20) {
+          png.data[i + 3] = 0;
+        }
+      }
+      png = trim(png);
+    }
     console.log(`  ${d.name}: ${png.width}x${png.height}`);
     return { name: d.name, png, flat: d.flat ?? false };
   });
@@ -207,6 +533,8 @@ function buildAtlas(sprites) {
   const worldHeights = {
     tree1: 5.2, tree2: 4.2, tree3: 3.6, tree4: 3.8, rock1: 0.85, rock2: 0.7,
     hut: 4.4, tent1: 3.2, tent2: 3.4, cart: 1.5, arch: 5.4,
+    dead_tree_big: 5.0, dead_tree: 2.6, cactus: 1.3, bone_pile: 0.5,
+    desert_rock: 0.9, banner_purple: 2.3, banner_red: 2.3, torch: 1.1,
   };
   saveJson(
     Object.fromEntries(

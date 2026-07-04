@@ -1,0 +1,31 @@
+{
+  "comment": "Block registry — the single source of truth for the voxel world. IDs are APPEND-ONLY (persisted room edits store raw ids; never renumber). kind: cube|cross. cull: opaque|cutout|liquid|none. light: 0-15 voxel emission. glow: rendered full-bright. tex keys reference tiles.json entries built by tools/build-assets.mjs.",
+  "blocks": [
+    { "id": 0, "name": "air", "label": "Air", "solid": false, "kind": "cube", "cull": "none" },
+    { "id": 1, "name": "grass", "label": "Grass Block", "solid": true, "kind": "cube", "cull": "opaque", "tex": { "top": "grass_top", "bottom": "dirt", "side": "grass_side" } },
+    { "id": 2, "name": "dirt", "label": "Dirt", "solid": true, "kind": "cube", "cull": "opaque" },
+    { "id": 3, "name": "stone", "label": "Stone", "solid": true, "kind": "cube", "cull": "opaque" },
+    { "id": 4, "name": "sand", "label": "Sand", "solid": true, "kind": "cube", "cull": "opaque" },
+    { "id": 5, "name": "water", "label": "Water", "solid": false, "kind": "cube", "cull": "liquid" },
+    { "id": 6, "name": "log", "label": "Log", "solid": true, "kind": "cube", "cull": "opaque", "tex": { "top": "log_top", "bottom": "log_top", "side": "log" } },
+    { "id": 7, "name": "leaves", "label": "Leaves", "solid": true, "kind": "cube", "cull": "cutout" },
+    { "id": 8, "name": "planks", "label": "Planks", "solid": true, "kind": "cube", "cull": "opaque" },
+    { "id": 9, "name": "cobblestone", "label": "Cobblestone", "solid": true, "kind": "cube", "cull": "opaque" },
+    { "id": 10, "name": "stone_bricks", "label": "Stone Bricks", "solid": true, "kind": "cube", "cull": "opaque" },
+    { "id": 11, "name": "mossy_cobblestone", "label": "Mossy Cobblestone", "solid": true, "kind": "cube", "cull": "opaque" },
+    { "id": 12, "name": "sandstone", "label": "Sandstone", "solid": true, "kind": "cube", "cull": "opaque", "tex": { "top": "sandstone_top", "bottom": "sandstone_top", "side": "sandstone" } },
+    { "id": 13, "name": "thatch", "label": "Thatch", "solid": true, "kind": "cube", "cull": "opaque" },
+    { "id": 14, "name": "roof", "label": "Roof Shingles", "solid": true, "kind": "cube", "cull": "opaque" },
+    { "id": 15, "name": "path", "label": "Gravel Path", "solid": true, "kind": "cube", "cull": "opaque" },
+    { "id": 16, "name": "bedrock", "label": "Bedrock", "solid": true, "kind": "cube", "cull": "opaque" },
+    { "id": 17, "name": "torch", "label": "Torch", "solid": false, "kind": "cross", "cull": "cutout", "glow": true, "light": 14 },
+    { "id": 18, "name": "tall_grass", "label": "Tall Grass", "solid": false, "kind": "cross", "cull": "cutout" },
+    { "id": 19, "name": "flower_red", "label": "Rose", "solid": false, "kind": "cross", "cull": "cutout" },
+    { "id": 20, "name": "flower_yellow", "label": "Dandelion", "solid": false, "kind": "cross", "cull": "cutout" },
+    { "id": 21, "name": "mushroom_red", "label": "Red Mushroom", "solid": false, "kind": "cross", "cull": "cutout" },
+    { "id": 22, "name": "mushroom_brown", "label": "Brown Mushroom", "solid": false, "kind": "cross", "cull": "cutout" },
+    { "id": 23, "name": "crystal", "label": "Mana Crystal", "solid": false, "kind": "cross", "cull": "cutout", "glow": true, "light": 11 },
+    { "id": 24, "name": "lava", "label": "Lava", "solid": false, "kind": "cube", "cull": "liquid", "glow": true, "light": 15 },
+    { "id": 25, "name": "glass", "label": "Glass", "solid": true, "kind": "cube", "cull": "cutout" }
+  ]
+}

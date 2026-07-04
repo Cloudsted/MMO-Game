@@ -73,9 +73,12 @@ public class DayNight {
 
         skyColor.set(NIGHT_SKY).lerp(DAY_SKY, sunFactor);
 
-        // entity tint: sky² * mix(moonBlue, dayWhite) with a mid diffuse term,
-        // never below the black floor — keep in step with terrain.frag
-        float sky = 0.4f + 0.6f * 0.75f;
+        // entity tint: terrain.frag's exact formula evaluated at the FLAT
+        // ground normal, so props/billboards match the floor under them at
+        // every hour (a fixed diffuse guess left the floor far darker at low
+        // sun/moon angles) — change together with terrain.frag
+        float ndlFlat = MathUtils.clamp(-lightDir.y, 0f, 1f);
+        float sky = 0.4f + 0.6f * (0.35f + 0.65f * ndlFlat);
         float s2 = sky * sky;
         float bright = 0.30f + 0.70f * sunFactor;
         entityLight.set(

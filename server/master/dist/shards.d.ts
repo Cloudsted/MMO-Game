@@ -11,6 +11,8 @@ export declare class ShardManager {
     private roomDefs;
     /** roomId → shardId for rooms that are open or opening */
     private roomAssignment;
+    /** expired ephemeral rooms sit out their downtime before reopening fresh */
+    private reopenNotBefore;
     constructor(cols: Collections, secret: string);
     attach(httpServer: Server): void;
     private onConnection;
@@ -24,10 +26,14 @@ export declare class ShardManager {
     private handleTransferRequest;
     /** Apply batched character state from a shard to MongoDB without re-simulating. */
     private applyReport;
-    /** Ensure every defined room has exactly one live/opening instance. */
+    /** Ensure every defined room has exactly one live/opening instance
+     *  (ephemeral rooms sit out their post-expiry downtime first). */
     private ensureRooms;
-    /** Open a room on a shard, passing its last persisted snapshot (if any). */
+    /** Open a room on a shard, passing its last persisted snapshot (if any).
+     *  Ephemeral rooms always start fresh. */
     private openRoomOn;
+    /** Tell every shard (→ every RoomHost) a destination went up or down. */
+    private broadcastRoomStatus;
     private pickShard;
     /** Drop a dead shard: mark its rooms down and reassign them. */
     private dropShard;
@@ -44,6 +50,9 @@ export declare class ShardManager {
         roomId: string;
         ticket: string;
     } | null;
+    /** Admin: close (→ auto-reopen = restart) a room. Stateful rooms resume
+     *  from their last snapshot; ephemeral rooms come back fresh. */
+    closeRoomAdmin(roomId: string): boolean;
     /** Live status for the admin/status endpoint. */
     status(): {
         shards: {

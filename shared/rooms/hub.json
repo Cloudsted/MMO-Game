@@ -7,17 +7,80 @@
   "size": { "w": 128, "h": 128 },
   "spawn": { "x": 64, "z": 64, "yaw": 3.14159 },
   "terrain": {
-    "kind": "heightmap",
+    "kind": "blocks",
     "seed": 20260702,
-    "amplitude": 1.6,
-    "frequency": 0.045,
+    "base": 12,
+    "amplitude": 2,
+    "frequency": 0.03,
     "plateauRadius": 46
   },
-  "map": "hub.map.json",
   "flags": { "safeZone": true, "buildingEnabled": false, "pvp": false },
   "portals": [
-    { "id": "hub-forest", "label": "Whispering Forest", "target": "forest", "x": 64, "z": 99, "r": 2.2 }
+    { "id": "hub-forest", "label": "Whispering Forest", "target": "forest", "x": 64, "z": 99, "r": 2.2 },
+    { "id": "hub-desert", "label": "Sunscour Desert", "target": "desert", "x": 54, "z": 100, "r": 2.2 },
+    { "id": "hub-dungeon", "label": "Sunken Crypt", "target": "dungeon", "x": 74, "z": 100, "r": 2.2 },
+    { "id": "hub-grounds", "label": "Building Grounds", "target": "grounds", "x": 44, "z": 101, "r": 2.2 }
   ],
   "spawnTables": [],
-  "npcs": []
+  "npcs": [
+    {
+      "id": "weaponsmith", "name": "Gorren the Smith", "sprite": "npc_smith",
+      "x": 52, "z": 52, "yaw": 2.36, "wanderRadius": 0,
+      "dialog": [
+        "Steel for the wilds, friend. A slime will laugh off your fists.",
+        "The iron sword holds an edge twice as long as that rusty thing."
+      ],
+      "shop": { "items": ["rusty_sword", "iron_sword", "hunting_bow", "longbow"], "buys": true }
+    },
+    {
+      "id": "provisioner", "name": "Mara the Provisioner", "sprite": "npc_provisioner",
+      "x": 47, "z": 62, "yaw": 1.57, "wanderRadius": 0,
+      "dialog": [
+        "Bread for the road, potions for when the road bites back.",
+        "Wolves hunt in packs out there. Carry more than you think you need."
+      ],
+      "shop": { "items": ["bread", "health_potion", "mana_potion"], "buys": true }
+    },
+    {
+      "id": "arcanist", "name": "Zella the Arcanist", "sprite": "npc_arcanist",
+      "x": 76, "z": 52, "yaw": -2.36, "wanderRadius": 0,
+      "dialog": [
+        "A staff decides what you are: fire, frost, or mercy.",
+        "Casting takes focus — stand still, or the spell slips away."
+      ],
+      "shop": { "items": ["fire_staff", "frost_staff", "heal_staff"], "buys": true }
+    },
+    {
+      "id": "carpenter", "name": "Jib the Carpenter", "sprite": "villager1",
+      "x": 44, "z": 66, "yaw": 1.57, "wanderRadius": 0,
+      "dialog": [
+        "Block by block — that's how anything worth keeping gets built.",
+        "Take the west portal to the Building Grounds and stack whatever you like. Torches too, for the night work."
+      ],
+      "shop": { "items": ["block_planks", "block_log", "block_cobblestone", "block_stone_bricks", "block_thatch", "block_glass", "block_torch"], "buys": true }
+    },
+    {
+      "id": "gate-guard", "name": "Gate Guard", "sprite": "npc_guard",
+      "x": 61, "z": 94, "yaw": 0, "wanderRadius": 0,
+      "dialog": [
+        "That portal leads to the Whispering Forest. Slimes near the road, wolves in the deep wood, bandits camped up north.",
+        "Die out there and your gear stays where you fell. Run back quick before someone else finds it."
+      ]
+    },
+    {
+      "id": "civ-1", "name": "Townsfolk", "sprite": "villager1",
+      "x": 64, "z": 55, "yaw": 0, "wanderRadius": 9,
+      "dialog": ["Lovely day on the plaza, isn't it?"]
+    },
+    {
+      "id": "civ-2", "name": "Townsfolk", "sprite": "villager2",
+      "x": 58, "z": 62, "yaw": 0, "wanderRadius": 9,
+      "dialog": ["They say the bandits up north hoard fine steel."]
+    },
+    {
+      "id": "civ-3", "name": "Townsfolk", "sprite": "villager3",
+      "x": 70, "z": 60, "yaw": 0, "wanderRadius": 9,
+      "dialog": ["I once saw an epic blade drop from a common thief. Luck of the roll!"]
+    }
+  ]
 }

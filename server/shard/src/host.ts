@@ -19,6 +19,8 @@ interface RoomProc {
   child: ChildProcess;
   ready: boolean;
   players: number;
+  /** set when the RoomHost announces a deliberate close (lifecycle expiry) */
+  closeReason: string | null;
 }
 
 interface Args {
@@ -44,6 +46,7 @@ class ShardHost {
   private log;
   private ws: WebSocket | null = null;
   private rooms = new Map<string, RoomProc>();
+  private roomStatuses = new Map<string, boolean>(); // latest from the master
   private nextPortOffset = 0;
   private stopping = false;
 
@@ -139,6 +142,18 @@ class ShardHost {
         }
         break;
       }
+      case "globalChat":
+        // fan out to every RoomHost on this shard
+        for (const room of this.rooms.values()) {
+          this.sendToRoom(room, { t: "globalChat", from: msg.from, text: msg.text });
+        }
+        break;
+      case "roomStatus":
+        this.roomStatuses.set(msg.roomId, msg.open);
+        for (const room of this.rooms.values()) {
+          this.sendToRoom(room, { t: "roomStatus", roomId: msg.roomId, open: msg.open });
+        }
+        break;
     }
   }
 
@@ -154,14 +169,15 @@ class ShardHost {
       execArgv: ["--import", "tsx"],
       stdio: ["inherit", "inherit", "inherit", "ipc"],
     });
-    const room: RoomProc = { roomId, port, child, ready: false, players: 0 };
+    const room: RoomProc = { roomId, port, child, ready: false, players: 0, closeReason: null };
     this.rooms.set(roomId, room);
 
     child.on("message", (raw: RoomToHost) => this.onRoomMessage(room, raw));
     child.on("exit", (code) => {
-      this.log.warn(`RoomHost ${roomId} exited (code ${code})`);
+      const reason = room.closeReason ?? `exit code ${code}`;
+      this.log.warn(`RoomHost ${roomId} exited (${reason})`);
       this.rooms.delete(roomId);
-      this.send({ t: "roomClosed", roomId, reason: `exit code ${code}` });
+      this.send({ t: "roomClosed", roomId, reason });
     });
     this.sendToRoom(room, { t: "init", roomId, port, snapshot });
   }
@@ -182,6 +198,10 @@ class ShardHost {
         room.ready = true;
         this.log.info(`room ${room.roomId} ready on port ${msg.port}`);
         this.send({ t: "roomOpened", roomId: room.roomId, port: msg.port });
+        // late-opening rooms still need the current availability picture
+        for (const [roomId, open] of this.roomStatuses) {
+          this.sendToRoom(room, { t: "roomStatus", roomId, open });
+        }
         break;
       case "stats":
         room.players = msg.players;
@@ -197,6 +217,12 @@ class ShardHost {
           targetRoomId: msg.targetRoomId,
           patch: msg.patch,
         });
+        break;
+      case "globalChat":
+        this.send({ t: "globalChat", from: msg.from, text: msg.text });
+        break;
+      case "closing":
+        room.closeReason = msg.reason;
         break;
     }
   }

@@ -3,7 +3,7 @@
     "walkSpeed": 4.5,
     "gravity": -22.0,
     "jumpVelocity": 7.5,
-    "playerRadius": 0.35,
+    "playerRadius": 0.3,
     "playerHeight": 1.7,
     "eyeHeight": 1.55,
     "swimSpeed": 2.5
@@ -18,11 +18,40 @@
     "moveToleranceM": 0.75,
     "ticketTtlMs": 30000
   },
+  "combat": {
+    "critChance": 0.05,
+    "critMult": 1.5,
+    "staggerMs": 400,
+    "projectileHitRadius": 0.55,
+    "meleeRangeGrace": 0.6,
+    "hpRegenPerSec": 2.0,
+    "manaRegenPerSec": 3.0,
+    "regenDelayAfterDamageMs": 5000,
+    "lootLockMobMs": 30000,
+    "lootLockDeathMs": 180000,
+    "mobLootExpireMs": 300000,
+    "pickupRange": 2.5,
+    "talkRange": 3.5,
+    "sellFraction": 0.4
+  },
+  "building": {
+    "placeRangeM": 6.0,
+    "maxPlayerBlocksPerRoom": 6000
+  },
+  "progression": {
+    "baseHp": 80,
+    "hpPerLevel": 20,
+    "baseMana": 50,
+    "manaPerLevel": 10,
+    "damagePerLevelPct": 0.06,
+    "xpBase": 60,
+    "xpExponent": 1.6,
+    "maxLevel": 30
+  },
   "world": {
-    "cellSizeM": 1.0,
-    "chunkCells": 32,
+    "worldHeight": 48,
+    "chunkBlocks": 16,
     "dayLengthSec": 1200,
-    "maxStandableSlope": 1.6,
     "terrainYToleranceM": 3.0
   }
 }

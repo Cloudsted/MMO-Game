@@ -1,0 +1,44 @@
+{
+  "slime": {
+    "name": "Slime", "sprite": "slime", "level": 1,
+    "hp": 30, "damage": 4, "moveSpeed": 1.7,
+    "ability": "slime_bounce", "aggroRadius": 7, "attackRange": 1.5,
+    "leashRadius": 20, "fleeAtHpPct": 0, "xp": 14, "loot": "slime_drops"
+  },
+  "wolf": {
+    "name": "Wolf", "sprite": "wolf", "level": 3,
+    "hp": 62, "damage": 8, "moveSpeed": 3.4,
+    "ability": "wolf_bite", "aggroRadius": 11, "attackRange": 1.7,
+    "leashRadius": 26, "fleeAtHpPct": 0.15, "xp": 34, "loot": "wolf_drops"
+  },
+  "bandit": {
+    "name": "Bandit", "sprite": "bandit", "level": 5,
+    "hp": 115, "damage": 12, "moveSpeed": 3.0,
+    "ability": "bandit_slash", "aggroRadius": 10, "attackRange": 2.1,
+    "leashRadius": 24, "fleeAtHpPct": 0.1, "xp": 72, "loot": "bandit_drops"
+  },
+  "skeleton": {
+    "name": "Skeleton", "sprite": "skeleton", "level": 6,
+    "hp": 95, "damage": 11, "moveSpeed": 2.8,
+    "ability": "skeleton_slash", "aggroRadius": 10, "attackRange": 2.0,
+    "leashRadius": 24, "fleeAtHpPct": 0, "xp": 58, "loot": "skeleton_drops"
+  },
+  "cacto": {
+    "name": "Cacto", "sprite": "cacto", "level": 5,
+    "hp": 140, "damage": 15, "moveSpeed": 1.4,
+    "ability": "cacto_spike", "aggroRadius": 6, "attackRange": 1.7,
+    "leashRadius": 15, "fleeAtHpPct": 0, "xp": 62, "loot": "cacto_drops"
+  },
+  "raptor": {
+    "name": "Raptor", "sprite": "raptor", "level": 7,
+    "hp": 78, "damage": 13, "moveSpeed": 4.3,
+    "ability": "raptor_bite", "aggroRadius": 13, "attackRange": 1.7,
+    "leashRadius": 30, "fleeAtHpPct": 0.12, "xp": 74, "loot": "raptor_drops"
+  },
+  "minotaur_boss": {
+    "name": "Gravelord Minotaur", "sprite": "minotaur", "level": 10,
+    "hp": 680, "damage": 27, "moveSpeed": 3.1,
+    "ability": "boss_slam", "aggroRadius": 15, "attackRange": 3.0,
+    "leashRadius": 34, "fleeAtHpPct": 0, "xp": 520, "loot": "boss_drops"
+  }
+}

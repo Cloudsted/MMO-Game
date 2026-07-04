@@ -6,7 +6,7 @@
  *   node scripts/greeter-bot.mjs --target Brian --seconds 120
  */
 import WebSocket from "ws";
-import { loadEnv, sleep, decodeTerrain } from "./lib.mjs";
+import { loadEnv, sleep, makeWorldTracker } from "./lib.mjs";
 
 loadEnv();
 const argv = process.argv.slice(2);
@@ -37,6 +37,7 @@ const grant = await api("/api/enter", { characterId: characters[0].id }, token);
 
 const ws = new WebSocket(grant.wsUrl);
 const me = { x: 0, y: 0, z: 0, seq: 0, terrain: null };
+  const tracker = makeWorldTracker();
 const others = new Map();
 
 ws.on("open", () => ws.send(JSON.stringify({ t: "hello", v: 1, ticket: grant.ticket })));
@@ -55,8 +56,9 @@ ws.on("message", (raw) => {
       const e = others.get(d.id);
       if (e) Object.assign(e, d);
     }
-  } else if (msg.t === "terrain") {
-    me.terrain = decodeTerrain(msg);
+  } else if (msg.t === "world" || msg.t === "chunks" || msg.t === "blockSet") {
+    const s = tracker.handle(msg);
+    if (s) me.terrain = s;
   } else if (msg.t === "correct") {
     me.x = msg.x;
     me.y = msg.y;

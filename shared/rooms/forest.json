@@ -4,21 +4,155 @@
   "type": "wilderness",
   "biome": "grass",
   "persistence": "stateful",
-  "size": { "w": 160, "h": 160 },
-  "spawn": { "x": 80, "z": 146, "yaw": 3.14159 },
-  "terrain": {
-    "kind": "heightmap",
-    "seed": 77103,
-    "amplitude": 3.4,
-    "frequency": 0.028,
-    "plateauRadius": 10,
-    "waterLevel": 1.15
+  "size": {
+    "w": 160,
+    "h": 160
   },
-  "propGen": { "trees": 260, "rocks": 46, "clearRadius": 11, "seed": 51422 },
-  "flags": { "safeZone": true, "buildingEnabled": false, "pvp": false },
-  "portals": [
-    { "id": "forest-hub", "label": "Hub City", "target": "hub", "x": 80, "z": 152, "r": 2.2 }
+  "spawn": {
+    "x": 80,
+    "z": 146,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 77103,
+    "base": 13,
+    "amplitude": 7,
+    "frequency": 0.02,
+    "plateauRadius": 10,
+    "waterLevel": 11,
+    "treeDensity": 1.6
+  },
+  "flags": {
+    "safeZone": true,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "regions": [
+    {
+      "kind": "circle",
+      "x": 28,
+      "z": 118,
+      "r": 12,
+      "pvp": true
+    }
   ],
-  "spawnTables": [],
+  "portals": [
+    {
+      "id": "forest-hub",
+      "label": "Hub City",
+      "target": "hub",
+      "x": 80,
+      "z": 152,
+      "r": 2.2
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "slime-meadow-w",
+      "region": {
+        "kind": "circle",
+        "x": 55,
+        "z": 105,
+        "r": 16
+      },
+      "mobs": [
+        {
+          "mob": "slime",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [
+        1,
+        2
+      ],
+      "respawnSec": 25
+    },
+    {
+      "id": "slime-meadow-e",
+      "region": {
+        "kind": "circle",
+        "x": 106,
+        "z": 116,
+        "r": 14
+      },
+      "mobs": [
+        {
+          "mob": "slime",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [
+        1,
+        2
+      ],
+      "respawnSec": 25
+    },
+    {
+      "id": "wolf-den-w",
+      "region": {
+        "kind": "circle",
+        "x": 40,
+        "z": 55,
+        "r": 18
+      },
+      "mobs": [
+        {
+          "mob": "wolf",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [
+        2,
+        3
+      ],
+      "respawnSec": 40
+    },
+    {
+      "id": "wolf-den-e",
+      "region": {
+        "kind": "circle",
+        "x": 120,
+        "z": 60,
+        "r": 16
+      },
+      "mobs": [
+        {
+          "mob": "wolf",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [
+        2,
+        2
+      ],
+      "respawnSec": 40
+    },
+    {
+      "id": "bandit-camp",
+      "region": {
+        "kind": "circle",
+        "x": 85,
+        "z": 30,
+        "r": 13
+      },
+      "mobs": [
+        {
+          "mob": "bandit",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [
+        2,
+        2
+      ],
+      "respawnSec": 60
+    }
+  ],
   "npcs": []
 }

@@ -7,13 +7,22 @@ import { z } from "zod";
 
 // ---------- shared value types ----------
 
+/** One inventory slot: per-instance item data from day one (rarity now;
+ *  affixes/durability later slot into the same shape). */
+export const ItemStackSchema = z.object({
+  item: z.string(),
+  qty: z.number().int().positive(),
+  rarity: z.string(),
+});
+export type ItemStack = z.infer<typeof ItemStackSchema>;
+
 export const CharacterSnapshotSchema = z.object({
   id: z.string(),
   name: z.string(),
   level: z.number().int(),
   xp: z.number(),
   gold: z.number(),
-  inventory: z.array(z.unknown()),
+  inventory: z.array(ItemStackSchema.nullable()),
   x: z.number(),
   y: z.number(),
   z: z.number(),
@@ -24,7 +33,7 @@ export type CharacterSnapshot = z.infer<typeof CharacterSnapshotSchema>;
 
 export const EntityFullSchema = z.object({
   id: z.number().int(),
-  kind: z.string(),
+  kind: z.string(), // player | mob | npc | loot
   name: z.string().optional(),
   sprite: z.string().optional(),
   x: z.number(),
@@ -32,6 +41,14 @@ export const EntityFullSchema = z.object({
   z: z.number(),
   yaw: z.number(),
   anim: z.string(),
+  // combat surface (players + mobs)
+  hp: z.number().optional(),
+  maxHp: z.number().optional(),
+  level: z.number().int().optional(),
+  /** action FSM state (idle/move/windup/active/recover/cast/stagger/dead) */
+  act: z.string().optional(),
+  /** ms remaining in act at send time — clients run the telegraph timer */
+  actMs: z.number().optional(),
 });
 export type EntityFull = z.infer<typeof EntityFullSchema>;
 
@@ -43,15 +60,47 @@ export const EntityDeltaSchema = z.object({
   z: z.number().optional(),
   yaw: z.number().optional(),
   anim: z.string().optional(),
+  hp: z.number().optional(),
+  act: z.string().optional(),
+  actMs: z.number().optional(),
 });
 export type EntityDelta = z.infer<typeof EntityDeltaSchema>;
 
 // ---------- control channel (shard host <-> master) ----------
 
-/** Persisted per-room dynamic state (grows with drops/buildings in later phases). */
+/** A dropped loot bag persisted with the room (death drops survive restarts). */
+export const DropStateSchema = z.object({
+  items: z.array(ItemStackSchema),
+  gold: z.number().int(),
+  x: z.number(),
+  y: z.number(),
+  z: z.number(),
+  /** character id whose lock applies, or null for free-for-all */
+  owner: z.string().nullable(),
+  unlockAt: z.number(), // ms epoch when the owner lock lifts
+  expireAt: z.number().nullable(), // ms epoch when the bag vanishes (null = never)
+});
+export type DropState = z.infer<typeof DropStateSchema>;
+
+/** A player block edit (place or break) — the voxel persistence overlay. */
+export const BlockEditWireSchema = z.object({
+  x: z.number().int(),
+  y: z.number().int(),
+  z: z.number().int(),
+  id: z.number().int(),
+  owner: z.string().nullable(),
+});
+export type BlockEditWire = z.infer<typeof BlockEditWireSchema>;
+
+/** Persisted per-room dynamic state. */
 export const RoomStateSchema = z.object({
   timeOfDay: z.number(),
   savedAt: z.number(),
+  drops: z.array(DropStateSchema).default([]),
+  /** per-spawner pending respawn timestamps (ms epoch) */
+  spawners: z.record(z.string(), z.array(z.number())).default({}),
+  /** sparse voxel edits applied over deterministic generation */
+  blocks: z.array(BlockEditWireSchema).default([]),
 });
 export type RoomState = z.infer<typeof RoomStateSchema>;
 
@@ -84,6 +133,7 @@ export const ShardToMasterSchema = z.discriminatedUnion("t", [
     targetRoomId: z.string(),
     patch: z.object({ id: z.string() }).passthrough(), // live character state to persist first
   }),
+  z.object({ t: z.literal("globalChat"), from: z.string(), text: z.string() }),
 ]);
 export type ShardToMaster = z.infer<typeof ShardToMasterSchema>;
 
@@ -112,6 +162,9 @@ export const MasterToShardSchema = z.discriminatedUnion("t", [
     characterId: z.string(),
     reason: z.string(),
   }),
+  z.object({ t: z.literal("globalChat"), from: z.string(), text: z.string() }),
+  /** live room availability — RoomHosts surface it as portal open/sealed */
+  z.object({ t: z.literal("roomStatus"), roomId: z.string(), open: z.boolean() }),
 ]);
 export type MasterToShard = z.infer<typeof MasterToShardSchema>;
 
@@ -126,9 +179,40 @@ export const ClientToServerSchema = z.discriminatedUnion("t", [
     y: z.number(),
     z: z.number(),
     yaw: z.number(),
+    /** camera pitch — kept fresh so projectiles release where you AIM NOW,
+     *  not where you clicked (optional: bots don't send it) */
+    pitch: z.number().optional(),
     anim: z.string(),
   }),
   z.object({ t: z.literal("usePortal"), portalId: z.string() }),
+  /** Use the held item's ability, aimed by camera yaw/pitch. */
+  z.object({ t: z.literal("attack"), yaw: z.number(), pitch: z.number() }),
+  /** Select a hotbar slot (0..7) as the held item. */
+  z.object({ t: z.literal("equip"), slot: z.number().int() }),
+  z.object({ t: z.literal("invMove"), from: z.number().int(), to: z.number().int() }),
+  z.object({ t: z.literal("consume"), slot: z.number().int() }),
+  z.object({ t: z.literal("dropItem"), slot: z.number().int(), qty: z.number().int().positive() }),
+  z.object({ t: z.literal("pickup"), id: z.number().int() }), // loot entity id
+  z.object({ t: z.literal("talk"), id: z.number().int() }), // npc entity id
+  z.object({ t: z.literal("buy"), npc: z.number().int(), item: z.string(), qty: z.number().int().positive() }),
+  z.object({ t: z.literal("sell"), npc: z.number().int(), slot: z.number().int(), qty: z.number().int().positive() }),
+  z.object({ t: z.literal("chat"), text: z.string().max(300) }),
+  z.object({ t: z.literal("respawn") }),
+  /** place the held block item into a world cell (building rooms) */
+  z.object({
+    t: z.literal("blockPlace"),
+    slot: z.number().int(),
+    x: z.number().int(),
+    y: z.number().int(),
+    z: z.number().int(),
+  }),
+  /** break a block (building rooms; player blocks refund their item) */
+  z.object({
+    t: z.literal("blockBreak"),
+    x: z.number().int(),
+    y: z.number().int(),
+    z: z.number().int(),
+  }),
   z.object({ t: z.literal("ping"), n: z.number() }),
   z.object({ t: z.literal("leave") }),
 ]);
@@ -141,31 +225,39 @@ export interface PortalWire {
   x: number;
   z: number;
   r: number;
+  /** false = destination room is down (sealed dungeon portal) */
+  open: boolean;
 }
 
-export interface WallWire {
-  x0: number;
-  z0: number;
-  x1: number;
-  z1: number;
-  type: string;
-}
-
-export interface PropWire {
-  id: number;
-  type: string;
+export interface RegionWire {
   x: number;
   z: number;
   r: number;
-  s: number;
-  /** facing in degrees (0 = front faces +Z, 90 = faces +X); flat props only */
-  rot: number;
+  pvp: boolean;
+}
+
+/** Combat/progression events. Transient — clients render and forget. */
+export type CombatEvent =
+  | { kind: "dmg"; src: number; tgt: number; amount: number; crit: boolean }
+  | { kind: "heal"; tgt: number; amount: number }
+  | { kind: "death"; id: number; by: number | null }
+  | { kind: "stagger"; id: number }
+  | { kind: "xp"; amount: number } // self only
+  | { kind: "levelup"; id: number; level: number };
+
+export interface ShopWire {
+  items: Array<{ item: string; price: number }>;
+  buys: boolean;
 }
 
 export type ServerToClient =
-  | { t: "welcome"; roomId: string; selfId: number; name: string; spawn: { x: number; y: number; z: number; yaw: number }; timeOfDay: number; ents: EntityFull[] }
-  | { t: "terrain"; w: number; h: number; heightsB64: string; typesB64: string; waterLevel: number | null }
-  | { t: "props"; props: PropWire[]; walls: WallWire[] }
+  | { t: "welcome"; roomId: string; selfId: number; name: string; spawn: { x: number; y: number; z: number; yaw: number }; timeOfDay: number; ents: EntityFull[]; safeZone: boolean; regions: RegionWire[]; buildingEnabled: boolean }
+  /** voxel world header: dimensions + how many chunk payloads follow */
+  | { t: "world"; w: number; h: number; height: number; waterLevel: number | null; chunks: number }
+  /** deflated 16×16×height block chunks (base64 raw-deflate), batched */
+  | { t: "chunks"; batch: Array<{ cx: number; cz: number; data: string }> }
+  /** a single live block change (player build/break, admin clears) */
+  | { t: "blockSet"; x: number; y: number; z: number; id: number }
   | { t: "portals"; portals: PortalWire[] }
   | { t: "transferFailed"; reason: string }
   | { t: "reject"; reason: string }
@@ -173,7 +265,18 @@ export type ServerToClient =
   | { t: "correct"; seq: number; x: number; y: number; z: number }
   | { t: "pong"; n: number; timeOfDay: number }
   | { t: "transfer"; wsUrl: string; roomId: string; ticket: string }
-  | { t: "evict"; reason: string };
+  | { t: "evict"; reason: string }
+  // ---- phase 4: combat / inventory / economy / chat ----
+  | { t: "stats"; hp: number; maxHp: number; mana: number; maxMana: number; xp: number; xpNext: number; level: number; gold: number }
+  | { t: "inv"; slots: Array<ItemStack | null>; held: number }
+  | { t: "evt"; e: CombatEvent }
+  | { t: "proj"; id: number; fx: string; x: number; y: number; z: number; vx: number; vy: number; vz: number; ttlMs: number }
+  | { t: "projHit"; id: number; x: number; y: number; z: number }
+  | { t: "debuff"; id: number; slowPct: number; durMs: number }
+  | { t: "died"; x: number; y: number; z: number } // self death → death screen
+  | { t: "chat"; channel: "room" | "global" | "system"; from: string; text: string }
+  | { t: "dialog"; id: number; name: string; lines: string[]; shop: ShopWire | null }
+  | { t: "portalState"; target: string; open: boolean };
 
 // ---------- encode / decode ----------
 

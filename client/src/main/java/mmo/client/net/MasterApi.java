@@ -26,6 +26,8 @@ public class MasterApi {
         .build();
     private final Gson gson = new Gson();
     private String token;
+    /** roles from the last login (god panel gating client-side; server re-checks) */
+    public List<String> roles = new ArrayList<>();
 
     public static class ApiException extends RuntimeException {
         public ApiException(String message) { super(message); }
@@ -77,6 +79,11 @@ public class MasterApi {
         body.addProperty("password", password);
         JsonObject res = call("POST", "/api/login", body);
         token = res.get("token").getAsString();
+        roles.clear();
+        JsonObject account = res.getAsJsonObject("account");
+        if (account != null && account.has("roles")) {
+            for (var el : account.getAsJsonArray("roles")) roles.add(el.getAsString());
+        }
     }
 
     public List<Character> characters() {

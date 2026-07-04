@@ -8,7 +8,7 @@
  */
 import WebSocket from "ws";
 import { execSync } from "node:child_process";
-import { loadEnv, decodeTerrain, sleep } from "./lib.mjs";
+import { loadEnv, makeWorldTracker, sleep, goTo } from "./lib.mjs";
 
 loadEnv();
 const MASTER = `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
@@ -30,6 +30,7 @@ function enterRoom(wsUrl, ticket) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(wsUrl);
     const state = { roomId: null, x: 0, y: 0, z: 0, seq: 0, terrain: null, portals: [], transfer: null, closed: false };
+  const tracker = makeWorldTracker();
     const timer = setTimeout(() => reject(new Error("room join timeout")), 10000);
     ws.on("open", () => ws.send(JSON.stringify({ t: "hello", v: 1, ticket })));
     ws.on("error", () => {});
@@ -37,7 +38,7 @@ function enterRoom(wsUrl, ticket) {
     ws.on("message", (raw) => {
       const msg = JSON.parse(raw.toString());
       if (msg.t === "welcome") Object.assign(state, { roomId: msg.roomId, x: msg.spawn.x, y: msg.spawn.y, z: msg.spawn.z });
-      else if (msg.t === "terrain") state.terrain = decodeTerrain(msg);
+      else if (msg.t === "world" || msg.t === "chunks") { const s = tracker.handle(msg); if (s) state.terrain = s; }
       else if (msg.t === "portals") state.portals = msg.portals;
       else if (msg.t === "transfer") state.transfer = msg;
       else if (msg.t === "correct") Object.assign(state, { x: msg.x, y: msg.y, z: msg.z });
@@ -51,19 +52,6 @@ function enterRoom(wsUrl, ticket) {
   });
 }
 
-async function walkTo(ws, state, tx, tz) {
-  const HZ = 20;
-  while (Math.hypot(tx - state.x, tz - state.z) > 0.8) {
-    const dx = tx - state.x, dz = tz - state.z;
-    const dist = Math.hypot(dx, dz);
-    const step = Math.min(4.0 / HZ, dist);
-    state.x += (dx / dist) * step;
-    state.z += (dz / dist) * step;
-    state.y = state.terrain.heightAt(state.x, state.z);
-    ws.send(JSON.stringify({ t: "move", seq: ++state.seq, x: state.x, y: state.y, z: state.z, yaw: 0, anim: "move" }));
-    await sleep(1000 / HZ);
-  }
-}
 
 // ---- get into the forest ----
 await api("/api/register", { username: "traveler", password: "travel123" }).catch(() => {});
@@ -76,7 +64,7 @@ let { ws, state } = await enterRoom(grant.wsUrl, grant.ticket);
 log(`entered ${state.roomId}`);
 if (state.roomId === "hub") {
   const p = state.portals.find((p) => p.target === "forest");
-  await walkTo(ws, state, p.x, p.z);
+  await goTo(ws, state, p.x, p.z);
   ws.send(JSON.stringify({ t: "usePortal", portalId: p.id }));
   while (!state.transfer) await sleep(100);
   ws.close();

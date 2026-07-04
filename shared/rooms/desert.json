@@ -1,0 +1,148 @@
+{
+  "id": "desert",
+  "name": "Sunscour Desert",
+  "type": "wilderness",
+  "biome": "desert",
+  "persistence": "stateful",
+  "size": {
+    "w": 160,
+    "h": 160
+  },
+  "spawn": {
+    "x": 80,
+    "z": 146,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 88204,
+    "base": 13,
+    "amplitude": 6,
+    "frequency": 0.018,
+    "plateauRadius": 10,
+    "waterLevel": 10
+  },
+  "flags": {
+    "safeZone": true,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "desert-hub",
+      "label": "Hub City",
+      "target": "hub",
+      "x": 80,
+      "z": 152,
+      "r": 2.2
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "cacto-grove",
+      "region": {
+        "kind": "circle",
+        "x": 62,
+        "z": 108,
+        "r": 15
+      },
+      "mobs": [
+        {
+          "mob": "cacto",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 35
+    },
+    {
+      "id": "skeleton-ruin-w",
+      "region": {
+        "kind": "circle",
+        "x": 38,
+        "z": 62,
+        "r": 16
+      },
+      "mobs": [
+        {
+          "mob": "skeleton",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [
+        2,
+        3
+      ],
+      "respawnSec": 40
+    },
+    {
+      "id": "skeleton-ruin-e",
+      "region": {
+        "kind": "circle",
+        "x": 118,
+        "z": 70,
+        "r": 15
+      },
+      "mobs": [
+        {
+          "mob": "skeleton",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [
+        2,
+        2
+      ],
+      "respawnSec": 40
+    },
+    {
+      "id": "raptor-flats",
+      "region": {
+        "kind": "circle",
+        "x": 88,
+        "z": 34,
+        "r": 18
+      },
+      "mobs": [
+        {
+          "mob": "raptor",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [
+        2,
+        3
+      ],
+      "respawnSec": 50
+    },
+    {
+      "id": "oasis-slimes",
+      "region": {
+        "kind": "circle",
+        "x": 108,
+        "z": 118,
+        "r": 13
+      },
+      "mobs": [
+        {
+          "mob": "slime",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [
+        1,
+        2
+      ],
+      "respawnSec": 25
+    }
+  ],
+  "npcs": []
+}

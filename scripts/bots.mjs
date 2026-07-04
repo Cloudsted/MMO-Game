@@ -6,7 +6,7 @@
  *   npm run bots -- --n 5 --seconds 30
  */
 import WebSocket from "ws";
-import { loadEnv, sleep, decodeTerrain } from "./lib.mjs";
+import { loadEnv, sleep, makeWorldTracker } from "./lib.mjs";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,6 +23,26 @@ const flag = (name, dflt) => {
 const N = Number(flag("n", 3));
 const SECONDS = Number(flag("seconds", 30));
 const MASTER = flag("master", `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`);
+// --room <id>: pre-stage the bots' character rows in Mongo so /api/enter
+// drops them straight into that room (multi-room load tests). Bot accounts
+// are namespaced per room so concurrent batches don't collide.
+const ROOM = flag("room", null);
+const PREFIX = ROOM ? `${ROOM}bot` : "bot";
+
+let stageInRoom = null;
+if (ROOM) {
+  const { MongoClient } = await import("mongodb");
+  const mongo = new MongoClient(process.env.MONGO_URL ?? "mongodb://127.0.0.1:27017/fantasy-mmo");
+  await mongo.connect();
+  const characters = mongo.db().collection("characters");
+  const { ObjectId } = await import("mongodb");
+  stageInRoom = async (characterId) => {
+    await characters.updateOne(
+      { _id: new ObjectId(characterId) },
+      { $set: { roomId: ROOM, x: null, y: null, z: null } }
+    );
+  };
+}
 
 let constantsText = readFileSync(resolve(ROOT, "shared/constants.json"), "utf8");
 if (constantsText.charCodeAt(0) === 0xfeff) constantsText = constantsText.slice(1);
@@ -43,7 +63,7 @@ async function api(path, body, token) {
 }
 
 async function runBot(i) {
-  const name = `bot_${i}`;
+  const name = `${PREFIX}_${i}`;
   const password = "botpass1";
   const log = (...a) => console.log(`[${name}]`, ...a);
 
@@ -53,14 +73,17 @@ async function runBot(i) {
   const { token } = await api("/api/login", { username: name, password });
   let { characters } = await api("/api/characters", null, token);
   if (characters.length === 0) {
-    const created = await api("/api/characters", { name: `Bot${i}` }, token);
+    const charName = ROOM ? `${ROOM[0].toUpperCase()}${ROOM.slice(1)}Bot${i}` : `Bot${i}`;
+    const created = await api("/api/characters", { name: charName }, token);
     characters = [created.character];
   }
+  if (stageInRoom) await stageInRoom(characters[0].id);
   const grant = await api("/api/enter", { characterId: characters[0].id }, token);
   log(`ticket for ${grant.roomId} at ${grant.wsUrl}`);
 
   const ws = new WebSocket(grant.wsUrl);
   const state = { x: 0, y: 0, z: 0, yaw: 0, seq: 0, others: new Map(), corrections: 0, snaps: 0, terrain: null };
+  const tracker = makeWorldTracker();
 
   await new Promise((res, rej) => {
     ws.on("open", () => {
@@ -83,8 +106,9 @@ async function runBot(i) {
           const e = state.others.get(d.id);
           if (e) Object.assign(e, d);
         }
-      } else if (msg.t === "terrain") {
-        state.terrain = decodeTerrain(msg);
+      } else if (msg.t === "world" || msg.t === "chunks" || msg.t === "blockSet") {
+        const s = tracker.handle(msg);
+        if (s) state.terrain = s;
       } else if (msg.t === "correct") {
         state.corrections++;
         state.x = msg.x;
@@ -113,8 +137,10 @@ async function runBot(i) {
     }
     if (Math.random() < 0.05) heading += (Math.random() - 0.5) * 2;
     const dt = 1 / hz;
-    state.x = Math.min(120, Math.max(8, state.x + Math.sin(heading) * speed * dt));
-    state.z = Math.min(120, Math.max(8, state.z + Math.cos(heading) * speed * dt));
+    const maxX = state.terrain ? state.terrain.w - 8 : 120;
+    const maxZ = state.terrain ? state.terrain.h - 8 : 120;
+    state.x = Math.min(maxX, Math.max(8, state.x + Math.sin(heading) * speed * dt));
+    state.z = Math.min(maxZ, Math.max(8, state.z + Math.cos(heading) * speed * dt));
     if (state.terrain) state.y = state.terrain.heightAt(state.x, state.z);
     state.yaw = heading;
     state.seq++;
@@ -139,5 +165,5 @@ for (const r of results) {
     console.error("[bots] FAILED:", r.reason?.message ?? r.reason);
   }
 }
-console.log(`[bots] ${N - failed}/${N} bots completed`);
+console.log(`[bots] ${N - failed}/${N} bots completed${ROOM ? ` in ${ROOM}` : ""}`);
 process.exit(failed ? 1 : 0);

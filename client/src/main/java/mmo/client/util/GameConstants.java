@@ -19,6 +19,11 @@ public final class GameConstants {
     public final int clientInputHz;
     public final float interestRadius;
 
+    public final float pickupRange;
+    public final float talkRange;
+
+    public final float bPlaceRange;
+
     private GameConstants(JsonObject root) {
         JsonObject m = root.getAsJsonObject("movement");
         walkSpeed = m.get("walkSpeed").getAsFloat();
@@ -32,6 +37,13 @@ public final class GameConstants {
         protocolVersion = n.get("protocolVersion").getAsInt();
         clientInputHz = n.get("clientInputHz").getAsInt();
         interestRadius = n.get("interestRadius").getAsFloat();
+
+        JsonObject c = root.getAsJsonObject("combat");
+        pickupRange = c.get("pickupRange").getAsFloat();
+        talkRange = c.get("talkRange").getAsFloat();
+
+        JsonObject b = root.getAsJsonObject("building");
+        bPlaceRange = b.get("placeRangeM").getAsFloat();
     }
 
     public static GameConstants load() {

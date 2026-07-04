@@ -37,6 +37,8 @@ export class ShardManager {
   private roomDefs = loadRoomDefs();
   /** roomId → shardId for rooms that are open or opening */
   private roomAssignment = new Map<string, { shardId: string; status: "opening" | "open" }>();
+  /** expired ephemeral rooms sit out their downtime before reopening fresh */
+  private reopenNotBefore = new Map<string, number>();
 
   constructor(
     private cols: Collections,
@@ -95,6 +97,10 @@ export class ShardManager {
     this.shards.set(shardId, shard);
     this.send(shard, { t: "registered", ok: true });
     log.info(`shard ${shardId} registered (host ${gameHost}, capacity ${capacity})`);
+    // give the newcomer the current availability picture
+    for (const def of this.roomDefs.values()) {
+      this.send(shard, { t: "roomStatus", roomId: def.id, open: this.roomAssignment.get(def.id)?.status === "open" });
+    }
     this.ensureRooms();
     return shard;
   }
@@ -115,6 +121,7 @@ export class ShardManager {
           { upsert: true }
         );
         log.info(`room ${msg.roomId} open on ${shard.shardId} port ${msg.port}`);
+        this.broadcastRoomStatus(msg.roomId, true);
         break;
       }
       case "roomClosed": {
@@ -125,12 +132,22 @@ export class ShardManager {
           { $set: { shardId: null, status: "down", gameHost: null, port: null, updatedAt: new Date() } }
         );
         log.warn(`room ${msg.roomId} closed on ${shard.shardId}: ${msg.reason}`);
+        this.broadcastRoomStatus(msg.roomId, false);
+        // lifecycle expiry: sit out the downtime, then reopen fresh
+        const def = this.roomDefs.get(msg.roomId);
+        if (msg.reason === "expired" && def?.lifecycle) {
+          const overrideSec = Number(process.env.MMO_DOWNTIME_OVERRIDE_SEC ?? 0);
+          const downtimeSec = overrideSec > 0 ? overrideSec : def.lifecycle.downtimeSec;
+          this.reopenNotBefore.set(msg.roomId, Date.now() + downtimeSec * 1000);
+          log.info(`room ${msg.roomId} enters downtime for ${downtimeSec}s`);
+        }
         this.ensureRooms();
         break;
       }
       case "report":
         await this.applyReport(msg.roomId, msg.characters);
-        if (msg.roomState) {
+        // ephemeral rooms restart fresh: never persist their state
+        if (msg.roomState && this.roomDefs.get(msg.roomId)?.persistence !== "ephemeral") {
           await this.cols.roomStates.updateOne(
             { roomId: msg.roomId },
             { $set: { state: msg.roomState, updatedAt: new Date() } },
@@ -140,6 +157,12 @@ export class ShardManager {
         break;
       case "requestTransfer":
         await this.handleTransferRequest(shard, msg.roomId, msg.characterId, msg.targetRoomId, msg.patch);
+        break;
+      case "globalChat":
+        // relay to every shard (including the sender — single delivery path)
+        for (const s of this.shards.values()) {
+          this.send(s, { t: "globalChat", from: msg.from, text: msg.text });
+        }
         break;
     }
   }
@@ -162,6 +185,11 @@ export class ShardManager {
     };
     if (!this.roomDefs.has(targetRoomId)) return deny("unknown destination");
     if (!ObjectId.isValid(characterId)) return deny("bad character id");
+    // check availability BEFORE persisting the patch — a denied transfer must
+    // leave the character exactly where they stand (hub is always fallback)
+    if (targetRoomId !== "hub" && this.roomAssignment.get(targetRoomId)?.status !== "open") {
+      return deny("that place is sealed right now");
+    }
 
     // persist live stats, but the position belongs to the target room now
     const { id, roomId: _r, x: _x, y: _y, z: _z, ...stats } = patch;
@@ -205,10 +233,17 @@ export class ShardManager {
     if (characters.length > 0) log.info(`applied report for ${roomId}: ${characters.length} character(s)`);
   }
 
-  /** Ensure every defined room has exactly one live/opening instance. */
+  /** Ensure every defined room has exactly one live/opening instance
+   *  (ephemeral rooms sit out their post-expiry downtime first). */
   private ensureRooms(): void {
+    const now = Date.now();
     for (const def of this.roomDefs.values()) {
       if (this.roomAssignment.has(def.id)) continue;
+      const notBefore = this.reopenNotBefore.get(def.id);
+      if (notBefore !== undefined) {
+        if (now < notBefore) continue;
+        this.reopenNotBefore.delete(def.id);
+      }
       const shard = this.pickShard();
       if (!shard) {
         log.warn(`no shard available to open room ${def.id}`);
@@ -219,17 +254,27 @@ export class ShardManager {
     }
   }
 
-  /** Open a room on a shard, passing its last persisted snapshot (if any). */
+  /** Open a room on a shard, passing its last persisted snapshot (if any).
+   *  Ephemeral rooms always start fresh. */
   private async openRoomOn(shard: ShardConn, roomId: string): Promise<void> {
     let snapshot = null;
-    try {
-      const doc = await this.cols.roomStates.findOne({ roomId });
-      if (doc) snapshot = doc.state;
-    } catch (e) {
-      log.error(`loading snapshot for ${roomId}`, e);
+    if (this.roomDefs.get(roomId)?.persistence !== "ephemeral") {
+      try {
+        const doc = await this.cols.roomStates.findOne({ roomId });
+        if (doc) snapshot = doc.state;
+      } catch (e) {
+        log.error(`loading snapshot for ${roomId}`, e);
+      }
     }
     this.send(shard, { t: "openRoom", roomId, snapshot });
     log.info(`opening room ${roomId} on shard ${shard.shardId}${snapshot ? " (from snapshot)" : ""}`);
+  }
+
+  /** Tell every shard (→ every RoomHost) a destination went up or down. */
+  private broadcastRoomStatus(roomId: string, open: boolean): void {
+    for (const s of this.shards.values()) {
+      this.send(s, { t: "roomStatus", roomId, open });
+    }
   }
 
   private pickShard(): ShardConn | null {
@@ -269,6 +314,8 @@ export class ShardManager {
         this.dropShard(shard.shardId);
       }
     }
+    // reopen ephemeral rooms whose downtime has passed
+    if (this.reopenNotBefore.size > 0) this.ensureRooms();
   }
 
   private send(shard: ShardConn, msg: MasterToShard): void {
@@ -319,6 +366,18 @@ export class ShardManager {
     const expiresAt = Date.now() + gameConstants().net.ticketTtlMs;
     this.send(shard, { t: "ticket", roomId, ticket, expiresAt, character: snapshot });
     return { wsUrl: `ws://${shard.gameHost}:${room.port}`, roomId, ticket };
+  }
+
+  /** Admin: close (→ auto-reopen = restart) a room. Stateful rooms resume
+   *  from their last snapshot; ephemeral rooms come back fresh. */
+  closeRoomAdmin(roomId: string): boolean {
+    const assignment = this.roomAssignment.get(roomId);
+    if (!assignment) return false;
+    const shard = this.shards.get(assignment.shardId);
+    if (!shard) return false;
+    this.send(shard, { t: "closeRoom", roomId, reason: "admin restart" });
+    log.info(`admin requested restart of ${roomId}`);
+    return true;
   }
 
   /** Live status for the admin/status endpoint. */

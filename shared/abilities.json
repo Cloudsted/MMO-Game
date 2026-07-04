@@ -1,0 +1,80 @@
+{
+  "punch": {
+    "kind": "melee", "windupMs": 200, "activeMs": 120, "recoverMs": 280,
+    "range": 1.6, "arcDeg": 75, "damage": 2,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 0, "manaCost": 0,
+    "fx": "hit"
+  },
+  "swing": {
+    "kind": "melee", "windupMs": 260, "activeMs": 140, "recoverMs": 320,
+    "range": 2.3, "arcDeg": 95,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 0, "manaCost": 0,
+    "fx": "slash"
+  },
+  "bow_shot": {
+    "kind": "projectile", "windupMs": 480, "activeMs": 80, "recoverMs": 260,
+    "projSpeed": 30, "maxRange": 45,
+    "canMoveWhile": false, "interruptible": true, "cooldownMs": 0, "manaCost": 0,
+    "fx": "arrow"
+  },
+  "firebolt": {
+    "kind": "projectile", "castTimeMs": 850, "recoverMs": 220,
+    "projSpeed": 20, "maxRange": 38,
+    "canMoveWhile": false, "interruptible": true, "cooldownMs": 1500, "manaCost": 12,
+    "fx": "firebolt"
+  },
+  "frost": {
+    "kind": "projectile", "castTimeMs": 600, "recoverMs": 220,
+    "projSpeed": 17, "maxRange": 32,
+    "canMoveWhile": false, "interruptible": true, "cooldownMs": 2500, "manaCost": 10,
+    "debuff": { "slowPct": 0.5, "durMs": 3000 },
+    "fx": "frost"
+  },
+  "heal": {
+    "kind": "self", "castTimeMs": 1200, "recoverMs": 200, "heal": 32,
+    "canMoveWhile": false, "interruptible": true, "cooldownMs": 4000, "manaCost": 20,
+    "fx": "heal"
+  },
+  "slime_bounce": {
+    "kind": "melee", "windupMs": 450, "activeMs": 150, "recoverMs": 600,
+    "range": 1.7, "arcDeg": 120,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 400, "manaCost": 0,
+    "fx": "hit"
+  },
+  "wolf_bite": {
+    "kind": "melee", "windupMs": 320, "activeMs": 140, "recoverMs": 450,
+    "range": 1.9, "arcDeg": 90,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 300, "manaCost": 0,
+    "fx": "hit"
+  },
+  "bandit_slash": {
+    "kind": "melee", "windupMs": 380, "activeMs": 150, "recoverMs": 480,
+    "range": 2.3, "arcDeg": 95,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 300, "manaCost": 0,
+    "fx": "slash"
+  },
+  "skeleton_slash": {
+    "kind": "melee", "windupMs": 420, "activeMs": 150, "recoverMs": 520,
+    "range": 2.2, "arcDeg": 90,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 300, "manaCost": 0,
+    "fx": "slash"
+  },
+  "cacto_spike": {
+    "kind": "melee", "windupMs": 550, "activeMs": 160, "recoverMs": 750,
+    "range": 1.9, "arcDeg": 130,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 500, "manaCost": 0,
+    "fx": "hit"
+  },
+  "raptor_bite": {
+    "kind": "melee", "windupMs": 250, "activeMs": 120, "recoverMs": 360,
+    "range": 1.8, "arcDeg": 80,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 250, "manaCost": 0,
+    "fx": "hit"
+  },
+  "boss_slam": {
+    "kind": "melee", "windupMs": 1300, "activeMs": 220, "recoverMs": 900,
+    "range": 3.3, "arcDeg": 150,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 1500, "manaCost": 0,
+    "fx": "hit"
+  }
+}

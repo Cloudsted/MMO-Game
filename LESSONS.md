@@ -83,6 +83,21 @@ instead of the game. **Rule:** capture the specific window by handle
 (`tools/capture-window.ps1`, PrintWindow + PW_RENDERFULLCONTENT) — better
 signal, no privacy leak, no focus fight.
 
+### PrintWindow can silently return pure white while the game renders fine
+During phase-4 verification every PrintWindow capture came back 100% white.
+The instinct was "the client is broken" — but a thread dump showed the render
+loop alive and burning CPU, and the server log showed the character entering
+the world (and getting killed by slimes while we debugged). When the
+interactive session is idle/locked or DWM stops composing an occluded GL
+swapchain, PrintWindow hands back an empty buffer. **Rules:** a white capture
+means the *capture path* is broken, not the game — check server logs and a
+thread dump before touching client code. And the durable fix is the same
+lesson as input injection: build the hook *into* the app — `MMO_SHOT` now
+writes glReadPixels screenshots from inside the render loop, immune to
+window/session state. Corollary: a pixel histogram of the "blank" capture
+(finding 58 sky-blue pixels at the margins) is what proved the frame wasn't
+really empty — cheap forensics beat re-launching five times.
+
 ## libGDX / rendering
 
 - `TextureRegionDrawable.tint()` returns a **SpriteDrawable** — assigning it
@@ -91,6 +106,34 @@ signal, no privacy leak, no focus fight.
   unless `ShaderProgram.pedantic = false` (bit us when a debug shader's early
   return eliminated `u_lightMul`).
 - `PerspectiveCamera.fieldOfView` is the **vertical** FOV.
+- **A CPU mirror of a shader curve must evaluate the same formula, not
+  approximate it.** entityLight guessed a fixed mid-diffuse (0.75) while the
+  terrain shader used the true normal-vs-light angle — at low sun/moon
+  elevations (dusk, dawn, most of the night) the floor crushed toward black
+  while props stayed bright. Owner spotted it immediately. Fix: ambient-wrap
+  the terrain diffuse AND compute entityLight with the actual flat-ground
+  angle, so a prop matches the ground it stands on at every hour. When two
+  render paths share "the same" lighting, diff their formulas term by term.
+- **Billboard height is judged against the first-person eye, and raw sheet
+  cells lie about height.** Humanoids at 1.55 m (= the camera's eye height)
+  put their head tops exactly at your eye line — everyone reads as a child.
+  Worse, the untrimmed player cell was 36 px with only 29 px of character,
+  so "1.55 m" players rendered ~1.25 m. Rules: trim every sheet so billboard
+  height means visible-character height, and size humanoids ~0.2 m above eye
+  height so you look slightly up at faces (now 1.75 m vs 1.55 m eyes).
+- **2D HUD invisibility that hugs a panel's exact outline is the depth
+  buffer, not the draw code.** After the voxel pivot, the minimap texture,
+  its dots, and the self-arrow all vanished while the panel behind them and
+  every OTHER HUD element drew fine. Hours of theories (draw overloads, two
+  UI instances, texture upload) died to one bisect: drawing the same texture
+  at 6 screen positions — visible everywhere EXCEPT inside the panel rect.
+  Mechanism: the 3D passes leave `GL_DEPTH_TEST` enabled; `ShapeRenderer`
+  writes depth at z=0, so everything drawn later inside that rect loses a
+  LESS test against it. (The old pipeline was accidentally safe — the deleted
+  WaterRenderer happened to disable depth before the HUD.) Fixes + rules:
+  `glDisable(GL_DEPTH_TEST)` at the top of the HUD pass, always; when a
+  subset of draws is invisible, bisect by POSITION before bisecting by API;
+  and when deleting a renderer, grep for the GL state it used to restore.
 - **Mouse-look must accumulate cursor events, not poll per-frame deltas.**
   The LWJGL3 backend *overwrites* deltaX/deltaY on every queued cursor event;
   `Gdx.input.getDeltaX()` read once per frame keeps only the last sub-frame
@@ -121,6 +164,34 @@ signal, no privacy leak, no focus fight.
   scaled preview images for coordinates produced wrong windows repeatedly;
   scripted probes were right every time.
 
+### Join-message ordering breaks late-arriving dependencies
+The built hut rendered as nothing: the `buildings` list arrives BEFORE
+`terrain` on join, and the renderer silently skipped mesh building when
+terrain was null — then never retried. **Rule:** any handler that depends on
+another message's data must re-run when that data lands (rebuild on
+setTerrain), or the join sequence must be ordered by dependency. When a
+replicated thing "isn't there", check WHEN its message arrived relative to
+what it needs, before checking WHAT it contains.
+
+### Straight-line bots grind on convex geometry — and stay stuck
+lifecycle-bot walked point-to-point at the dungeon portal and hit the city
+wall (the new portals sit outside the wall, unlike the forest one). Worse:
+its stuck position persisted on disconnect, so the NEXT run started wedged
+against the wall band and failed differently. **Rule:** waypoint bots through
+known gaps (gate: 64,93 → 64,100), and when a bot fails "impossibly", check
+where its character row says it's standing — the previous failure may be the
+cause.
+
+### Agent-cataloged file paths need existence checks, not trust
+The sound-library sweep (a subagent) returned near-perfect source paths —
+except five: the elemental magic pack pads FOUR spaces before its bracket
+ids (`...Whoosh - 01    [002562].wav`), which the report normalized to one.
+The pipeline was built to WARN-and-continue on missing sources instead of
+failing, so the gap surfaced as a clean list to fix rather than a crash.
+**Rules:** validate any externally-reported path with `existsSync` before
+wiring it in, and make batch pipelines report missing inputs and keep going
+— a partial build plus a precise MISSING list beats an abort.
+
 ## Multiplayer / state
 
 - **Connected clients overwrite manual DB edits.** Character rows are
@@ -142,6 +213,26 @@ signal, no privacy leak, no focus fight.
   editing `hash2`/`valueNoise`/`fbm` (or their call parameters) after rooms
   ship regenerates *different worlds* under everyone's feet.
 
+- **Block worlds broke every greedy bot walker — give bots real pathfinding.**
+  Post-pivot, straight-line walkers with "y = ground height" stalled forever:
+  forests are mazes of 1×1 trunk columns, hills have 2-block cliff steps, and
+  probe-and-deflect steering just jiggles in concave pockets. Bots hold the
+  ENTIRE world grid, so the honest fix was 30 lines of BFS (`findPath` +
+  `goTo` in scripts/lib.mjs) — instant, robust, done. Second trap inside the
+  fix: a bot must raise its feet to the tallest column its AABB overlaps
+  *mid-crossing* (footprint-max, not center height), or the server rejects
+  the move exactly at each 1-block step — a real client jumps; a bot
+  pre-rises.
+- **A killed Gradle wrapper does not kill the game JVM** (Windows). "Stopping"
+  a `gradlew run` task leaves the actual game running; launching another
+  client then starts a duplicate-login WAR — the two clients evict each other
+  through the master at ~25 joins/sec (server log: an unbroken
+  enter/evict/enter chant), and every screenshot catches a freshly-reset
+  screen. Kill the game by process identity (`java.exe` on the adoptium-21
+  toolchain), then verify count 0 before relaunching. A supervisor that
+  RESPAWNS its children (shard host → RoomHosts) has the same shape: kill the
+  parent, or the corpses reanimate.
+
 ## Reading test output
 
 - Killed background clients report "failed, exit code 1" — that's the kill,
@@ -153,3 +244,9 @@ signal, no privacy leak, no focus fight.
 - If the client HUD position moves during an unattended test, the user
   grabbed the keyboard (they do). Re-check assumptions before interpreting
   that capture — one "mystery teleport" was just the owner playing.
+- **The world now fights back during staging.** A character parked near a
+  spawn table for a screenshot got aggroed and killed in 30 s ("Claude_test
+  died (dropped 7 stacks)") — which first read as a bug and was actually
+  every combat system working at once. When a staged scene changes state by
+  itself, list what SHOULD act on it (mob aggro, loot expiry, respawns)
+  before suspecting the code.

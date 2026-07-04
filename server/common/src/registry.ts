@@ -1,0 +1,179 @@
+/**
+ * RegistryService: all game data (items, abilities, mobs, loot tables) loads
+ * through here — never imported as module constants — so `/reload registries`
+ * can hot-reload tuning into live RoomHosts. Zod-validated on load; fails
+ * fast on dangling id references.
+ */
+import { z } from "zod";
+import { resolve } from "node:path";
+import { readJsonFile } from "./json.js";
+import { SHARED_DIR } from "./paths.js";
+import { BLOCK } from "./blocks.js";
+
+// ---------- schemas ----------
+
+export const RaritySchema = z.object({
+  mult: z.number(),
+  color: z.string(),
+  weight: z.number(),
+});
+export type RarityDef = z.infer<typeof RaritySchema>;
+
+export const ItemDefSchema = z.object({
+  name: z.string(),
+  kind: z.enum(["weapon", "consumable", "building", "misc"]),
+  ability: z.string().optional(), // weapons: the ability this item grants
+  damage: z.number().optional(), // weapons: base damage before rarity/level
+  /** building items: block name (shared/blocks.json) this item places */
+  block: z.string().optional(),
+  value: z.number().int(), // shop base price (gold); shops buy at a fraction
+  stack: z.number().int().positive(),
+  icon: z.tuple([z.number().int(), z.number().int()]), // (col,row) in tf_icon_16
+  viewmodel: z.string().optional(), // first-person held sprite key
+  effect: z
+    .object({
+      heal: z.number().optional(),
+      mana: z.number().optional(),
+      hotTotal: z.number().optional(),
+      hotDurMs: z.number().optional(),
+    })
+    .optional(),
+});
+export type ItemDef = z.infer<typeof ItemDefSchema>;
+
+export const AbilityDefSchema = z.object({
+  kind: z.enum(["melee", "projectile", "self"]),
+  // melee/bow path: windup -> active -> recover. spell path: cast -> recover.
+  windupMs: z.number().int().optional(),
+  activeMs: z.number().int().optional(),
+  castTimeMs: z.number().int().optional(),
+  recoverMs: z.number().int(),
+  range: z.number().optional(), // melee reach (m)
+  arcDeg: z.number().optional(), // melee cone width
+  projSpeed: z.number().optional(),
+  maxRange: z.number().optional(), // projectile lifetime range
+  damage: z.number().optional(), // fallback when no item/mob damage applies
+  heal: z.number().optional(),
+  debuff: z.object({ slowPct: z.number(), durMs: z.number().int() }).optional(),
+  canMoveWhile: z.boolean(),
+  interruptible: z.boolean(),
+  cooldownMs: z.number().int(),
+  manaCost: z.number(),
+  fx: z.string(),
+});
+export type AbilityDef = z.infer<typeof AbilityDefSchema>;
+
+export const MobDefSchema = z.object({
+  name: z.string(),
+  sprite: z.string(),
+  level: z.number().int(),
+  hp: z.number(),
+  damage: z.number(),
+  moveSpeed: z.number(),
+  ability: z.string(),
+  aggroRadius: z.number(),
+  attackRange: z.number(),
+  leashRadius: z.number(),
+  fleeAtHpPct: z.number(),
+  xp: z.number(),
+  loot: z.string(),
+});
+export type MobDef = z.infer<typeof MobDefSchema>;
+
+/** Weighted entry: exactly one of item / table / nothing (weight only). */
+export const LootEntrySchema = z.object({
+  weight: z.number().positive(),
+  item: z.string().optional(),
+  table: z.string().optional(),
+  qty: z.tuple([z.number().int(), z.number().int()]).optional(),
+  minRarity: z.string().optional(),
+});
+
+export const LootTableSchema = z.object({
+  gold: z.tuple([z.number().int(), z.number().int()]),
+  rolls: z.tuple([z.number().int(), z.number().int()]),
+  entries: z.array(LootEntrySchema).min(1),
+  /** boss-style guaranteed-drop slots: every entry always rolls once */
+  guaranteed: z.array(LootEntrySchema).default([]),
+});
+export type LootTable = z.infer<typeof LootTableSchema>;
+
+const ItemsFileSchema = z.object({
+  rarities: z.record(z.string(), RaritySchema),
+  items: z.record(z.string(), ItemDefSchema),
+});
+
+// ---------- service ----------
+
+export class RegistryService {
+  rarities!: Record<string, RarityDef>;
+  items!: Record<string, ItemDef>;
+  abilities!: Record<string, AbilityDef>;
+  mobs!: Record<string, MobDef>;
+  loot!: Record<string, LootTable>;
+
+  constructor() {
+    this.reload();
+  }
+
+  /** (Re)load everything from shared/. Throws (leaving old data intact-ish)
+   *  on schema or cross-reference errors — callers catch and report. */
+  reload(): void {
+    const itemsFile = ItemsFileSchema.parse(readJsonFile(resolve(SHARED_DIR, "items.json")));
+    const abilities = z.record(z.string(), AbilityDefSchema).parse(readJsonFile(resolve(SHARED_DIR, "abilities.json")));
+    const mobs = z.record(z.string(), MobDefSchema).parse(readJsonFile(resolve(SHARED_DIR, "mobs.json")));
+    const loot = z.record(z.string(), LootTableSchema).parse(readJsonFile(resolve(SHARED_DIR, "loot.json")));
+
+    // cross-reference validation: fail fast on dangling ids
+    for (const [id, item] of Object.entries(itemsFile.items)) {
+      if (item.ability && !abilities[item.ability]) throw new Error(`item ${id}: unknown ability ${item.ability}`);
+      if (item.block && !BLOCK[item.block]) throw new Error(`item ${id}: unknown block ${item.block}`);
+    }
+    for (const [id, mob] of Object.entries(mobs)) {
+      if (!abilities[mob.ability]) throw new Error(`mob ${id}: unknown ability ${mob.ability}`);
+      if (!loot[mob.loot]) throw new Error(`mob ${id}: unknown loot table ${mob.loot}`);
+    }
+    for (const [id, table] of Object.entries(loot)) {
+      for (const e of [...table.entries, ...table.guaranteed]) {
+        if (e.item && e.table) throw new Error(`loot ${id}: entry has both item and table`);
+        if (e.item && !itemsFile.items[e.item]) throw new Error(`loot ${id}: unknown item ${e.item}`);
+        if (e.table && !loot[e.table]) throw new Error(`loot ${id}: unknown table ${e.table}`);
+        if (e.minRarity && !itemsFile.rarities[e.minRarity]) throw new Error(`loot ${id}: unknown rarity ${e.minRarity}`);
+      }
+    }
+
+    this.rarities = itemsFile.rarities;
+    this.items = itemsFile.items;
+    this.abilities = abilities;
+    this.mobs = mobs;
+    this.loot = loot;
+  }
+
+  item(id: string): ItemDef {
+    const d = this.items[id];
+    if (!d) throw new Error(`unknown item ${id}`);
+    return d;
+  }
+  ability(id: string): AbilityDef {
+    const d = this.abilities[id];
+    if (!d) throw new Error(`unknown ability ${id}`);
+    return d;
+  }
+  mob(id: string): MobDef {
+    const d = this.mobs[id];
+    if (!d) throw new Error(`unknown mob ${id}`);
+    return d;
+  }
+  lootTable(id: string): LootTable {
+    const d = this.loot[id];
+    if (!d) throw new Error(`unknown loot table ${id}`);
+    return d;
+  }
+
+  /** Rarity tiers ordered ascending by power (mult). */
+  rarityOrder(): string[] {
+    return Object.entries(this.rarities)
+      .sort((a, b) => a[1].mult - b[1].mult)
+      .map(([k]) => k);
+  }
+}

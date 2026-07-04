@@ -6,7 +6,7 @@
  *   node scripts/travel-bot.mjs
  */
 import WebSocket from "ws";
-import { loadEnv, decodeTerrain } from "./lib.mjs";
+import { loadEnv, makeWorldTracker, goTo } from "./lib.mjs";
 
 loadEnv();
 const MASTER = `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
@@ -31,6 +31,7 @@ function enterRoom(wsUrl, ticket) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(wsUrl);
     const state = { roomId: null, x: 0, y: 0, z: 0, seq: 0, terrain: null, portals: [], transfer: null };
+  const tracker = makeWorldTracker();
     const timer = setTimeout(() => reject(new Error("room join timeout")), 10000);
     ws.on("open", () => ws.send(JSON.stringify({ t: "hello", v: 1, ticket })));
     ws.on("error", (e) => reject(e));
@@ -43,9 +44,13 @@ function enterRoom(wsUrl, ticket) {
           state.y = msg.spawn.y;
           state.z = msg.spawn.z;
           break;
-        case "terrain":
-          state.terrain = decodeTerrain(msg);
+        case "world":
+        case "chunks":
+        case "blockSet": {
+          const s = tracker.handle(msg);
+          if (s) state.terrain = s;
           break;
+        }
         case "portals":
           state.portals = msg.portals;
           break;
@@ -75,25 +80,6 @@ function enterRoom(wsUrl, ticket) {
 }
 
 /** Walk in legal steps toward (tx,tz), then wait a beat. */
-async function walkTo(ws, state, tx, tz) {
-  const HZ = 20;
-  const SPEED = 4.0;
-  while (Math.hypot(tx - state.x, tz - state.z) > 0.8) {
-    const dx = tx - state.x;
-    const dz = tz - state.z;
-    const dist = Math.hypot(dx, dz);
-    const step = Math.min(SPEED / HZ, dist);
-    state.x += (dx / dist) * step;
-    state.z += (dz / dist) * step;
-    state.y = state.terrain.heightAt(state.x, state.z);
-    state.seq++;
-    ws.send(JSON.stringify({
-      t: "move", seq: state.seq, x: state.x, y: state.y, z: state.z,
-      yaw: Math.atan2(dx, dz), anim: "move",
-    }));
-    await new Promise((r) => setTimeout(r, 1000 / HZ));
-  }
-}
 
 /** Use a portal and wait for the transfer grant. */
 async function usePortal(ws, state, portalId) {
@@ -120,7 +106,7 @@ log(`entered ${state.roomId} at ${state.x.toFixed(1)},${state.z.toFixed(1)}`);
 if (state.roomId !== "hub") {
   // character may have been left in the forest by a previous run — go home first
   const back = state.portals.find((p) => p.target === "hub");
-  await walkTo(ws, state, back.x, back.z);
+  await goTo(ws, state, back.x, back.z);
   const t0 = await usePortal(ws, state, back.id);
   ws.close();
   ({ ws, state } = await enterRoom(t0.wsUrl, t0.ticket));
@@ -131,7 +117,7 @@ if (state.roomId !== "hub") {
 const toForest = state.portals.find((p) => p.target === "forest");
 if (!toForest) throw new Error("no forest portal in hub");
 log(`walking to portal '${toForest.label}' at ${toForest.x},${toForest.z}`);
-await walkTo(ws, state, toForest.x, toForest.z);
+await goTo(ws, state, toForest.x, toForest.z);
 const t1 = await usePortal(ws, state, toForest.id);
 log(`transfer granted -> ${t1.roomId} at ${t1.wsUrl}`);
 ws.close();
@@ -142,7 +128,7 @@ log(`entered ${state.roomId} at ${state.x.toFixed(1)},${state.z.toFixed(1)} — 
 
 // forest -> hub
 const toHub = state.portals.find((p) => p.target === "hub");
-await walkTo(ws, state, toHub.x, toHub.z);
+await goTo(ws, state, toHub.x, toHub.z);
 const t2 = await usePortal(ws, state, toHub.id);
 log(`transfer granted -> ${t2.roomId}`);
 ws.close();

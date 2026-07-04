@@ -11,32 +11,43 @@ import mmo.client.net.Protocol;
 import java.util.ArrayDeque;
 
 /**
- * A remote entity rendered as a camera-facing sprite billboard with the
- * RPG-Maker 4-row directional logic (see prompt.md appendix: rel > 0 means
- * the entity faces toward screen-right and must use the right-facing row —
- * a sign error here mirrors every profile view).
+ * A remote entity (player, mob, NPC, or loot bag) rendered as a camera-facing
+ * sprite billboard with the RPG-Maker 4-row directional logic (see prompt.md
+ * appendix: rel > 0 means the entity faces toward screen-right and must use
+ * the right-facing row — a sign error here mirrors every profile view).
  *
  * Position is played back from a timestamped snapshot buffer ~120 ms behind
- * receive time, lerping between surrounding samples — smooth at 10-15 Hz
- * snapshot rates without leading the server.
+ * receive time. Action-FSM states replicate as act + remaining ms; the class
+ * runs the telegraph timer locally and tints the sprite (a mob's windup is
+ * your dodge window).
  */
 public class RemotePlayer {
-    private static final float HEIGHT = 1.55f; // world height of the sprite quad
     private static final float WALK_FPS = 6f;
     private static final long INTERP_DELAY_MS = 120;
     private static final int MAX_SAMPLES = 30;
 
     public final int id;
+    public final String kind;
+    public final String sprite;
     public String name;
     public String anim = "idle";
+    public int hp = -1, maxHp = -1;
+    public int level = 0;
     public float yaw;
     /** interpolated render position */
     public final Vector3 pos = new Vector3();
 
+    // action FSM mirror: act + local end time (server sends remaining ms)
+    public String act = "idle";
+    private long actEndsAt = 0;
+    private long actStartedAt = 0;
+
     public final Decal decal;
     public final Decal shadow;
+    public final float height;
     private final PlayerSheet sheet;
     private float animTime = 0;
+    private float bobTime = 0;
     private final Vector3 tmp = new Vector3();
 
     private static class Sample {
@@ -47,12 +58,19 @@ public class RemotePlayer {
     private final ArrayDeque<Sample> samples = new ArrayDeque<>();
     private final Sample latest = new Sample();
 
-    public RemotePlayer(Protocol.Entity e, PlayerSheet sheet, TextureRegion shadowRegion) {
+    public RemotePlayer(Protocol.Entity e, SpriteLibrary sprites, TextureRegion shadowRegion) {
         this.id = e.id;
+        this.kind = e.kind;
+        this.sprite = e.sprite;
         this.name = e.name;
-        this.sheet = sheet;
+        this.sheet = sprites.sheet(e.sprite);
+        this.height = sprites.height(e.sprite);
         this.anim = e.anim;
         this.yaw = e.yaw;
+        this.hp = e.hp;
+        this.maxHp = e.maxHp;
+        this.level = e.level;
+        setAct(e.act, e.actMs);
         latest.x = e.x;
         latest.y = e.y;
         latest.z = e.z;
@@ -60,8 +78,8 @@ public class RemotePlayer {
         pos.set(e.x, e.y, e.z);
         pushSample(e.x, e.y, e.z, e.yaw);
 
-        float width = HEIGHT * sheet.frameW / (float) sheet.frameH;
-        decal = Decal.newDecal(width, HEIGHT, sheet.frame(PlayerSheet.ROW_DOWN, 0, false), true);
+        float width = height * sheet.frameW / (float) sheet.frameH;
+        decal = Decal.newDecal(width, height, sheet.frame(PlayerSheet.ROW_DOWN, 0, false), true);
         shadow = Decal.newDecal(width * 0.8f, width * 0.5f, shadowRegion, true);
         shadow.setColor(0f, 0f, 0f, 0.35f);
         shadow.setRotationX(-90);
@@ -78,12 +96,21 @@ public class RemotePlayer {
         while (samples.size() > MAX_SAMPLES) samples.removeFirst();
     }
 
+    private void setAct(String newAct, float msLeft) {
+        if (newAct == null) return;
+        act = newAct;
+        actStartedAt = System.currentTimeMillis();
+        actEndsAt = actStartedAt + (long) msLeft;
+    }
+
     public void applyDelta(com.google.gson.JsonObject d) {
         if (d.has("x")) latest.x = d.get("x").getAsFloat();
         if (d.has("y")) latest.y = d.get("y").getAsFloat();
         if (d.has("z")) latest.z = d.get("z").getAsFloat();
         if (d.has("yaw")) latest.yaw = d.get("yaw").getAsFloat();
         if (d.has("anim")) anim = d.get("anim").getAsString();
+        if (d.has("hp")) hp = d.get("hp").getAsInt();
+        if (d.has("act")) setAct(d.get("act").getAsString(), d.has("actMs") ? d.get("actMs").getAsFloat() : 0);
         pushSample(latest.x, latest.y, latest.z, latest.yaw);
     }
 
@@ -94,7 +121,15 @@ public class RemotePlayer {
         latest.yaw = e.yaw;
         anim = e.anim;
         name = e.name;
+        hp = e.hp;
+        maxHp = e.maxHp;
+        level = e.level;
+        if (!e.act.equals(act)) setAct(e.act, e.actMs);
         pushSample(e.x, e.y, e.z, e.yaw);
+    }
+
+    public boolean isDead() {
+        return "dead".equals(act);
     }
 
     /** Sample the buffer at renderTime = now - delay, lerping neighbours. */
@@ -125,11 +160,12 @@ public class RemotePlayer {
         }
     }
 
-    public void update(float dt, Camera cam, TerrainData terrain, Color light) {
+    public void update(float dt, Camera cam, VoxelWorld world, Color light) {
         interpolate();
 
-        boolean moving = "move".equals(anim);
+        boolean moving = "move".equals(anim) && !isDead();
         if (moving) animTime += dt;
+        bobTime += dt;
 
         // row selection vs. camera angle
         float toCam = MathUtils.atan2(cam.position.x - pos.x, cam.position.z - pos.z);
@@ -142,17 +178,54 @@ public class RemotePlayer {
 
         int walkTick = (int) (animTime * WALK_FPS);
         decal.setTextureRegion(sheet.frame(row, walkTick, moving));
-        decal.setPosition(pos.x, pos.y + HEIGHT / 2f, pos.z);
-        decal.setColor(light.r, light.g, light.b, 1f);
+
+        float bob = "loot".equals(kind) ? 0.08f * MathUtils.sin(bobTime * 2.2f) + 0.08f : 0f;
+        float jitter = 0f;
+        long now = System.currentTimeMillis();
+
+        // action-state tint: the visible telegraph layer
+        float r = light.r, g = light.g, b = light.b, a = 1f;
+        switch (act) {
+            case "windup", "cast" -> {
+                // pulse toward warning color, faster as release approaches
+                float total = Math.max(1, actEndsAt - actStartedAt);
+                float progress = MathUtils.clamp((now - actStartedAt) / total, 0f, 1f);
+                float pulse = 0.5f + 0.5f * MathUtils.sin(bobTime * (8f + progress * 14f));
+                if ("cast".equals(act)) {
+                    b = Math.min(1f, b + 0.55f * pulse);
+                    g = Math.min(1f, g + 0.25f * pulse);
+                } else {
+                    r = Math.min(1f, r + 0.65f * pulse * (0.4f + 0.6f * progress));
+                }
+            }
+            case "active" -> {
+                r = Math.min(1f, r + 0.8f);
+                g = Math.min(1f, g + 0.4f);
+            }
+            case "stagger" -> {
+                r = Math.min(1f, r + 0.5f);
+                g = Math.min(1f, g + 0.5f);
+                jitter = 0.05f * MathUtils.sin(bobTime * 40f);
+            }
+            case "dead" -> {
+                r *= 0.45f;
+                g *= 0.45f;
+                b *= 0.45f;
+                a = 0.55f;
+            }
+            default -> {}
+        }
+        decal.setColor(r, g, b, a);
+        decal.setPosition(pos.x + jitter, pos.y + height / 2f + bob, pos.z);
         // cylindrical billboard: face the camera around Y only (stays upright)
-        tmp.set(cam.position.x, pos.y + HEIGHT / 2f, cam.position.z);
+        tmp.set(cam.position.x, pos.y + height / 2f + bob, cam.position.z);
         decal.lookAt(tmp, Vector3.Y);
 
-        // blob shadow hugs the terrain; fades when airborne
-        float ground = terrain != null ? terrain.heightAt(pos.x, pos.z) : pos.y;
+        // blob shadow hugs the ground; fades when airborne
+        float ground = world != null ? world.standY(pos.x, pos.z) : pos.y;
         float above = Math.max(0, pos.y - ground);
         shadow.setPosition(pos.x, ground + 0.03f, pos.z);
-        shadow.setColor(0f, 0f, 0f, Math.max(0f, 0.35f - above * 0.1f));
+        shadow.setColor(0f, 0f, 0f, Math.max(0f, (isDead() ? 0.15f : 0.35f) - above * 0.1f));
     }
 
     public static float wrapPi(float a) {

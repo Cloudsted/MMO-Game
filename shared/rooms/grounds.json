@@ -1,0 +1,42 @@
+{
+  "id": "grounds",
+  "name": "Building Grounds",
+  "type": "building",
+  "biome": "grass",
+  "persistence": "stateful",
+  "size": {
+    "w": 96,
+    "h": 96
+  },
+  "spawn": {
+    "x": 48,
+    "z": 86,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 71633,
+    "base": 12,
+    "amplitude": 1,
+    "frequency": 0.03,
+    "plateauRadius": 30,
+    "treeDensity": 0.15
+  },
+  "flags": {
+    "safeZone": true,
+    "buildingEnabled": true,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "grounds-hub",
+      "label": "Hub City",
+      "target": "hub",
+      "x": 48,
+      "z": 92,
+      "r": 2.2
+    }
+  ],
+  "spawnTables": [],
+  "npcs": []
+}

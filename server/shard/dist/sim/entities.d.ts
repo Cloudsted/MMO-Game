@@ -1,9 +1,9 @@
 /**
- * Entity model: id + component bag. Phase 1 carries only what replication
- * needs; combat/AI/inventory components arrive in later phases. Systems
- * iterate entities and read/write components — no inheritance.
+ * Entity model: id + component bag. Systems iterate entities and read/write
+ * components — no inheritance. Players, mobs, NPCs, and loot bags are all
+ * the same shape with different bags.
  */
-import type { EntityFull, EntityDelta } from "@fantasy-mmo/common";
+import type { EntityFull, EntityDelta, ItemStack } from "@fantasy-mmo/common";
 export interface Position {
     x: number;
     y: number;
@@ -15,14 +15,75 @@ export interface Renderable {
     anim: string;
     name?: string;
 }
+/** Action FSM states — the body, shared by players and mobs alike. */
+export type ActState = "idle" | "move" | "windup" | "active" | "cast" | "recover" | "stagger" | "dead";
+export interface Combat {
+    act: ActState;
+    actEndsAt: number;
+    /** ability id being executed (windup/active/cast/recover) */
+    ability: string | null;
+    /** damage the pending ability will deal (item/mob/level/rarity resolved at use time) */
+    pendingDamage: number;
+    aimYaw: number;
+    aimPitch: number;
+    cooldowns: Map<string, number>;
+    lastDamagedAt: number;
+    slowPct: number;
+    slowUntil: number;
+    /** heal-over-time from food: hpPerSec until hotUntil */
+    hotPerSec: number;
+    hotUntil: number;
+}
+export declare function freshCombat(): Combat;
+export interface Health {
+    hp: number;
+    maxHp: number;
+}
+export interface ManaPool {
+    mana: number;
+    maxMana: number;
+}
+/** Mob-only decision layer (the brain). Talks to the body via intents only. */
+export interface MobBrain {
+    mobId: string;
+    state: "patrol" | "chase" | "flee" | "return";
+    home: {
+        x: number;
+        z: number;
+    };
+    spawnerId: string;
+    targetId: number | null;
+    threat: Map<number, number>;
+    nextWanderAt: number;
+    wanderTarget: {
+        x: number;
+        z: number;
+    } | null;
+}
+/** A dropped loot bag in the world. */
+export interface LootBag {
+    items: ItemStack[];
+    gold: number;
+    owner: string | null;
+    unlockAt: number;
+    expireAt: number | null;
+}
 export interface Entity {
     id: number;
-    kind: "player";
+    kind: "player" | "mob" | "npc" | "loot";
     pos: Position;
     renderable: Renderable;
+    level?: number;
+    health?: Health;
+    mana?: ManaPool;
+    combat?: Combat;
+    brain?: MobBrain;
+    loot?: LootBag;
+    /** npc registry id (dialog/shop lookup) */
+    npcId?: string;
 }
 export declare function allocEntityId(): number;
-export declare function toFull(e: Entity): EntityFull;
+export declare function toFull(e: Entity, now: number): EntityFull;
 /** Replicated mutable fields, used for per-viewer delta computation. */
 export interface ReplicatedState {
     x: number;
@@ -30,8 +91,11 @@ export interface ReplicatedState {
     z: number;
     yaw: number;
     anim: string;
+    hp: number | undefined;
+    act: string | undefined;
 }
 export declare function replicatedState(e: Entity): ReplicatedState;
-/** Delta of changed fields vs. what a viewer last saw; null when unchanged. */
-export declare function diffState(id: number, prev: ReplicatedState, curr: ReplicatedState): EntityDelta | null;
+/** Delta of changed fields vs. what a viewer last saw; null when unchanged.
+ *  act changes carry actMs so clients can run the telegraph timer. */
+export declare function diffState(e: Entity, prev: ReplicatedState, curr: ReplicatedState, now: number): EntityDelta | null;
 //# sourceMappingURL=entities.d.ts.map

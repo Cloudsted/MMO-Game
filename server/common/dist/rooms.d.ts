@@ -22,12 +22,193 @@ export declare const PortalDefSchema: z.ZodObject<{
     r: number;
 }>;
 export type PortalDef = z.infer<typeof PortalDefSchema>;
+export declare const SpawnTableSchema: z.ZodObject<{
+    id: z.ZodString;
+    region: z.ZodObject<{
+        kind: z.ZodLiteral<"circle">;
+        x: z.ZodNumber;
+        z: z.ZodNumber;
+        r: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        kind: "circle";
+        x: number;
+        z: number;
+        r: number;
+    }, {
+        kind: "circle";
+        x: number;
+        z: number;
+        r: number;
+    }>;
+    mobs: z.ZodArray<z.ZodObject<{
+        mob: z.ZodString;
+        weight: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        weight: number;
+        mob: string;
+    }, {
+        weight: number;
+        mob: string;
+    }>, "many">;
+    maxAlive: z.ZodNumber;
+    packSize: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+    respawnSec: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    region: {
+        kind: "circle";
+        x: number;
+        z: number;
+        r: number;
+    };
+    mobs: {
+        weight: number;
+        mob: string;
+    }[];
+    maxAlive: number;
+    packSize: [number, number];
+    respawnSec: number;
+}, {
+    id: string;
+    region: {
+        kind: "circle";
+        x: number;
+        z: number;
+        r: number;
+    };
+    mobs: {
+        weight: number;
+        mob: string;
+    }[];
+    maxAlive: number;
+    packSize: [number, number];
+    respawnSec: number;
+}>;
+export type SpawnTable = z.infer<typeof SpawnTableSchema>;
+export declare const NpcDefSchema: z.ZodObject<{
+    id: z.ZodString;
+    name: z.ZodString;
+    sprite: z.ZodString;
+    x: z.ZodNumber;
+    z: z.ZodNumber;
+    yaw: z.ZodDefault<z.ZodNumber>;
+    wanderRadius: z.ZodDefault<z.ZodNumber>;
+    dialog: z.ZodArray<z.ZodString, "many">;
+    shop: z.ZodOptional<z.ZodObject<{
+        items: z.ZodArray<z.ZodString, "many">;
+        buys: z.ZodBoolean;
+    }, "strip", z.ZodTypeAny, {
+        items: string[];
+        buys: boolean;
+    }, {
+        items: string[];
+        buys: boolean;
+    }>>;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    name: string;
+    sprite: string;
+    x: number;
+    z: number;
+    yaw: number;
+    wanderRadius: number;
+    dialog: string[];
+    shop?: {
+        items: string[];
+        buys: boolean;
+    } | undefined;
+}, {
+    id: string;
+    name: string;
+    sprite: string;
+    x: number;
+    z: number;
+    dialog: string[];
+    yaw?: number | undefined;
+    wanderRadius?: number | undefined;
+    shop?: {
+        items: string[];
+        buys: boolean;
+    } | undefined;
+}>;
+export type NpcDef = z.infer<typeof NpcDefSchema>;
+/** A flagged sub-area of a room (PvP zones; more flags later). */
+export declare const RegionSchema: z.ZodObject<{
+    kind: z.ZodLiteral<"circle">;
+    x: z.ZodNumber;
+    z: z.ZodNumber;
+    r: z.ZodNumber;
+    pvp: z.ZodDefault<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    kind: "circle";
+    x: number;
+    z: number;
+    r: number;
+    pvp: boolean;
+}, {
+    kind: "circle";
+    x: number;
+    z: number;
+    r: number;
+    pvp?: boolean | undefined;
+}>;
+export type RegionDef = z.infer<typeof RegionSchema>;
+/** Ephemeral-room lifecycle: live for lifetimeSec, warn, evict, close; the
+ *  master reopens it fresh after downtimeSec. */
+export declare const LifecycleSchema: z.ZodObject<{
+    lifetimeSec: z.ZodNumber;
+    downtimeSec: z.ZodNumber;
+    warnAtSecLeft: z.ZodArray<z.ZodNumber, "many">;
+}, "strip", z.ZodTypeAny, {
+    lifetimeSec: number;
+    downtimeSec: number;
+    warnAtSecLeft: number[];
+}, {
+    lifetimeSec: number;
+    downtimeSec: number;
+    warnAtSecLeft: number[];
+}>;
+export type LifecycleDef = z.infer<typeof LifecycleSchema>;
 export declare const RoomDefSchema: z.ZodObject<{
     id: z.ZodString;
     name: z.ZodString;
     type: z.ZodEnum<["hub", "wilderness", "dungeon", "building"]>;
     biome: z.ZodString;
     persistence: z.ZodEnum<["stateful", "ephemeral"]>;
+    /** pin the visual clock (dungeon mood); omit for the live day/night cycle */
+    fixedTime: z.ZodOptional<z.ZodNumber>;
+    lifecycle: z.ZodOptional<z.ZodObject<{
+        lifetimeSec: z.ZodNumber;
+        downtimeSec: z.ZodNumber;
+        warnAtSecLeft: z.ZodArray<z.ZodNumber, "many">;
+    }, "strip", z.ZodTypeAny, {
+        lifetimeSec: number;
+        downtimeSec: number;
+        warnAtSecLeft: number[];
+    }, {
+        lifetimeSec: number;
+        downtimeSec: number;
+        warnAtSecLeft: number[];
+    }>>;
+    regions: z.ZodDefault<z.ZodArray<z.ZodObject<{
+        kind: z.ZodLiteral<"circle">;
+        x: z.ZodNumber;
+        z: z.ZodNumber;
+        r: z.ZodNumber;
+        pvp: z.ZodDefault<z.ZodBoolean>;
+    }, "strip", z.ZodTypeAny, {
+        kind: "circle";
+        x: number;
+        z: number;
+        r: number;
+        pvp: boolean;
+    }, {
+        kind: "circle";
+        x: number;
+        z: number;
+        r: number;
+        pvp?: boolean | undefined;
+    }>, "many">>;
     size: z.ZodObject<{
         w: z.ZodNumber;
         h: z.ZodNumber;
@@ -51,61 +232,51 @@ export declare const RoomDefSchema: z.ZodObject<{
         z: number;
         yaw: number;
     }>;
+    /** Voxel terrain parameters — all vertical units are BLOCK Y levels.
+     *  base = mean surface height, amplitude = noise relief in blocks,
+     *  waterLevel = water fills terrain below this level (omit for none),
+     *  plateauRadius = flatten radius around spawn,
+     *  treeDensity = per-column tree chance multiplier (biome default 1). */
     terrain: z.ZodObject<{
-        kind: z.ZodEnum<["flat", "heightmap"]>;
-        height: z.ZodOptional<z.ZodNumber>;
-        seed: z.ZodOptional<z.ZodNumber>;
-        amplitude: z.ZodOptional<z.ZodNumber>;
-        frequency: z.ZodOptional<z.ZodNumber>;
+        kind: z.ZodLiteral<"blocks">;
+        seed: z.ZodNumber;
+        base: z.ZodNumber;
+        amplitude: z.ZodNumber;
+        frequency: z.ZodNumber;
         plateauRadius: z.ZodOptional<z.ZodNumber>;
         waterLevel: z.ZodOptional<z.ZodNumber>;
+        treeDensity: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
-        kind: "flat" | "heightmap";
-        height?: number | undefined;
-        seed?: number | undefined;
-        amplitude?: number | undefined;
-        frequency?: number | undefined;
+        kind: "blocks";
+        seed: number;
+        base: number;
+        amplitude: number;
+        frequency: number;
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
+        treeDensity?: number | undefined;
     }, {
-        kind: "flat" | "heightmap";
-        height?: number | undefined;
-        seed?: number | undefined;
-        amplitude?: number | undefined;
-        frequency?: number | undefined;
+        kind: "blocks";
+        seed: number;
+        base: number;
+        amplitude: number;
+        frequency: number;
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
+        treeDensity?: number | undefined;
     }>;
-    /** authored overlay produced by tools/build-maps.mjs (paints, props, walls) */
-    map: z.ZodOptional<z.ZodString>;
-    propGen: z.ZodOptional<z.ZodObject<{
-        trees: z.ZodNumber;
-        rocks: z.ZodNumber;
-        clearRadius: z.ZodNumber;
-        seed: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        seed: number;
-        trees: number;
-        rocks: number;
-        clearRadius: number;
-    }, {
-        seed: number;
-        trees: number;
-        rocks: number;
-        clearRadius: number;
-    }>>;
     flags: z.ZodObject<{
         safeZone: z.ZodBoolean;
         buildingEnabled: z.ZodBoolean;
         pvp: z.ZodBoolean;
     }, "strip", z.ZodTypeAny, {
+        pvp: boolean;
         safeZone: boolean;
         buildingEnabled: boolean;
-        pvp: boolean;
     }, {
+        pvp: boolean;
         safeZone: boolean;
         buildingEnabled: boolean;
-        pvp: boolean;
     }>;
     portals: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
@@ -129,14 +300,127 @@ export declare const RoomDefSchema: z.ZodObject<{
         z: number;
         r: number;
     }>, "many">;
-    spawnTables: z.ZodArray<z.ZodUnknown, "many">;
-    npcs: z.ZodArray<z.ZodUnknown, "many">;
+    spawnTables: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        region: z.ZodObject<{
+            kind: z.ZodLiteral<"circle">;
+            x: z.ZodNumber;
+            z: z.ZodNumber;
+            r: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            kind: "circle";
+            x: number;
+            z: number;
+            r: number;
+        }, {
+            kind: "circle";
+            x: number;
+            z: number;
+            r: number;
+        }>;
+        mobs: z.ZodArray<z.ZodObject<{
+            mob: z.ZodString;
+            weight: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            weight: number;
+            mob: string;
+        }, {
+            weight: number;
+            mob: string;
+        }>, "many">;
+        maxAlive: z.ZodNumber;
+        packSize: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+        respawnSec: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        id: string;
+        region: {
+            kind: "circle";
+            x: number;
+            z: number;
+            r: number;
+        };
+        mobs: {
+            weight: number;
+            mob: string;
+        }[];
+        maxAlive: number;
+        packSize: [number, number];
+        respawnSec: number;
+    }, {
+        id: string;
+        region: {
+            kind: "circle";
+            x: number;
+            z: number;
+            r: number;
+        };
+        mobs: {
+            weight: number;
+            mob: string;
+        }[];
+        maxAlive: number;
+        packSize: [number, number];
+        respawnSec: number;
+    }>, "many">;
+    npcs: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        name: z.ZodString;
+        sprite: z.ZodString;
+        x: z.ZodNumber;
+        z: z.ZodNumber;
+        yaw: z.ZodDefault<z.ZodNumber>;
+        wanderRadius: z.ZodDefault<z.ZodNumber>;
+        dialog: z.ZodArray<z.ZodString, "many">;
+        shop: z.ZodOptional<z.ZodObject<{
+            items: z.ZodArray<z.ZodString, "many">;
+            buys: z.ZodBoolean;
+        }, "strip", z.ZodTypeAny, {
+            items: string[];
+            buys: boolean;
+        }, {
+            items: string[];
+            buys: boolean;
+        }>>;
+    }, "strip", z.ZodTypeAny, {
+        id: string;
+        name: string;
+        sprite: string;
+        x: number;
+        z: number;
+        yaw: number;
+        wanderRadius: number;
+        dialog: string[];
+        shop?: {
+            items: string[];
+            buys: boolean;
+        } | undefined;
+    }, {
+        id: string;
+        name: string;
+        sprite: string;
+        x: number;
+        z: number;
+        dialog: string[];
+        yaw?: number | undefined;
+        wanderRadius?: number | undefined;
+        shop?: {
+            items: string[];
+            buys: boolean;
+        } | undefined;
+    }>, "many">;
 }, "strip", z.ZodTypeAny, {
     id: string;
-    type: "hub" | "wilderness" | "dungeon" | "building";
     name: string;
+    type: "building" | "hub" | "wilderness" | "dungeon";
     biome: string;
     persistence: "stateful" | "ephemeral";
+    regions: {
+        kind: "circle";
+        x: number;
+        z: number;
+        r: number;
+        pvp: boolean;
+    }[];
     size: {
         w: number;
         h: number;
@@ -147,18 +431,19 @@ export declare const RoomDefSchema: z.ZodObject<{
         yaw: number;
     };
     terrain: {
-        kind: "flat" | "heightmap";
-        height?: number | undefined;
-        seed?: number | undefined;
-        amplitude?: number | undefined;
-        frequency?: number | undefined;
+        kind: "blocks";
+        seed: number;
+        base: number;
+        amplitude: number;
+        frequency: number;
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
+        treeDensity?: number | undefined;
     };
     flags: {
+        pvp: boolean;
         safeZone: boolean;
         buildingEnabled: boolean;
-        pvp: boolean;
     };
     portals: {
         id: string;
@@ -168,19 +453,46 @@ export declare const RoomDefSchema: z.ZodObject<{
         z: number;
         r: number;
     }[];
-    spawnTables: unknown[];
-    npcs: unknown[];
-    map?: string | undefined;
-    propGen?: {
-        seed: number;
-        trees: number;
-        rocks: number;
-        clearRadius: number;
+    spawnTables: {
+        id: string;
+        region: {
+            kind: "circle";
+            x: number;
+            z: number;
+            r: number;
+        };
+        mobs: {
+            weight: number;
+            mob: string;
+        }[];
+        maxAlive: number;
+        packSize: [number, number];
+        respawnSec: number;
+    }[];
+    npcs: {
+        id: string;
+        name: string;
+        sprite: string;
+        x: number;
+        z: number;
+        yaw: number;
+        wanderRadius: number;
+        dialog: string[];
+        shop?: {
+            items: string[];
+            buys: boolean;
+        } | undefined;
+    }[];
+    fixedTime?: number | undefined;
+    lifecycle?: {
+        lifetimeSec: number;
+        downtimeSec: number;
+        warnAtSecLeft: number[];
     } | undefined;
 }, {
     id: string;
-    type: "hub" | "wilderness" | "dungeon" | "building";
     name: string;
+    type: "building" | "hub" | "wilderness" | "dungeon";
     biome: string;
     persistence: "stateful" | "ephemeral";
     size: {
@@ -193,18 +505,19 @@ export declare const RoomDefSchema: z.ZodObject<{
         yaw: number;
     };
     terrain: {
-        kind: "flat" | "heightmap";
-        height?: number | undefined;
-        seed?: number | undefined;
-        amplitude?: number | undefined;
-        frequency?: number | undefined;
+        kind: "blocks";
+        seed: number;
+        base: number;
+        amplitude: number;
+        frequency: number;
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
+        treeDensity?: number | undefined;
     };
     flags: {
+        pvp: boolean;
         safeZone: boolean;
         buildingEnabled: boolean;
-        pvp: boolean;
     };
     portals: {
         id: string;
@@ -214,320 +527,51 @@ export declare const RoomDefSchema: z.ZodObject<{
         z: number;
         r: number;
     }[];
-    spawnTables: unknown[];
-    npcs: unknown[];
-    map?: string | undefined;
-    propGen?: {
-        seed: number;
-        trees: number;
-        rocks: number;
-        clearRadius: number;
+    spawnTables: {
+        id: string;
+        region: {
+            kind: "circle";
+            x: number;
+            z: number;
+            r: number;
+        };
+        mobs: {
+            weight: number;
+            mob: string;
+        }[];
+        maxAlive: number;
+        packSize: [number, number];
+        respawnSec: number;
+    }[];
+    npcs: {
+        id: string;
+        name: string;
+        sprite: string;
+        x: number;
+        z: number;
+        dialog: string[];
+        yaw?: number | undefined;
+        wanderRadius?: number | undefined;
+        shop?: {
+            items: string[];
+            buys: boolean;
+        } | undefined;
+    }[];
+    fixedTime?: number | undefined;
+    lifecycle?: {
+        lifetimeSec: number;
+        downtimeSec: number;
+        warnAtSecLeft: number[];
     } | undefined;
+    regions?: {
+        kind: "circle";
+        x: number;
+        z: number;
+        r: number;
+        pvp?: boolean | undefined;
+    }[] | undefined;
 }>;
 export type RoomDef = z.infer<typeof RoomDefSchema>;
-export declare const MapPaintSchema: z.ZodDiscriminatedUnion<"shape", [z.ZodObject<{
-    shape: z.ZodLiteral<"rect">;
-    type: z.ZodNumber;
-    x0: z.ZodNumber;
-    z0: z.ZodNumber;
-    x1: z.ZodNumber;
-    z1: z.ZodNumber;
-}, "strip", z.ZodTypeAny, {
-    type: number;
-    shape: "rect";
-    x0: number;
-    z0: number;
-    x1: number;
-    z1: number;
-}, {
-    type: number;
-    shape: "rect";
-    x0: number;
-    z0: number;
-    x1: number;
-    z1: number;
-}>, z.ZodObject<{
-    shape: z.ZodLiteral<"circle">;
-    type: z.ZodNumber;
-    x: z.ZodNumber;
-    z: z.ZodNumber;
-    r: z.ZodNumber;
-}, "strip", z.ZodTypeAny, {
-    x: number;
-    z: number;
-    r: number;
-    type: number;
-    shape: "circle";
-}, {
-    x: number;
-    z: number;
-    r: number;
-    type: number;
-    shape: "circle";
-}>, z.ZodObject<{
-    shape: z.ZodLiteral<"path">;
-    type: z.ZodNumber;
-    points: z.ZodArray<z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>, "many">;
-    width: z.ZodNumber;
-}, "strip", z.ZodTypeAny, {
-    type: number;
-    shape: "path";
-    points: [number, number][];
-    width: number;
-}, {
-    type: number;
-    shape: "path";
-    points: [number, number][];
-    width: number;
-}>]>;
-export declare const MapPropSchema: z.ZodObject<{
-    type: z.ZodString;
-    x: z.ZodNumber;
-    z: z.ZodNumber;
-    r: z.ZodNumber;
-    s: z.ZodNumber;
-    rot: z.ZodDefault<z.ZodNumber>;
-}, "strip", z.ZodTypeAny, {
-    x: number;
-    z: number;
-    r: number;
-    type: string;
-    s: number;
-    rot: number;
-}, {
-    x: number;
-    z: number;
-    r: number;
-    type: string;
-    s: number;
-    rot?: number | undefined;
-}>;
-export declare const MapWallSchema: z.ZodObject<{
-    x0: z.ZodNumber;
-    z0: z.ZodNumber;
-    x1: z.ZodNumber;
-    z1: z.ZodNumber;
-    type: z.ZodString;
-}, "strip", z.ZodTypeAny, {
-    type: string;
-    x0: number;
-    z0: number;
-    x1: number;
-    z1: number;
-}, {
-    type: string;
-    x0: number;
-    z0: number;
-    x1: number;
-    z1: number;
-}>;
-export declare const RoomMapSchema: z.ZodObject<{
-    version: z.ZodNumber;
-    flatten: z.ZodDefault<z.ZodArray<z.ZodObject<{
-        x0: z.ZodNumber;
-        z0: z.ZodNumber;
-        x1: z.ZodNumber;
-        z1: z.ZodNumber;
-        height: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        height: number;
-        x0: number;
-        z0: number;
-        x1: number;
-        z1: number;
-    }, {
-        height: number;
-        x0: number;
-        z0: number;
-        x1: number;
-        z1: number;
-    }>, "many">>;
-    paints: z.ZodDefault<z.ZodArray<z.ZodDiscriminatedUnion<"shape", [z.ZodObject<{
-        shape: z.ZodLiteral<"rect">;
-        type: z.ZodNumber;
-        x0: z.ZodNumber;
-        z0: z.ZodNumber;
-        x1: z.ZodNumber;
-        z1: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        type: number;
-        shape: "rect";
-        x0: number;
-        z0: number;
-        x1: number;
-        z1: number;
-    }, {
-        type: number;
-        shape: "rect";
-        x0: number;
-        z0: number;
-        x1: number;
-        z1: number;
-    }>, z.ZodObject<{
-        shape: z.ZodLiteral<"circle">;
-        type: z.ZodNumber;
-        x: z.ZodNumber;
-        z: z.ZodNumber;
-        r: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        x: number;
-        z: number;
-        r: number;
-        type: number;
-        shape: "circle";
-    }, {
-        x: number;
-        z: number;
-        r: number;
-        type: number;
-        shape: "circle";
-    }>, z.ZodObject<{
-        shape: z.ZodLiteral<"path">;
-        type: z.ZodNumber;
-        points: z.ZodArray<z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>, "many">;
-        width: z.ZodNumber;
-    }, "strip", z.ZodTypeAny, {
-        type: number;
-        shape: "path";
-        points: [number, number][];
-        width: number;
-    }, {
-        type: number;
-        shape: "path";
-        points: [number, number][];
-        width: number;
-    }>]>, "many">>;
-    props: z.ZodDefault<z.ZodArray<z.ZodObject<{
-        type: z.ZodString;
-        x: z.ZodNumber;
-        z: z.ZodNumber;
-        r: z.ZodNumber;
-        s: z.ZodNumber;
-        rot: z.ZodDefault<z.ZodNumber>;
-    }, "strip", z.ZodTypeAny, {
-        x: number;
-        z: number;
-        r: number;
-        type: string;
-        s: number;
-        rot: number;
-    }, {
-        x: number;
-        z: number;
-        r: number;
-        type: string;
-        s: number;
-        rot?: number | undefined;
-    }>, "many">>;
-    walls: z.ZodDefault<z.ZodArray<z.ZodObject<{
-        x0: z.ZodNumber;
-        z0: z.ZodNumber;
-        x1: z.ZodNumber;
-        z1: z.ZodNumber;
-        type: z.ZodString;
-    }, "strip", z.ZodTypeAny, {
-        type: string;
-        x0: number;
-        z0: number;
-        x1: number;
-        z1: number;
-    }, {
-        type: string;
-        x0: number;
-        z0: number;
-        x1: number;
-        z1: number;
-    }>, "many">>;
-}, "strip", z.ZodTypeAny, {
-    version: number;
-    flatten: {
-        height: number;
-        x0: number;
-        z0: number;
-        x1: number;
-        z1: number;
-    }[];
-    paints: ({
-        type: number;
-        shape: "rect";
-        x0: number;
-        z0: number;
-        x1: number;
-        z1: number;
-    } | {
-        x: number;
-        z: number;
-        r: number;
-        type: number;
-        shape: "circle";
-    } | {
-        type: number;
-        shape: "path";
-        points: [number, number][];
-        width: number;
-    })[];
-    props: {
-        x: number;
-        z: number;
-        r: number;
-        type: string;
-        s: number;
-        rot: number;
-    }[];
-    walls: {
-        type: string;
-        x0: number;
-        z0: number;
-        x1: number;
-        z1: number;
-    }[];
-}, {
-    version: number;
-    flatten?: {
-        height: number;
-        x0: number;
-        z0: number;
-        x1: number;
-        z1: number;
-    }[] | undefined;
-    paints?: ({
-        type: number;
-        shape: "rect";
-        x0: number;
-        z0: number;
-        x1: number;
-        z1: number;
-    } | {
-        x: number;
-        z: number;
-        r: number;
-        type: number;
-        shape: "circle";
-    } | {
-        type: number;
-        shape: "path";
-        points: [number, number][];
-        width: number;
-    })[] | undefined;
-    props?: {
-        x: number;
-        z: number;
-        r: number;
-        type: string;
-        s: number;
-        rot?: number | undefined;
-    }[] | undefined;
-    walls?: {
-        type: string;
-        x0: number;
-        z0: number;
-        x1: number;
-        z1: number;
-    }[] | undefined;
-}>;
-export type RoomMap = z.infer<typeof RoomMapSchema>;
-/** Loads a room's authored map overlay from shared/rooms/maps/. */
-export declare function loadRoomMap(file: string): RoomMap;
 /** Loads and validates every room definition in shared/rooms/. */
 export declare function loadRoomDefs(): Map<string, RoomDef>;
 export declare function loadRoomDef(roomId: string): RoomDef;

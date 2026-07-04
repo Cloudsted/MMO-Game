@@ -1,64 +1,412 @@
 {
   "$comment": "Canonical message catalog. Both runtimes' protocol modules implement exactly these messages. JSON encoding for MVP; this file is the seam a binary encoding swaps in behind. Field types: s=string n=number b=bool o=object a=array ?=optional.",
   "version": 1,
-
   "http": {
-    "POST /api/register": { "req": { "username": "s", "password": "s" }, "res": { "ok": "b" } },
-    "POST /api/login": { "req": { "username": "s", "password": "s" }, "res": { "token": "s", "account": { "id": "s", "username": "s", "roles": "a<s>" } } },
-    "GET /api/characters": { "auth": "Bearer token", "res": { "characters": "a<Character>" } },
-    "POST /api/characters": { "auth": "Bearer token", "req": { "name": "s" }, "res": { "character": "Character" } },
-    "POST /api/enter": { "auth": "Bearer token", "req": { "characterId": "s" }, "res": { "wsUrl": "s", "roomId": "s", "ticket": "s" } }
+    "POST /api/register": {
+      "req": {
+        "username": "s",
+        "password": "s"
+      },
+      "res": {
+        "ok": "b"
+      }
+    },
+    "POST /api/login": {
+      "req": {
+        "username": "s",
+        "password": "s"
+      },
+      "res": {
+        "token": "s",
+        "account": {
+          "id": "s",
+          "username": "s",
+          "roles": "a<s>"
+        }
+      }
+    },
+    "GET /api/characters": {
+      "auth": "Bearer token",
+      "res": {
+        "characters": "a<Character>"
+      }
+    },
+    "POST /api/characters": {
+      "auth": "Bearer token",
+      "req": {
+        "name": "s"
+      },
+      "res": {
+        "character": "Character"
+      }
+    },
+    "POST /api/enter": {
+      "auth": "Bearer token",
+      "req": {
+        "characterId": "s"
+      },
+      "res": {
+        "wsUrl": "s",
+        "roomId": "s",
+        "ticket": "s"
+      }
+    }
   },
-
   "control": {
     "$comment": "Shard host <-> master WS at /control. First message must be register with the shared secret.",
     "shardToMaster": {
-      "register": { "shardId": "s", "gameHost": "s", "capacity": "n", "secret": "s" },
-      "heartbeat": { "rooms": "a<{roomId:s,port:n,players:n,status:s}>" },
-      "roomOpened": { "roomId": "s", "port": "n" },
-      "roomClosed": { "roomId": "s", "reason": "s" },
-      "report": { "roomId": "s", "characters": "a<CharacterPatch>", "roomState": "RoomState?" },
-      "requestTransfer": { "$comment": "portal use: persist live state, then mint a ticket to the target room", "roomId": "s", "characterId": "s", "targetRoomId": "s", "patch": "CharacterPatch" }
+      "register": {
+        "shardId": "s",
+        "gameHost": "s",
+        "capacity": "n",
+        "secret": "s"
+      },
+      "heartbeat": {
+        "rooms": "a<{roomId:s,port:n,players:n,status:s}>"
+      },
+      "roomOpened": {
+        "roomId": "s",
+        "port": "n"
+      },
+      "roomClosed": {
+        "roomId": "s",
+        "reason": "s"
+      },
+      "report": {
+        "roomId": "s",
+        "characters": "a<CharacterPatch>",
+        "roomState": "RoomState?"
+      },
+      "requestTransfer": {
+        "$comment": "portal use: persist live state, then mint a ticket to the target room",
+        "roomId": "s",
+        "characterId": "s",
+        "targetRoomId": "s",
+        "patch": "CharacterPatch"
+      },
+      "globalChat": {
+        "from": "s",
+        "text": "s"
+      }
     },
     "masterToShard": {
-      "registered": { "ok": "b" },
-      "openRoom": { "roomId": "s", "snapshot": "RoomState|null" },
-      "closeRoom": { "roomId": "s", "reason": "s" },
-      "ticket": { "roomId": "s", "ticket": "s", "expiresAt": "n", "character": "CharacterSnapshot" },
-      "transferGrant": { "roomId": "s", "characterId": "s", "targetRoomId": "s", "wsUrl": "s", "ticket": "s" },
-      "transferDeny": { "roomId": "s", "characterId": "s", "reason": "s" }
+      "registered": {
+        "ok": "b"
+      },
+      "openRoom": {
+        "roomId": "s",
+        "snapshot": "RoomState|null"
+      },
+      "closeRoom": {
+        "roomId": "s",
+        "reason": "s"
+      },
+      "ticket": {
+        "roomId": "s",
+        "ticket": "s",
+        "expiresAt": "n",
+        "character": "CharacterSnapshot"
+      },
+      "transferGrant": {
+        "roomId": "s",
+        "characterId": "s",
+        "targetRoomId": "s",
+        "wsUrl": "s",
+        "ticket": "s"
+      },
+      "transferDeny": {
+        "roomId": "s",
+        "characterId": "s",
+        "reason": "s"
+      },
+      "globalChat": {
+        "$comment": "relayed to every shard, then every RoomHost",
+        "from": "s",
+        "text": "s"
+      },
+      "roomStatus": {
+        "$comment": "room availability; RoomHosts surface as portal sealed/open",
+        "roomId": "s",
+        "open": "b"
+      }
     }
   },
-
   "game": {
     "$comment": "Client <-> RoomHost gameplay WS.",
     "clientToServer": {
-      "hello": { "v": "n", "ticket": "s" },
-      "move": { "seq": "n", "x": "n", "y": "n", "z": "n", "yaw": "n", "anim": "s" },
-      "usePortal": { "portalId": "s" },
-      "ping": { "n": "n" },
-      "leave": {}
+      "hello": {
+        "v": "n",
+        "ticket": "s"
+      },
+      "move": {
+        "seq": "n",
+        "x": "n",
+        "y": "n",
+        "z": "n",
+        "yaw": "n",
+        "pitch": "n?",
+        "anim": "s",
+        "$comment": "pitch keeps player aim live during windup/cast — projectiles fire where the mouse points at release"
+      },
+      "usePortal": {
+        "portalId": "s"
+      },
+      "attack": {
+        "$comment": "use the held item's ability aimed by camera",
+        "yaw": "n",
+        "pitch": "n"
+      },
+      "equip": {
+        "slot": "n"
+      },
+      "invMove": {
+        "from": "n",
+        "to": "n"
+      },
+      "consume": {
+        "slot": "n"
+      },
+      "dropItem": {
+        "slot": "n",
+        "qty": "n"
+      },
+      "pickup": {
+        "id": "n"
+      },
+      "talk": {
+        "id": "n"
+      },
+      "buy": {
+        "npc": "n",
+        "item": "s",
+        "qty": "n"
+      },
+      "sell": {
+        "npc": "n",
+        "slot": "n",
+        "qty": "n"
+      },
+      "chat": {
+        "$comment": "'/g ' prefix = global; admin: /give /tp /spawnmob /time /reload /clearblocks /expire",
+        "text": "s"
+      },
+      "respawn": {},
+      "ping": {
+        "n": "n"
+      },
+      "leave": {},
+      "blockPlace": {
+        "$comment": "place the held block item into a world cell (building rooms only)",
+        "slot": "n",
+        "x": "n",
+        "y": "n",
+        "z": "n"
+      },
+      "blockBreak": {
+        "$comment": "break a block (building rooms; player-placed blocks refund their item)",
+        "x": "n",
+        "y": "n",
+        "z": "n"
+      }
     },
     "serverToClient": {
-      "welcome": { "roomId": "s", "selfId": "n", "name": "s", "spawn": { "x": "n", "y": "n", "z": "n", "yaw": "n" }, "timeOfDay": "n", "ents": "a<EntityFull>" },
-      "terrain": { "$comment": "sent right after welcome; heights = int16 centimetres LE base64 over the (w+1)x(h+1) vertex grid, types = uint8 ground ids (0 grass, 1 dirt, 2 stone, 3 sand)", "w": "n", "h": "n", "heightsB64": "s", "typesB64": "s", "waterLevel": "n|null" },
-      "props": { "props": "a<{id:n,type:s,x:n,z:n,r:n,s:n}>", "walls": "a<{x0:n,z0:n,x1:n,z1:n,type:s}>" },
-      "portals": { "portals": "a<{id:s,label:s,target:s,x:n,z:n,r:n}>" },
-      "transferFailed": { "reason": "s" },
-      "reject": { "reason": "s" },
-      "snap": { "tick": "n", "ents": "a<EntityDelta>", "enter": "a<EntityFull>", "leave": "a<n>" },
-      "correct": { "seq": "n", "x": "n", "y": "n", "z": "n" },
-      "pong": { "n": "n", "timeOfDay": "n" },
-      "transfer": { "wsUrl": "s", "roomId": "s", "ticket": "s" },
-      "evict": { "reason": "s" }
+      "welcome": {
+        "roomId": "s",
+        "selfId": "n",
+        "name": "s",
+        "spawn": {
+          "x": "n",
+          "y": "n",
+          "z": "n",
+          "yaw": "n"
+        },
+        "timeOfDay": "n",
+        "ents": "a<EntityFull>",
+        "safeZone": "b",
+        "regions": "a<{x:n,z:n,r:n,pvp:b}>",
+        "buildingEnabled": "b"
+      },
+      "world": {
+        "$comment": "voxel world header sent right after welcome: dimensions in blocks + number of chunk payloads that follow",
+        "w": "n",
+        "h": "n",
+        "height": "n",
+        "waterLevel": "n|null",
+        "chunks": "n"
+      },
+      "chunks": {
+        "$comment": "batched 16x16xheight block chunks; data = raw-deflate base64, x-fastest then z then y",
+        "batch": "a<{cx:n,cz:n,data:s}>"
+      },
+      "blockSet": {
+        "$comment": "one live block change (build/break/admin revert)",
+        "x": "n",
+        "y": "n",
+        "z": "n",
+        "id": "n"
+      },
+      "portals": {
+        "portals": "a<{id:s,label:s,target:s,x:n,z:n,r:n}>"
+      },
+      "transferFailed": {
+        "reason": "s"
+      },
+      "reject": {
+        "reason": "s"
+      },
+      "snap": {
+        "tick": "n",
+        "ents": "a<EntityDelta>",
+        "enter": "a<EntityFull>",
+        "leave": "a<n>"
+      },
+      "correct": {
+        "seq": "n",
+        "x": "n",
+        "y": "n",
+        "z": "n"
+      },
+      "pong": {
+        "n": "n",
+        "timeOfDay": "n"
+      },
+      "transfer": {
+        "wsUrl": "s",
+        "roomId": "s",
+        "ticket": "s"
+      },
+      "evict": {
+        "reason": "s"
+      },
+      "stats": {
+        "$comment": "self stats, sent on change",
+        "hp": "n",
+        "maxHp": "n",
+        "mana": "n",
+        "maxMana": "n",
+        "xp": "n",
+        "xpNext": "n",
+        "level": "n",
+        "gold": "n"
+      },
+      "inv": {
+        "$comment": "full inventory sync on change; held = hotbar slot index",
+        "slots": "a<ItemStack|null>",
+        "held": "n"
+      },
+      "evt": {
+        "e": "CombatEvent"
+      },
+      "proj": {
+        "$comment": "projectile spawn; client dead-reckons from velocity",
+        "id": "n",
+        "fx": "s",
+        "x": "n",
+        "y": "n",
+        "z": "n",
+        "vx": "n",
+        "vy": "n",
+        "vz": "n",
+        "ttlMs": "n"
+      },
+      "projHit": {
+        "id": "n",
+        "x": "n",
+        "y": "n",
+        "z": "n"
+      },
+      "debuff": {
+        "id": "n",
+        "slowPct": "n",
+        "durMs": "n"
+      },
+      "died": {
+        "$comment": "self death -> death screen; send respawn to return",
+        "x": "n",
+        "y": "n",
+        "z": "n"
+      },
+      "chat": {
+        "channel": "room|global|system",
+        "from": "s",
+        "text": "s"
+      },
+      "dialog": {
+        "id": "n",
+        "name": "s",
+        "lines": "a<s>",
+        "shop": "{items:a<{item:s,price:n}>,buys:b}|null"
+      },
+      "portalState": {
+        "$comment": "destination room went up/down",
+        "target": "s",
+        "open": "b"
+      }
     }
   },
-
   "types": {
-    "Character": { "id": "s", "name": "s", "level": "n", "xp": "n", "gold": "n", "roomId": "s" },
-    "CharacterSnapshot": { "id": "s", "name": "s", "level": "n", "xp": "n", "gold": "n", "inventory": "a", "x": "n", "y": "n", "z": "n", "yaw": "n", "roles": "a<s>" },
-    "CharacterPatch": { "id": "s", "$comment": "partial CharacterSnapshot fields to persist" },
-    "EntityFull": { "id": "n", "kind": "s", "name": "s?", "sprite": "s?", "x": "n", "y": "n", "z": "n", "yaw": "n", "anim": "s" },
-    "EntityDelta": { "id": "n", "$comment": "id plus only changed fields of EntityFull" }
+    "Character": {
+      "id": "s",
+      "name": "s",
+      "level": "n",
+      "xp": "n",
+      "gold": "n",
+      "roomId": "s"
+    },
+    "CharacterSnapshot": {
+      "id": "s",
+      "name": "s",
+      "level": "n",
+      "xp": "n",
+      "gold": "n",
+      "inventory": "a<ItemStack|null>",
+      "x": "n",
+      "y": "n",
+      "z": "n",
+      "yaw": "n",
+      "roles": "a<s>"
+    },
+    "CharacterPatch": {
+      "id": "s",
+      "$comment": "partial CharacterSnapshot fields to persist"
+    },
+    "ItemStack": {
+      "item": "s",
+      "qty": "n",
+      "rarity": "s",
+      "$comment": "per-instance item data; affixes/durability later"
+    },
+    "EntityFull": {
+      "id": "n",
+      "kind": "s (player|mob|npc|loot)",
+      "name": "s?",
+      "sprite": "s?",
+      "x": "n",
+      "y": "n",
+      "z": "n",
+      "yaw": "n",
+      "anim": "s",
+      "hp": "n?",
+      "maxHp": "n?",
+      "level": "n?",
+      "act": "s?",
+      "actMs": "n?"
+    },
+    "EntityDelta": {
+      "id": "n",
+      "$comment": "id plus only changed fields of EntityFull (x/y/z/yaw/anim/hp/act/actMs)"
+    },
+    "CombatEvent": {
+      "kind": "dmg|heal|death|stagger|xp|levelup",
+      "$comment": "dmg:{src,tgt,amount,crit} heal:{tgt,amount} death:{id,by} stagger:{id} xp:{amount} levelup:{id,level}"
+    },
+    "BlockEdit": {
+      "x": "n",
+      "y": "n",
+      "z": "n",
+      "id": "n",
+      "owner": "s|null",
+      "$comment": "sparse voxel edit persisted in RoomState.blocks"
+    }
   }
 }

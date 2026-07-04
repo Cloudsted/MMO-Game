@@ -21,6 +21,14 @@ export type HostToRoom = {
     characterId: string;
     reason: string;
 } | {
+    t: "globalChat";
+    from: string;
+    text: string;
+} | {
+    t: "roomStatus";
+    roomId: string;
+    open: boolean;
+} | {
     t: "close";
     reason: string;
 };
@@ -43,5 +51,14 @@ export type RoomToHost = {
     patch: {
         id: string;
     } & Record<string, unknown>;
+} | {
+    t: "globalChat";
+    from: string;
+    text: string;
+}
+/** announced before a deliberate exit so the master learns the real reason */
+ | {
+    t: "closing";
+    reason: string;
 };
 //# sourceMappingURL=ipc.d.ts.map

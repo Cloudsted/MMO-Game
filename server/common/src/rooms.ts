@@ -14,86 +14,91 @@ export const PortalDefSchema = z.object({
 });
 export type PortalDef = z.infer<typeof PortalDefSchema>;
 
+export const SpawnTableSchema = z.object({
+  id: z.string(),
+  region: z.object({ kind: z.literal("circle"), x: z.number(), z: z.number(), r: z.number() }),
+  mobs: z.array(z.object({ mob: z.string(), weight: z.number().positive() })).min(1),
+  maxAlive: z.number().int().positive(),
+  packSize: z.tuple([z.number().int(), z.number().int()]),
+  respawnSec: z.number(),
+});
+export type SpawnTable = z.infer<typeof SpawnTableSchema>;
+
+export const NpcDefSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  sprite: z.string(),
+  x: z.number(),
+  z: z.number(),
+  yaw: z.number().default(0),
+  wanderRadius: z.number().default(0), // 0 = stands still
+  dialog: z.array(z.string()).min(1),
+  shop: z
+    .object({
+      items: z.array(z.string()).min(1), // item ids for sale at registry value
+      buys: z.boolean(), // will buy any player item at a fraction of value
+    })
+    .optional(),
+});
+export type NpcDef = z.infer<typeof NpcDefSchema>;
+
+/** A flagged sub-area of a room (PvP zones; more flags later). */
+export const RegionSchema = z.object({
+  kind: z.literal("circle"),
+  x: z.number(),
+  z: z.number(),
+  r: z.number(),
+  pvp: z.boolean().default(false),
+});
+export type RegionDef = z.infer<typeof RegionSchema>;
+
+/** Ephemeral-room lifecycle: live for lifetimeSec, warn, evict, close; the
+ *  master reopens it fresh after downtimeSec. */
+export const LifecycleSchema = z.object({
+  lifetimeSec: z.number().positive(),
+  downtimeSec: z.number().nonnegative(),
+  warnAtSecLeft: z.array(z.number().positive()),
+});
+export type LifecycleDef = z.infer<typeof LifecycleSchema>;
+
 export const RoomDefSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
   type: z.enum(["hub", "wilderness", "dungeon", "building"]),
   biome: z.string(),
   persistence: z.enum(["stateful", "ephemeral"]),
+  /** pin the visual clock (dungeon mood); omit for the live day/night cycle */
+  fixedTime: z.number().min(0).max(1).optional(),
+  lifecycle: LifecycleSchema.optional(),
+  regions: z.array(RegionSchema).default([]),
   size: z.object({ w: z.number().int().positive(), h: z.number().int().positive() }),
   spawn: z.object({ x: z.number(), z: z.number(), yaw: z.number() }),
+  /** Voxel terrain parameters — all vertical units are BLOCK Y levels.
+   *  base = mean surface height, amplitude = noise relief in blocks,
+   *  waterLevel = water fills terrain below this level (omit for none),
+   *  plateauRadius = flatten radius around spawn,
+   *  treeDensity = per-column tree chance multiplier (biome default 1). */
   terrain: z.object({
-    kind: z.enum(["flat", "heightmap"]),
-    height: z.number().optional(),
-    seed: z.number().optional(),
-    amplitude: z.number().optional(),
-    frequency: z.number().optional(),
+    kind: z.literal("blocks"),
+    seed: z.number(),
+    base: z.number().int(),
+    amplitude: z.number(),
+    frequency: z.number(),
     plateauRadius: z.number().optional(),
-    waterLevel: z.number().optional(),
+    waterLevel: z.number().int().optional(),
+    treeDensity: z.number().optional(),
   }),
-  /** authored overlay produced by tools/build-maps.mjs (paints, props, walls) */
-  map: z.string().optional(),
-  propGen: z
-    .object({
-      trees: z.number().int(),
-      rocks: z.number().int(),
-      clearRadius: z.number(),
-      seed: z.number(),
-    })
-    .optional(),
   flags: z.object({
     safeZone: z.boolean(),
     buildingEnabled: z.boolean(),
     pvp: z.boolean(),
   }),
   portals: z.array(PortalDefSchema),
-  spawnTables: z.array(z.unknown()),
-  npcs: z.array(z.unknown()),
+  spawnTables: z.array(SpawnTableSchema),
+  npcs: z.array(NpcDefSchema),
 });
 
 export type RoomDef = z.infer<typeof RoomDefSchema>;
-
-// ---------- authored map overlay (output of tools/build-maps.mjs) ----------
-
-export const MapPaintSchema = z.discriminatedUnion("shape", [
-  z.object({ shape: z.literal("rect"), type: z.number().int(), x0: z.number(), z0: z.number(), x1: z.number(), z1: z.number() }),
-  z.object({ shape: z.literal("circle"), type: z.number().int(), x: z.number(), z: z.number(), r: z.number() }),
-  z.object({ shape: z.literal("path"), type: z.number().int(), points: z.array(z.tuple([z.number(), z.number()])), width: z.number() }),
-]);
-
-export const MapPropSchema = z.object({
-  type: z.string(),
-  x: z.number(),
-  z: z.number(),
-  r: z.number(), // collision cylinder radius, 0 = walk-through
-  s: z.number(),
-  rot: z.number().default(0), // facing in degrees (flat props)
-});
-
-export const MapWallSchema = z.object({
-  // straight wall run rendered as repeated panels; collision = thick segment
-  x0: z.number(),
-  z0: z.number(),
-  x1: z.number(),
-  z1: z.number(),
-  type: z.string(), // wall texture key in the prop atlas
-});
-
-export const RoomMapSchema = z.object({
-  version: z.number().int(),
-  flatten: z
-    .array(z.object({ x0: z.number(), z0: z.number(), x1: z.number(), z1: z.number(), height: z.number() }))
-    .default([]),
-  paints: z.array(MapPaintSchema).default([]),
-  props: z.array(MapPropSchema).default([]),
-  walls: z.array(MapWallSchema).default([]),
-});
-export type RoomMap = z.infer<typeof RoomMapSchema>;
-
-/** Loads a room's authored map overlay from shared/rooms/maps/. */
-export function loadRoomMap(file: string): RoomMap {
-  return RoomMapSchema.parse(readJsonFile(resolve(SHARED_DIR, "rooms", "maps", file)));
-}
 
 /** Loads and validates every room definition in shared/rooms/. */
 export function loadRoomDefs(): Map<string, RoomDef> {

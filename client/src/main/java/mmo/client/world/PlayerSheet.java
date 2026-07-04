@@ -35,6 +35,31 @@ public class PlayerSheet {
         }
     }
 
+    /** A 3x4 walk grid at explicit frame dimensions (SpriteLibrary sheets). */
+    public PlayerSheet(String pngPath, int frameW, int frameH) {
+        texture = new Texture(Gdx.files.internal(pngPath));
+        texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        this.frameW = frameW;
+        this.frameH = frameH;
+        frames = new TextureRegion[4][3];
+        for (int r = 0; r < 4; r++) {
+            for (int c = 0; c < 3; c++) {
+                frames[r][c] = new TextureRegion(texture, c * frameW, r * frameH, frameW, frameH);
+            }
+        }
+    }
+
+    /** A single static image presented as a sheet (loot bags, props). */
+    public PlayerSheet(String pngPath) {
+        texture = new Texture(Gdx.files.internal(pngPath));
+        texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        frameW = texture.getWidth();
+        frameH = texture.getHeight();
+        TextureRegion region = new TextureRegion(texture);
+        frames = new TextureRegion[4][3];
+        for (int r = 0; r < 4; r++) for (int c = 0; c < 3; c++) frames[r][c] = region;
+    }
+
     public TextureRegion frame(int row, int walkTick, boolean moving) {
         int col = moving ? WALK_CYCLE[walkTick % WALK_CYCLE.length] : 1;
         return frames[row][col];

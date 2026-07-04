@@ -1,0 +1,227 @@
+{
+  "rarities": {
+    "common": {
+      "mult": 1,
+      "color": "#e8e8e8",
+      "weight": 70
+    },
+    "uncommon": {
+      "mult": 1.15,
+      "color": "#4ade5b",
+      "weight": 20
+    },
+    "rare": {
+      "mult": 1.35,
+      "color": "#4aa3ff",
+      "weight": 8
+    },
+    "epic": {
+      "mult": 1.6,
+      "color": "#b96aff",
+      "weight": 2
+    }
+  },
+  "items": {
+    "rusty_sword": {
+      "name": "Rusty Sword",
+      "kind": "weapon",
+      "ability": "swing",
+      "damage": 6,
+      "value": 8,
+      "stack": 1,
+      "icon": [
+        1,
+        6
+      ]
+    },
+    "iron_sword": {
+      "name": "Iron Sword",
+      "kind": "weapon",
+      "ability": "swing",
+      "damage": 11,
+      "value": 40,
+      "stack": 1,
+      "icon": [
+        2,
+        6
+      ]
+    },
+    "hunting_bow": {
+      "name": "Hunting Bow",
+      "kind": "weapon",
+      "ability": "bow_shot",
+      "damage": 9,
+      "value": 15,
+      "stack": 1,
+      "icon": [
+        11,
+        7
+      ]
+    },
+    "longbow": {
+      "name": "Longbow",
+      "kind": "weapon",
+      "ability": "bow_shot",
+      "damage": 14,
+      "value": 60,
+      "stack": 1,
+      "icon": [
+        13,
+        7
+      ]
+    },
+    "fire_staff": {
+      "name": "Fire Staff",
+      "kind": "weapon",
+      "ability": "firebolt",
+      "damage": 13,
+      "value": 50,
+      "stack": 1,
+      "icon": [
+        6,
+        7
+      ]
+    },
+    "frost_staff": {
+      "name": "Frost Staff",
+      "kind": "weapon",
+      "ability": "frost",
+      "damage": 8,
+      "value": 50,
+      "stack": 1,
+      "icon": [
+        7,
+        7
+      ]
+    },
+    "heal_staff": {
+      "name": "Staff of Mending",
+      "kind": "weapon",
+      "ability": "heal",
+      "damage": 0,
+      "value": 45,
+      "stack": 1,
+      "icon": [
+        3,
+        7
+      ]
+    },
+    "bread": {
+      "name": "Bread",
+      "kind": "consumable",
+      "value": 3,
+      "stack": 10,
+      "icon": [
+        4,
+        4
+      ],
+      "effect": {
+        "hotTotal": 24,
+        "hotDurMs": 8000
+      }
+    },
+    "health_potion": {
+      "name": "Health Potion",
+      "kind": "consumable",
+      "value": 12,
+      "stack": 10,
+      "icon": [
+        5,
+        3
+      ],
+      "effect": {
+        "heal": 40
+      }
+    },
+    "mana_potion": {
+      "name": "Mana Potion",
+      "kind": "consumable",
+      "value": 12,
+      "stack": 10,
+      "icon": [
+        6,
+        3
+      ],
+      "effect": {
+        "mana": 40
+      }
+    },
+    "block_planks": {
+      "name": "Planks",
+      "kind": "building",
+      "block": "planks",
+      "value": 3,
+      "stack": 50,
+      "icon": [
+        0,
+        21
+      ]
+    },
+    "block_log": {
+      "name": "Log",
+      "kind": "building",
+      "block": "log",
+      "value": 4,
+      "stack": 50,
+      "icon": [
+        1,
+        21
+      ]
+    },
+    "block_cobblestone": {
+      "name": "Cobblestone",
+      "kind": "building",
+      "block": "cobblestone",
+      "value": 3,
+      "stack": 50,
+      "icon": [
+        2,
+        21
+      ]
+    },
+    "block_stone_bricks": {
+      "name": "Stone Bricks",
+      "kind": "building",
+      "block": "stone_bricks",
+      "value": 5,
+      "stack": 50,
+      "icon": [
+        3,
+        21
+      ]
+    },
+    "block_thatch": {
+      "name": "Thatch",
+      "kind": "building",
+      "block": "thatch",
+      "value": 2,
+      "stack": 50,
+      "icon": [
+        4,
+        21
+      ]
+    },
+    "block_glass": {
+      "name": "Glass",
+      "kind": "building",
+      "block": "glass",
+      "value": 6,
+      "stack": 50,
+      "icon": [
+        5,
+        21
+      ]
+    },
+    "block_torch": {
+      "name": "Torch",
+      "kind": "building",
+      "block": "torch",
+      "value": 5,
+      "stack": 50,
+      "icon": [
+        6,
+        21
+      ]
+    }
+  }
+}

@@ -53,26 +53,111 @@ declare const ConstantsSchema: z.ZodObject<{
         moveToleranceM: number;
         ticketTtlMs: number;
     }>;
+    combat: z.ZodObject<{
+        critChance: z.ZodNumber;
+        critMult: z.ZodNumber;
+        staggerMs: z.ZodNumber;
+        projectileHitRadius: z.ZodNumber;
+        meleeRangeGrace: z.ZodNumber;
+        hpRegenPerSec: z.ZodNumber;
+        manaRegenPerSec: z.ZodNumber;
+        regenDelayAfterDamageMs: z.ZodNumber;
+        lootLockMobMs: z.ZodNumber;
+        lootLockDeathMs: z.ZodNumber;
+        mobLootExpireMs: z.ZodNumber;
+        pickupRange: z.ZodNumber;
+        talkRange: z.ZodNumber;
+        sellFraction: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        critChance: number;
+        critMult: number;
+        staggerMs: number;
+        projectileHitRadius: number;
+        meleeRangeGrace: number;
+        hpRegenPerSec: number;
+        manaRegenPerSec: number;
+        regenDelayAfterDamageMs: number;
+        lootLockMobMs: number;
+        lootLockDeathMs: number;
+        mobLootExpireMs: number;
+        pickupRange: number;
+        talkRange: number;
+        sellFraction: number;
+    }, {
+        critChance: number;
+        critMult: number;
+        staggerMs: number;
+        projectileHitRadius: number;
+        meleeRangeGrace: number;
+        hpRegenPerSec: number;
+        manaRegenPerSec: number;
+        regenDelayAfterDamageMs: number;
+        lootLockMobMs: number;
+        lootLockDeathMs: number;
+        mobLootExpireMs: number;
+        pickupRange: number;
+        talkRange: number;
+        sellFraction: number;
+    }>;
+    building: z.ZodObject<{
+        placeRangeM: z.ZodNumber;
+        maxPlayerBlocksPerRoom: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        placeRangeM: number;
+        maxPlayerBlocksPerRoom: number;
+    }, {
+        placeRangeM: number;
+        maxPlayerBlocksPerRoom: number;
+    }>;
+    progression: z.ZodObject<{
+        baseHp: z.ZodNumber;
+        hpPerLevel: z.ZodNumber;
+        baseMana: z.ZodNumber;
+        manaPerLevel: z.ZodNumber;
+        damagePerLevelPct: z.ZodNumber;
+        xpBase: z.ZodNumber;
+        xpExponent: z.ZodNumber;
+        maxLevel: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        baseHp: number;
+        hpPerLevel: number;
+        baseMana: number;
+        manaPerLevel: number;
+        damagePerLevelPct: number;
+        xpBase: number;
+        xpExponent: number;
+        maxLevel: number;
+    }, {
+        baseHp: number;
+        hpPerLevel: number;
+        baseMana: number;
+        manaPerLevel: number;
+        damagePerLevelPct: number;
+        xpBase: number;
+        xpExponent: number;
+        maxLevel: number;
+    }>;
     world: z.ZodObject<{
-        cellSizeM: z.ZodNumber;
-        chunkCells: z.ZodNumber;
+        worldHeight: z.ZodNumber;
+        chunkBlocks: z.ZodNumber;
         dayLengthSec: z.ZodNumber;
-        maxStandableSlope: z.ZodNumber;
         terrainYToleranceM: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        cellSizeM: number;
-        chunkCells: number;
+        worldHeight: number;
+        chunkBlocks: number;
         dayLengthSec: number;
-        maxStandableSlope: number;
         terrainYToleranceM: number;
     }, {
-        cellSizeM: number;
-        chunkCells: number;
+        worldHeight: number;
+        chunkBlocks: number;
         dayLengthSec: number;
-        maxStandableSlope: number;
         terrainYToleranceM: number;
     }>;
 }, "strip", z.ZodTypeAny, {
+    building: {
+        placeRangeM: number;
+        maxPlayerBlocksPerRoom: number;
+    };
     movement: {
         walkSpeed: number;
         gravity: number;
@@ -92,14 +177,43 @@ declare const ConstantsSchema: z.ZodObject<{
         moveToleranceM: number;
         ticketTtlMs: number;
     };
+    combat: {
+        critChance: number;
+        critMult: number;
+        staggerMs: number;
+        projectileHitRadius: number;
+        meleeRangeGrace: number;
+        hpRegenPerSec: number;
+        manaRegenPerSec: number;
+        regenDelayAfterDamageMs: number;
+        lootLockMobMs: number;
+        lootLockDeathMs: number;
+        mobLootExpireMs: number;
+        pickupRange: number;
+        talkRange: number;
+        sellFraction: number;
+    };
+    progression: {
+        baseHp: number;
+        hpPerLevel: number;
+        baseMana: number;
+        manaPerLevel: number;
+        damagePerLevelPct: number;
+        xpBase: number;
+        xpExponent: number;
+        maxLevel: number;
+    };
     world: {
-        cellSizeM: number;
-        chunkCells: number;
+        worldHeight: number;
+        chunkBlocks: number;
         dayLengthSec: number;
-        maxStandableSlope: number;
         terrainYToleranceM: number;
     };
 }, {
+    building: {
+        placeRangeM: number;
+        maxPlayerBlocksPerRoom: number;
+    };
     movement: {
         walkSpeed: number;
         gravity: number;
@@ -119,11 +233,36 @@ declare const ConstantsSchema: z.ZodObject<{
         moveToleranceM: number;
         ticketTtlMs: number;
     };
+    combat: {
+        critChance: number;
+        critMult: number;
+        staggerMs: number;
+        projectileHitRadius: number;
+        meleeRangeGrace: number;
+        hpRegenPerSec: number;
+        manaRegenPerSec: number;
+        regenDelayAfterDamageMs: number;
+        lootLockMobMs: number;
+        lootLockDeathMs: number;
+        mobLootExpireMs: number;
+        pickupRange: number;
+        talkRange: number;
+        sellFraction: number;
+    };
+    progression: {
+        baseHp: number;
+        hpPerLevel: number;
+        baseMana: number;
+        manaPerLevel: number;
+        damagePerLevelPct: number;
+        xpBase: number;
+        xpExponent: number;
+        maxLevel: number;
+    };
     world: {
-        cellSizeM: number;
-        chunkCells: number;
+        worldHeight: number;
+        chunkBlocks: number;
         dayLengthSec: number;
-        maxStandableSlope: number;
         terrainYToleranceM: number;
     };
 }>;

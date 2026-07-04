@@ -1,4 +1,5 @@
 import { MongoClient, type Db, type Collection, ObjectId } from "mongodb";
+import type { ItemStack, RoomState } from "@fantasy-mmo/common";
 
 export interface AccountDoc {
   _id?: ObjectId;
@@ -23,7 +24,7 @@ export interface CharacterDoc {
   level: number;
   xp: number;
   gold: number;
-  inventory: unknown[];
+  inventory: Array<ItemStack | null>;
   roomId: string;
   x: number | null; // null = use room spawn
   y: number | null;
@@ -45,7 +46,7 @@ export interface RoomRegistryDoc {
 export interface RoomStateDoc {
   _id?: ObjectId;
   roomId: string;
-  state: { timeOfDay: number; savedAt: number };
+  state: RoomState;
   updatedAt: Date;
 }
 

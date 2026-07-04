@@ -1,0 +1,313 @@
+/**
+ * RegistryService: all game data (items, abilities, mobs, loot tables) loads
+ * through here — never imported as module constants — so `/reload registries`
+ * can hot-reload tuning into live RoomHosts. Zod-validated on load; fails
+ * fast on dangling id references.
+ */
+import { z } from "zod";
+export declare const RaritySchema: z.ZodObject<{
+    mult: z.ZodNumber;
+    color: z.ZodString;
+    weight: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    mult: number;
+    color: string;
+    weight: number;
+}, {
+    mult: number;
+    color: string;
+    weight: number;
+}>;
+export type RarityDef = z.infer<typeof RaritySchema>;
+export declare const ItemDefSchema: z.ZodObject<{
+    name: z.ZodString;
+    kind: z.ZodEnum<["weapon", "consumable", "building", "misc"]>;
+    ability: z.ZodOptional<z.ZodString>;
+    damage: z.ZodOptional<z.ZodNumber>;
+    /** building items: block name (shared/blocks.json) this item places */
+    block: z.ZodOptional<z.ZodString>;
+    value: z.ZodNumber;
+    stack: z.ZodNumber;
+    icon: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+    viewmodel: z.ZodOptional<z.ZodString>;
+    effect: z.ZodOptional<z.ZodObject<{
+        heal: z.ZodOptional<z.ZodNumber>;
+        mana: z.ZodOptional<z.ZodNumber>;
+        hotTotal: z.ZodOptional<z.ZodNumber>;
+        hotDurMs: z.ZodOptional<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        heal?: number | undefined;
+        mana?: number | undefined;
+        hotTotal?: number | undefined;
+        hotDurMs?: number | undefined;
+    }, {
+        heal?: number | undefined;
+        mana?: number | undefined;
+        hotTotal?: number | undefined;
+        hotDurMs?: number | undefined;
+    }>>;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    kind: "weapon" | "consumable" | "building" | "misc";
+    value: number;
+    stack: number;
+    icon: [number, number];
+    ability?: string | undefined;
+    damage?: number | undefined;
+    block?: string | undefined;
+    viewmodel?: string | undefined;
+    effect?: {
+        heal?: number | undefined;
+        mana?: number | undefined;
+        hotTotal?: number | undefined;
+        hotDurMs?: number | undefined;
+    } | undefined;
+}, {
+    name: string;
+    kind: "weapon" | "consumable" | "building" | "misc";
+    value: number;
+    stack: number;
+    icon: [number, number];
+    ability?: string | undefined;
+    damage?: number | undefined;
+    block?: string | undefined;
+    viewmodel?: string | undefined;
+    effect?: {
+        heal?: number | undefined;
+        mana?: number | undefined;
+        hotTotal?: number | undefined;
+        hotDurMs?: number | undefined;
+    } | undefined;
+}>;
+export type ItemDef = z.infer<typeof ItemDefSchema>;
+export declare const AbilityDefSchema: z.ZodObject<{
+    kind: z.ZodEnum<["melee", "projectile", "self"]>;
+    windupMs: z.ZodOptional<z.ZodNumber>;
+    activeMs: z.ZodOptional<z.ZodNumber>;
+    castTimeMs: z.ZodOptional<z.ZodNumber>;
+    recoverMs: z.ZodNumber;
+    range: z.ZodOptional<z.ZodNumber>;
+    arcDeg: z.ZodOptional<z.ZodNumber>;
+    projSpeed: z.ZodOptional<z.ZodNumber>;
+    maxRange: z.ZodOptional<z.ZodNumber>;
+    damage: z.ZodOptional<z.ZodNumber>;
+    heal: z.ZodOptional<z.ZodNumber>;
+    debuff: z.ZodOptional<z.ZodObject<{
+        slowPct: z.ZodNumber;
+        durMs: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        slowPct: number;
+        durMs: number;
+    }, {
+        slowPct: number;
+        durMs: number;
+    }>>;
+    canMoveWhile: z.ZodBoolean;
+    interruptible: z.ZodBoolean;
+    cooldownMs: z.ZodNumber;
+    manaCost: z.ZodNumber;
+    fx: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    kind: "melee" | "projectile" | "self";
+    recoverMs: number;
+    canMoveWhile: boolean;
+    interruptible: boolean;
+    cooldownMs: number;
+    manaCost: number;
+    fx: string;
+    damage?: number | undefined;
+    heal?: number | undefined;
+    windupMs?: number | undefined;
+    activeMs?: number | undefined;
+    castTimeMs?: number | undefined;
+    range?: number | undefined;
+    arcDeg?: number | undefined;
+    projSpeed?: number | undefined;
+    maxRange?: number | undefined;
+    debuff?: {
+        slowPct: number;
+        durMs: number;
+    } | undefined;
+}, {
+    kind: "melee" | "projectile" | "self";
+    recoverMs: number;
+    canMoveWhile: boolean;
+    interruptible: boolean;
+    cooldownMs: number;
+    manaCost: number;
+    fx: string;
+    damage?: number | undefined;
+    heal?: number | undefined;
+    windupMs?: number | undefined;
+    activeMs?: number | undefined;
+    castTimeMs?: number | undefined;
+    range?: number | undefined;
+    arcDeg?: number | undefined;
+    projSpeed?: number | undefined;
+    maxRange?: number | undefined;
+    debuff?: {
+        slowPct: number;
+        durMs: number;
+    } | undefined;
+}>;
+export type AbilityDef = z.infer<typeof AbilityDefSchema>;
+export declare const MobDefSchema: z.ZodObject<{
+    name: z.ZodString;
+    sprite: z.ZodString;
+    level: z.ZodNumber;
+    hp: z.ZodNumber;
+    damage: z.ZodNumber;
+    moveSpeed: z.ZodNumber;
+    ability: z.ZodString;
+    aggroRadius: z.ZodNumber;
+    attackRange: z.ZodNumber;
+    leashRadius: z.ZodNumber;
+    fleeAtHpPct: z.ZodNumber;
+    xp: z.ZodNumber;
+    loot: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    ability: string;
+    damage: number;
+    sprite: string;
+    level: number;
+    hp: number;
+    moveSpeed: number;
+    aggroRadius: number;
+    attackRange: number;
+    leashRadius: number;
+    fleeAtHpPct: number;
+    xp: number;
+    loot: string;
+}, {
+    name: string;
+    ability: string;
+    damage: number;
+    sprite: string;
+    level: number;
+    hp: number;
+    moveSpeed: number;
+    aggroRadius: number;
+    attackRange: number;
+    leashRadius: number;
+    fleeAtHpPct: number;
+    xp: number;
+    loot: string;
+}>;
+export type MobDef = z.infer<typeof MobDefSchema>;
+/** Weighted entry: exactly one of item / table / nothing (weight only). */
+export declare const LootEntrySchema: z.ZodObject<{
+    weight: z.ZodNumber;
+    item: z.ZodOptional<z.ZodString>;
+    table: z.ZodOptional<z.ZodString>;
+    qty: z.ZodOptional<z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>>;
+    minRarity: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    weight: number;
+    item?: string | undefined;
+    table?: string | undefined;
+    qty?: [number, number] | undefined;
+    minRarity?: string | undefined;
+}, {
+    weight: number;
+    item?: string | undefined;
+    table?: string | undefined;
+    qty?: [number, number] | undefined;
+    minRarity?: string | undefined;
+}>;
+export declare const LootTableSchema: z.ZodObject<{
+    gold: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+    rolls: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+    entries: z.ZodArray<z.ZodObject<{
+        weight: z.ZodNumber;
+        item: z.ZodOptional<z.ZodString>;
+        table: z.ZodOptional<z.ZodString>;
+        qty: z.ZodOptional<z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>>;
+        minRarity: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        weight: number;
+        item?: string | undefined;
+        table?: string | undefined;
+        qty?: [number, number] | undefined;
+        minRarity?: string | undefined;
+    }, {
+        weight: number;
+        item?: string | undefined;
+        table?: string | undefined;
+        qty?: [number, number] | undefined;
+        minRarity?: string | undefined;
+    }>, "many">;
+    /** boss-style guaranteed-drop slots: every entry always rolls once */
+    guaranteed: z.ZodDefault<z.ZodArray<z.ZodObject<{
+        weight: z.ZodNumber;
+        item: z.ZodOptional<z.ZodString>;
+        table: z.ZodOptional<z.ZodString>;
+        qty: z.ZodOptional<z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>>;
+        minRarity: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        weight: number;
+        item?: string | undefined;
+        table?: string | undefined;
+        qty?: [number, number] | undefined;
+        minRarity?: string | undefined;
+    }, {
+        weight: number;
+        item?: string | undefined;
+        table?: string | undefined;
+        qty?: [number, number] | undefined;
+        minRarity?: string | undefined;
+    }>, "many">>;
+}, "strip", z.ZodTypeAny, {
+    entries: {
+        weight: number;
+        item?: string | undefined;
+        table?: string | undefined;
+        qty?: [number, number] | undefined;
+        minRarity?: string | undefined;
+    }[];
+    gold: [number, number];
+    rolls: [number, number];
+    guaranteed: {
+        weight: number;
+        item?: string | undefined;
+        table?: string | undefined;
+        qty?: [number, number] | undefined;
+        minRarity?: string | undefined;
+    }[];
+}, {
+    entries: {
+        weight: number;
+        item?: string | undefined;
+        table?: string | undefined;
+        qty?: [number, number] | undefined;
+        minRarity?: string | undefined;
+    }[];
+    gold: [number, number];
+    rolls: [number, number];
+    guaranteed?: {
+        weight: number;
+        item?: string | undefined;
+        table?: string | undefined;
+        qty?: [number, number] | undefined;
+        minRarity?: string | undefined;
+    }[] | undefined;
+}>;
+export type LootTable = z.infer<typeof LootTableSchema>;
+export declare class RegistryService {
+    rarities: Record<string, RarityDef>;
+    items: Record<string, ItemDef>;
+    abilities: Record<string, AbilityDef>;
+    mobs: Record<string, MobDef>;
+    loot: Record<string, LootTable>;
+    constructor();
+    /** (Re)load everything from shared/. Throws (leaving old data intact-ish)
+     *  on schema or cross-reference errors — callers catch and report. */
+    reload(): void;
+    item(id: string): ItemDef;
+    ability(id: string): AbilityDef;
+    mob(id: string): MobDef;
+    lootTable(id: string): LootTable;
+    /** Rarity tiers ordered ascending by power (mult). */
+    rarityOrder(): string[];
+}
+//# sourceMappingURL=registry.d.ts.map

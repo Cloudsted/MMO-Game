@@ -1,0 +1,136 @@
+{
+  "id": "dungeon",
+  "name": "Sunken Crypt",
+  "type": "dungeon",
+  "biome": "dungeon",
+  "persistence": "ephemeral",
+  "fixedTime": 0.92,
+  "lifecycle": {
+    "lifetimeSec": 3000,
+    "downtimeSec": 240,
+    "warnAtSecLeft": [
+      300,
+      60,
+      10
+    ]
+  },
+  "size": {
+    "w": 64,
+    "h": 64
+  },
+  "spawn": {
+    "x": 32,
+    "z": 56,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 40412,
+    "base": 12,
+    "amplitude": 1,
+    "frequency": 0.05,
+    "plateauRadius": 8
+  },
+  "flags": {
+    "safeZone": false,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "dungeon-hub",
+      "label": "Hub City",
+      "target": "hub",
+      "x": 32,
+      "z": 60,
+      "r": 2.2
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "crypt-slimes",
+      "region": {
+        "kind": "circle",
+        "x": 22,
+        "z": 40,
+        "r": 8
+      },
+      "mobs": [
+        {
+          "mob": "slime",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [
+        2,
+        3
+      ],
+      "respawnSec": 60
+    },
+    {
+      "id": "crypt-skeletons-e",
+      "region": {
+        "kind": "circle",
+        "x": 44,
+        "z": 36,
+        "r": 9
+      },
+      "mobs": [
+        {
+          "mob": "skeleton",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [
+        2,
+        3
+      ],
+      "respawnSec": 70
+    },
+    {
+      "id": "crypt-skeletons-n",
+      "region": {
+        "kind": "circle",
+        "x": 26,
+        "z": 20,
+        "r": 8
+      },
+      "mobs": [
+        {
+          "mob": "skeleton",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [
+        2,
+        2
+      ],
+      "respawnSec": 70
+    },
+    {
+      "id": "boss-hall",
+      "region": {
+        "kind": "circle",
+        "x": 46,
+        "z": 12,
+        "r": 5
+      },
+      "mobs": [
+        {
+          "mob": "minotaur_boss",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 99999
+    }
+  ],
+  "npcs": []
+}

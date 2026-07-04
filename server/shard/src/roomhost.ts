@@ -68,6 +68,12 @@ class RoomHost {
         session?.send({ t: "transferFailed", reason: msg.reason });
         break;
       }
+      case "globalChat":
+        this.sim?.deliverGlobalChat(msg.from, msg.text);
+        break;
+      case "roomStatus":
+        this.sim?.setRoomStatus(msg.roomId, msg.open);
+        break;
       case "close":
         this.close(msg.reason);
         break;
@@ -77,6 +83,7 @@ class RoomHost {
   private init(roomId: string, port: number, snapshot: import("@fantasy-mmo/common").RoomState | null): void {
     const def = loadRoomDef(roomId);
     this.sim = new RoomSim(def, snapshot);
+    this.sim.onGlobalChat = (from, text) => this.sendHost({ t: "globalChat", from, text });
     this.log = makeLogger(`roomhost/${roomId}`);
     const consts = gameConstants();
 
@@ -92,6 +99,47 @@ class RoomHost {
     setInterval(() => this.reportAll(), REPORT_INTERVAL_MS).unref();
     setInterval(() => this.sweepTickets(), 10_000).unref();
     setInterval(() => this.sendHost({ t: "stats", players: this.sim!.playerCount() }), 5000).unref();
+
+    // ephemeral lifecycle: warn, evict everyone to the hub, close; the master
+    // reopens the room fresh after its downtime
+    if (def.lifecycle) {
+      const overrideSec = Number(process.env.MMO_LIFETIME_OVERRIDE_SEC ?? 0);
+      this.scheduleExpiry(overrideSec > 0 ? overrideSec : def.lifecycle.lifetimeSec);
+      this.sim.onExpireRequest = (sec) => this.scheduleExpiry(sec); // admin /expire
+    }
+  }
+
+  private expiryTimers: NodeJS.Timeout[] = [];
+
+  /** (Re)schedule the room's collapse `lifetimeSec` from now, with warnings. */
+  private scheduleExpiry(lifetimeSec: number): void {
+    const def = this.sim!.def;
+    if (!def.lifecycle) return;
+    for (const t of this.expiryTimers) clearTimeout(t);
+    this.expiryTimers = [];
+    const lifeMs = lifetimeSec * 1000;
+    for (const warnSec of def.lifecycle.warnAtSecLeft) {
+      const at = lifeMs - warnSec * 1000;
+      if (at <= 0) continue;
+      const label = warnSec >= 60 ? `${Math.round(warnSec / 60)} minute(s)` : `${warnSec} seconds`;
+      this.expiryTimers.push(
+        setTimeout(() => this.sim!.systemAll(`The ${def.name} collapses in ${label}!`), at)
+      );
+    }
+    this.expiryTimers.push(setTimeout(() => this.expire(), lifeMs));
+    this.log.info(`lifecycle armed: expires in ${lifetimeSec}s`);
+  }
+
+  /** Lifetime over: evict everyone toward the hub and shut down. */
+  private expire(): void {
+    if (this.closing) return;
+    this.closing = true;
+    this.log.info("lifetime expired: evicting players and closing");
+    // persist everyone as hub-bound so reconnects go straight there
+    this.sendHost({ t: "report", characters: this.sim!.buildEvictionReport() });
+    for (const s of this.sim!.allSessions()) s.send({ t: "evict", reason: "the dungeon has collapsed" });
+    this.sendHost({ t: "closing", reason: "expired" });
+    setTimeout(() => process.exit(0), 800);
   }
 
   private onConnection(ws: WebSocket): void {
@@ -130,16 +178,15 @@ class RoomHost {
         }
         this.tickets.delete(msg.ticket); // single use
         clearTimeout(helloTimeout);
+        // addPlayer ships welcome + the voxel world (header + chunk batches)
         session = this.sim!.addPlayer(pending.character, send);
-        send({ t: "terrain", ...this.sim!.terrain.encode() });
-        send({ t: "props", props: this.sim!.terrain.props, walls: this.sim!.terrain.walls });
-        send({ t: "portals", portals: this.sim!.def.portals });
+        send({ t: "portals", portals: this.sim!.portalsWire() });
         return;
       }
 
       switch (msg.t) {
         case "move":
-          this.sim!.handleMove(session, msg.seq, msg.x, msg.y, msg.z, msg.yaw, msg.anim);
+          this.sim!.handleMove(session, msg.seq, msg.x, msg.y, msg.z, msg.yaw, msg.anim, msg.pitch ?? 0);
           break;
         case "usePortal": {
           const portal = this.sim!.validatePortalUse(session, msg.portalId);
@@ -157,6 +204,45 @@ class RoomHost {
           });
           break;
         }
+        case "attack":
+          this.sim!.handleAttack(session, msg.yaw, msg.pitch);
+          break;
+        case "equip":
+          this.sim!.handleEquip(session, msg.slot);
+          break;
+        case "invMove":
+          this.sim!.handleInvMove(session, msg.from, msg.to);
+          break;
+        case "consume":
+          this.sim!.handleConsume(session, msg.slot);
+          break;
+        case "dropItem":
+          this.sim!.handleDropItem(session, msg.slot, msg.qty);
+          break;
+        case "pickup":
+          this.sim!.handlePickup(session, msg.id);
+          break;
+        case "talk":
+          this.sim!.handleTalk(session, msg.id);
+          break;
+        case "buy":
+          this.sim!.handleBuy(session, msg.npc, msg.item, msg.qty);
+          break;
+        case "sell":
+          this.sim!.handleSell(session, msg.npc, msg.slot, msg.qty);
+          break;
+        case "chat":
+          this.sim!.handleChat(session, msg.text);
+          break;
+        case "respawn":
+          this.sim!.handleRespawn(session);
+          break;
+        case "blockPlace":
+          this.sim!.handleBlockPlace(session, msg.slot, msg.x, msg.y, msg.z);
+          break;
+        case "blockBreak":
+          this.sim!.handleBlockBreak(session, msg.x, msg.y, msg.z);
+          break;
         case "ping":
           send({ t: "pong", n: msg.n, timeOfDay: this.sim!.timeOfDay() });
           break;
@@ -188,11 +274,12 @@ class RoomHost {
 
   private reportAll(): void {
     if (!this.sim) return;
-    // room state (clock, later drops/buildings) persists even when empty
+    // room state (clock, drops, buildings) persists even when empty —
+    // except ephemeral rooms, which restart fresh by design
     this.sendHost({
       t: "report",
       characters: this.sim.playerCount() > 0 ? this.sim.buildReport() : [],
-      roomState: this.sim.buildRoomState(),
+      roomState: this.sim.def.persistence === "ephemeral" ? undefined : this.sim.buildRoomState(),
     });
   }
 

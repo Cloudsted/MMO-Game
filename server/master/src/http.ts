@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { makeLogger } from "@fantasy-mmo/common";
 import type { Collections, AccountDoc, CharacterDoc } from "./db.js";
 import { register, login, authenticate, AuthError } from "./auth.js";
+import { handleAdmin } from "./admin.js";
 import type { ShardManager } from "./shards.js";
 
 const log = makeLogger("master/http");
@@ -53,6 +54,9 @@ async function route(req: IncomingMessage, res: ServerResponse, cols: Collection
     return json(res, 200, { ok: true, ...shards.status() });
   }
 
+  // admin panel + admin API (ADMIN_KEY-gated inside)
+  if (handleAdmin(req, res, url, shards, process.env.ADMIN_KEY ?? "")) return;
+
   if (method === "POST" && path === "/api/register") {
     const body = JSON.parse(await readBody(req));
     if (typeof body.username !== "string" || typeof body.password !== "string") {
@@ -99,8 +103,12 @@ async function route(req: IncomingMessage, res: ServerResponse, cols: Collection
       name: body.name,
       level: 1,
       xp: 0,
-      gold: 0,
-      inventory: [],
+      gold: 25,
+      // starter kit: a blade and a meal — enough to tag your first slime
+      inventory: [
+        { item: "rusty_sword", qty: 1, rarity: "common" },
+        { item: "bread", qty: 3, rarity: "common" },
+      ],
       roomId: "hub",
       x: null,
       y: null,

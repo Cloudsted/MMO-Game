@@ -28,6 +28,10 @@ public final class Protocol {
         public String sprite = "player";
         public float x, y, z, yaw;
         public String anim = "idle";
+        public int hp = -1, maxHp = -1; // -1 = no health component
+        public int level = 0;
+        public String act = "idle";
+        public float actMs = 0;
 
         public static Entity fromFull(JsonObject o) {
             Entity e = new Entity();
@@ -40,6 +44,11 @@ public final class Protocol {
             e.z = o.get("z").getAsFloat();
             e.yaw = o.get("yaw").getAsFloat();
             e.anim = o.get("anim").getAsString();
+            if (o.has("hp") && !o.get("hp").isJsonNull()) e.hp = o.get("hp").getAsInt();
+            if (o.has("maxHp") && !o.get("maxHp").isJsonNull()) e.maxHp = o.get("maxHp").getAsInt();
+            if (o.has("level") && !o.get("level").isJsonNull()) e.level = o.get("level").getAsInt();
+            if (o.has("act") && !o.get("act").isJsonNull()) e.act = o.get("act").getAsString();
+            if (o.has("actMs") && !o.get("actMs").isJsonNull()) e.actMs = o.get("actMs").getAsFloat();
             return e;
         }
     }
@@ -54,7 +63,7 @@ public final class Protocol {
         return GSON.toJson(o);
     }
 
-    public static String move(int seq, float x, float y, float z, float yaw, String anim) {
+    public static String move(int seq, float x, float y, float z, float yaw, float pitch, String anim) {
         JsonObject o = new JsonObject();
         o.addProperty("t", "move");
         o.addProperty("seq", seq);
@@ -62,6 +71,7 @@ public final class Protocol {
         o.addProperty("y", y);
         o.addProperty("z", z);
         o.addProperty("yaw", yaw);
+        o.addProperty("pitch", pitch); // live aim: releases fire where the mouse points NOW
         o.addProperty("anim", anim);
         return GSON.toJson(o);
     }
@@ -70,6 +80,108 @@ public final class Protocol {
         JsonObject o = new JsonObject();
         o.addProperty("t", "usePortal");
         o.addProperty("portalId", portalId);
+        return GSON.toJson(o);
+    }
+
+    public static String attack(float yaw, float pitch) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "attack");
+        o.addProperty("yaw", yaw);
+        o.addProperty("pitch", pitch);
+        return GSON.toJson(o);
+    }
+
+    public static String equip(int slot) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "equip");
+        o.addProperty("slot", slot);
+        return GSON.toJson(o);
+    }
+
+    public static String invMove(int from, int to) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "invMove");
+        o.addProperty("from", from);
+        o.addProperty("to", to);
+        return GSON.toJson(o);
+    }
+
+    public static String consume(int slot) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "consume");
+        o.addProperty("slot", slot);
+        return GSON.toJson(o);
+    }
+
+    public static String dropItem(int slot, int qty) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "dropItem");
+        o.addProperty("slot", slot);
+        o.addProperty("qty", qty);
+        return GSON.toJson(o);
+    }
+
+    public static String pickup(int id) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "pickup");
+        o.addProperty("id", id);
+        return GSON.toJson(o);
+    }
+
+    public static String talk(int id) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "talk");
+        o.addProperty("id", id);
+        return GSON.toJson(o);
+    }
+
+    public static String buy(int npc, String item, int qty) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "buy");
+        o.addProperty("npc", npc);
+        o.addProperty("item", item);
+        o.addProperty("qty", qty);
+        return GSON.toJson(o);
+    }
+
+    public static String sell(int npc, int slot, int qty) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "sell");
+        o.addProperty("npc", npc);
+        o.addProperty("slot", slot);
+        o.addProperty("qty", qty);
+        return GSON.toJson(o);
+    }
+
+    public static String chat(String text) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "chat");
+        o.addProperty("text", text);
+        return GSON.toJson(o);
+    }
+
+    public static String respawn() {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "respawn");
+        return GSON.toJson(o);
+    }
+
+    public static String blockPlace(int slot, int x, int y, int z) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "blockPlace");
+        o.addProperty("slot", slot);
+        o.addProperty("x", x);
+        o.addProperty("y", y);
+        o.addProperty("z", z);
+        return GSON.toJson(o);
+    }
+
+    public static String blockBreak(int x, int y, int z) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "blockBreak");
+        o.addProperty("x", x);
+        o.addProperty("y", y);
+        o.addProperty("z", z);
         return GSON.toJson(o);
     }
 
