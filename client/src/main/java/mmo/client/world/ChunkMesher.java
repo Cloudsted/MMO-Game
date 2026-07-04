@@ -75,6 +75,18 @@ public final class ChunkMesher {
     private static final float[] CROSS_B = {0.08f, 0, 0.92f, 0, 0, 0.92f, 0, 0.08f, 1, 0, 0.08f, 1, 0.92f, 0, 1, 0.92f, 1, 0.08f, 1, 1};
     private static final float[] CROSS_B2 = {0.92f, 0, 0.08f, 1, 0, 0.08f, 0, 0.92f, 0, 0, 0.92f, 1, 0.08f, 1, 1, 0.08f, 1, 0.92f, 0, 1};
 
+    /** Emit one cross-plant quad, tagging its TOP verts (local y &gt; 0.5) with a
+     *  2.5 brightness sentinel. Still "thin" in the frag (v_br &gt; 1.2 clamps to
+     *  0.95), but voxel.vert reads &gt; 2.0 to bend those verts in the wind while
+     *  the rooted bottom verts stay 1.5. sway=false keeps every vert at 1.5. */
+    private static void crossQuad(Pass target, float[] arr, boolean sway, int tile, int cols,
+                                  int wx, int y, int wz, float[] br, float[] skyL, float[] blkL) {
+        for (int i = 0; i < 4; i++) {
+            br[i] = (sway && arr[i * 5 + 1] > 0.5f) ? 2.5f : 1.5f;
+        }
+        target.quad(arr, 0, tile, cols, wx, y, wz, br, skyL, blkL, false);
+    }
+
     /** Mesh one 16x16 column chunk. */
     public static Result build(VoxelWorld world, VoxelLighting light, int cx, int cz) {
         Result out = new Result();
@@ -103,18 +115,15 @@ public final class ChunkMesher {
                             k = (packed & 15) / 15f;
                         }
                         for (int i = 0; i < 4; i++) {
-                            // 1.5 = "thin double-sided quad" sentinel: the
-                            // shader clamps it to 0.95 for display and uses
-                            // |N.L| in the shadow test (cube faces > 1.0 never
-                            // occur, so the flag can ride the brightness attr)
-                            br[i] = 1.5f;
                             skyL[i] = s;
                             blkL[i] = k;
                         }
-                        target.quad(CROSS_A, 0, b.tileSide, reg.atlasCols, wx, y, wz, br, skyL, blkL, false);
-                        target.quad(CROSS_A2, 0, b.tileSide, reg.atlasCols, wx, y, wz, br, skyL, blkL, false);
-                        target.quad(CROSS_B, 0, b.tileSide, reg.atlasCols, wx, y, wz, br, skyL, blkL, false);
-                        target.quad(CROSS_B2, 0, b.tileSide, reg.atlasCols, wx, y, wz, br, skyL, blkL, false);
+                        // plants bend in the wind; torches/crystals (glow) don't
+                        boolean sway = !b.glow;
+                        crossQuad(target, CROSS_A, sway, b.tileSide, reg.atlasCols, wx, y, wz, br, skyL, blkL);
+                        crossQuad(target, CROSS_A2, sway, b.tileSide, reg.atlasCols, wx, y, wz, br, skyL, blkL);
+                        crossQuad(target, CROSS_B, sway, b.tileSide, reg.atlasCols, wx, y, wz, br, skyL, blkL);
+                        crossQuad(target, CROSS_B2, sway, b.tileSide, reg.atlasCols, wx, y, wz, br, skyL, blkL);
                         continue;
                     }
 

@@ -3,6 +3,7 @@
   "name": "Building Grounds",
   "type": "building",
   "biome": "grass",
+  "wind": 0.6,
   "persistence": "stateful",
   "size": {
     "w": 96,

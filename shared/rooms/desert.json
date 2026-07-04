@@ -3,6 +3,7 @@
   "name": "Sunscour Desert",
   "type": "wilderness",
   "biome": "desert",
+  "wind": 0.85,
   "persistence": "stateful",
   "size": {
     "w": 160,

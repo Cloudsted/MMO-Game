@@ -82,6 +82,7 @@ public class GameUi {
         final Vector3 world = new Vector3();
         boolean screenSpace;
         float sx, sy;
+        float vx; // small horizontal drift so stacked hits don't overlap
         String text;
         Color color;
         float age;
@@ -190,6 +191,7 @@ public class GameUi {
         f.text = text;
         f.color = new Color(color);
         f.scale = scale;
+        f.vx = MathUtils.random(-16f, 16f);
         floaters.add(f);
     }
 
@@ -201,6 +203,7 @@ public class GameUi {
         f.text = text;
         f.color = new Color(color);
         f.scale = scale;
+        f.vx = MathUtils.random(-10f, 10f);
         floaters.add(f);
     }
 
@@ -482,21 +485,29 @@ public class GameUi {
             float rise = f.age * 46f;
             float fx, fy;
             if (f.screenSpace) {
-                fx = f.sx;
+                fx = f.sx + f.vx * f.age;
                 fy = f.sy + rise;
             } else {
                 tmp.set(f.world);
                 if (!cam.frustum.pointInFrustum(tmp)) continue;
                 cam.project(tmp);
-                fx = tmp.x;
+                fx = tmp.x + f.vx * f.age;
                 fy = tmp.y + rise;
             }
-            font.getData().setScale(f.scale);
+            // pop-scale overshoot on spawn, then settle to the base scale
+            float pop = 1f + 0.5f * (float) Math.exp(-f.age * 9f);
+            font.getData().setScale(f.scale * pop);
             layout.setText(font, f.text);
-            font.setColor(0f, 0f, 0f, alpha * 0.7f);
-            font.draw(batch, layout, fx - layout.width / 2f + 1, fy - 1);
+            float lx = fx - layout.width / 2f;
+            // 4-way dark outline keeps numbers legible over the busy world
+            font.setColor(0f, 0f, 0f, alpha * 0.8f);
+            float o = 1.5f;
+            font.draw(batch, layout, lx - o, fy);
+            font.draw(batch, layout, lx + o, fy);
+            font.draw(batch, layout, lx, fy - o);
+            font.draw(batch, layout, lx, fy + o);
             font.setColor(f.color.r, f.color.g, f.color.b, alpha);
-            font.draw(batch, layout, fx - layout.width / 2f, fy);
+            font.draw(batch, layout, lx, fy);
             font.getData().setScale(1f);
         }
         batch.end();

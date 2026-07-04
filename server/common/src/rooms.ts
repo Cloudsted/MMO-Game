@@ -66,6 +66,9 @@ export const RoomDefSchema = z.object({
   name: z.string(),
   type: z.enum(["hub", "wilderness", "dungeon", "building"]),
   biome: z.string(),
+  /** Ambient wind strength for client foliage sway (0 = still, e.g. dungeons).
+   *  Purely visual; sent to the client in the `world` message. ~1 = gentle. */
+  wind: z.number().min(0).default(0),
   persistence: z.enum(["stateful", "ephemeral"]),
   /** pin the visual clock (dungeon mood); omit for the live day/night cycle */
   fixedTime: z.number().min(0).max(1).optional(),

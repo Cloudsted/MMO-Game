@@ -144,6 +144,42 @@ really empty — cheap forensics beat re-launching five times.
   don't stack a low `setForegroundFPS` cap on top of vsync — two competing
   frame pacers add input jitter; vsync paces, the cap is only a high safety
   net (see Main.java).
+- **Do not filmic-tonemap a scene whose lighting is already tuned in LDR.**
+  Bolting an ACES tonemap (+ colour grade) onto the hand-tuned voxel curve
+  lifted the darks and desaturated highlights — sprites and light surfaces
+  went pale, flat, and washed-out in sunlight, and the owner rejected it
+  twice. The curve was tuned to look right at [0,1]; a tonemap re-maps exactly
+  those values. **Rule:** post-process over a tuned LDR scene should only ADD
+  (bloom glow, vignette, god-rays), never RE-MAP the base colours. Keep bloom
+  thresholded high (0.9) so normally-lit geometry never enters the bright pass.
+- **Binary per-sprite shadow-receive reads as strobing, not shading.** A
+  sun-ray test that hard-cut a billboard to 45% brightness the instant it
+  entered a cast shadow made characters flick dark/light as they walked
+  ("washed in sun, instantly dark in shade") — a hard on/off step on a moving
+  subject looks like a bug, not lighting. **Rule:** don't apply a binary
+  brightness step to moving sprites; let the baked positional skylight
+  (caves/canopy) do the gradual darkening, and reserve directional cast
+  shadows for static geometry (which is cached and doesn't strobe).
+- **A post-process pass that binds textures to unit >0 must reset the active
+  texture unit before the HUD draws.** After adding the bloom/composite stack
+  (PostFx), the 3D scene looked perfect but the HUD text and minimap rendered
+  as multicolored garbage while the ShapeRenderer bars (no texture) stayed
+  clean — the tell that it was texture sampling, not draw logic. Cause:
+  `Texture.bind(unit)` calls `glActiveTexture(unit)` and leaves it selected;
+  compositing binds the bloom buffer to unit 1 last, so the active unit stayed
+  1. libGDX `SpriteBatch` binds its font/atlas via `texture.bind()` (no unit)
+  onto the *active* unit while its sampler reads unit 0 — so the glyphs sampled
+  the leftover scene texture. Fix: `Gdx.gl.glActiveTexture(GL_TEXTURE0)` at the
+  end of the composite. Rule: any pass that touches multi-texture units must
+  leave unit 0 active for the 2D batches that follow.
+- **Wrapping the frame in a scene FBO for post-fx is safe IF you keep the HUD
+  outside it and the shadow FBOs before it.** The scene FBO (`begin()` before
+  the sky/clear, `composite()` right before `drawHud`) needs a depth attachment
+  or opaque/water sorting breaks; the shadow-map FBO passes must run *before*
+  `begin()` (they end() back to the backbuffer, then the scene FBO binds); and
+  `MMO_SHOT` still works because the composite lands on the backbuffer before
+  the shot hook reads it. Gate the whole thing behind `MMO_NO_POST=1` so a
+  driver/FBO issue has an instant escape hatch.
 
 ## Art pipeline (Time Fantasy sheets)
 

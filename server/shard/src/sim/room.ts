@@ -521,6 +521,7 @@ export class RoomSim {
       height: WORLD_HEIGHT,
       waterLevel: this.waterLevel(),
       chunks: chunks.length,
+      wind: this.def.wind,
     });
     for (let i = 0; i < chunks.length; i += CHUNKS_PER_MSG) {
       send({ t: "chunks", batch: chunks.slice(i, i + CHUNKS_PER_MSG) });

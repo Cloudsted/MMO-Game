@@ -517,3 +517,71 @@ Quick reference only — the stories behind these (and more) live in
   - Building demolish now EXISTS (bare-hand break refunds placed blocks);
     world mining outside building rooms stays off by design — revisit if
     the owner wants resource gathering.
+- 2026-07-03 **VISUAL EYE-CANDY LAYER — "cinematic voxel"** (owner request:
+  make the 2D-in-3D world pop / a solid aesthetic). All ADDITIVE and
+  client-only — the tuned voxel.frag curve, its CPU mirror
+  (VoxelLighting/DayNight), and the no-jitter shadow cache are UNTOUCHED.
+  New env escape hatches: `MMO_NO_POST=1` (disable post stack), `MMO_PARTICLES=0`.
+  - **Atmosphere** — `world/SkyRenderer.java` + `shaders/sky.{vert,frag}`:
+    a fullscreen gradient sky dome drawn after the clear / before the world
+    (depth off), reconstructing the view ray from `cam.invProjectionView`.
+    Horizon colour = DayNight.skyColor (so the fog still dissolves seamlessly
+    — the fog invariant holds); zenith deep blue by day / near-black by night;
+    warm sun glow + cool moon glow along sun/moonDir; drifting fbm clouds; a
+    twinkling per-cell star field that fades in at night.
+  - **Ambient particles** — `world/ParticleField.java`: camera-local bubble of
+    billboard Decals added to the SHARED decalBatch before its flush. Dust
+    motes (daytime, voxel-lit, scale hard with sunFactor), fireflies (night,
+    additive, near ground), torch embers (additive, seeded from the
+    rebuildFlames torch scan via `particles.setTorches`), forest leaves
+    (fall + flutter). Capped (300) + distance-culled; motes/leaves ride
+    `voxels.lightColorAt` so they vanish in caves.
+  - **Post-process** — `world/PostFx.java` + `shaders/{fullscreen.vert,
+    bright.frag,blur.frag,composite.frag}`: the 3D scene renders into a
+    colour+depth FBO (`begin()` before the clear, `composite()` right before
+    drawHud), then bright-pass → ping-pong blur → composite = additive bloom
+    + ACES tonemap + time-of-day colour grade + vignette + sun god-rays. HUD
+    stays OUTSIDE the FBO (drawn after composite, never blooms). Bloom makes
+    torches/crystals/lava/sun disc/FX bleed light. `ShaderProgram.pedantic`
+    is now set false in Main (the branchy post shaders need it).
+  - **Sprite pop / game feel** — RemotePlayer: hit-flash (white blow on `hit()`
+    from the dmg event) + idle breathing + hit-squash (scale about the feet).
+    WorldScreen: a red self-damage screen pulse. GameUi floaters: pop-scale
+    overshoot + 4-way outline + horizontal drift.
+  - Verified via MMO_SHOT (tools/out/w1*, w2*): day hub (sun bloom + god-rays,
+    dust motes, crisp HUD, 75 fps), night hub (torch bloom pools, stars,
+    fireflies, moody grade). Two traps paid for — see LESSONS.md: the
+    texture-unit leak that garbled the HUD, and the scene-FBO/HUD/shadow-FBO
+    ordering. The screenshot staging cost claude_test its inventory (AFK in
+    the forest → eaten); character re-staged to the hub spawn (the DB
+    enter-world schema requires numeric x/y/z — nulling them fails zod).
+  - **Per-room WIND** (owner request; 2026-07-03 follow-up): new `wind` number
+    on the room def (`server/common/src/rooms.ts`, default 0), shipped in the
+    `world` message (`protocol.ts` + `shared/protocol.json`), read by the
+    client into `VoxelRenderer.wind`. voxel.vert bends the TOP verts of
+    cross-plants (grass/flowers/brush) by `wind * ~0.055 m` on a
+    `sin(u_time)` — ChunkMesher tags those verts with a 2.5 br sentinel
+    (still "thin" in the frag; torches/crystals = glow crosses never sway).
+    The sway is deliberately NOT in shadow.vert, so the cached shadow map
+    can't crawl. Values: forest 1.0, desert 0.85, hub 0.7, grounds 0.6,
+    dungeon = 0 (omitted → schema default). Kept very gentle for a start.
+  - **Owner-feedback tuning pass**: bloom/exposure/grade were washing the
+    scene out — dialled back (threshold 0.72→0.82, bloom 1.15→0.55, exposure
+    1.12→1.0, godray 0.5→0.3, gentler grade tints + saturation, tighter/dimmer
+    sky sun-glow). Night stars were too bright and pulsed in unison — now
+    dim (×0.5), tiny twinkle amplitude (0.9±0.1), each star on its own slow
+    rate + phase (per-cell second hash) so they don't flicker together.
+  - **Owner-feedback lighting fix** (2026-07-03, later — supersedes the
+    tonemap/grade + entity-shadow-receive above): the ACES filmic tonemap +
+    colour grade in composite.frag washed sprites and lit surfaces out in
+    sunlight (filmic lifts darks + desaturates highlights on an already
+    LDR-tuned scene), and the sprite cast-shadow RECEIVE (`entityShadowMul`,
+    a binary 0.45 sun-ray) made characters "instantly run dark" stepping into
+    shade — owner rejected both. Now: composite passes the tuned scene through
+    UNCHANGED, only ADDING emissive bloom (threshold raised to 0.9 so normally
+    -lit geometry never blooms) + subtle god-rays + a light vignette; entities
+    are lit purely by `voxels.lightColorAt` at their position (caves/torch
+    pools still darken/warm them) with NO directional sun-shadow dimming.
+    `entityShadowMul` deleted. Sprites still CAST onto the ground; blocks
+    still RECEIVE the directional shadow map (that base looked good). See
+    LESSONS.md ("don't tonemap an LDR-tuned scene" + "binary sprite shadow").

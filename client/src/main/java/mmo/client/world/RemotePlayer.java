@@ -44,9 +44,12 @@ public class RemotePlayer {
 
     public final Decal decal;
     public final float height;
+    private final float baseW;
     private final PlayerSheet sheet;
     private float animTime = 0;
     private float bobTime = 0;
+    /** 1 → 0 white-flash + squash impulse, fired by hit() on taking damage */
+    private float hitFlash = 0f;
     private final Vector3 tmp = new Vector3();
 
     private static class Sample {
@@ -77,8 +80,13 @@ public class RemotePlayer {
         pos.set(e.x, e.y, e.z);
         pushSample(e.x, e.y, e.z, e.yaw);
 
-        float width = height * sheet.frameW / (float) sheet.frameH;
-        decal = Decal.newDecal(width, height, sheet.frame(PlayerSheet.ROW_DOWN, 0, false), true);
+        baseW = height * sheet.frameW / (float) sheet.frameH;
+        decal = Decal.newDecal(baseW, height, sheet.frame(PlayerSheet.ROW_DOWN, 0, false), true);
+    }
+
+    /** Impact feedback: brief white flash + a squash-and-recover pop. */
+    public void hit() {
+        hitFlash = 1f;
     }
 
     private void pushSample(float x, float y, float z, float yaw) {
@@ -211,10 +219,31 @@ public class RemotePlayer {
             }
             default -> {}
         }
+        // hit flash: blow the sprite toward white as the impulse decays
+        if (hitFlash > 0f) hitFlash = Math.max(0f, hitFlash - dt * 4f);
+        boolean living = !isDead() && !"loot".equals(kind);
+        if (living && hitFlash > 0f) {
+            float f = 0.75f * hitFlash;
+            r = Math.min(1f, r + (1f - r) * f);
+            g = Math.min(1f, g + (1f - g) * f);
+            b = Math.min(1f, b + (1f - b) * f);
+        }
         decal.setColor(r, g, b, a);
-        decal.setPosition(pos.x + jitter, pos.y + height / 2f + bob, pos.z);
+
+        // subtle idle breathing + a hit squash give the flat sprite weight;
+        // scale about the feet (adjust centre Y as the height changes)
+        float sx = 1f, sy = 1f;
+        if (living) {
+            float breath = MathUtils.sin(bobTime * 1.8f + id);
+            sy = (1f + 0.025f * breath) * (1f - 0.18f * hitFlash);
+            sx = (1f - 0.015f * breath) * (1f + 0.14f * hitFlash);
+        }
+        float sw = baseW * sx, sh = height * sy;
+        decal.setDimensions(sw, sh);
+        float cy = pos.y + sh / 2f + bob;
+        decal.setPosition(pos.x + jitter, cy, pos.z);
         // cylindrical billboard: face the camera around Y only (stays upright)
-        tmp.set(cam.position.x, pos.y + height / 2f + bob, cam.position.z);
+        tmp.set(cam.position.x, cy, cam.position.z);
         decal.lookAt(tmp, Vector3.Y);
     }
 

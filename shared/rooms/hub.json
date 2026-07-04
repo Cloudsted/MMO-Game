@@ -3,6 +3,7 @@
   "name": "Hub City",
   "type": "hub",
   "biome": "grass",
+  "wind": 0.7,
   "persistence": "stateful",
   "size": { "w": 128, "h": 128 },
   "spawn": { "x": 64, "z": 64, "yaw": 3.14159 },

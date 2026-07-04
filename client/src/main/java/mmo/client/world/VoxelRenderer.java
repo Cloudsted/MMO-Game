@@ -41,6 +41,9 @@ public final class VoxelRenderer {
     private final Color tmpColor = new Color();
     /** bumped on every chunk rebuild — ShadowMap re-renders when it changes */
     public int meshVersion = 0;
+    /** per-room wind strength (0 = still); drives cross-plant sway in voxel.vert */
+    public float wind = 0f;
+    private float time = 0f;
 
     private static final class ChunkMeshes {
         Mesh solid, glow, water;
@@ -113,6 +116,11 @@ public final class VoxelRenderer {
      * placeholder light into the seam, and nothing ever remeshes it (the old
      * relight-then-mesh-immediately loop left hard lines on chunk borders).
      */
+    /** Advance the animation clock (wind sway) — call once per frame. */
+    public void tick(float dt) {
+        time += dt;
+    }
+
     public void update() {
         int budget = CHUNKS_PER_FRAME;
         while (budget-- > 0 && !relightQueue.isEmpty()) {
@@ -227,6 +235,8 @@ public final class VoxelRenderer {
         shader.setUniformMatrix("u_projView", cam.combined);
         shader.setUniformf("u_camPos", cam.position);
         shader.setUniformf("u_sun", dayNight.sunFactor);
+        shader.setUniformf("u_time", time);
+        shader.setUniformf("u_wind", wind);
         shader.setUniformf("u_fogColor", dayNight.skyColor.r, dayNight.skyColor.g, dayNight.skyColor.b);
         shader.setUniformf("u_fogRange", fogStart, fogEnd);
         if (shadows != null) {

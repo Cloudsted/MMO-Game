@@ -3,6 +3,7 @@
   "name": "Whispering Forest",
   "type": "wilderness",
   "biome": "grass",
+  "wind": 1.0,
   "persistence": "stateful",
   "size": {
     "w": 160,

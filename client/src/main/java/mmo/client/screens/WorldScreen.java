@@ -39,6 +39,9 @@ import mmo.client.world.SpriteLibrary;
 import mmo.client.world.Viewmodel;
 import mmo.client.world.VoxelRenderer;
 import mmo.client.world.VoxelWorld;
+import mmo.client.world.SkyRenderer;
+import mmo.client.world.ParticleField;
+import mmo.client.world.PostFx;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -72,6 +75,9 @@ public class WorldScreen extends ScreenAdapter {
     private final Decal sunDecal, moonDecal;
     private final SpriteLibrary sprites;
     private final FxSystem fx;
+    private final SkyRenderer sky;
+    private final ParticleField particles;
+    private final PostFx postFx;
     private final Viewmodel viewmodel;
     private final GameUi ui;
     private final Texture radialTexture;
@@ -138,6 +144,7 @@ public class WorldScreen extends ScreenAdapter {
     private boolean leaving = false; // transfer/reconnect in progress
     private String statusFlash = null;
     private float statusFlashT = 0;
+    private float selfHitFlash = 0f; // 1 → 0 red screen pulse on taking damage
 
     // combat-local mirrors (server stays authoritative; these shape feel/UI)
     private long movementLockedUntil = 0;
@@ -177,6 +184,9 @@ public class WorldScreen extends ScreenAdapter {
 
         sprites = new SpriteLibrary();
         fx = new FxSystem();
+        sky = new SkyRenderer();
+        particles = new ParticleField();
+        postFx = new PostFx();
         viewmodel = new Viewmodel();
         decalBatch = new DecalBatch(new CameraGroupStrategy(cam));
         ui = new GameUi(socket::sendSafe, game.items);
@@ -300,6 +310,7 @@ public class WorldScreen extends ScreenAdapter {
                     worldInit = false;
                     if (voxels != null) voxels.dispose();
                     voxels = new VoxelRenderer(world);
+                    voxels.wind = msg.has("wind") ? msg.get("wind").getAsFloat() : 0f;
                     if (shadowMap != null) shadowMap.dispose();
                     shadowMap = new ShadowMap(world.w, world.h, world.height);
                 }
@@ -474,12 +485,13 @@ public class WorldScreen extends ScreenAdapter {
                 boolean crit = e.get("crit").getAsBoolean();
                 if (tgt == selfId) {
                     game.audio.play("hit");
+                    selfHitFlash = 1f;
                     ui.addScreenFloater("-" + amount, new Color(1f, 0.3f, 0.25f, 1f), crit ? 1.7f : 1.25f);
                 } else {
-                    RemotePlayer hitRp = remotes.get(tgt);
-                    if (hitRp != null) game.audio.playAt("hit", hitRp.pos.x, hitRp.pos.y + 1f, hitRp.pos.z);
                     RemotePlayer rp = remotes.get(tgt);
                     if (rp != null) {
+                        game.audio.playAt("hit", rp.pos.x, rp.pos.y + 1f, rp.pos.z);
+                        rp.hit();
                         tmp.set(rp.pos.x, rp.pos.y + rp.height + 0.3f, rp.pos.z);
                         ui.addFloater(tmp, amount + (crit ? "!" : ""), crit ? new Color(1f, 0.75f, 0.1f, 1f) : Color.WHITE, crit ? 1.5f : 1.05f);
                     }
@@ -588,6 +600,7 @@ public class WorldScreen extends ScreenAdapter {
             }
         }
         fx.setFlames(flames);
+        particles.setTorches(flames);
     }
 
     private boolean inPvpZone(float x, float z) {
@@ -611,15 +624,6 @@ public class WorldScreen extends ScreenAdapter {
         RemotePlayer existing = remotes.get(e.id);
         if (existing != null) existing.applyFull(e);
         else remotes.put(e.id, new RemotePlayer(e, sprites));
-    }
-
-    /** SHADOW_DIM when a sun-ray from this point hits a block (the entity/
-     *  viewmodel stands in a cast shadow), else 1. Entities never sample the
-     *  shadow maps — this CPU ray is how sprites RECEIVE shadows. */
-    private float entityShadowMul(float x, float y, float z) {
-        if (world == null || !world.ready()) return 1f;
-        return world.sunlit(x, y, z, -dayNight.shadowDir.x, -dayNight.shadowDir.y, -dayNight.shadowDir.z)
-            ? 1f : VoxelRenderer.SHADOW_DIM;
     }
 
     private void flash(String text) {
@@ -1053,6 +1057,7 @@ public class WorldScreen extends ScreenAdapter {
         if (welcomed) game.audio.setContext(roomName, dayNight.sunFactor < 0.22f);
         game.audio.update(dt);
         if (statusFlashT > 0) statusFlashT -= dt;
+        if (selfHitFlash > 0f) selfHitFlash = Math.max(0f, selfHitFlash - dt * 3f);
 
         cam.position.set(
             pos.x + correctionOffset.x,
@@ -1071,6 +1076,7 @@ public class WorldScreen extends ScreenAdapter {
         // each entity casts its CURRENT sprite frame as a sun-facing quad.
         if (voxels != null && shadowMap != null) {
             voxels.update(); // incremental relight + remesh queue
+            voxels.tick(dt); // advance the wind-sway clock
             shadowMap.render(voxels, dayNight);
             shadowMap.beginEntities();
             if (!noEntityShadows) {
@@ -1091,7 +1097,16 @@ public class WorldScreen extends ScreenAdapter {
             shadowMap.endEntities();
         }
 
+        // post-process: render the whole 3D scene into an offscreen FBO, then
+        // composite (bloom/tonemap/grade/vignette/god-rays) to the backbuffer
+        // before the HUD. No-op passthrough when MMO_NO_POST=1.
+        postFx.begin();
+
         ScreenUtils.clear(dayNight.skyColor.r, dayNight.skyColor.g, dayNight.skyColor.b, 1f, true);
+
+        // gradient sky dome + sun/moon glow + clouds + stars (fills the frame
+        // behind the world; depth off, so all geometry paints over it)
+        sky.render(cam, dayNight, dt);
 
         if (voxels != null) {
             voxels.render(cam, dayNight, FOG_START, FOG_END, shadowMap);
@@ -1151,16 +1166,19 @@ public class WorldScreen extends ScreenAdapter {
 
         for (RemotePlayer rp : remotes.values()) {
             // per-entity voxel light (torch pools, cave dark) via the CPU
-            // mirror; a sun-ray test dims the skylight term when the entity
-            // stands in a cast shadow (same factor the ground uses)
+            // mirror. NO directional sun-shadow dimming: sprites used to hard-
+            // cut to 45% the instant they stepped into a cast shadow, which
+            // read as "washed in sun / instantly dark in shade" (owner-rejected).
+            // Caves/canopies still darken sprites through the baked skylight.
             Color tint = voxels != null && ready
-                ? voxels.lightColorAt(rp.pos.x, rp.pos.y + 0.8f, rp.pos.z, dayNight.sunFactor,
-                    entityShadowMul(rp.pos.x, rp.pos.y + rp.height * 0.6f, rp.pos.z))
+                ? voxels.lightColorAt(rp.pos.x, rp.pos.y + 0.8f, rp.pos.z, dayNight.sunFactor)
                 : dayNight.entityLight;
             rp.update(dt, cam, world, tint);
             decalBatch.add(rp.decal);
         }
         fx.update(dt, cam, decalBatch);
+        // ambient particles: dust motes / fireflies / torch embers / leaves
+        particles.update(dt, cam, voxels, dayNight.sunFactor, roomName, decalBatch);
         decalBatch.flush();
 
         // block-building ghost: wireframe cube on the aim target
@@ -1178,6 +1196,10 @@ public class WorldScreen extends ScreenAdapter {
             wireCube(shapes3d, gx, gy, gz);
             shapes3d.end();
         }
+
+        // resolve the scene FBO to the backbuffer through the post stack, THEN
+        // draw the HUD on top (so the HUD is never bloomed/graded)
+        postFx.composite(cam, dayNight);
 
         drawHud(ready);
 
@@ -1234,6 +1256,15 @@ public class WorldScreen extends ScreenAdapter {
 
         // entity hp bars (shapes pass before text so text sits on top)
         Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
+
+        // damage feedback: a red screen pulse when the local player is hit
+        if (selfHitFlash > 0f) {
+            shapes.begin(ShapeRenderer.ShapeType.Filled);
+            shapes.setColor(0.8f, 0.05f, 0.05f, 0.22f * selfHitFlash);
+            shapes.rect(0, 0, w, h);
+            shapes.end();
+        }
+
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         for (RemotePlayer rp : remotes.values()) {
             if (rp.hp < 0 || rp.maxHp <= 0 || "npc".equals(rp.kind) || rp.isDead()) continue;
@@ -1350,8 +1381,7 @@ public class WorldScreen extends ScreenAdapter {
         // dimmed when the player stands in a cast shadow
         if (ready && !ui.dead) {
             Color vmTint = voxels != null
-                ? voxels.lightColorAt(pos.x, pos.y + 1.2f, pos.z, dayNight.sunFactor,
-                    entityShadowMul(pos.x, pos.y + 1.2f, pos.z))
+                ? voxels.lightColorAt(pos.x, pos.y + 1.2f, pos.z, dayNight.sunFactor)
                 : dayNight.entityLight;
             viewmodel.render(hudBatch, vmTint, w, h);
         }
@@ -1394,6 +1424,7 @@ public class WorldScreen extends ScreenAdapter {
         cam.viewportHeight = height;
         hudBatch.getProjectionMatrix().setToOrtho2D(0, 0, width, height);
         shapes.getProjectionMatrix().setToOrtho2D(0, 0, width, height);
+        postFx.resize(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
     }
 
     @Override
@@ -1405,6 +1436,9 @@ public class WorldScreen extends ScreenAdapter {
         decalBatch.dispose();
         sprites.dispose();
         fx.dispose();
+        sky.dispose();
+        particles.dispose();
+        postFx.dispose();
         viewmodel.dispose();
         ui.dispose();
         radialTexture.dispose();

@@ -2,9 +2,17 @@ package mmo.client;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 
 public class Main {
     public static void main(String[] args) {
+        // The new eye-candy shaders (sky, post-process bloom/grade) branch on
+        // uniforms that the GLSL compiler can prove dead in some paths; with
+        // pedantic on, setUniformf on an eliminated uniform throws (LESSONS.md).
+        // Turn it off once at startup — the voxel/shadow shaders keep all their
+        // uniforms live regardless, so this is safe for them too.
+        ShaderProgram.pedantic = false;
+
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
         config.setTitle("fantasy-mmo");
         config.setWindowedMode(1280, 720);
