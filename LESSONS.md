@@ -213,6 +213,16 @@ wiring it in, and make batch pipelines report missing inputs and keep going
   editing `hash2`/`valueNoise`/`fbm` (or their call parameters) after rooms
   ship regenerates *different worlds* under everyone's feet.
 
+- **Verifying directional shadows: put the camera on the SHADOW side.** The
+  shadow-map feature read as completely broken across two launch-debug
+  cycles (empty-map theories, culling theories, a full clean rebuild) — the
+  in-shader debug view then showed the depth compare working perfectly. The
+  actual problem: the test camera looked NW at 08:23 with the sun in the
+  east — every shadow fell away from the viewer, hidden BEHIND its caster.
+  Same scene at 16:19 facing west: dramatic shadows everywhere. Rule: a
+  directional-light test must reason about the light azimuth vs the camera
+  BEFORE concluding failure — or lock a low sun and orbit. (Related rule
+  from the time-lock lesson: pin the clock, then also pin the geometry.)
 - **Block worlds broke every greedy bot walker — give bots real pathfinding.**
   Post-pivot, straight-line walkers with "y = ground height" stalled forever:
   forests are mazes of 1×1 trunk columns, hills have 2-block cliff steps, and

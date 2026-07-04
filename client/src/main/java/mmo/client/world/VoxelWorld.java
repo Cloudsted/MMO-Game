@@ -104,6 +104,28 @@ public final class VoxelWorld {
         return 1;
     }
 
+    /** Lowest standable floor (solid below, 2 air above) — the walk level
+     *  under archways/lintels, where standY would return the arch top. */
+    public float walkY(float x, float z) {
+        int xi = (int) Math.floor(x), zi = (int) Math.floor(z);
+        for (int y = 1; y < height - 1; y++) {
+            if (reg.solid(get(xi, y - 1, zi)) && !reg.solid(get(xi, y, zi)) && !reg.solid(get(xi, y + 1, zi))) {
+                return y;
+            }
+        }
+        return standY(x, z);
+    }
+
+    /** Top of the highest solid block at or below fromY (entity blob shadows
+     *  under tree canopies must not snap to the canopy top). */
+    public float floorBelow(float x, float fromY, float z) {
+        int xi = (int) Math.floor(x), zi = (int) Math.floor(z);
+        for (int y = Math.min(height - 1, (int) Math.floor(fromY)); y >= 0; y--) {
+            if (reg.solid(get(xi, y, zi))) return y + 1;
+        }
+        return 0;
+    }
+
     /** True when a creature AABB (feet at y) intersects any solid block. */
     public boolean collidesAABB(float x, float y, float z, float radius, float bodyHeight) {
         int x0 = (int) Math.floor(x - radius), x1 = (int) Math.floor(x + radius);

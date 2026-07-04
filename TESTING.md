@@ -124,9 +124,9 @@ Run it as a **background task**. First-ever build downloads Gradle + JDK 21
 | `MMO_MUTE=1` | **set on every unattended launch** — the client has full audio now, and a forgotten mute plays combat sounds and music on the user's speakers while they work |
 | `MMO_SHOT=<pathPrefix>` | **the reliable capture path**: writes `<prefix>-1.png` … `<prefix>-8.png` from inside the render loop (glReadPixels), one every ~6 s after entering the world. Immune to the white-frame problem below |
 | `MMO_UI=inventory\|god\|talk\|shop` | opens that UI window on entry (talk/shop auto-talk to the nearest NPC — stage the character within ~4 m of one) |
-| `MMO_DEBUG_NO_PROPS=1` / `NO_SHADOWS=1` / `SINGLE_QUAD=1` / `QUADZ_ONLY=1` | render-pass isolation (see 3.5) |
-| `MMO_DEBUG_UV=1` | props render interpolated UVs as color (r=u, g=v) — the tool that cracks "what is this quad sampling?" mysteries |
-| `MMO_DEBUG_DUMP_PROPS=1` | writes `client/props-dump.txt`, every prop quad's vertices+UVs, for offline analysis |
+| `MMO_DEBUG_NO_SHADOWS=1` | skip entity blob shadows (render-pass isolation) |
+| `MMO_SHADOW_RES=2048` | shadow map resolution (256..8192); lower = chunkier shadow edges |
+| `MMO_DEBUG_SHADOW=1` | shadow debugging: the world renders the light-space compare as color (red = shadowed, green = stored depth, blue = lit, magenta = outside the map) AND the packed shadow map dumps once to tools/out/shadowmap-dump.png. **When shadows "don't work", first check the sun azimuth vs the camera** — shadows fall AWAY from the light and hide behind their casters (see LESSONS.md) |
 
 **Always use a dedicated test account** (`claude_test:devpass1`), never the
 user's (`brian`). Duplicate character login evicts the other session — logging
@@ -197,22 +197,23 @@ state). Assert against these numbers, don't guess from pixels.
 The proven order when something looks wrong (this exact ladder found the
 prop-atlas garbage-strip bug):
 
-1. **Isolate passes** with the debug env flags (props off, shadows off, one
-   quad orientation at a time). **Keep the camera identical across runs**
-   (`MMO_LOOK_AT` + same character position) — an elimination test with a
-   different viewpoint proves nothing; we lost an hour to exactly that.
+1. **Isolate passes** with the debug env flags (blob shadows off, shadow
+   debug view). **Keep the camera identical across runs** (`MMO_LOOK_AT` +
+   same character position) — an elimination test with a different viewpoint
+   proves nothing; we lost an hour to exactly that.
 2. **Zoom into captures**: crop + nearest-neighbor upscale the PNG around the
    artifact (pngjs one-liner in Node) and look at actual pixel colors. Color
    identifies the texture being sampled; shape identifies the geometry.
-3. **Visualize data as color**: `MMO_DEBUG_UV=1` renders UV coordinates
-   instead of textures. Uniform color = degenerate UVs; gradient = healthy.
-4. **Dump and diff**: `MMO_DEBUG_DUMP_PROPS=1` + an offline analysis script
-   (parse quads, assert rectangles/aspect/UV ranges). If the data is right
-   and the render is wrong, suspect the *content* being sampled (atlas), the
-   pass state, or a confounded test — in that order of likelihood.
+3. **Visualize data as color**: `MMO_DEBUG_SHADOW=1` renders the light-space
+   depth compare instead of lighting; the same trick (output the suspect
+   quantity as RGB) cracks most "why is this pixel wrong" mysteries.
+4. **Bisect by position, not just by API**: when a subset of draws is
+   invisible, draw the SAME thing at several screen/world positions in one
+   frame — the shape of where it survives usually names the mechanism
+   (a panel-shaped hole = depth/stencil; a screen edge = projection).
 5. **Regenerate the authoritative data offline**: server modules run directly
-   under Node (`node --import tsx -e "import {Terrain}..."`) since terrain
-   and props are deterministic. Render top-down maps, count ground types,
+   under Node (`npx tsx tools/render-voxel.mts`) since worldgen is
+   deterministic. Render top-down maps, count ground types,
    list prop positions — compare against what the client shows. tools/out/
    holds the renders (`node tools/build-maps.mjs` refreshes the hub map).
 

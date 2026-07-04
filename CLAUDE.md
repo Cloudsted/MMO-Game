@@ -151,6 +151,31 @@ show their block tile).
     shared/rooms/maps/, client TerrainRenderer/TerrainData/PropsRenderer/
     WaterRenderer/BuildingsRenderer/LightManager + terrain/prop/water
     shaders. Prop atlas + ground tiles remain in the pipeline but unused.
+- 2026-07-03 **Directional shadow mapping + sun/moon discs** (owner request:
+  true shadows on all world objects; entities keep circle shadows).
+  - `world/ShadowMap.java`: one orthographic depth pass over the whole room
+    from the active celestial light (sun by day, moon by night — both are
+    `DayNight.lightDir`), depth PACKED INTO RGBA8 color (GL20-safe, no depth
+    textures), re-rendered every frame (~100 draw calls, trivial).
+    Resolution via `MMO_SHADOW_RES` (default 2048, clamp 256..8192). Light
+    origin snaps to texel steps so shadows don't crawl as the sun moves.
+    Leaves cast leafy shadows (cutout discard in shadow.frag); the glow pass
+    (torch flames, crystals, lava) casts nothing by design; water casts
+    nothing but RECEIVES shadows.
+  - `voxel.frag` compares in light space and dims the SKYLIGHT term only
+    (`u_shadowDim` 0.45) — torch pools still glow inside cast shadows, and
+    cave darkness stays governed by the voxel light. Entities/viewmodel keep
+    voxel-light tint + blob circles (unchanged by design).
+  - Sun + moon: procedural 32 px pixel-art discs (layered sun + corona,
+    cratered moon) billboarded 330 m out along `DayNight.sunDir`/`moonDir`,
+    depth-tested so terrain occludes them at the horizon.
+  - Debug: `MMO_DEBUG_SHADOW=1` = light-space compare visualized in-world +
+    a one-shot packed-map dump to tools/out/shadowmap-dump.png.
+  - Same session: portal glow/label anchor via `VoxelWorld.walkY` (the floor
+    UNDER an arch — standY returned the lintel top and floated the glow
+    above the gate), entity blob shadows via `floorBelow` (no more shadows
+    on canopy tops), and water now draws BEFORE billboards so pond surfaces
+    never paint over entities standing in front of them.
 
 ## Conventions
 

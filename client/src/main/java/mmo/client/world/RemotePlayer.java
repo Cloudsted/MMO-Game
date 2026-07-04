@@ -221,8 +221,9 @@ public class RemotePlayer {
         tmp.set(cam.position.x, pos.y + height / 2f + bob, cam.position.z);
         decal.lookAt(tmp, Vector3.Y);
 
-        // blob shadow hugs the ground; fades when airborne
-        float ground = world != null ? world.standY(pos.x, pos.z) : pos.y;
+        // blob shadow hugs the ground UNDER the entity; fades when airborne
+        // (standY would snap it onto tree canopies / arch lintels overhead)
+        float ground = world != null ? world.floorBelow(pos.x, pos.y + 0.5f, pos.z) : pos.y;
         float above = Math.max(0, pos.y - ground);
         shadow.setPosition(pos.x, ground + 0.03f, pos.z);
         shadow.setColor(0f, 0f, 0f, Math.max(0f, (isDead() ? 0.15f : 0.35f) - above * 0.1f));

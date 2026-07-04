@@ -139,9 +139,20 @@ public final class VoxelRenderer {
         return m;
     }
 
+    /** Depth-only pass into a shadow map (light-space matrix pre-set by the
+     *  caller; tiles bound for cutout discard). All chunks, no frustum cull —
+     *  the light sees the whole room. */
+    public void renderDepth(com.badlogic.gdx.graphics.glutils.ShaderProgram depthShader) {
+        tiles.bind(0);
+        depthShader.setUniformi("u_tiles", 0);
+        for (IntMap.Entry<ChunkMeshes> e : meshes) {
+            if (e.value.solid != null) e.value.solid.render(depthShader, GL20.GL_TRIANGLES);
+        }
+    }
+
     /** Solid + cutout + glow passes (opaque world geometry). */
-    public void render(Camera cam, DayNight dayNight, float fogStart, float fogEnd) {
-        begin(cam, dayNight, fogStart, fogEnd);
+    public void render(Camera cam, DayNight dayNight, float fogStart, float fogEnd, ShadowMap shadows) {
+        begin(cam, dayNight, fogStart, fogEnd, shadows);
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glDisable(GL20.GL_BLEND);
         shader.setUniformf("u_fullbright", 0f);
@@ -159,9 +170,10 @@ public final class VoxelRenderer {
         }
     }
 
-    /** Translucent water pass — call AFTER entities/decals so it tints them. */
-    public void renderWater(Camera cam, DayNight dayNight, float fogStart, float fogEnd) {
-        begin(cam, dayNight, fogStart, fogEnd);
+    /** Translucent water pass — drawn BEFORE billboards (no depth write), so
+     *  entities in front of a pond are never painted over by its surface. */
+    public void renderWater(Camera cam, DayNight dayNight, float fogStart, float fogEnd, ShadowMap shadows) {
+        begin(cam, dayNight, fogStart, fogEnd, shadows);
         Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glDepthMask(false);
         Gdx.gl.glEnable(GL20.GL_BLEND);
@@ -177,13 +189,22 @@ public final class VoxelRenderer {
         Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
-    private void begin(Camera cam, DayNight dayNight, float fogStart, float fogEnd) {
+    private void begin(Camera cam, DayNight dayNight, float fogStart, float fogEnd, ShadowMap shadows) {
         shader.bind();
         shader.setUniformMatrix("u_projView", cam.combined);
         shader.setUniformf("u_camPos", cam.position);
         shader.setUniformf("u_sun", dayNight.sunFactor);
         shader.setUniformf("u_fogColor", dayNight.skyColor.r, dayNight.skyColor.g, dayNight.skyColor.b);
         shader.setUniformf("u_fogRange", fogStart, fogEnd);
+        if (shadows != null) {
+            shadows.depthTexture().bind(1);
+            shader.setUniformi("u_shadowMap", 1);
+            shader.setUniformMatrix("u_shadowMat", shadows.matrix());
+            shader.setUniformf("u_shadowDim", 0.45f); // skylight kept in shadow
+        } else {
+            shader.setUniformf("u_shadowDim", 1f);
+        }
+        shader.setUniformf("u_shadowDebug", "1".equals(System.getenv("MMO_DEBUG_SHADOW")) ? 1f : 0f);
         tiles.bind(0);
         shader.setUniformi("u_tiles", 0);
     }

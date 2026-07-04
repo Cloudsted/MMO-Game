@@ -17,6 +17,10 @@ public class DayNight {
     private final float dayLengthSec;
 
     public final Vector3 lightDir = new Vector3(0, -1, 0); // FROM light TOWARD ground
+    /** unit vector from the ground TOWARD the sun disc (may be below horizon) */
+    public final Vector3 sunDir = new Vector3(0, 1, 0);
+    /** unit vector from the ground TOWARD the moon disc (opposite the sun) */
+    public final Vector3 moonDir = new Vector3(0, -1, 0);
     public float sunFactor = 1f; // 0 night .. 1 full day
     public final Color skyColor = new Color();
     /** multiply sprite/decal colors by this — CPU mirror of the shader curve */
@@ -69,6 +73,8 @@ public class DayNight {
         } else {
             lightDir.set(az * 0.85f, -Math.max(-elev, 0.06f), 0.35f).nor();
         }
+        sunDir.set(az * 0.85f, elev, 0.35f).nor();
+        moonDir.set(-az * 0.85f, -elev, -0.35f).nor();
         sunFactor = MathUtils.clamp((elev + 0.05f) / 0.30f, 0f, 1f);
 
         skyColor.set(NIGHT_SKY).lerp(DAY_SKY, sunFactor);

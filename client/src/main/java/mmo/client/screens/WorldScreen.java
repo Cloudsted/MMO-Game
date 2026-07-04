@@ -33,6 +33,7 @@ import mmo.client.world.BlockRegistry;
 import mmo.client.world.DayNight;
 import mmo.client.world.FxSystem;
 import mmo.client.world.RemotePlayer;
+import mmo.client.world.ShadowMap;
 import mmo.client.world.SpriteLibrary;
 import mmo.client.world.Viewmodel;
 import mmo.client.world.VoxelRenderer;
@@ -62,8 +63,12 @@ public class WorldScreen extends ScreenAdapter {
     private final PerspectiveCamera cam;
     private VoxelWorld world;
     private VoxelRenderer voxels;
+    private ShadowMap shadowMap;
     private boolean worldInit = false;
     private final DecalBatch decalBatch;
+    // celestial bodies: pixel-art discs billboarded far along their sky dirs
+    private final Texture sunTexture, moonTexture;
+    private final Decal sunDecal, moonDecal;
     private final SpriteLibrary sprites;
     private final FxSystem fx;
     private final Viewmodel viewmodel;
@@ -170,6 +175,12 @@ public class WorldScreen extends ScreenAdapter {
         decalBatch = new DecalBatch(new CameraGroupStrategy(cam));
         ui = new GameUi(socket::sendSafe, game.items);
         ui.admin = game.master.roles.contains("admin");
+
+        // sun + moon: chunky pixel-art discs (generated; nearest-filtered)
+        sunTexture = makeCelestial(true);
+        moonTexture = makeCelestial(false);
+        sunDecal = Decal.newDecal(34, 34, new TextureRegion(sunTexture), true);
+        moonDecal = Decal.newDecal(22, 22, new TextureRegion(moonTexture), true);
 
         // radial gradient texture: blob shadows + portal glows (generated)
         Pixmap pm = new Pixmap(64, 64, Pixmap.Format.RGBA8888);
@@ -282,6 +293,8 @@ public class WorldScreen extends ScreenAdapter {
                     worldInit = false;
                     if (voxels != null) voxels.dispose();
                     voxels = new VoxelRenderer(world);
+                    if (shadowMap != null) shadowMap.dispose();
+                    shadowMap = new ShadowMap(world.w, world.h, world.height);
                 }
                 case "chunks" -> {
                     if (world != null) {
@@ -513,6 +526,42 @@ public class WorldScreen extends ScreenAdapter {
             }
             default -> {}
         }
+    }
+
+    /** Chunky pixel-art celestial disc: warm layered sun or cratered moon. */
+    private static Texture makeCelestial(boolean sun) {
+        int s = 32;
+        Pixmap pm = new Pixmap(s, s, Pixmap.Format.RGBA8888);
+        for (int y = 0; y < s; y++) {
+            for (int x = 0; x < s; x++) {
+                float dx = (x - 15.5f) / 15.5f, dy = (y - 15.5f) / 15.5f;
+                float d = (float) Math.sqrt(dx * dx + dy * dy);
+                if (sun) {
+                    if (d < 0.55f) pm.setColor(1f, 0.98f, 0.88f, 1f);
+                    else if (d < 0.75f) pm.setColor(1f, 0.92f, 0.55f, 1f);
+                    else if (d < 0.95f) pm.setColor(1f, 0.8f, 0.35f, 0.55f);
+                    else pm.setColor(0, 0, 0, 0);
+                } else {
+                    // fixed crater splotches keep it deterministic + pixel-y
+                    boolean crater = (x >= 9 && x <= 13 && y >= 10 && y <= 14)
+                        || (x >= 18 && x <= 21 && y >= 18 && y <= 21)
+                        || (x >= 14 && x <= 16 && y >= 22 && y <= 24);
+                    if (d < 0.8f) {
+                        if (crater) pm.setColor(0.62f, 0.66f, 0.78f, 1f);
+                        else pm.setColor(0.86f, 0.89f, 0.97f, 1f);
+                    } else if (d < 0.92f) {
+                        pm.setColor(0.7f, 0.74f, 0.86f, 0.5f);
+                    } else {
+                        pm.setColor(0, 0, 0, 0);
+                    }
+                }
+                pm.drawPixel(x, y);
+            }
+        }
+        Texture t = new Texture(pm);
+        t.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        pm.dispose();
+        return t;
     }
 
     /** Flame flipbooks sit on every torch block in the world. */
@@ -1000,11 +1049,39 @@ public class WorldScreen extends ScreenAdapter {
         cam.up.set(0, 1, 0);
         cam.update();
 
+        // directional shadow pass: the whole room from the sun/moon, before
+        // the main framebuffer draws anything that samples it
+        if (voxels != null && shadowMap != null) {
+            voxels.update(); // incremental relight + remesh queue
+            shadowMap.render(voxels, dayNight);
+        }
+
         ScreenUtils.clear(dayNight.skyColor.r, dayNight.skyColor.g, dayNight.skyColor.b, 1f, true);
 
         if (voxels != null) {
-            voxels.update(); // incremental relight + remesh queue
-            voxels.render(cam, dayNight, FOG_START, FOG_END);
+            voxels.render(cam, dayNight, FOG_START, FOG_END, shadowMap);
+            // water draws BEFORE billboards (no depth write): entities in
+            // front of a pond are never painted over by its surface
+            voxels.renderWater(cam, dayNight, FOG_START, FOG_END, shadowMap);
+        }
+
+        // sun + moon discs, billboarded far along their sky directions
+        // (depth-tested, so terrain occludes them at the horizon)
+        if (dayNight.sunDir.y > -0.06f) {
+            sunDecal.setPosition(
+                cam.position.x + dayNight.sunDir.x * 330f,
+                cam.position.y + dayNight.sunDir.y * 330f,
+                cam.position.z + dayNight.sunDir.z * 330f);
+            sunDecal.lookAt(cam.position, Vector3.Y);
+            decalBatch.add(sunDecal);
+        }
+        if (dayNight.moonDir.y > -0.06f) {
+            moonDecal.setPosition(
+                cam.position.x + dayNight.moonDir.x * 330f,
+                cam.position.y + dayNight.moonDir.y * 330f,
+                cam.position.z + dayNight.moonDir.z * 330f);
+            moonDecal.lookAt(cam.position, Vector3.Y);
+            decalBatch.add(moonDecal);
         }
 
         // throttled rebuilds after block edits
@@ -1020,11 +1097,13 @@ public class WorldScreen extends ScreenAdapter {
         }
 
         // portal glows: pulsing cyan billboards; sealed = dim gray ember
+        // (walkY = the gate floor UNDER the archway; standY would return the
+        // lintel top and float the glow above the arch)
         glowTime += dt;
         for (int i = 0; i < portals.size() && ready; i++) {
             Portal p = portals.get(i);
             Decal glow = portalGlows.get(i);
-            float ground = world.standY(p.x(), p.z());
+            float ground = world.walkY(p.x(), p.z());
             boolean open = portalOpen.getOrDefault(p.target(), true);
             float pulse = open ? 0.45f + 0.2f * MathUtils.sin(glowTime * 2.6f) : 0.18f;
             glow.setPosition(p.x(), ground + 1.7f, p.z());
@@ -1047,9 +1126,6 @@ public class WorldScreen extends ScreenAdapter {
         }
         fx.update(dt, cam, decalBatch);
         decalBatch.flush();
-
-        // water is drawn after billboards so ponds tint what's under them
-        if (voxels != null) voxels.renderWater(cam, dayNight, FOG_START, FOG_END);
 
         // block-building ghost: wireframe cube on the aim target
         if (ready && buildingEnabled && !ui.anyWindowOpen() && aimHit
@@ -1157,7 +1233,7 @@ public class WorldScreen extends ScreenAdapter {
         // portal labels (sealed destinations say so)
         if (ready) {
             for (Portal p : portals) {
-                tmp.set(p.x(), world.standY(p.x(), p.z()) + 5.0f, p.z());
+                tmp.set(p.x(), world.walkY(p.x(), p.z()) + 5.5f, p.z());
                 if (cam.position.dst2(tmp) > 70 * 70) continue;
                 if (!cam.frustum.pointInFrustum(tmp)) continue;
                 cam.project(tmp);
@@ -1285,6 +1361,9 @@ public class WorldScreen extends ScreenAdapter {
     @Override
     public void dispose() {
         if (voxels != null) voxels.dispose();
+        if (shadowMap != null) shadowMap.dispose();
+        sunTexture.dispose();
+        moonTexture.dispose();
         decalBatch.dispose();
         sprites.dispose();
         fx.dispose();
