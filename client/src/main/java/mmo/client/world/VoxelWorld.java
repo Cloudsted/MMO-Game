@@ -73,6 +73,24 @@ public final class VoxelWorld {
         return data[x + z * w + y * w * h] & 0xff;
     }
 
+    /**
+     * Cast a ray from (x,y,z) along (dx,dy,dz) — pass the direction TOWARD
+     * the sun, i.e. -DayNight.shadowDir — and report whether it escapes the
+     * world without hitting a solid block. This is how entities RECEIVE cast
+     * shadows (their tint dims by VoxelRenderer.SHADOW_DIM when blocked);
+     * they never sample the shadow maps, so billboard self-shadowing is
+     * impossible. 0.4 m steps resolve every 1 m block on the way out.
+     */
+    public boolean sunlit(float x, float y, float z, float dx, float dy, float dz) {
+        for (float t = 0.5f; t < 160f; t += 0.4f) {
+            float sx = x + dx * t, sy = y + dy * t, sz = z + dz * t;
+            if (sy >= height) return true;
+            if (sx < 0 || sx >= w || sz < 0 || sz >= h) return true;
+            if (reg.solid(get((int) Math.floor(sx), (int) Math.floor(sy), (int) Math.floor(sz)))) return false;
+        }
+        return true;
+    }
+
     public void set(int x, int y, int z, int id) {
         if (x < 0 || x >= w || y < 0 || y >= height || z < 0 || z >= h) return;
         data[x + z * w + y * w * h] = (byte) id;

@@ -124,13 +124,15 @@ Run it as a **background task**. First-ever build downloads Gradle + JDK 21
 | `MMO_MUTE=1` | **set on every unattended launch** — the client has full audio now, and a forgotten mute plays combat sounds and music on the user's speakers while they work |
 | `MMO_SHOT=<pathPrefix>` | **the reliable capture path**: writes `<prefix>-1.png` … `<prefix>-8.png` from inside the render loop (glReadPixels), one every ~6 s after entering the world. Immune to the white-frame problem below |
 | `MMO_UI=inventory\|god\|talk\|shop` | opens that UI window on entry (talk/shop auto-talk to the nearest NPC — stage the character within ~4 m of one) |
-| `MMO_DEBUG_NO_SHADOWS=1` | skip entity blob shadows (render-pass isolation) |
-| `MMO_SHADOW_RES=2048` | shadow map resolution (256..8192); lower = chunkier shadow edges |
-| `MMO_DEBUG_SHADOW=1` | shadow debugging: the world renders the light-space compare as color (red = shadowed, green = stored depth, blue = lit, magenta = outside the map) AND the packed shadow map dumps once to tools/out/shadowmap-dump.png. **When shadows "don't work", first check the sun azimuth vs the camera** — shadows fall AWAY from the light and hide behind their casters (see LESSONS.md) |
+| `MMO_DEBUG_NO_SHADOWS=1` | skip the entity CAST-shadow pass (render-pass isolation; blob decals no longer exist) |
+| `MMO_SHADOW_RES=4096` | world shadow map resolution (256..8192, entity map runs at half); lower = chunkier shadow edges |
+| `MMO_DEBUG_SHADOW=1` | shadow debugging: the world renders the light-space compare as color (red = shadowed, green = stored depth, blue = lit, magenta = outside the map; cyan = surface absent from the map — leaf-cutout holes and water are EXPECTED cyan, they don't cast) AND the packed shadow map dumps once to tools/out/shadowmap-dump.png after the world finishes meshing. **When shadows "don't work", first check the sun azimuth vs the camera** — shadows fall AWAY from the light and hide behind their casters (see LESSONS.md) |
 
 **Always use a dedicated test account** (`claude_test:devpass1`), never the
 user's (`brian`). Duplicate character login evicts the other session — logging
-in as the user kicks them out of their own game.
+in as the user kicks them out of their own game. **If the user is currently
+playing on `claude_test`** (we sometimes hand them an autologin client),
+verify with `claude_test2:devpass1` instead — same eviction rule applies.
 
 **Env vars do not persist between agent PowerShell calls.** Every launch must
 set the full set in the same command. (An unset `MMO_AUTOLOGIN` = client stuck

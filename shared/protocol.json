@@ -214,6 +214,7 @@
         "roomId": "s",
         "selfId": "n",
         "name": "s",
+        "sprite": "s",
         "spawn": {
           "x": "n",
           "y": "n",

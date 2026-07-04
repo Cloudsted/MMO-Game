@@ -24,6 +24,8 @@ public final class GameConstants {
 
     public final float bPlaceRange;
 
+    public final float dayLengthSec;
+
     private GameConstants(JsonObject root) {
         JsonObject m = root.getAsJsonObject("movement");
         walkSpeed = m.get("walkSpeed").getAsFloat();
@@ -44,6 +46,9 @@ public final class GameConstants {
 
         JsonObject b = root.getAsJsonObject("building");
         bPlaceRange = b.get("placeRangeM").getAsFloat();
+
+        JsonObject wd = root.getAsJsonObject("world");
+        dayLengthSec = wd.get("dayLengthSec").getAsFloat();
     }
 
     public static GameConstants load() {

@@ -251,7 +251,7 @@ export interface ShopWire {
 }
 
 export type ServerToClient =
-  | { t: "welcome"; roomId: string; selfId: number; name: string; spawn: { x: number; y: number; z: number; yaw: number }; timeOfDay: number; ents: EntityFull[]; safeZone: boolean; regions: RegionWire[]; buildingEnabled: boolean }
+  | { t: "welcome"; roomId: string; selfId: number; name: string; sprite: string; spawn: { x: number; y: number; z: number; yaw: number }; timeOfDay: number; ents: EntityFull[]; safeZone: boolean; regions: RegionWire[]; buildingEnabled: boolean }
   /** voxel world header: dimensions + how many chunk payloads follow */
   | { t: "world"; w: number; h: number; height: number; waterLevel: number | null; chunks: number }
   /** deflated 16×16×height block chunks (base64 raw-deflate), batched */

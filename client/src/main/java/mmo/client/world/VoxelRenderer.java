@@ -26,6 +26,9 @@ import java.util.List;
 public final class VoxelRenderer {
     private static final int CHUNK = VoxelWorld.CHUNK;
     private static final int CHUNKS_PER_FRAME = 6;
+    /** skylight multiplier inside a cast shadow — entities dim by the SAME
+     *  factor via lightColorAt(..., shadowMul) so sprites match the ground */
+    public static final float SHADOW_DIM = 0.45f;
 
     public final VoxelWorld world;
     public final VoxelLighting lighting;
@@ -33,8 +36,11 @@ public final class VoxelRenderer {
     private final Texture tiles;
     private final IntMap<ChunkMeshes> meshes = new IntMap<>();
     private final IntSet relightSet = new IntSet();
-    private final List<Integer> queue = new ArrayList<>();
+    private final List<Integer> relightQueue = new ArrayList<>();
+    private final List<Integer> meshQueue = new ArrayList<>();
     private final Color tmpColor = new Color();
+    /** bumped on every chunk rebuild — ShadowMap re-renders when it changes */
+    public int meshVersion = 0;
 
     private static final class ChunkMeshes {
         Mesh solid, glow, water;
@@ -64,7 +70,8 @@ public final class VoxelRenderer {
 
     /** Queue every chunk, nearest to (px,pz) first — call once chunks arrive. */
     public void enqueueAll(float px, float pz) {
-        queue.clear();
+        relightQueue.clear();
+        meshQueue.clear();
         relightSet.clear();
         List<int[]> order = new ArrayList<>();
         for (int cz = 0; cz < world.chunksZ(); cz++)
@@ -74,7 +81,8 @@ public final class VoxelRenderer {
         for (int[] c : order) {
             int k = key(c[0], c[1]);
             relightSet.add(k);
-            queue.add(k);
+            relightQueue.add(k);
+            meshQueue.add(k);
         }
     }
 
@@ -92,25 +100,49 @@ public final class VoxelRenderer {
                 int nx = cx + dx, nz = cz + dz;
                 if (nx < 0 || nz < 0 || nx >= world.chunksX() || nz >= world.chunksZ()) continue;
                 int k = key(nx, nz);
-                relightSet.add(k);
-                if (!queue.contains(k)) queue.add(k);
+                if (relightSet.add(k)) relightQueue.add(k);
+                if (!meshQueue.contains(k)) meshQueue.add(k);
             }
         }
     }
 
-    /** Process a few queued chunks per frame (relight, then rebuild meshes). */
+    /**
+     * Process queued chunks: relights run ahead, and a chunk only meshes once
+     * its whole 3x3 neighbourhood is lit. Border vertices sample neighbour
+     * chunks' light — meshing before the neighbour computes bakes full-sky
+     * placeholder light into the seam, and nothing ever remeshes it (the old
+     * relight-then-mesh-immediately loop left hard lines on chunk borders).
+     */
     public void update() {
         int budget = CHUNKS_PER_FRAME;
-        while (budget-- > 0 && !queue.isEmpty()) {
-            int k = queue.remove(0);
-            int cx = k & 0xffff, cz = (k >> 16) & 0xffff;
-            if (relightSet.remove(k)) lighting.compute(cx, cz);
-            rebuildChunk(cx, cz, k);
+        while (budget-- > 0 && !relightQueue.isEmpty()) {
+            int k = relightQueue.remove(0);
+            relightSet.remove(k);
+            lighting.compute(k & 0xffff, (k >> 16) & 0xffff);
+        }
+        budget = CHUNKS_PER_FRAME;
+        while (budget-- > 0 && !meshQueue.isEmpty()) {
+            int k = meshQueue.get(0);
+            if (!neighborhoodLit(k)) break; // wait for relights to catch up
+            meshQueue.remove(0);
+            rebuildChunk(k & 0xffff, (k >> 16) & 0xffff, k);
         }
     }
 
+    private boolean neighborhoodLit(int k) {
+        int cx = k & 0xffff, cz = (k >> 16) & 0xffff;
+        for (int dz = -1; dz <= 1; dz++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                int nx = cx + dx, nz = cz + dz;
+                if (nx < 0 || nz < 0 || nx >= world.chunksX() || nz >= world.chunksZ()) continue;
+                if (relightSet.contains(key(nx, nz))) return false;
+            }
+        }
+        return true;
+    }
+
     public boolean idle() {
-        return queue.isEmpty();
+        return relightQueue.isEmpty() && meshQueue.isEmpty();
     }
 
     private void rebuildChunk(int cx, int cz, int k) {
@@ -125,6 +157,7 @@ public final class VoxelRenderer {
             new Vector3(cx * CHUNK, 0, cz * CHUNK),
             new Vector3(cx * CHUNK + CHUNK, world.height, cz * CHUNK + CHUNK));
         meshes.put(k, cm);
+        meshVersion++;
     }
 
     private static Mesh upload(ChunkMesher.Pass pass) {
@@ -198,9 +231,14 @@ public final class VoxelRenderer {
         shader.setUniformf("u_fogRange", fogStart, fogEnd);
         if (shadows != null) {
             shadows.depthTexture().bind(1);
+            shadows.entityDepthTexture().bind(2);
             shader.setUniformi("u_shadowMap", 1);
+            shader.setUniformi("u_entShadowMap", 2);
             shader.setUniformMatrix("u_shadowMat", shadows.matrix());
-            shader.setUniformf("u_shadowDim", 0.45f); // skylight kept in shadow
+            shader.setUniformf("u_shadowDim", SHADOW_DIM); // skylight kept in shadow
+            shader.setUniformf("u_lightDir", dayNight.shadowDir);
+            shader.setUniformf("u_shadowTexel", shadows.texelWorld());
+            shader.setUniformf("u_shadowRange", shadows.depthRange());
         } else {
             shader.setUniformf("u_shadowDim", 1f);
         }
@@ -209,10 +247,16 @@ public final class VoxelRenderer {
         shader.setUniformi("u_tiles", 0);
     }
 
-    /** Voxel-lit tint for billboards/viewmodel at a world position. */
-    public Color lightColorAt(float x, float y, float z, float sun) {
+    /** Voxel-lit tint for billboards/viewmodel at a world position.
+     *  shadowMul dims the skylight term only (1 = sunlit, SHADOW_DIM = in a
+     *  cast shadow) — the CPU mirror of the shader's shadow path. */
+    public Color lightColorAt(float x, float y, float z, float sun, float shadowMul) {
         int packed = lighting.at((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
-        return VoxelLighting.lightColor(packed, sun, tmpColor);
+        return VoxelLighting.lightColor(packed, sun, shadowMul, tmpColor);
+    }
+
+    public Color lightColorAt(float x, float y, float z, float sun) {
+        return lightColorAt(x, y, z, sun, 1f);
     }
 
     public void dispose() {

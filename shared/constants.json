@@ -51,7 +51,7 @@
   "world": {
     "worldHeight": 48,
     "chunkBlocks": 16,
-    "dayLengthSec": 1200,
+    "dayLengthSec": 4800,
     "terrainYToleranceM": 3.0
   }
 }

@@ -17,6 +17,15 @@ public class DayNight {
     private final float dayLengthSec;
 
     public final Vector3 lightDir = new Vector3(0, -1, 0); // FROM light TOWARD ground
+    /**
+     * lightDir quantized to 0.25-degree sun steps — the shadow pass keys off
+     * this so the light-space matrix is IDENTICAL between steps (a shadow map
+     * re-projected from a continuously-moving sun makes every edge crawl and
+     * shimmer per frame). One step lands every dayLengthSec/1440 seconds
+     * (~3.3 s at the current 4800 s day).
+     */
+    public final Vector3 shadowDir = new Vector3(0, -1, 0);
+    private static final float SHADOW_STEP = 0.25f * MathUtils.degreesToRadians;
     /** unit vector from the ground TOWARD the sun disc (may be below horizon) */
     public final Vector3 sunDir = new Vector3(0, 1, 0);
     /** unit vector from the ground TOWARD the moon disc (opposite the sun) */
@@ -75,6 +84,15 @@ public class DayNight {
         }
         sunDir.set(az * 0.85f, elev, 0.35f).nor();
         moonDir.set(-az * 0.85f, -elev, -0.35f).nor();
+
+        // shadow light: same formula at the quantized sun angle
+        float qtheta = Math.round(theta / SHADOW_STEP) * SHADOW_STEP;
+        float qElev = MathUtils.sin(qtheta), qAz = MathUtils.cos(qtheta);
+        if (qElev >= 0) {
+            shadowDir.set(-qAz * 0.85f, -Math.max(qElev, 0.06f), -0.35f).nor();
+        } else {
+            shadowDir.set(qAz * 0.85f, -Math.max(-qElev, 0.06f), 0.35f).nor();
+        }
         sunFactor = MathUtils.clamp((elev + 0.05f) / 0.30f, 0f, 1f);
 
         skyColor.set(NIGHT_SKY).lerp(DAY_SKY, sunFactor);

@@ -32,6 +32,7 @@ import mmo.client.util.ItemRegistry;
 import mmo.client.world.BlockRegistry;
 import mmo.client.world.DayNight;
 import mmo.client.world.FxSystem;
+import mmo.client.world.PlayerSheet;
 import mmo.client.world.RemotePlayer;
 import mmo.client.world.ShadowMap;
 import mmo.client.world.SpriteLibrary;
@@ -124,6 +125,11 @@ public class WorldScreen extends ScreenAdapter {
     private boolean manualCursorFree = false; // ESC released the mouse on purpose
 
     private int selfId = -1;
+    /** own sprite name (welcome message) — casts the local player's shadow
+     *  even though no self billboard is drawn */
+    private String selfSprite = null;
+    private float selfAnimTime = 0;
+    private final boolean noEntityShadows = "1".equals(System.getenv("MMO_DEBUG_NO_SHADOWS"));
     private String roomName = "";
     private boolean safeZone = true;
     private boolean welcomed = false;
@@ -165,7 +171,7 @@ public class WorldScreen extends ScreenAdapter {
         cam.near = 0.1f;
         cam.far = 400f;
 
-        dayNight = new DayNight(1200f);
+        dayNight = new DayNight(game.constants.dayLengthSec);
         String timeOffset = System.getenv("MMO_TIME_OFFSET");
         if (timeOffset != null) dayNight.addDebugOffset(Float.parseFloat(timeOffset));
 
@@ -249,6 +255,7 @@ public class WorldScreen extends ScreenAdapter {
                 case "welcome" -> {
                     welcomed = true;
                     selfId = msg.get("selfId").getAsInt();
+                    if (msg.has("sprite")) selfSprite = msg.get("sprite").getAsString();
                     roomName = msg.get("roomId").getAsString();
                     safeZone = !msg.has("safeZone") || msg.get("safeZone").getAsBoolean();
                     buildingEnabled = msg.has("buildingEnabled") && msg.get("buildingEnabled").getAsBoolean();
@@ -603,7 +610,16 @@ public class WorldScreen extends ScreenAdapter {
         if (e.id == selfId) return;
         RemotePlayer existing = remotes.get(e.id);
         if (existing != null) existing.applyFull(e);
-        else remotes.put(e.id, new RemotePlayer(e, sprites, radialRegion));
+        else remotes.put(e.id, new RemotePlayer(e, sprites));
+    }
+
+    /** SHADOW_DIM when a sun-ray from this point hits a block (the entity/
+     *  viewmodel stands in a cast shadow), else 1. Entities never sample the
+     *  shadow maps — this CPU ray is how sprites RECEIVE shadows. */
+    private float entityShadowMul(float x, float y, float z) {
+        if (world == null || !world.ready()) return 1f;
+        return world.sunlit(x, y, z, -dayNight.shadowDir.x, -dayNight.shadowDir.y, -dayNight.shadowDir.z)
+            ? 1f : VoxelRenderer.SHADOW_DIM;
     }
 
     private void flash(String text) {
@@ -1050,10 +1066,29 @@ public class WorldScreen extends ScreenAdapter {
         cam.update();
 
         // directional shadow pass: the whole room from the sun/moon, before
-        // the main framebuffer draws anything that samples it
+        // the main framebuffer draws anything that samples it. World map is
+        // cached between sun steps; the entity map re-draws every frame —
+        // each entity casts its CURRENT sprite frame as a sun-facing quad.
         if (voxels != null && shadowMap != null) {
             voxels.update(); // incremental relight + remesh queue
             shadowMap.render(voxels, dayNight);
+            shadowMap.beginEntities();
+            if (!noEntityShadows) {
+                for (RemotePlayer rp : remotes.values()) {
+                    shadowMap.entityQuad(rp.decal.getTextureRegion(),
+                        rp.pos.x, rp.pos.y, rp.pos.z, rp.decal.getWidth(), rp.height);
+                }
+                if (selfSprite != null && welcomed) {
+                    PlayerSheet sheet = sprites.sheet(selfSprite);
+                    float sh = sprites.height(selfSprite);
+                    float sw = sh * sheet.frameW / (float) sheet.frameH;
+                    if (movingNow) selfAnimTime += dt;
+                    shadowMap.entityQuad(
+                        sheet.frame(PlayerSheet.ROW_DOWN, (int) (selfAnimTime * 6f), movingNow),
+                        pos.x, pos.y, pos.z, sw, sh);
+                }
+            }
+            shadowMap.endEntities();
         }
 
         ScreenUtils.clear(dayNight.skyColor.r, dayNight.skyColor.g, dayNight.skyColor.b, 1f, true);
@@ -1114,14 +1149,15 @@ public class WorldScreen extends ScreenAdapter {
             decalBatch.add(glow);
         }
 
-        boolean noShadows = "1".equals(System.getenv("MMO_DEBUG_NO_SHADOWS"));
         for (RemotePlayer rp : remotes.values()) {
-            // per-entity voxel light (torch pools, cave dark) via the CPU mirror
+            // per-entity voxel light (torch pools, cave dark) via the CPU
+            // mirror; a sun-ray test dims the skylight term when the entity
+            // stands in a cast shadow (same factor the ground uses)
             Color tint = voxels != null && ready
-                ? voxels.lightColorAt(rp.pos.x, rp.pos.y + 0.8f, rp.pos.z, dayNight.sunFactor)
+                ? voxels.lightColorAt(rp.pos.x, rp.pos.y + 0.8f, rp.pos.z, dayNight.sunFactor,
+                    entityShadowMul(rp.pos.x, rp.pos.y + rp.height * 0.6f, rp.pos.z))
                 : dayNight.entityLight;
             rp.update(dt, cam, world, tint);
-            if (!noShadows) decalBatch.add(rp.shadow);
             decalBatch.add(rp.decal);
         }
         fx.update(dt, cam, decalBatch);
@@ -1310,10 +1346,12 @@ public class WorldScreen extends ScreenAdapter {
         font.draw(hudBatch, status, 10, h - 10);
 
         // first-person viewmodel (overlay pass — never clips world geometry),
-        // lit by the voxel light at the player like everything else
+        // lit by the voxel light at the player like everything else — and
+        // dimmed when the player stands in a cast shadow
         if (ready && !ui.dead) {
             Color vmTint = voxels != null
-                ? voxels.lightColorAt(pos.x, pos.y + 1.2f, pos.z, dayNight.sunFactor)
+                ? voxels.lightColorAt(pos.x, pos.y + 1.2f, pos.z, dayNight.sunFactor,
+                    entityShadowMul(pos.x, pos.y + 1.2f, pos.z))
                 : dayNight.entityLight;
             viewmodel.render(hudBatch, vmTint, w, h);
         }

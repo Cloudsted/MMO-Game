@@ -154,18 +154,47 @@ show their block tile).
 - 2026-07-03 **Directional shadow mapping + sun/moon discs** (owner request:
   true shadows on all world objects; entities keep circle shadows).
   - `world/ShadowMap.java`: one orthographic depth pass over the whole room
-    from the active celestial light (sun by day, moon by night — both are
-    `DayNight.lightDir`), depth PACKED INTO RGBA8 color (GL20-safe, no depth
-    textures), re-rendered every frame (~100 draw calls, trivial).
-    Resolution via `MMO_SHADOW_RES` (default 2048, clamp 256..8192). Light
-    origin snaps to texel steps so shadows don't crawl as the sun moves.
-    Leaves cast leafy shadows (cutout discard in shadow.frag); the glow pass
-    (torch flames, crystals, lava) casts nothing by design; water casts
-    nothing but RECEIVES shadows.
-  - `voxel.frag` compares in light space and dims the SKYLIGHT term only
-    (`u_shadowDim` 0.45) — torch pools still glow inside cast shadows, and
-    cave darkness stays governed by the voxel light. Entities/viewmodel keep
-    voxel-light tint + blob circles (unchanged by design).
+    from the active celestial light (sun by day, moon by night), depth
+    PACKED INTO RGBA8 color (GL20-safe, no depth textures). The pass keys
+    off `DayNight.shadowDir` — the sun angle QUANTIZED to 0.25° steps — and
+    re-renders ONLY when that steps (~0.8 s at dayLength 1200) or a chunk
+    remeshes (`VoxelRenderer.meshVersion`); between steps the map is
+    bit-identical, so shadow edges cannot crawl or shimmer. Resolution via
+    `MMO_SHADOW_RES` (default 4096, clamp 256..8192). Leaves cast leafy
+    shadows (cutout discard in shadow.frag); the glow pass (torch flames,
+    crystals, lava) casts nothing by design; water casts nothing but
+    RECEIVES shadows.
+  - **Entity shadows (2026-07-03, owner request — replaced the blob
+    circles)**: a SECOND half-res depth map re-drawn every frame holds every
+    entity's CURRENT sprite frame as a vertical quad rotated to face the
+    sun's azimuth (paper-doll cutout; shadow.frag's alpha discard casts the
+    sprite's transparency properly). voxel.frag shadows against
+    `min(worldDepth, entityDepth)`, so sprite shadows land on terrain,
+    walls, and water; the cached world map keeps its no-jitter property.
+    The LOCAL player also casts (the welcome message now carries a `sprite`
+    field — the server excludes self from ents, so the client can't learn
+    it any other way). Entities RECEIVE via `VoxelWorld.sunlit()` — a CPU ray toward
+    the sun that dims the sprite/viewmodel tint by `VoxelRenderer.
+    SHADOW_DIM` (skylight only, torch glow survives); they never sample the
+    maps, so billboard self-shadowing is impossible. `MMO_DEBUG_NO_SHADOWS`
+    now disables the entity CAST pass (blob decals no longer exist).
+    Same session: `dayLengthSec` 1200 → 4800 (owner wanted a 4× slower
+    cycle) — and DayNight now reads it from GameConstants instead of a
+    hardcoded 1200 literal (a convention violation that would have silently
+    desynced the client clock from the server's).
+  - `voxel.frag` dims the SKYLIGHT term only (`u_shadowDim` 0.45) — torch
+    pools still glow inside cast shadows, and cave darkness stays governed
+    by the voxel light. Face normals come from screen-space derivatives
+    (exact for blocks): faces pointing away from the light are shadowed
+    WITHOUT a map lookup (can't acne), lit faces compare with a
+    slope-scaled bias in METERS (`0.02 + 1.5·texel·tanθ`; texel size and
+    far−near passed as uniforms) so edges stay within ~2 texels of the
+    caster at every hour. Crossed plants are flagged thin/double-sided via
+    a br=1.5 vertex sentinel (shader uses |ndl|, clamps br back to 0.95).
+    Entities/viewmodel keep voxel-light tint + blob circles (unchanged by
+    design). Chunk-border light seams: relight and mesh are now separate
+    queues — a chunk meshes only once its 3×3 neighbourhood is relit (see
+    LESSONS.md for all three of these hunts).
   - Sun + moon: procedural 32 px pixel-art discs (layered sun + corona,
     cratered moon) billboarded 330 m out along `DayNight.sunDir`/`moonDir`,
     depth-tested so terrain occludes them at the horizon.

@@ -154,10 +154,12 @@ public final class VoxelLighting {
     /**
      * Shared light->color curve — the CPU mirror of voxel.frag (change both
      * together). Quadratic falloff keeps caves dark and surfaces punchy.
+     * shadowMul dims the SKYLIGHT term only (cast shadows never kill torch
+     * glow) — pass VoxelRenderer.SHADOW_DIM when the position is shadowed.
      */
-    public static Color lightColor(int packed, float sun, Color out) {
+    public static Color lightColor(int packed, float sun, float shadowMul, Color out) {
         float s = (packed >> 4) / 15f, b = (packed & 15) / 15f;
-        float sl = s * s, bl = b * b;
+        float sl = s * s * shadowMul, bl = b * b;
         float skyR = 0.16f + (1.02f - 0.16f) * sun;
         float skyG = 0.19f + (0.99f - 0.19f) * sun;
         float skyB = 0.34f + (0.95f - 0.34f) * sun;
@@ -167,5 +169,9 @@ public final class VoxelLighting {
             Math.min(1f, Math.max(Math.max(sl * skyB, bl * 0.61f), 0.045f)),
             1f);
         return out;
+    }
+
+    public static Color lightColor(int packed, float sun, Color out) {
+        return lightColor(packed, sun, 1f, out);
     }
 }

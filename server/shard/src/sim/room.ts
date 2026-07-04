@@ -504,6 +504,7 @@ export class RoomSim {
       roomId: this.def.id,
       selfId: entity.id,
       name: character.name,
+      sprite: entity.renderable.sprite, // client casts the local player's shadow with it
       spawn: { x: entity.pos.x, y: entity.pos.y, z: entity.pos.z, yaw: entity.pos.yaw },
       timeOfDay: this.timeOfDay(),
       ents,

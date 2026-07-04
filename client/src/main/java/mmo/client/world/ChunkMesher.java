@@ -103,7 +103,11 @@ public final class ChunkMesher {
                             k = (packed & 15) / 15f;
                         }
                         for (int i = 0; i < 4; i++) {
-                            br[i] = 0.95f;
+                            // 1.5 = "thin double-sided quad" sentinel: the
+                            // shader clamps it to 0.95 for display and uses
+                            // |N.L| in the shadow test (cube faces > 1.0 never
+                            // occur, so the flag can ride the brightness attr)
+                            br[i] = 1.5f;
                             skyL[i] = s;
                             blkL[i] = k;
                         }

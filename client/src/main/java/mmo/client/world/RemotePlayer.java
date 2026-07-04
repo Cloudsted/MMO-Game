@@ -43,7 +43,6 @@ public class RemotePlayer {
     private long actStartedAt = 0;
 
     public final Decal decal;
-    public final Decal shadow;
     public final float height;
     private final PlayerSheet sheet;
     private float animTime = 0;
@@ -58,7 +57,7 @@ public class RemotePlayer {
     private final ArrayDeque<Sample> samples = new ArrayDeque<>();
     private final Sample latest = new Sample();
 
-    public RemotePlayer(Protocol.Entity e, SpriteLibrary sprites, TextureRegion shadowRegion) {
+    public RemotePlayer(Protocol.Entity e, SpriteLibrary sprites) {
         this.id = e.id;
         this.kind = e.kind;
         this.sprite = e.sprite;
@@ -80,9 +79,6 @@ public class RemotePlayer {
 
         float width = height * sheet.frameW / (float) sheet.frameH;
         decal = Decal.newDecal(width, height, sheet.frame(PlayerSheet.ROW_DOWN, 0, false), true);
-        shadow = Decal.newDecal(width * 0.8f, width * 0.5f, shadowRegion, true);
-        shadow.setColor(0f, 0f, 0f, 0.35f);
-        shadow.setRotationX(-90);
     }
 
     private void pushSample(float x, float y, float z, float yaw) {
@@ -220,13 +216,6 @@ public class RemotePlayer {
         // cylindrical billboard: face the camera around Y only (stays upright)
         tmp.set(cam.position.x, pos.y + height / 2f + bob, cam.position.z);
         decal.lookAt(tmp, Vector3.Y);
-
-        // blob shadow hugs the ground UNDER the entity; fades when airborne
-        // (standY would snap it onto tree canopies / arch lintels overhead)
-        float ground = world != null ? world.floorBelow(pos.x, pos.y + 0.5f, pos.z) : pos.y;
-        float above = Math.max(0, pos.y - ground);
-        shadow.setPosition(pos.x, ground + 0.03f, pos.z);
-        shadow.setColor(0f, 0f, 0f, Math.max(0f, (isDead() ? 0.15f : 0.35f) - above * 0.1f));
     }
 
     public static float wrapPi(float a) {

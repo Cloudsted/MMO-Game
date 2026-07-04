@@ -223,6 +223,43 @@ wiring it in, and make batch pipelines report missing inputs and keep going
   directional-light test must reason about the light azimuth vs the camera
   BEFORE concluding failure — or lock a low sun and orbit. (Related rule
   from the time-lock lesson: pin the clock, then also pin the geometry.)
+  **Hit again in mirrored form** verifying entity shadows: "sun behind the
+  camera so shadows stretch ahead" is wrong for BILLBOARDS — a sprite's
+  shadow falls directly behind the sprite itself and the billboard hides
+  it. The camera must be on the shadow side (facing INTO the sun) so
+  shadows lie between the caster and the viewer. Same rule, second scar.
+- **Ask what a normalized shadow bias means in METERS.** The depth-compare
+  bias 0.0035 looked tiny, but normalized depth spans the light camera's
+  far−near ≈ 266 m — so it was ~0.9 m of bias, sliding every shadow edge
+  more than a full block off its corner ("shadows don't match the blocks").
+  Fixes that follow from stating the units: pass far−near to the shader and
+  express bias in meters; make it slope-scaled from the derivative-computed
+  face normal (`cross(dFdx(pos), dFdy(pos))` — exact for axis-aligned block
+  faces); and skip the map entirely for faces pointing AWAY from the light
+  (ndl ≤ 0 → shadowed) — those faces can never acne because they never
+  self-compare. Bonus: thin double-sided quads (crossed plants) need
+  |ndl| — flag them via an out-of-range vertex attribute (br = 1.5).
+- **A shadow map re-projected from a continuously-moving sun shimmers every
+  frame.** DayNight advanced the sun per frame, so the light matrix (and
+  thus every shadow texel boundary) shifted sub-texel per frame — "shadows
+  are incredibly jittery". The world-axis "texel snap" made it worse: for a
+  tilted light camera you'd have to snap along the camera's own right/up
+  axes; snapping world x/z is noise. Real fix: quantize the sun angle for
+  the shadow pass (0.25° steps ≈ 0.8 s at dayLength 1200 s) and re-render
+  the map ONLY when that steps or a chunk remeshes — between steps the map
+  is bit-identical, so edges *cannot* crawl, and the depth pass becomes
+  nearly free. The visible sun/moon discs keep the smooth angle; a 0.25°
+  divergence between disc and shadows is imperceptible.
+- **Never mesh a chunk before its neighbours are relit.** The voxel light
+  seams ("hard lines on chunk borders") came from the relight+mesh queue
+  doing both per chunk in one pass: a chunk's border vertices sample the
+  3×3 neighbourhood's light, so meshing before a neighbour's compute() ran
+  baked the placeholder full-sky value into the seam — and nothing ever
+  remeshed it. Fix: two queues; relights drain first, and a chunk only
+  meshes when none of its 3×3 neighbourhood is pending relight. General
+  form: when stage B bakes a snapshot of stage A's output ACROSS unit
+  boundaries, "A then B per unit" is not enough — B(unit) must wait for
+  A(all units it reads).
 - **Block worlds broke every greedy bot walker — give bots real pathfinding.**
   Post-pivot, straight-line walkers with "y = ground height" stalled forever:
   forests are mazes of 1×1 trunk columns, hills have 2-block cliff steps, and
