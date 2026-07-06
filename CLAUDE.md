@@ -585,3 +585,14 @@ Quick reference only — the stories behind these (and more) live in
     `entityShadowMul` deleted. Sprites still CAST onto the ground; blocks
     still RECEIVE the directional shadow map (that base looked good). See
     LESSONS.md ("don't tonemap an LDR-tuned scene" + "binary sprite shadow").
+  - **Owner-feedback tuning pass 2** (2026-07-03): (1) breathing squish halved
+    in amplitude AND speed (RemotePlayer: sin(bobTime*0.9), ±0.0125/0.0075) —
+    too strong/fast before. (2) NIGHT darkened ~25%: the night skylight
+    endpoint in the lit curve dropped (0.16,0.19,0.34)→(0.12,0.14,0.25) in BOTH
+    voxel.frag's skyC mix AND VoxelLighting.lightColor (the CPU mirror — kept
+    in lockstep); torch/blocklight untouched so pools still pop. (3) shadow
+    map DEFAULT_RES 4096→8192 (~3 cm/texel; world + half-res entity map both
+    crisper) — the old 4096 read chunky on the 160 m rooms. (4) bloom brought
+    back to punchy (strength 1.15) BUT threshold kept at 0.9 with a sharp
+    tonemap that used to roll them off, a 0.72 threshold bloomed sunlit SPRITES
+    into white halos — 0.9 lands the strong glow on emissive blocks/sun only.

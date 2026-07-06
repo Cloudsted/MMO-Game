@@ -12,6 +12,8 @@ uniform float u_threshold;
 void main() {
     vec3 c = texture2D(u_scene, v_uv).rgb;
     float l = dot(c, vec3(0.299, 0.587, 0.114));
-    float knee = smoothstep(u_threshold, u_threshold + 0.35, l);
+    // sharp knee: near-full-bright emissive passes strongly, sunlit sprites
+    // (luminance just under the threshold) stay out of the bloom entirely
+    float knee = smoothstep(u_threshold, u_threshold + 0.12, l);
     gl_FragColor = vec4(c * knee, 1.0);
 }

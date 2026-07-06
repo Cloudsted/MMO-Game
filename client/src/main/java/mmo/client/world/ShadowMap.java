@@ -21,8 +21,9 @@ import com.badlogic.gdx.math.Vector3;
  * The voxel shader compares against it and dims the SKYLIGHT term only, so
  * torch pools still glow inside shadows.
  *
- * Resolution is configurable via MMO_SHADOW_RES (default 4096 — crisp
- * pixel-edged shadows that resolve sub-block detail on a 160 m room).
+ * Resolution is configurable via MMO_SHADOW_RES (default 8192 — ~3 cm/texel
+ * on a 160 m room, so block + sprite shadow edges read crisp rather than
+ * chunky; lower it if VRAM is tight). The entity map runs at half this.
  *
  * The world pass keys off DayNight.shadowDir (the sun angle quantized to
  * 0.25° steps) and re-renders ONLY when that steps or a chunk remeshes —
@@ -42,7 +43,7 @@ import com.badlogic.gdx.math.Vector3;
  * — so billboard self-shadowing is impossible by construction.
  */
 public class ShadowMap {
-    public static final int DEFAULT_RES = 4096;
+    public static final int DEFAULT_RES = 8192;
 
     private final FrameBuffer fbo;
     private final FrameBuffer entityFbo;

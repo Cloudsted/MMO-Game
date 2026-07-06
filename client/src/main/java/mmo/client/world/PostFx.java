@@ -33,12 +33,14 @@ public final class PostFx {
     private int w, h, bw, bh;
     private final Vector3 tmp = new Vector3();
 
-    // Bloom only catches genuinely emissive/bright pixels (torches, crystals,
-    // lava, sun disc, FX) — the high threshold keeps normally-lit sprites and
-    // terrain out of it, so nothing washes. No tonemap/grade (see composite.frag).
+    // Strong, punchy bloom on genuinely emissive things (torches, crystals,
+    // lava, sun) — owner liked the original strength. The threshold sits ABOVE
+    // sunlit-sprite luminance (with a sharp bright-pass knee) so lit characters
+    // don't glow white: the original 0.72 only looked right because the ACES
+    // tonemap (now removed as the real wash cause) rolled those highlights off.
     private static final float THRESHOLD = 0.9f;
-    private static final float BLOOM_STRENGTH = 0.55f;
-    private static final float VIGNETTE = 0.4f;
+    private static final float BLOOM_STRENGTH = 1.15f;
+    private static final float VIGNETTE = 0.55f;
 
     public PostFx() {
         on = !"1".equals(System.getenv("MMO_NO_POST"));
@@ -125,7 +127,7 @@ public final class PostFx {
             cam.project(tmp, 0, 0, w, h); // -> FBO pixels, y-up; /w,/h gives UV
             sunU = tmp.x / w;
             sunV = tmp.y / h;
-            godray = 0.3f * dn.sunFactor;
+            godray = 0.5f * dn.sunFactor;
         }
 
         // composite to the backbuffer

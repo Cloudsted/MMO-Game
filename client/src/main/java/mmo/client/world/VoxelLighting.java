@@ -160,9 +160,11 @@ public final class VoxelLighting {
     public static Color lightColor(int packed, float sun, float shadowMul, Color out) {
         float s = (packed >> 4) / 15f, b = (packed & 15) / 15f;
         float sl = s * s * shadowMul, bl = b * b;
-        float skyR = 0.16f + (1.02f - 0.16f) * sun;
-        float skyG = 0.19f + (0.99f - 0.19f) * sun;
-        float skyB = 0.34f + (0.95f - 0.34f) * sun;
+        // night skylight endpoints darkened ~25% (owner: night was too bright);
+        // MUST match voxel.frag's skyC mix — this is the CPU mirror
+        float skyR = 0.12f + (1.02f - 0.12f) * sun;
+        float skyG = 0.14f + (0.99f - 0.14f) * sun;
+        float skyB = 0.25f + (0.95f - 0.25f) * sun;
         out.set(
             Math.min(1f, Math.max(Math.max(sl * skyR, bl * 1.35f), 0.045f)),
             Math.min(1f, Math.max(Math.max(sl * skyG, bl * 1.02f), 0.045f)),

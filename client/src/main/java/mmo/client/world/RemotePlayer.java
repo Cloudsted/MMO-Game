@@ -234,9 +234,11 @@ public class RemotePlayer {
         // scale about the feet (adjust centre Y as the height changes)
         float sx = 1f, sy = 1f;
         if (living) {
-            float breath = MathUtils.sin(bobTime * 1.8f + id);
-            sy = (1f + 0.025f * breath) * (1f - 0.18f * hitFlash);
-            sx = (1f - 0.015f * breath) * (1f + 0.14f * hitFlash);
+            // subtle breathing: half the amplitude and half the speed of the
+            // first pass (owner wanted it gentler/slower)
+            float breath = MathUtils.sin(bobTime * 0.9f + id);
+            sy = (1f + 0.0125f * breath) * (1f - 0.18f * hitFlash);
+            sx = (1f - 0.0075f * breath) * (1f + 0.14f * hitFlash);
         }
         float sw = baseW * sx, sh = height * sy;
         decal.setDimensions(sw, sh);
