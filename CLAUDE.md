@@ -594,5 +594,6 @@ Quick reference only — the stories behind these (and more) live in
     map DEFAULT_RES 4096→8192 (~3 cm/texel; world + half-res entity map both
     crisper) — the old 4096 read chunky on the 160 m rooms. (4) bloom brought
     back to punchy (strength 1.15) BUT threshold kept at 0.9 with a sharp
+    bright-pass knee (0.12) instead of the original 0.72: without the (removed)
     tonemap that used to roll them off, a 0.72 threshold bloomed sunlit SPRITES
     into white halos — 0.9 lands the strong glow on emissive blocks/sun only.
