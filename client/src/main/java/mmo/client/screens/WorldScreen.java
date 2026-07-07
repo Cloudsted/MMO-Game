@@ -792,7 +792,10 @@ public class WorldScreen extends ScreenAdapter {
         float bestD = range;
         for (RemotePlayer rp : remotes.values()) {
             if (!kind.equals(rp.kind)) continue;
-            float d = (float) Math.hypot(pos.x - rp.pos.x, pos.z - rp.pos.z);
+            // 3D distance, mirroring the server — loot on a platform above
+            // is out of reach (no prompt) until you climb up to it
+            float dx = pos.x - rp.pos.x, dy = pos.y - rp.pos.y, dz = pos.z - rp.pos.z;
+            float d = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
             if (d < bestD) {
                 bestD = d;
                 best = rp;

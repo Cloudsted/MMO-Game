@@ -17,6 +17,11 @@ export interface MoveIntent {
     /** max blocks this move may step DOWN (default ~1; chase/flee/return
      *  pass PURPOSEFUL_MAX_DROP so treed/ledged mobs can drop to targets) */
     maxDrop?: number;
+    /** purposeful moves may cross liquid: wade shallow runs on the flooded
+     *  floor, swim deep water at the surface. Wander never wades — idle mobs
+     *  don't stroll into ponds, and standing across a lava trench no longer
+     *  cheeses melee mobs that want to reach you. */
+    wade?: boolean;
 }
 export interface BrainDecision {
     move: MoveIntent | null;
@@ -34,9 +39,11 @@ export interface BrainDecision {
 export declare function tickBrain(mob: Entity, def: MobDef, players: Entity[], now: number, attackReachY?: number): BrainDecision;
 /**
  * Apply a move intent with voxel rules: walk at speed, deflect around
- * blockers, step up/down at most one block, never into water or lava,
- * keep headroom. `others` are packmates whose personal space deflects the
- * path too (mobs fan out instead of stacking). Sets yaw + walk anim.
+ * blockers, step up/down at most one block, keep headroom. Liquid blocks
+ * the way UNLESS the intent wades (purposeful moves): shallow runs are
+ * crossed on the flooded floor, deep water is swum at the surface.
+ * `others` are packmates whose personal space deflects the path too (mobs
+ * fan out instead of stacking). Sets yaw + walk anim.
  * Returns whether the mob moved.
  */
 export declare function applyMove(e: Entity, intent: MoveIntent, baseSpeed: number, dt: number, world: VoxelWorld, bounds: {

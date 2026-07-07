@@ -470,3 +470,21 @@ mob-AI tuning, 2026-07-07). Costs paid and rules derived:
   separators — the file collapses to one line). Use `git checkout HEAD --
   <file>` to restore content; never round-trip file bytes through the PS
   pipeline.
+
+## Every proximity check is a cylinder until someone adds the Y term
+
+Loot from a watchtower platform could be picked up by standing UNDER the
+tower (2026-07-07 owner report). `handlePickup` measured `hypot(dx, dz)` —
+a 2.5 m radius column of infinite height. NPC talk had the same shape;
+melee had already grown its vertical gate one batch earlier, but nobody
+swept the OTHER interaction ranges when that fix landed.
+
+- **When a distance check earns a vertical gate, grep for the siblings the
+  same day**: `Math.hypot(` with two args over the sim is a two-minute audit
+  that would have caught pickup + talk when meleeVerticalReach shipped.
+- Elevated content (tower caches) is what turns a latent 2D check into an
+  exploit: the bug existed since phase 4, but only mattered once prefabs
+  put loot 8 blocks up. New content class ⇒ re-audit old assumptions.
+- The client mirrored the same 2D check in its [E] prompt (`nearestOfKind`)
+  — range checks live in BOTH runtimes here; fixing only the server leaves
+  a lying prompt.

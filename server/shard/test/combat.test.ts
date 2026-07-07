@@ -377,6 +377,79 @@ describe("floor spawns + canopy drop-down", () => {
   });
 });
 
+describe("liquid pathing (wade/swim)", () => {
+  const sim = new RoomSim(loadRoomDef("hub"));
+  const world = sim.world;
+  const bounds = sim.def.size;
+  const WATER = BLOCK.water!.id;
+
+  /** A flat, unobstructed, dry 10×7 patch (extra west margin: the swim pool
+   *  and its far bank live at dx -6..-2) away from structures. */
+  function findFlatSpot(): { x: number; z: number; y: number } {
+    for (let z = 8; z < bounds.h - 8; z += 4) {
+      for (let x = 10; x < bounds.w - 8; x += 4) {
+        const y = world.standY(x, z);
+        let ok = true;
+        for (let dx = -6; dx <= 3 && ok; dx++)
+          for (let dz = -3; dz <= 3 && ok; dz++) {
+            const yy = world.standY(x + dx, z + dz);
+            if (yy !== y || world.collidesAABB(x + dx, yy, z + dz, 0.3, 1.6) || world.liquidAt(x + dx, yy + 0.1, z + dz)) ok = false;
+          }
+        if (ok) return { x, z, y };
+      }
+    }
+    throw new Error("no flat spot in hub");
+  }
+  const flat = findFlatSpot();
+  const fx = Math.floor(flat.x);
+  const fz = Math.floor(flat.z);
+
+  it("a wading intent crosses a shallow trench that blocks a wander intent", () => {
+    // 2-wide, 1-deep water run at fx+1..fx+2 (2 wide so a 0.25-radius
+    // footprint can't straddle it), long enough that deflection can't round it
+    for (let ox = 1; ox <= 2; ox++) {
+      for (let dz = -12; dz <= 12; dz++) {
+        const wy = world.standY(fx + ox, fz + dz) - 1;
+        world.set(fx + ox, wy, fz + dz, WATER);
+      }
+    }
+    const tx = fx + 3.5;
+    const wander = testEntity(fx - 1.5, fz + 0.5);
+    wander.kind = "mob";
+    wander.pos.y = flat.y;
+    for (let i = 0; i < 60; i++) applyMove(wander, { x: tx, z: fz + 0.5, speedMult: 1 }, 3, 0.1, world, bounds, null);
+    expect(wander.pos.x).toBeLessThan(fx + 1.5); // stuck at the lip, never crossed
+
+    const chaser = testEntity(fx - 1.5, fz + 0.5);
+    chaser.kind = "mob";
+    chaser.pos.y = flat.y;
+    for (let i = 0; i < 80; i++) applyMove(chaser, { x: tx, z: fz + 0.5, speedMult: 1, maxDrop: 8, wade: true }, 3, 0.1, world, bounds, null);
+    expect(Math.abs(chaser.pos.x - tx)).toBeLessThan(0.5); // waded across
+    expect(chaser.pos.y).toBe(flat.y); // and climbed back out
+  });
+
+  it("swims deep water at the surface, not along the drowned floor", () => {
+    // 3-wide, 3-deep pool at fx-4..fx-2 (west of the trench test's line)
+    for (let ox = -4; ox <= -2; ox++) {
+      for (let dz = -12; dz <= 12; dz++) {
+        const top = world.standY(fx + ox, fz + dz) - 1;
+        for (let d = 0; d < 3; d++) world.set(fx + ox, top - d, fz + dz, WATER);
+      }
+    }
+    const e = testEntity(fx - 0.5, fz + 0.5);
+    e.kind = "mob";
+    e.pos.y = flat.y;
+    const tx = fx - 5.5;
+    let minY = e.pos.y;
+    for (let i = 0; i < 80; i++) {
+      applyMove(e, { x: tx, z: fz + 0.5, speedMult: 1, maxDrop: 8, wade: true }, 3, 0.1, world, bounds, null);
+      minY = Math.min(minY, e.pos.y);
+    }
+    expect(Math.abs(e.pos.x - tx)).toBeLessThan(0.5); // crossed the pool
+    expect(minY).toBe(flat.y - 1); // swam one below the bank (surface), never the floor 3 down
+  });
+});
+
 describe("attack timing (whiff-proofing)", () => {
   let sim: RoomSim;
 
@@ -558,6 +631,23 @@ describe("RoomSim gameplay", () => {
     sim.handlePickup(b.session, bag.id);
     expect(b.session.slots.filter(Boolean).length).toBe(bobInvBefore); // denied
     expect(b.last("chat")?.channel).toBe("system");
+  });
+
+  it("rejects pickup from directly under an elevated bag (3D range)", () => {
+    const a = join("c1", "Alice", 64, 64, [{ item: "bread", qty: 2, rarity: "common" }]);
+    sim.handleDropItem(a.session, 0, 2);
+    const bag = [...sim.allEntities()].find((e) => e.kind === "loot")!;
+    expect(bag).toBeDefined();
+    // hoist the bag onto a "tower platform" 8 blocks up
+    bag.pos.y += 8;
+    a.session.entity.pos.x = bag.pos.x;
+    a.session.entity.pos.z = bag.pos.z;
+    sim.handlePickup(a.session, bag.id);
+    expect(a.session.slots.filter(Boolean)).toHaveLength(0); // standing underneath: denied
+    // at platform height on the same column: allowed
+    a.session.entity.pos.y = bag.pos.y;
+    sim.handlePickup(a.session, bag.id);
+    expect(a.session.slots.some((s) => s?.item === "bread")).toBe(true);
   });
 
   it("buys and sells at the shop with gold checks", () => {

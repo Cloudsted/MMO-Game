@@ -27,6 +27,9 @@ const SEPARATION_Y_TOLERANCE = 1.5;
 const PURPOSEFUL_MAX_DROP = 8;
 /** Default per-step drop for wander/separation (mirror of the 1-step-up). */
 const DEFAULT_MAX_DROP = 1.05;
+/** Liquid this deep or less is waded on the flooded floor; deeper columns
+ *  are swum at the surface. (Mob height is 1.6 — 1.5 keeps the head out.) */
+const WADE_DEPTH = 1.5;
 
 export interface MoveIntent {
   x: number;
@@ -35,6 +38,11 @@ export interface MoveIntent {
   /** max blocks this move may step DOWN (default ~1; chase/flee/return
    *  pass PURPOSEFUL_MAX_DROP so treed/ledged mobs can drop to targets) */
   maxDrop?: number;
+  /** purposeful moves may cross liquid: wade shallow runs on the flooded
+   *  floor, swim deep water at the surface. Wander never wades — idle mobs
+   *  don't stroll into ponds, and standing across a lava trench no longer
+   *  cheeses melee mobs that want to reach you. */
+  wade?: boolean;
 }
 
 export interface BrainDecision {
@@ -89,7 +97,7 @@ export function tickBrain(
         return none;
       }
       mob.health!.hp = Math.min(mob.health!.maxHp, mob.health!.hp + def.hp * RETURN_HEAL_PCT_PER_SEC * 0.1);
-      return { move: { x: b.home.x, z: b.home.z, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP }, attack: null, faceYaw: null };
+      return { move: { x: b.home.x, z: b.home.z, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP, wade: true }, attack: null, faceYaw: null };
     }
     // target them BEFORE the leash check below — the mob may still stand
     // outside the circle, and a null targetId would re-leash it instantly
@@ -107,7 +115,7 @@ export function tickBrain(
       b.state = "return";
       b.targetId = null;
       b.threat.clear();
-      return { move: { x: b.home.x, z: b.home.z, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP }, attack: null, faceYaw: null };
+      return { move: { x: b.home.x, z: b.home.z, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP, wade: true }, attack: null, faceYaw: null };
     }
   }
 
@@ -134,7 +142,7 @@ export function tickBrain(
       b.state = "flee";
       const away = Math.atan2(mob.pos.x - best.pos.x, mob.pos.z - best.pos.z);
       return {
-        move: { x: mob.pos.x + Math.sin(away) * 6, z: mob.pos.z + Math.cos(away) * 6, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP },
+        move: { x: mob.pos.x + Math.sin(away) * 6, z: mob.pos.z + Math.cos(away) * 6, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP, wade: true },
         attack: null,
         faceYaw: null,
       };
@@ -143,7 +151,7 @@ export function tickBrain(
     const dy = Math.abs(best.pos.y - mob.pos.y);
     if (d > def.attackRange || dy > attackReachY) {
       b.state = "chase";
-      return { move: { x: best.pos.x, z: best.pos.z, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP }, attack: null, faceYaw: null };
+      return { move: { x: best.pos.x, z: best.pos.z, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP, wade: true }, attack: null, faceYaw: null };
     }
     b.state = "chase";
     const face = Math.atan2(best.pos.x - mob.pos.x, best.pos.z - mob.pos.z);
@@ -183,9 +191,11 @@ function crowdsNeighbour(e: Entity, nx: number, nz: number, others: Entity[]): b
 
 /**
  * Apply a move intent with voxel rules: walk at speed, deflect around
- * blockers, step up/down at most one block, never into water or lava,
- * keep headroom. `others` are packmates whose personal space deflects the
- * path too (mobs fan out instead of stacking). Sets yaw + walk anim.
+ * blockers, step up/down at most one block, keep headroom. Liquid blocks
+ * the way UNLESS the intent wades (purposeful moves): shallow runs are
+ * crossed on the flooded floor, deep water is swum at the surface.
+ * `others` are packmates whose personal space deflects the path too (mobs
+ * fan out instead of stacking). Sets yaw + walk anim.
  * Returns whether the mob moved.
  */
 export function applyMove(
@@ -213,10 +223,16 @@ export function applyMove(
     if (crowdsNeighbour(e, nx, nz, others)) continue; // don't walk into a packmate
     // ground under the new spot: at most a 1-block step UP, and down by the
     // intent's drop allowance (purposeful moves may hop off canopies/ledges)
-    const ny = world.groundBelow(nx, e.pos.y + 1.05, nz, 0.25);
+    let ny = world.groundBelow(nx, e.pos.y + 1.05, nz, 0.25);
+    if (world.liquidAt(nx, ny + 0.1, nz)) {
+      if (!intent.wade) continue; // wander doesn't stroll into ponds
+      // wade shallow liquid on the flooded floor; swim deep at the surface
+      let surf = ny;
+      while (surf - ny < 12 && world.liquidAt(nx, surf + 0.1, nz)) surf++;
+      if (surf - ny > WADE_DEPTH) ny = surf - 1;
+    }
     if (ny - e.pos.y > 1.05 || e.pos.y - ny > maxDrop) continue;
     if (world.collidesAABB(nx, ny, nz, 0.3, 1.6)) continue; // headroom/blockers
-    if (world.liquidAt(nx, ny + 0.1, nz)) continue; // don't wade in
     e.pos.x = nx;
     e.pos.z = nz;
     e.pos.y = ny;

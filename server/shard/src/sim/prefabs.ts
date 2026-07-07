@@ -520,9 +520,29 @@ register({
     // door-less doorway (someone took the door) + a tipped crate outside
     ctx.fill(3, FL, 5, 3, FL + 1, 5, 0);
     ctx.set(4, FL, 6, "planks");
-    // top platform + the log ladder mast that reaches it
-    ctx.fill(2, FL + 7, 2, 4, FL + 7, 4, "planks");
-    ctx.fill(2, FL, 2, 2, FL + 6, 2, "log");
+    // top platform — the east row stays OPEN: that's where the stair pops
+    // through (and the headroom the climb needs; see the step math below)
+    ctx.fill(2, FL + 7, 2, 3, FL + 7, 4, "planks");
+    // interior spiral stair, door cell (3,4) around the wall to the top:
+    // 7 plank treads on log posts, each 1 up from the last (jump height).
+    // Standing feet on tread i = FL+1+i; the open east platform row keeps
+    // 2 blocks of headroom over every tread and over each jump's arc, and
+    // from the last tread ((4,4), feet FL+7) one more jump mounts the
+    // platform (feet FL+8), where the cache sits at local (3, 9, 3).
+    const steps: Array<[number, number]> = [
+      [2, 4],
+      [2, 3],
+      [2, 2],
+      [3, 2],
+      [4, 2],
+      [4, 3],
+      [4, 4],
+    ];
+    steps.forEach(([sx, sz], i) => {
+      const top = FL + i;
+      if (top > FL) ctx.fill(sx, FL, sz, sx, top - 1, sz, "log");
+      ctx.set(sx, top, sz, "planks");
+    });
     // light = language: the brazier only burns while someone tends it
     if (ctx.ruinLevel === 0) ctx.set(3, FL + 8, 3, "torch");
   },

@@ -639,6 +639,35 @@ show their block tile).
     default covers all rooms. Torch/blocklight and DayNight sky/fog are
     untouched — only the skylight floor lifts.
 
+- 2026-07-07 **3D INTERACTION RANGES + MOB LIQUID PATHING + WATCHTOWER
+  STAIRS batch** (owner bug list). Verified: 143 vitest (4 new), live-stack
+  combat-bot + mob-floor-probe + new `scripts/wade-probe.mjs`, watchtower
+  screenshot tools/out/watchtower-stairs-*.png.
+  - **Pickup/talk ranges are 3D now** (owner: items on the watchtower top
+    were lootable from under it): `handlePickup` and `nearNpc` measure
+    `hypot(dx, dy, dz)`; the client mirrors in `nearestOfKind` (both the
+    [E] action and the prompt). Combat was already vertically gated by the
+    previous batch's `meleeVerticalReach` — see LESSONS.md ("every
+    proximity check is a cylinder") for the audit rule this taught.
+  - **Mobs wade/swim when purposeful** (owner: standing across lava
+    cheesed the Furnace Golem): `MoveIntent.wade` — chase/flee/return
+    moves may enter liquid; ≤1.5 deep is waded on the flooded floor,
+    deeper is swum at the surface (feet in the top liquid cell, so 1-block
+    banks stay climbable). Wander and separation pushes still refuse
+    liquid, so camps/idlers stay dry and packs can't be shoved into ponds.
+    `wade-probe.mjs` proves it live: wolf spawned across a real forest
+    pond, watched crossing OVER the water strip to reach the probe.
+  - **Watchtower spiral stairs** (owner: no way up to the top loot): the
+    unclimbable 1×1 "log ladder mast" is gone; 7 plank-on-log treads climb
+    the interior wall from the door cell, each +1 (jump height), and the
+    platform's east row stays open as the stair well — that hole IS the
+    jump-arc headroom, so nothing obstructs the climb. Cache still sits at
+    local (3,9,3) on the remaining 2×3 platform. `prefabs.test.ts` BFS-walks
+    the climb (1-block mounts, take-off + landing headroom) door → cache at
+    every rotation × ruin level; the cache-loot tests now hoist the looter
+    to platform height first (ground-level looting is exactly the killed
+    exploit).
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes

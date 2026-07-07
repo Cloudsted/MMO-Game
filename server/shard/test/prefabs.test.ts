@@ -5,10 +5,11 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CharacterSnapshot, ItemStack, ServerToClient } from "@fantasy-mmo/common";
-import { loadRoomDef, RegistryService, RoomDefSchema } from "@fantasy-mmo/common";
-import { PREFABS } from "../src/sim/prefabs.js";
+import { isSolidBlock, loadRoomDef, RegistryService, RoomDefSchema } from "@fantasy-mmo/common";
+import { PREFABS, stampPrefab } from "../src/sim/prefabs.js";
 import { RoomSim } from "../src/sim/room.js";
 import { VoxelWorld } from "../src/sim/voxel.js";
+import { Builder } from "../src/sim/voxelstructures.js";
 
 const reg = new RegistryService();
 
@@ -152,8 +153,10 @@ describe("prefab loot caches", () => {
     expect(bag!.loot!.owner).toBeNull(); // unowned
     expect(bag!.loot!.expireAt).toBeNull(); // cache bags never expire
 
-    // 2. loot it empty
+    // 2. loot it empty — pickup range is 3D, so the looter must actually
+    // stand at platform height (the climb path is proven separately below)
     const c = joinRoom(sim, "c1", "Looter", cache.x, cache.z);
+    c.session.entity.pos.y = bag!.pos.y;
     sim.handlePickup(c.session, bag!.id);
     expect(bagNear(sim, cache.x, cache.z)).toBeNull();
     ticks(sim, 10); // sweep notices the bag vanished → lastLootedAt = now
@@ -180,6 +183,7 @@ describe("prefab loot caches", () => {
     ticks(sim, 10);
     const bag = bagNear(sim, cache.x, cache.z)!;
     const c = joinRoom(sim, "c1", "Looter", cache.x, cache.z);
+    c.session.entity.pos.y = bag.pos.y;
     sim.handlePickup(c.session, bag.id);
     ticks(sim, 10);
     const state = sim.buildRoomState();
@@ -190,6 +194,77 @@ describe("prefab loot caches", () => {
     expect(sim2.allCaches()[0]!.lastLootedAt).toBe(state.caches[cache.key]);
     for (let i = 0; i < 20; i++) sim2.tick();
     expect(bagNear(sim2, cache.x, cache.z)).toBeNull();
+  });
+});
+
+describe("watchtower climb path", () => {
+  /** Flat empty proving ground; the tower is stamped manually per case. */
+  function flatWorld() {
+    const def = scatterDef([], {
+      size: { w: 96, h: 96 },
+      spawn: { x: 10, z: 10, yaw: 0 },
+      terrain: { kind: "blocks", seed: 777, base: 12, amplitude: 0, frequency: 0.02 },
+      portals: [],
+    });
+    return { def, world: new VoxelWorld(def) };
+  }
+
+  /**
+   * Conservative movement BFS over (cell, feetY) states: 4-dir level walks,
+   * 1-block jump mounts (which additionally need a free cell above the head
+   * at BOTH the take-off and landing columns), drops up to 3 with a clear
+   * fall corridor. If THIS reaches the target, real physics (jump apex
+   * 1.28 m, height <1.8) certainly does.
+   */
+  function canClimb(world: VoxelWorld, sx: number, sz: number, tx: number, tz: number, ty: number): boolean {
+    const free = (x: number, y: number, z: number) => !isSolidBlock(world.get(x, y, z));
+    const standing = (x: number, y: number, z: number) => !free(x, y - 1, z) && free(x, y, z) && free(x, y + 1, z);
+    const key = (x: number, y: number, z: number) => `${x},${y},${z}`;
+    const start = { x: sx, y: world.floorY(sx + 0.5, sz + 0.5), z: sz };
+    const seen = new Set([key(start.x, start.y, start.z)]);
+    const queue = [start];
+    while (queue.length > 0) {
+      const c = queue.shift()!;
+      if (c.x === tx && c.z === tz && c.y === ty) return true;
+      for (const [dx, dz] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ] as const) {
+        const nx = c.x + dx;
+        const nz = c.z + dz;
+        for (const ny of [c.y + 1, c.y, c.y - 1, c.y - 2, c.y - 3]) {
+          if (ny < 1 || !standing(nx, ny, nz)) continue;
+          if (ny === c.y + 1 && (!free(c.x, c.y + 2, c.z) || !free(nx, c.y + 2, nz))) continue; // jump arc headroom
+          if (ny < c.y) {
+            let corridor = true;
+            for (let y = ny + 2; y <= c.y + 1 && corridor; y++) corridor = free(nx, y, nz);
+            if (!corridor) continue;
+          }
+          const k = key(nx, ny, nz);
+          if (!seen.has(k)) {
+            seen.add(k);
+            queue.push({ x: nx, y: ny, z: nz });
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  it("has a jumpable ground → cache path at every rotation × ruin level", () => {
+    for (const rot of [0, 1, 2, 3] as const) {
+      for (const ruin of [0, 1, 2] as const) {
+        const { def, world } = flatWorld();
+        const hooks = stampPrefab(new Builder(world, def), "ruined_watchtower", 40, 40, rot, ruin);
+        const cache = hooks.lootCache!;
+        expect(
+          canClimb(world, 36, 36, Math.floor(cache.x), Math.floor(cache.z), cache.y),
+          `rot ${rot} ruin ${ruin}: no path from the ground to the cache`
+        ).toBe(true);
+      }
+    }
   });
 });
 

@@ -1333,7 +1333,8 @@ export class RoomSim {
     if (e.combat!.act === "dead") return;
     const bag = this.entities.get(id);
     if (!bag || bag.kind !== "loot" || !bag.loot) return;
-    const dist = Math.hypot(bag.pos.x - e.pos.x, bag.pos.z - e.pos.z);
+    // 3D distance — a bag on a tower platform is NOT reachable from under it
+    const dist = Math.hypot(bag.pos.x - e.pos.x, bag.pos.y - e.pos.y, bag.pos.z - e.pos.z);
     if (dist > this.consts.combat.pickupRange) return;
     const now = Date.now();
     if (bag.loot.owner && bag.loot.owner !== session.character.id && bag.loot.unlockAt > now) {
@@ -1368,9 +1369,9 @@ export class RoomSim {
   private nearNpc(session: PlayerSession, entityId: number): boolean {
     const e = this.entities.get(entityId);
     if (!e) return false;
-    return (
-      Math.hypot(e.pos.x - session.entity.pos.x, e.pos.z - session.entity.pos.z) <= this.consts.combat.talkRange + 1.0
-    );
+    const p = session.entity.pos;
+    // 3D — no chatting up through floors/platforms
+    return Math.hypot(e.pos.x - p.x, e.pos.y - p.y, e.pos.z - p.z) <= this.consts.combat.talkRange + 1.0;
   }
 
   handleTalk(session: PlayerSession, entityId: number): void {
