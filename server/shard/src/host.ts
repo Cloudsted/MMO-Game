@@ -8,7 +8,15 @@ import { fork, type ChildProcess } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import WebSocket from "ws";
-import { loadEnv, requireEnv, makeLogger, encode, decodeMasterToShard, type ShardToMaster } from "@fantasy-mmo/common";
+import {
+  loadEnv,
+  requireEnv,
+  makeLogger,
+  encode,
+  decodeMasterToShard,
+  type RoomAdminInfo,
+  type ShardToMaster,
+} from "@fantasy-mmo/common";
 import type { HostToRoom, RoomToHost } from "./ipc.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -19,6 +27,8 @@ interface RoomProc {
   child: ChildProcess;
   ready: boolean;
   players: number;
+  /** latest admin telemetry from the RoomHost (forwarded in heartbeats) */
+  info: RoomAdminInfo | null;
   /** set when the RoomHost announces a deliberate close (lifecycle expiry) */
   closeReason: string | null;
 }
@@ -156,6 +166,11 @@ class ShardHost {
           this.sendToRoom(room, { t: "roomStatus", roomId: msg.roomId, open: msg.open });
         }
         break;
+      case "kick": {
+        const room = this.rooms.get(msg.roomId);
+        if (room) this.sendToRoom(room, { t: "kick", characterId: msg.characterId, reason: msg.reason });
+        break;
+      }
     }
   }
 
@@ -171,7 +186,7 @@ class ShardHost {
       execArgv: ["--import", "tsx"],
       stdio: ["inherit", "inherit", "inherit", "ipc"],
     });
-    const room: RoomProc = { roomId, port, child, ready: false, players: 0, closeReason: null };
+    const room: RoomProc = { roomId, port, child, ready: false, players: 0, info: null, closeReason: null };
     this.rooms.set(roomId, room);
 
     child.on("message", (raw: RoomToHost) => this.onRoomMessage(room, raw));
@@ -207,6 +222,7 @@ class ShardHost {
         break;
       case "stats":
         room.players = msg.players;
+        if (msg.info) room.info = msg.info;
         break;
       case "report":
         this.send({ t: "report", roomId: room.roomId, characters: msg.characters, roomState: msg.roomState });
@@ -235,7 +251,18 @@ class ShardHost {
       t: "heartbeat",
       rooms: [...this.rooms.values()]
         .filter((r) => r.ready)
-        .map((r) => ({ roomId: r.roomId, port: r.port, players: r.players, status: "open" })),
+        .map((r) => ({
+          roomId: r.roomId,
+          port: r.port,
+          players: r.players,
+          status: "open",
+          info: r.info ?? undefined,
+        })),
+      shard: {
+        pid: process.pid,
+        memMB: Math.round(process.memoryUsage().rss / (1024 * 1024)),
+        uptimeSec: Math.round(process.uptime()),
+      },
     });
   }
 

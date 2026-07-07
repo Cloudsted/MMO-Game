@@ -11,6 +11,7 @@ import {
   type CharacterSnapshot,
   type MasterToShard,
   type PortalArrival,
+  type RoomAdminInfo,
 } from "@fantasy-mmo/common";
 import type { Collections, CharacterDoc } from "./db.js";
 import { ObjectId } from "mongodb";
@@ -19,6 +20,8 @@ const log = makeLogger("master/shards");
 
 const HEARTBEAT_TIMEOUT_MS = 15_000;
 const SWEEP_INTERVAL_MS = 5_000;
+const HISTORY_SAMPLE_MS = 10_000;
+const HISTORY_CAP = 1080; // 3 hours at 10 s/sample
 
 interface ShardConn {
   shardId: string;
@@ -26,8 +29,19 @@ interface ShardConn {
   capacity: number;
   ws: WebSocket;
   lastSeen: number;
+  registeredAt: number;
+  /** shard-host process telemetry from the latest heartbeat */
+  info: { pid: number; memMB: number; uptimeSec: number } | null;
   /** roomId → port, from the latest heartbeat/roomOpened */
-  rooms: Map<string, { port: number; players: number; status: string }>;
+  rooms: Map<string, { port: number; players: number; status: string; info?: RoomAdminInfo }>;
+}
+
+/** One point on the dashboard's population/memory timeline. */
+export interface HistorySample {
+  t: number;
+  players: number;
+  rooms: Record<string, number>;
+  memMB: number;
 }
 
 /**
@@ -41,6 +55,8 @@ export class ShardManager {
   private roomAssignment = new Map<string, { shardId: string; status: "opening" | "open" }>();
   /** expired ephemeral rooms sit out their downtime before reopening fresh */
   private reopenNotBefore = new Map<string, number>();
+  /** population/memory timeline for the admin dashboard (in-memory ring) */
+  private history: HistorySample[] = [];
 
   constructor(
     private cols: Collections,
@@ -51,6 +67,30 @@ export class ShardManager {
     const wss = new WebSocketServer({ server: httpServer, path: "/control" });
     wss.on("connection", (ws) => this.onConnection(ws));
     setInterval(() => this.sweep(), SWEEP_INTERVAL_MS).unref();
+    setInterval(() => this.sampleHistory(), HISTORY_SAMPLE_MS).unref();
+  }
+
+  /** Sample the live population for the dashboard timeline. */
+  private sampleHistory(): void {
+    const rooms: Record<string, number> = {};
+    let players = 0;
+    for (const shard of this.shards.values()) {
+      for (const [roomId, r] of shard.rooms) {
+        rooms[roomId] = (rooms[roomId] ?? 0) + r.players;
+        players += r.players;
+      }
+    }
+    this.history.push({
+      t: Date.now(),
+      players,
+      rooms,
+      memMB: Math.round(process.memoryUsage().rss / (1024 * 1024)),
+    });
+    if (this.history.length > HISTORY_CAP) this.history.splice(0, this.history.length - HISTORY_CAP);
+  }
+
+  historySamples(): HistorySample[] {
+    return this.history;
   }
 
   private onConnection(ws: WebSocket): void {
@@ -95,7 +135,16 @@ export class ShardManager {
       existing.ws.close();
       this.dropShard(shardId);
     }
-    const shard: ShardConn = { shardId, gameHost, capacity, ws, lastSeen: Date.now(), rooms: new Map() };
+    const shard: ShardConn = {
+      shardId,
+      gameHost,
+      capacity,
+      ws,
+      lastSeen: Date.now(),
+      registeredAt: Date.now(),
+      info: null,
+      rooms: new Map(),
+    };
     this.shards.set(shardId, shard);
     this.send(shard, { t: "registered", ok: true });
     log.info(`shard ${shardId} registered (host ${gameHost}, capacity ${capacity})`);
@@ -112,7 +161,10 @@ export class ShardManager {
       case "register":
         break; // already handled
       case "heartbeat":
-        shard.rooms = new Map(msg.rooms.map((r) => [r.roomId, { port: r.port, players: r.players, status: r.status }]));
+        shard.rooms = new Map(
+          msg.rooms.map((r) => [r.roomId, { port: r.port, players: r.players, status: r.status, info: r.info }])
+        );
+        if (msg.shard) shard.info = msg.shard;
         break;
       case "roomOpened": {
         shard.rooms.set(msg.roomId, { port: msg.port, players: 0, status: "open" });
@@ -397,6 +449,25 @@ export class ShardManager {
     return true;
   }
 
+  /** Admin: kick one player out of their room (client auto-recovers via login). */
+  kickPlayer(roomId: string, characterId: string, reason: string): boolean {
+    const assignment = this.roomAssignment.get(roomId);
+    if (!assignment) return false;
+    const shard = this.shards.get(assignment.shardId);
+    if (!shard) return false;
+    this.send(shard, { t: "kick", roomId, characterId, reason });
+    log.info(`admin kick requested: character ${characterId} in ${roomId}`);
+    return true;
+  }
+
+  /** Admin: server-wide announcement, delivered as global chat in every room. */
+  broadcast(from: string, text: string): void {
+    for (const s of this.shards.values()) {
+      this.send(s, { t: "globalChat", from, text });
+    }
+    log.info(`admin broadcast: ${text}`);
+  }
+
   /** Live status for the admin/status endpoint. */
   status() {
     return {
@@ -405,9 +476,59 @@ export class ShardManager {
         gameHost: s.gameHost,
         capacity: s.capacity,
         lastSeen: s.lastSeen,
-        rooms: [...s.rooms.entries()].map(([roomId, r]) => ({ roomId, ...r })),
+        rooms: [...s.rooms.entries()].map(([roomId, r]) => ({ roomId, port: r.port, players: r.players, status: r.status })),
       })),
       rooms: [...this.roomAssignment.entries()].map(([roomId, a]) => ({ roomId, ...a })),
+    };
+  }
+
+  /** Flattened online-player list across every shard (admin dashboard). */
+  livePlayers() {
+    const out: Array<RoomAdminInfo["players"][number] & { roomId: string; shardId: string }> = [];
+    for (const s of this.shards.values()) {
+      for (const [roomId, r] of s.rooms) {
+        for (const p of r.info?.players ?? []) out.push({ ...p, roomId, shardId: s.shardId });
+      }
+    }
+    return out;
+  }
+
+  /** Everything the admin dashboard's overview needs in one payload. */
+  adminOverview() {
+    const now = Date.now();
+    return {
+      shards: [...this.shards.values()].map((s) => ({
+        shardId: s.shardId,
+        gameHost: s.gameHost,
+        capacity: s.capacity,
+        lastSeenMsAgo: now - s.lastSeen,
+        connectedForSec: Math.round((now - s.registeredAt) / 1000),
+        info: s.info,
+        rooms: [...s.rooms.entries()].map(([roomId, r]) => ({ roomId, ...r })),
+      })),
+      assignments: [...this.roomAssignment.entries()].map(([roomId, a]) => ({ roomId, ...a })),
+      reopenAt: [...this.reopenNotBefore.entries()].map(([roomId, at]) => ({ roomId, at })),
+      defs: [...this.roomDefs.values()].map((d) => ({
+        id: d.id,
+        name: d.name,
+        type: d.type,
+        biome: d.biome,
+        size: d.size,
+        persistence: d.persistence,
+        lifecycle: d.lifecycle ?? null,
+        fixedTime: d.fixedTime ?? null,
+        wind: d.wind,
+        flags: d.flags,
+        portals: d.portals.map((p) => ({ id: p.id, label: p.label, target: p.target })),
+        spawnTables: d.spawnTables.map((t) => ({
+          id: t.id,
+          maxAlive: t.maxAlive,
+          respawnSec: t.respawnSec,
+          mobs: t.mobs.map((m) => m.mob),
+        })),
+        prefabs: d.prefabs.map((p) => ({ prefab: p.prefab, count: p.count })),
+        npcs: d.npcs.map((n) => ({ id: n.id, name: n.name, shop: !!n.shop })),
+      })),
     };
   }
 }

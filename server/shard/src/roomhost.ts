@@ -31,6 +31,12 @@ class RoomHost {
   private tickets = new Map<string, PendingTicket>();
   private pendingTransfers = new Map<string, PlayerSession>(); // characterId → session
   private closing = false;
+  // sim-tick timings over the current stats window (admin telemetry)
+  private tickDurSum = 0;
+  private tickDurMax = 0;
+  private tickCount = 0;
+  /** ephemeral rooms: ms epoch of the scheduled collapse */
+  private expiresAtMs: number | null = null;
 
   start(): void {
     if (!process.send) {
@@ -74,6 +80,9 @@ class RoomHost {
       case "roomStatus":
         this.sim?.setRoomStatus(msg.roomId, msg.open);
         break;
+      case "kick":
+        this.sim?.adminKick(msg.characterId, msg.reason);
+        break;
       case "close":
         this.close(msg.reason);
         break;
@@ -96,11 +105,18 @@ class RoomHost {
       this.sendHost({ t: "ready", port });
     });
 
-    setInterval(() => this.sim!.tick(), 1000 / consts.net.simTickHz);
+    setInterval(() => {
+      const t0 = performance.now();
+      this.sim!.tick();
+      const d = performance.now() - t0;
+      this.tickDurSum += d;
+      this.tickCount++;
+      if (d > this.tickDurMax) this.tickDurMax = d;
+    }, 1000 / consts.net.simTickHz);
     setInterval(() => this.sim!.snapshot(), 1000 / consts.net.snapshotHz);
     setInterval(() => this.reportAll(), REPORT_INTERVAL_MS).unref();
     setInterval(() => this.sweepTickets(), 10_000).unref();
-    setInterval(() => this.sendHost({ t: "stats", players: this.sim!.playerCount() }), 5000).unref();
+    setInterval(() => this.sendStats(), 5000).unref();
 
     // ephemeral lifecycle: warn, evict everyone to the hub, close; the master
     // reopens the room fresh after its downtime
@@ -109,6 +125,23 @@ class RoomHost {
       this.scheduleExpiry(overrideSec > 0 ? overrideSec : def.lifecycle.lifetimeSec);
       this.sim.onExpireRequest = (sec) => this.scheduleExpiry(sec); // admin /expire
     }
+  }
+
+  /** Stats heartbeat up to the shard host: player count + admin telemetry. */
+  private sendStats(): void {
+    if (!this.sim) return;
+    const info = {
+      ...this.sim.adminInfo(),
+      uptimeSec: Math.round(process.uptime()),
+      tickAvgMs: this.tickCount > 0 ? Math.round((this.tickDurSum / this.tickCount) * 100) / 100 : 0,
+      tickMaxMs: Math.round(this.tickDurMax * 100) / 100,
+      memMB: Math.round(process.memoryUsage().rss / (1024 * 1024)),
+      expiresAt: this.expiresAtMs,
+    };
+    this.tickDurSum = 0;
+    this.tickDurMax = 0;
+    this.tickCount = 0;
+    this.sendHost({ t: "stats", players: this.sim.playerCount(), info });
   }
 
   private expiryTimers: NodeJS.Timeout[] = [];
@@ -129,6 +162,7 @@ class RoomHost {
       );
     }
     this.expiryTimers.push(setTimeout(() => this.expire(), lifeMs));
+    this.expiresAtMs = Date.now() + lifeMs;
     this.log.info(`lifecycle armed: expires in ${lifetimeSec}s`);
   }
 

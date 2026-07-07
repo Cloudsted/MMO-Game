@@ -55,7 +55,7 @@ async function route(req: IncomingMessage, res: ServerResponse, cols: Collection
   }
 
   // admin panel + admin API (ADMIN_KEY-gated inside)
-  if (handleAdmin(req, res, url, shards, process.env.ADMIN_KEY ?? "")) return;
+  if (await handleAdmin(req, res, url, shards, cols, process.env.ADMIN_KEY ?? "")) return;
 
   if (method === "POST" && path === "/api/register") {
     const body = JSON.parse(await readBody(req));

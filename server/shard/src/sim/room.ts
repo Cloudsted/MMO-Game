@@ -24,6 +24,7 @@ import {
   type NpcDef,
   type PortalDef,
   type PortalWire,
+  type RoomAdminInfo,
   type RoomDef,
   type RoomState,
   type ServerToClient,
@@ -582,6 +583,53 @@ export class RoomSim {
 
   playerCount(): number {
     return this.sessions.size;
+  }
+
+  /** Sim-side live telemetry for the admin dashboard; the RoomHost stamps the
+   *  process-side fields (uptime/tick timings/memory/expiry) on top. */
+  adminInfo(): Pick<
+    RoomAdminInfo,
+    "mobs" | "npcs" | "drops" | "projectiles" | "blockEdits" | "timeOfDay" | "players"
+  > {
+    let mobs = 0;
+    let npcs = 0;
+    let drops = 0;
+    for (const e of this.entities.values()) {
+      if (e.kind === "mob") mobs++;
+      else if (e.kind === "npc") npcs++;
+      else if (e.kind === "loot") drops++;
+    }
+    const players = [...this.sessions.values()].map((s) => ({
+      charId: s.character.id,
+      name: s.character.name,
+      level: s.entity.level ?? 1,
+      hp: Math.max(0, Math.ceil(s.entity.health?.hp ?? 0)),
+      maxHp: s.entity.health?.maxHp ?? 0,
+      gold: s.gold,
+      x: Math.round(s.entity.pos.x * 10) / 10,
+      y: Math.round(s.entity.pos.y * 10) / 10,
+      z: Math.round(s.entity.pos.z * 10) / 10,
+    }));
+    return {
+      mobs,
+      npcs,
+      drops,
+      projectiles: this.projectiles.length,
+      blockEdits: this.world.edits.size,
+      timeOfDay: this.timeOfDay(),
+      players,
+    };
+  }
+
+  /** Admin dashboard kick: evict a player by character id (same evict +
+   *  immediate-remove sequence as duplicate-login handling). */
+  adminKick(characterId: string, reason: string): boolean {
+    const session = this.byCharacterId.get(characterId);
+    if (!session) return false;
+    this.log.info(`admin kick: ${session.character.name} (${reason})`);
+    session.send({ t: "evict", reason });
+    this.removePlayer(session);
+    return true;
   }
 
   // ---------- players ----------

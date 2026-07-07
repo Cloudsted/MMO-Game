@@ -62,7 +62,9 @@
         "secret": "s"
       },
       "heartbeat": {
-        "rooms": "a<{roomId:s,port:n,players:n,status:s}>"
+        "$comment": "info/shard = admin-dashboard telemetry (RoomAdminInfo: entity counts, block edits, clock, tick timings, memory, expiry, live player list)",
+        "rooms": "a<{roomId:s,port:n,players:n,status:s,info:RoomAdminInfo?}>",
+        "shard": "{pid:n,memMB:n,uptimeSec:n}?"
       },
       "roomOpened": {
         "roomId": "s",
@@ -129,6 +131,12 @@
         "$comment": "room availability; RoomHosts surface as portal sealed/open",
         "roomId": "s",
         "open": "b"
+      },
+      "kick": {
+        "$comment": "admin dashboard: evict one player from a room",
+        "roomId": "s",
+        "characterId": "s",
+        "reason": "s"
       }
     }
   },

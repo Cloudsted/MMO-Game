@@ -123,6 +123,40 @@ export const RoomStateSchema = z.object({
 });
 export type RoomState = z.infer<typeof RoomStateSchema>;
 
+/** Live per-room telemetry piggybacked on the shard heartbeat → admin dashboard.
+ *  Sim-side counts come from RoomSim.adminInfo(); process-side numbers
+ *  (uptime/tick timings/memory/expiry) are stamped by the RoomHost. */
+export const RoomAdminInfoSchema = z.object({
+  mobs: z.number().int(),
+  npcs: z.number().int(),
+  drops: z.number().int(),
+  projectiles: z.number().int(),
+  /** player block edits in the persistence overlay */
+  blockEdits: z.number().int(),
+  timeOfDay: z.number(),
+  uptimeSec: z.number(),
+  /** avg/max sim tick duration over the last stats window */
+  tickAvgMs: z.number(),
+  tickMaxMs: z.number(),
+  memMB: z.number(),
+  /** ephemeral rooms: ms epoch of the scheduled collapse (null = no lifecycle) */
+  expiresAt: z.number().nullable(),
+  players: z.array(
+    z.object({
+      charId: z.string(),
+      name: z.string(),
+      level: z.number().int(),
+      hp: z.number(),
+      maxHp: z.number(),
+      gold: z.number(),
+      x: z.number(),
+      y: z.number(),
+      z: z.number(),
+    })
+  ),
+});
+export type RoomAdminInfo = z.infer<typeof RoomAdminInfoSchema>;
+
 export const ShardToMasterSchema = z.discriminatedUnion("t", [
   z.object({
     t: z.literal("register"),
@@ -134,8 +168,16 @@ export const ShardToMasterSchema = z.discriminatedUnion("t", [
   z.object({
     t: z.literal("heartbeat"),
     rooms: z.array(
-      z.object({ roomId: z.string(), port: z.number().int(), players: z.number().int(), status: z.string() })
+      z.object({
+        roomId: z.string(),
+        port: z.number().int(),
+        players: z.number().int(),
+        status: z.string(),
+        info: RoomAdminInfoSchema.optional(),
+      })
     ),
+    /** shard-host process telemetry (admin dashboard) */
+    shard: z.object({ pid: z.number().int(), memMB: z.number(), uptimeSec: z.number() }).optional(),
   }),
   z.object({ t: z.literal("roomOpened"), roomId: z.string(), port: z.number().int() }),
   z.object({ t: z.literal("roomClosed"), roomId: z.string(), reason: z.string() }),
@@ -188,6 +230,8 @@ export const MasterToShardSchema = z.discriminatedUnion("t", [
   z.object({ t: z.literal("globalChat"), from: z.string(), text: z.string() }),
   /** live room availability — RoomHosts surface it as portal open/sealed */
   z.object({ t: z.literal("roomStatus"), roomId: z.string(), open: z.boolean() }),
+  /** admin dashboard: evict one player from a room */
+  z.object({ t: z.literal("kick"), roomId: z.string(), characterId: z.string(), reason: z.string() }),
 ]);
 export type MasterToShard = z.infer<typeof MasterToShardSchema>;
 

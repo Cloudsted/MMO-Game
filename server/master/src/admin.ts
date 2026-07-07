@@ -1,18 +1,26 @@
 /**
- * Admin web panel: live shard/room table, room restart buttons, and a tail
- * of the master's own logs. Served by the master at /admin, gated by
- * ADMIN_KEY (.env). Plain HTML+JS — no build step, no dependencies.
+ * Admin web dashboard API. The page itself lives in adminpage.ts (plain
+ * HTML+JS, no build step); this module serves it at /admin and exposes the
+ * ADMIN_KEY-gated JSON API under /api/admin/*. Everything is read from live
+ * shard telemetry (heartbeats) or MongoDB — character writes are deliberately
+ * NOT offered here: a connected client's periodic report would clobber them
+ * (see "Known traps" in CLAUDE.md); use the in-game admin commands instead.
  */
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { ObjectId } from "mongodb";
 import { logSink } from "@fantasy-mmo/common";
+import type { Collections } from "./db.js";
 import type { ShardManager } from "./shards.js";
+import { PAGE } from "./adminpage.js";
 
-const LOG_LINES = 300;
+const LOG_LINES = 500;
 const logBuffer: string[] = [];
 logSink.push = (line) => {
   logBuffer.push(line);
   if (logBuffer.length > LOG_LINES) logBuffer.shift();
 };
+
+const masterStartedAt = Date.now();
 
 function json(res: ServerResponse, status: number, body: unknown): void {
   const text = JSON.stringify(body);
@@ -21,13 +29,14 @@ function json(res: ServerResponse, status: number, body: unknown): void {
 }
 
 /** Handles /admin* routes. Returns true when the request was handled. */
-export function handleAdmin(
+export async function handleAdmin(
   req: IncomingMessage,
   res: ServerResponse,
   url: URL,
   shards: ShardManager,
+  cols: Collections,
   adminKey: string
-): boolean {
+): Promise<boolean> {
   const path = url.pathname;
   if (!path.startsWith("/admin") && !path.startsWith("/api/admin")) return false;
 
@@ -37,101 +46,209 @@ export function handleAdmin(
     return true;
   }
 
-  // API routes below require the key
-  if (url.searchParams.get("key") !== adminKey) {
+  // API routes below require the key (an unset ADMIN_KEY locks the API out
+  // entirely — an empty string must never act as a valid key)
+  if (!adminKey || url.searchParams.get("key") !== adminKey) {
     json(res, 401, { error: "bad admin key" });
     return true;
   }
+  const method = req.method ?? "GET";
+  const q = (name: string) => url.searchParams.get(name) ?? "";
+
   if (path === "/api/admin/logs") {
     json(res, 200, { lines: logBuffer });
     return true;
   }
-  if (path === "/api/admin/restart-room" && req.method === "POST") {
-    const roomId = url.searchParams.get("roomId") ?? "";
-    const ok = shards.closeRoomAdmin(roomId);
+
+  if (path === "/api/admin/overview") {
+    const [accounts, characters, sessions, roomStates] = await Promise.all([
+      cols.accounts.estimatedDocumentCount(),
+      cols.characters.estimatedDocumentCount(),
+      cols.sessions.estimatedDocumentCount(),
+      cols.roomStates.estimatedDocumentCount(),
+    ]);
+    json(res, 200, {
+      master: {
+        pid: process.pid,
+        memMB: Math.round(process.memoryUsage().rss / (1024 * 1024)),
+        uptimeSec: Math.round(process.uptime()),
+        startedAt: masterStartedAt,
+        node: process.version,
+      },
+      db: { accounts, characters, sessions, roomStates },
+      ...shards.adminOverview(),
+    });
+    return true;
+  }
+
+  if (path === "/api/admin/history") {
+    json(res, 200, { samples: shards.historySamples() });
+    return true;
+  }
+
+  if (path === "/api/admin/players") {
+    json(res, 200, { players: shards.livePlayers() });
+    return true;
+  }
+
+  if (path === "/api/admin/characters") {
+    const query = q("q") ? { name: { $regex: escapeRegex(q("q")), $options: "i" } } : {};
+    const limit = Math.min(200, Number(q("limit")) || 50);
+    const list = await cols.characters
+      .find(query)
+      .sort({ level: -1, name: 1 })
+      .limit(limit)
+      .toArray();
+    const accountIds = [...new Set(list.map((c) => c.accountId.toHexString()))].map((id) => new ObjectId(id));
+    const accounts = await cols.accounts.find({ _id: { $in: accountIds } }).toArray();
+    const nameByAccount = new Map(accounts.map((a) => [a._id!.toHexString(), a.username]));
+    const online = new Set(shards.livePlayers().map((p) => p.charId));
+    json(res, 200, {
+      characters: list.map((c) => ({
+        id: c._id!.toHexString(),
+        name: c.name,
+        level: c.level,
+        xp: c.xp,
+        gold: c.gold,
+        roomId: c.roomId,
+        x: c.x,
+        y: c.y,
+        z: c.z,
+        account: nameByAccount.get(c.accountId.toHexString()) ?? "?",
+        createdAt: c.createdAt,
+        online: online.has(c._id!.toHexString()),
+        items: c.inventory.filter(Boolean).length,
+      })),
+    });
+    return true;
+  }
+
+  if (path === "/api/admin/character") {
+    if (!ObjectId.isValid(q("id"))) {
+      json(res, 400, { error: "bad character id" });
+      return true;
+    }
+    const c = await cols.characters.findOne({ _id: new ObjectId(q("id")) });
+    if (!c) {
+      json(res, 404, { error: "character not found" });
+      return true;
+    }
+    const account = await cols.accounts.findOne({ _id: c.accountId });
+    const online = shards.livePlayers().find((p) => p.charId === c._id!.toHexString()) ?? null;
+    json(res, 200, {
+      character: {
+        id: c._id!.toHexString(),
+        name: c.name,
+        level: c.level,
+        xp: c.xp,
+        gold: c.gold,
+        roomId: c.roomId,
+        x: c.x,
+        y: c.y,
+        z: c.z,
+        yaw: c.yaw,
+        inventory: c.inventory,
+        account: account?.username ?? "?",
+        roles: account?.roles ?? [],
+        createdAt: c.createdAt,
+        online,
+      },
+    });
+    return true;
+  }
+
+  if (path === "/api/admin/accounts") {
+    const query = q("q") ? { username: { $regex: escapeRegex(q("q")), $options: "i" } } : {};
+    const list = await cols.accounts.find(query).sort({ createdAt: -1 }).limit(100).toArray();
+    const ids = list.map((a) => a._id!);
+    const chars = await cols.characters.find({ accountId: { $in: ids } }).toArray();
+    const byAccount = new Map<string, string[]>();
+    for (const c of chars) {
+      const key = c.accountId.toHexString();
+      (byAccount.get(key) ?? byAccount.set(key, []).get(key)!).push(c.name);
+    }
+    json(res, 200, {
+      accounts: list.map((a) => ({
+        id: a._id!.toHexString(),
+        username: a.username,
+        roles: a.roles,
+        createdAt: a.createdAt,
+        characters: byAccount.get(a._id!.toHexString()) ?? [],
+      })),
+    });
+    return true;
+  }
+
+  if (path === "/api/admin/set-role" && method === "POST") {
+    const accountId = q("accountId");
+    const grant = q("grant") === "1";
+    // only the admin role exists today; refuse arbitrary role strings
+    if (q("role") !== "admin" || !ObjectId.isValid(accountId)) {
+      json(res, 400, { error: "bad role or account id" });
+      return true;
+    }
+    const update = grant ? { $addToSet: { roles: "admin" } } : { $pull: { roles: "admin" } };
+    const r = await cols.accounts.updateOne({ _id: new ObjectId(accountId) }, update as never);
+    json(res, r.matchedCount ? 200 : 404, r.matchedCount ? { ok: true } : { error: "account not found" });
+    return true;
+  }
+
+  if (path === "/api/admin/roomstate") {
+    const doc = await cols.roomStates.findOne({ roomId: q("roomId") });
+    if (!doc) {
+      json(res, 404, { error: "no persisted state for that room" });
+      return true;
+    }
+    const st = doc.state;
+    json(res, 200, {
+      roomId: q("roomId"),
+      savedAt: st.savedAt,
+      updatedAt: doc.updatedAt,
+      timeOfDay: st.timeOfDay,
+      blockEdits: st.blocks.length,
+      spawnersPending: Object.fromEntries(Object.entries(st.spawners).map(([id, ats]) => [id, ats.length])),
+      caches: st.caches,
+      drops: st.drops.slice(0, 50).map((d) => ({
+        x: Math.round(d.x * 10) / 10,
+        y: Math.round(d.y * 10) / 10,
+        z: Math.round(d.z * 10) / 10,
+        gold: d.gold,
+        items: d.items.map((i) => (i.qty > 1 ? `${i.item} x${i.qty}` : i.item)),
+        owner: d.owner,
+        expireAt: d.expireAt,
+      })),
+      dropsTotal: st.drops.length,
+    });
+    return true;
+  }
+
+  if (path === "/api/admin/broadcast" && method === "POST") {
+    const text = q("text").trim().slice(0, 300);
+    if (!text) {
+      json(res, 400, { error: "text required" });
+      return true;
+    }
+    shards.broadcast("[SERVER]", text);
+    json(res, 200, { ok: true });
+    return true;
+  }
+
+  if (path === "/api/admin/kick" && method === "POST") {
+    const ok = shards.kickPlayer(q("roomId"), q("characterId"), q("reason") || "kicked by an admin");
     json(res, ok ? 200 : 404, ok ? { ok: true } : { error: "room not assigned" });
     return true;
   }
+
+  if (path === "/api/admin/restart-room" && method === "POST") {
+    const ok = shards.closeRoomAdmin(q("roomId"));
+    json(res, ok ? 200 : 404, ok ? { ok: true } : { error: "room not assigned" });
+    return true;
+  }
+
   json(res, 404, { error: "not found" });
   return true;
 }
 
-const PAGE = `<!doctype html>
-<html><head><meta charset="utf-8"><title>fantasy-mmo admin</title>
-<style>
-  body { font: 13px/1.5 Consolas, monospace; background: #14151c; color: #d8d8e0; margin: 24px; }
-  h1 { font-size: 18px; color: #ffd37a; }
-  h2 { font-size: 14px; color: #9fc1ff; margin-top: 24px; }
-  table { border-collapse: collapse; margin-top: 8px; }
-  td, th { border: 1px solid #33364a; padding: 5px 12px; text-align: left; }
-  th { background: #1e2030; color: #9fc1ff; }
-  button { background: #3a2f4f; color: #eee; border: 1px solid #665a88; padding: 3px 10px; cursor: pointer; font: inherit; }
-  button:hover { background: #4d3f6b; }
-  #logs { background: #0d0e13; border: 1px solid #33364a; padding: 10px; margin-top: 8px;
-          height: 320px; overflow-y: auto; white-space: pre-wrap; font-size: 12px; }
-  .warn { color: #ffcf6e; } .error { color: #ff7a7a; }
-  input { background: #1e2030; border: 1px solid #33364a; color: #eee; padding: 4px 8px; font: inherit; }
-  .muted { color: #777c92; }
-</style></head><body>
-<h1>fantasy-mmo — admin</h1>
-<div>key <input id="key" type="password" size="24"> <span id="state" class="muted">enter the ADMIN_KEY from .env</span></div>
-<h2>shards &amp; rooms</h2>
-<div id="status" class="muted">…</div>
-<h2>master log</h2>
-<div id="logs"></div>
-<script>
-const keyEl = document.getElementById('key');
-keyEl.value = localStorage.getItem('adminKey') || '';
-keyEl.addEventListener('change', () => localStorage.setItem('adminKey', keyEl.value));
-const k = () => encodeURIComponent(keyEl.value);
-
-async function refreshStatus() {
-  try {
-    const s = await (await fetch('/api/status')).json();
-    let html = '';
-    for (const shard of s.shards) {
-      html += '<table><tr><th colspan="4">' + shard.shardId + ' @ ' + shard.gameHost +
-        ' <span class="muted">(capacity ' + shard.capacity + ')</span></th></tr>' +
-        '<tr><th>room</th><th>port</th><th>players</th><th></th></tr>';
-      for (const r of shard.rooms) {
-        html += '<tr><td>' + r.roomId + '</td><td>' + r.port + '</td><td>' + r.players + '</td>' +
-          '<td><button onclick="restartRoom(\\'' + r.roomId + '\\')">restart</button></td></tr>';
-      }
-      html += '</table>';
-    }
-    const down = s.rooms.filter(r => r.status !== 'open').map(r => r.roomId + ':' + r.status);
-    if (down.length) html += '<p class="warn">pending/down: ' + down.join(', ') + '</p>';
-    document.getElementById('status').innerHTML = html || 'no shards connected';
-  } catch (e) {
-    document.getElementById('status').textContent = 'status unavailable: ' + e;
-  }
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-
-async function refreshLogs() {
-  if (!keyEl.value) return;
-  try {
-    const r = await fetch('/api/admin/logs?key=' + k());
-    if (!r.ok) { document.getElementById('state').textContent = 'bad key'; return; }
-    document.getElementById('state').textContent = 'authorized';
-    const data = await r.json();
-    const el = document.getElementById('logs');
-    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 20;
-    el.innerHTML = data.lines.map(l => {
-      const cls = l.includes(' ERROR ') ? 'error' : l.includes(' WARN ') ? 'warn' : '';
-      return '<div class="' + cls + '">' + l.replace(/</g, '&lt;') + '</div>';
-    }).join('');
-    if (atBottom) el.scrollTop = el.scrollHeight;
-  } catch (e) { /* master briefly away */ }
-}
-
-async function restartRoom(roomId) {
-  if (!confirm('Restart room ' + roomId + '? Connected players get evicted (they auto-recover via the hub).')) return;
-  await fetch('/api/admin/restart-room?roomId=' + roomId + '&key=' + k(), { method: 'POST' });
-  setTimeout(refreshStatus, 800);
-}
-
-setInterval(refreshStatus, 2500);
-setInterval(refreshLogs, 2500);
-refreshStatus();
-refreshLogs();
-</script></body></html>`;
