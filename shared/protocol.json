@@ -248,7 +248,8 @@
         "height": "n",
         "waterLevel": "n|null",
         "chunks": "n",
-        "wind": "n"
+        "wind": "n",
+        "nightLight": "n"
       },
       "chunks": {
         "$comment": "batched 16x16xheight block chunks; data = raw-deflate base64, x-fastest then z then y",

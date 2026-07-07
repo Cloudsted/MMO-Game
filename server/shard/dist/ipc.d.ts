@@ -1,5 +1,5 @@
 /** IPC messages between the shard host and its RoomHost child processes. */
-import type { CharacterSnapshot, RoomState } from "@fantasy-mmo/common";
+import type { CharacterSnapshot, RoomAdminInfo, RoomState } from "@fantasy-mmo/common";
 export type HostToRoom = {
     t: "init";
     roomId: string;
@@ -29,6 +29,10 @@ export type HostToRoom = {
     roomId: string;
     open: boolean;
 } | {
+    t: "kick";
+    characterId: string;
+    reason: string;
+} | {
     t: "close";
     reason: string;
 };
@@ -38,6 +42,7 @@ export type RoomToHost = {
 } | {
     t: "stats";
     players: number;
+    info?: RoomAdminInfo;
 } | {
     t: "report";
     characters: Array<{

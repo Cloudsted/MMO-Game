@@ -73,6 +73,10 @@ export interface PlayerSession {
   snapCount: number;
   /** granted a transfer: the coming disconnect must not clobber the DB */
   transferring: boolean;
+  /** attack click that arrived a timing-sliver early (recover tail /
+   *  cooldown drift) — retried from tick() until it fires or expires,
+   *  instead of silently whiffing after the client already animated */
+  pendingAttack: { aimYaw: number; aimPitch: number; until: number } | null;
   // ---- phase 4 ----
   slots: Array<ItemStack | null>; // INV_SIZE slots; hotbar = first HOTBAR_SIZE
   held: number; // hotbar slot index
@@ -215,9 +219,26 @@ export class RoomSim {
     if (!table || !spawner) return;
     const at = findSpawnPoint(table, this.world, this.waterLevel());
     if (!at) return;
+    // pack scatter must be validated too — the point findSpawnPoint vetted
+    // is clean, but a blind ±1.5 offset can land on a tree column (the treed
+    // boar packs). Reject scatters whose floor differs from the pack point's
+    // or that clip solids/liquid; stragglers stack on the point and the
+    // separation pass fans them out.
+    const baseY = this.world.floorY(at.x, at.z);
     for (let i = 0; i < count; i++) {
-      const x = at.x + (Math.random() - 0.5) * 3;
-      const z = at.z + (Math.random() - 0.5) * 3;
+      let x = at.x;
+      let z = at.z;
+      for (let attempt = 0; attempt < 6; attempt++) {
+        const cx = at.x + (Math.random() - 0.5) * 3;
+        const cz = at.z + (Math.random() - 0.5) * 3;
+        const cy = this.world.floorY(cx, cz);
+        if (Math.abs(cy - baseY) > 2) continue;
+        if (this.world.liquidAt(cx, cy + 0.1, cz)) continue;
+        if (this.world.collidesAABB(cx, cy, cz, 0.3, 1.6)) continue;
+        x = cx;
+        z = cz;
+        break;
+      }
       const mob = this.spawnMob(pickMob(table), x, z, spawnerId);
       if (mob) spawner.alive.add(mob.id);
     }
@@ -231,7 +252,8 @@ export class RoomSim {
     const e: Entity = {
       id: allocEntityId(),
       kind: "mob",
-      pos: { x: gx, y: this.world.standY(gx, gz), z: gz, yaw: Math.random() * Math.PI * 2 },
+      // floorY, not standY: mobs spawn on the ground UNDER canopies/roofs
+      pos: { x: gx, y: this.world.floorY(gx, gz), z: gz, yaw: Math.random() * Math.PI * 2 },
       renderable: { sprite: def.sprite, anim: "idle", name: def.name },
       level: def.level,
       health: { hp: def.hp, maxHp: def.hp },
@@ -292,6 +314,13 @@ export class RoomSim {
       restored++;
     }
     if (restored > 0) this.log.info(`restored ${restored} loot drop(s) from snapshot`);
+  }
+
+  /** Ground Y for a bag dropped by an entity whose feet are at fromY — the
+   *  walkable top under THEM, not the column's standY (which is the canopy/
+   *  roof top when the death happens under a tree). */
+  private dropY(x: number, z: number, fromY: number): number {
+    return this.world.groundBelow(x, fromY + 1.05, z, 0.25);
   }
 
   private spawnLootBag(
@@ -490,7 +519,7 @@ export class RoomSim {
       if (itemId) {
         const leftover = addItem(this.reg, session.slots, { item: itemId, qty: 1, rarity: "common" });
         if (leftover > 0) {
-          this.spawnLootBag(session.entity.pos.x, session.entity.pos.z, [{ item: itemId, qty: 1, rarity: "common" }], 0, session.character.id, Date.now() + 3000, Date.now() + this.consts.combat.mobLootExpireMs);
+          this.spawnLootBag(session.entity.pos.x, session.entity.pos.z, [{ item: itemId, qty: 1, rarity: "common" }], 0, session.character.id, Date.now() + 3000, Date.now() + this.consts.combat.mobLootExpireMs, this.dropY(session.entity.pos.x, session.entity.pos.z, session.entity.pos.y));
         }
         session.dirtyInv = true;
       }
@@ -686,6 +715,7 @@ export class RoomSim {
       known: new Map(),
       snapCount: 0,
       transferring: false,
+      pendingAttack: null,
       slots,
       held: 0,
       lastPitch: 0,
@@ -733,6 +763,7 @@ export class RoomSim {
       waterLevel: this.waterLevel(),
       chunks: chunks.length,
       wind: this.def.wind,
+      nightLight: this.def.nightLight,
     });
     for (let i = 0; i < chunks.length; i += CHUNKS_PER_MSG) {
       send({ t: "chunks", batch: chunks.slice(i, i + CHUNKS_PER_MSG) });
@@ -832,10 +863,31 @@ export class RoomSim {
 
   // ---------- combat ----------
 
-  /** Player pressed attack: use the held item's ability, aimed by camera. */
+  /**
+   * Player pressed attack: use the held item's ability, aimed by camera.
+   * Two layers defend against silent whiffs (client animates, server drops):
+   * the body FSM is caught up to the packet's arrival (it otherwise only
+   * steps at tick rate, so a click just after recover's end was judged
+   * against a stale state), and a still-blocked click is buffered briefly
+   * and retried from tick() instead of vanishing.
+   */
   handleAttack(session: PlayerSession, aimYaw: number, aimPitch: number): void {
     const e = session.entity;
     if (e.combat!.act === "dead") return;
+    const now = Date.now();
+    this.advanceCombat(e, now);
+    if (this.tryHeldAbility(session, aimYaw, aimPitch, now)) {
+      session.pendingAttack = null;
+    } else {
+      session.pendingAttack = { aimYaw, aimPitch, until: now + this.consts.combat.attackBufferMs };
+    }
+  }
+
+  /** Start the held item's ability. Returns false only for blocks worth
+   *  buffering (body busy / cooldown / mana); no-op inputs return true. */
+  private tryHeldAbility(session: PlayerSession, aimYaw: number, aimPitch: number, now: number): boolean {
+    const e = session.entity;
+    if (e.combat!.act === "dead") return true;
     const held = session.slots[session.held];
     let abilityId = "punch";
     let base = 0;
@@ -843,7 +895,7 @@ export class RoomSim {
     let heldDef: ItemDef | null = null;
     if (held) {
       const def = this.reg.items[held.item];
-      if (!def || def.kind !== "weapon" || !def.ability) return; // held a non-weapon: no-op
+      if (!def || def.kind !== "weapon" || !def.ability) return true; // held a non-weapon: no-op
       heldDef = def;
       abilityId = def.ability;
       const rarity = this.reg.rarities[held.rarity]?.mult ?? 1;
@@ -851,12 +903,13 @@ export class RoomSim {
       speedMult = held.stats?.spd ?? 1;
     }
     const ability = this.reg.abilities[abilityId];
-    if (!ability) return;
+    if (!ability) return true;
     if (base === 0) base = ability.damage ?? 2;
     const levelMult = 1 + this.consts.progression.damagePerLevelPct * ((e.level ?? 1) - 1);
-    const started = startAbility(e, abilityId, ability, base * levelMult, aimYaw, aimPitch, Date.now(), speedMult);
+    const started = startAbility(e, abilityId, ability, base * levelMult, aimYaw, aimPitch, now, speedMult);
     // weapons wear one durability point per use (bare hands never do)
     if (started && held && heldDef && held.maxDur !== undefined) this.wearHeldItem(session, held, heldDef);
+    return started;
   }
 
   /** Durability tick: at zero the weapon breaks and the slot empties. */
@@ -875,15 +928,23 @@ export class RoomSim {
     if (!def) return;
     const ability = this.reg.abilities[def.ability];
     if (!ability) return;
-    const aimYaw = Math.atan2(target.pos.x - mob.pos.x, target.pos.z - mob.pos.z);
-    startAbility(mob, def.ability, ability, def.damage, aimYaw, 0, now);
+    const dx = target.pos.x - mob.pos.x;
+    const dz = target.pos.z - mob.pos.z;
+    const aimYaw = Math.atan2(dx, dz);
+    // ranged mobs aim the muzzle (~eye 1.45) at the target's chest (~1.0)
+    // so bolts connect up and down slopes; melee ignores pitch entirely
+    let aimPitch = 0;
+    if (ability.kind === "projectile") {
+      aimPitch = Math.atan2(target.pos.y + 1.0 - (mob.pos.y + 1.45), Math.max(0.1, Math.hypot(dx, dz)));
+    }
+    startAbility(mob, def.ability, ability, def.damage, aimYaw, aimPitch, now);
   }
 
   private resolveMeleeHit(attacker: Entity, ability: AbilityDef): void {
     const range = ability.range ?? 2;
     const arc = ability.arcDeg ?? 90;
     for (const target of this.targetsOf(attacker)) {
-      if (inMeleeCone(attacker, target, range, arc, this.consts.combat.meleeRangeGrace)) {
+      if (inMeleeCone(attacker, target, range, arc, this.consts.combat.meleeRangeGrace, this.consts.combat.meleeVerticalReach)) {
         this.applyDamage(attacker, target, attacker.combat!.pendingDamage);
         // melee on-hit debuffs (spider venom, envenomed daggers)
         if (ability.debuff) this.applyDebuff(target, ability.debuff, attacker);
@@ -1054,7 +1115,8 @@ export class RoomSim {
             rolled.gold,
             topChar,
             now + this.consts.combat.lootLockMobMs,
-            now + this.consts.combat.mobLootExpireMs
+            now + this.consts.combat.mobLootExpireMs,
+            this.dropY(tgt.pos.x, tgt.pos.z, tgt.pos.y)
           );
         }
       }
@@ -1088,7 +1150,8 @@ export class RoomSim {
         0,
         diedInPvp ? null : session.character.id,
         now + lockMs,
-        null // death bags persist
+        null, // death bags persist
+        this.dropY(session.entity.pos.x, session.entity.pos.z, session.entity.pos.y)
       );
     }
     session.slots = normalizeInventory([]);
@@ -1261,7 +1324,7 @@ export class RoomSim {
     // small toss in facing direction; FFA after a short lock
     const x = p.x + Math.sin(p.yaw) * 1.2;
     const z = p.z + Math.cos(p.yaw) * 1.2;
-    this.spawnLootBag(x, z, [removed], 0, session.character.id, Date.now() + 3000, Date.now() + this.consts.combat.mobLootExpireMs);
+    this.spawnLootBag(x, z, [removed], 0, session.character.id, Date.now() + 3000, Date.now() + this.consts.combat.mobLootExpireMs, this.dropY(x, z, p.y));
     session.dirtyInv = true;
   }
 
@@ -1580,6 +1643,35 @@ export class RoomSim {
     this.broadcastNear(x, z, { t: "evt", e });
   }
 
+  /**
+   * Advance one entity's action FSM to `now`, firing due melee hits and
+   * releases. tick() runs it at 10 Hz; handleAttack runs it again at packet
+   * arrival so a click landing between ticks isn't judged against a stale
+   * recover/active state (the silent-whiff bug). Loops because catching up
+   * may cross more than one state boundary.
+   */
+  private advanceCombat(e: Entity, now: number): void {
+    for (let guard = 0; guard < 4; guard++) {
+      const c = e.combat!;
+      const ability = c.ability ? (this.reg.abilities[c.ability] ?? null) : null;
+      const before = c.act;
+      const fired = advanceFsm(e, ability, now);
+      if (fired && e.kind === "player") {
+        // players aim WHILE winding up/casting: fire where the mouse points
+        // at release, not where it pointed at click. Mobs keep the aim
+        // frozen at windup start — their telegraph is the dodge window.
+        const s = this.sessions.get(e.id);
+        if (s) {
+          c.aimYaw = e.pos.yaw;
+          c.aimPitch = s.lastPitch;
+        }
+      }
+      if (fired === "melee-hit" && ability) this.resolveMeleeHit(e, ability);
+      else if (fired === "release" && ability) this.releaseAbility(e, ability, now);
+      if (c.act === before) break;
+    }
+  }
+
   /** Simulation tick (10 Hz): FSMs, brains, projectiles, regen, respawns. */
   tick(): void {
     this.tickNo++;
@@ -1590,20 +1682,7 @@ export class RoomSim {
     // 1. advance action FSMs; fire melee hits and releases
     for (const e of this.entities.values()) {
       if (!e.combat) continue;
-      const ability = e.combat.ability ? (this.reg.abilities[e.combat.ability] ?? null) : null;
-      const fired = advanceFsm(e, ability, now);
-      if (fired && e.kind === "player") {
-        // players aim WHILE winding up/casting: fire where the mouse points
-        // at release, not where it pointed at click. Mobs keep the aim
-        // frozen at windup start — their telegraph is the dodge window.
-        const s = this.sessions.get(e.id);
-        if (s) {
-          e.combat.aimYaw = e.pos.yaw;
-          e.combat.aimPitch = s.lastPitch;
-        }
-      }
-      if (fired === "melee-hit" && ability) this.resolveMeleeHit(e, ability);
-      else if (fired === "release" && ability) this.releaseAbility(e, ability, now);
+      this.advanceCombat(e, now);
       // debuff expiry
       if (e.combat.slowPct > 0 && e.combat.slowUntil <= now) e.combat.slowPct = 0;
       // poison DoT: accrue over the active window, land whole-point bites
@@ -1632,6 +1711,18 @@ export class RoomSim {
       }
     }
 
+    // 1b. buffered attacks: clicks that arrived a hair early fire now that
+    // the FSMs have stepped, instead of silently whiffing
+    for (const s of this.sessions.values()) {
+      const pa = s.pendingAttack;
+      if (!pa) continue;
+      if (pa.until <= now) {
+        s.pendingAttack = null;
+        continue;
+      }
+      if (this.tryHeldAbility(s, pa.aimYaw, pa.aimPitch, now)) s.pendingAttack = null;
+    }
+
     // 2. mob brains → intents → body
     const players = [...this.sessions.values()].map((s) => s.entity);
     const aliveMobs = [...this.entities.values()].filter((e) => e.kind === "mob" && e.combat!.act !== "dead");
@@ -1639,7 +1730,12 @@ export class RoomSim {
       if (!e.brain) continue;
       const def = this.reg.mobs[e.brain.mobId];
       if (!def) continue;
-      const decision = tickBrain(e, def, players, now);
+      // melee mobs can only land blows within the vertical reach; ranged
+      // mobs aim with real pitch, so height barely matters to them
+      const mobAbility = this.reg.abilities[def.ability];
+      const reachY =
+        mobAbility?.kind === "projectile" ? Number.POSITIVE_INFINITY : this.consts.combat.meleeVerticalReach;
+      const decision = tickBrain(e, def, players, now, reachY);
       let moved = false;
       if (decision.move) {
         let speed = def.moveSpeed;

@@ -386,6 +386,47 @@ every authored entity position, same as the existing spawn/portal
 exclusions; and when an entity is misplaced, check the generated world at
 its column (probe the grid) before auditing authored coordinates.
 
+### standY strikes again: mob packs in trees (the sequel to Zella's tree)
+Owner report: boar packs stuck in canopies, goring players standing below.
+Three separate assumptions conspired: `spawnMob` used `standY` (canopy top,
+the exact Zella bug — fixed for NPCs, not generalized to mobs);
+`spawnPack` scattered ±1.5 around a VALIDATED point without re-validating
+the offsets (the vetted point was clean grass, the scatter landed on the
+tree next to it); and every combat range check — brain attack decision and
+`inMeleeCone` — was 2D, so a mob 6 blocks up was "in range" of a player at
+the trunk. **Rules:** when a placement bug is fixed for one entity kind,
+grep every other `standY`/placement call site and generalize (`floorY` is
+now the primitive: lowest walkable gap = the floor under canopies/roofs);
+a validated point does NOT validate its neighbourhood — re-check every
+scattered/offset position with the same rules; and any distance check
+between entities in a 3D world needs an explicit vertical term, or the
+gap becomes a wall-hack in whichever direction nobody tested.
+
+### The attack-whiff triple (animation plays, nothing happens)
+Owner report: swords/spells/bows sometimes animate with no effect. Not one
+bug — three stacked timing mismatches between client prediction and server
+authority, each individually small enough to survive every bot test (bots
+don't spam-click at cooldown boundaries):
+1. `advanceFsm` restarted each stage's timer from the 10 Hz tick that
+   noticed it (`actEndsAt = now + …`), so windup→active→recover stretched
+   up to ~300 ms past the client's `busyMs()` prediction. Stage timers now
+   run from the previous stage's end (`actEndsAt += …`).
+2. `handleAttack` judged the click against FSM state that only advances on
+   ticks — a click 50 ms after recover truly ended was rejected as
+   "still recovering". The handler now catches the FSM up to the packet's
+   arrival time, and a still-blocked click is buffered ~200 ms and retried
+   from tick() instead of being dropped.
+3. The client's self-stagger handler set `bodyBusyUntil = 0` (the server
+   holds you busy for staggerMs) and never checked mana before animating a
+   cast the server would silently refuse.
+**Rules:** in a tick-driven sim, any input validated against timed state
+must first advance that state to the input's timestamp — tick rate is a
+performance choice and must never be observable as input loss; timers that
+chain must accumulate from their predecessor's deadline, not from
+observation time; and every silent server-side rejection of a
+client-predicted action is a whiff bug by definition — either the client
+must pre-check the same gate, or the server must buffer/answer.
+
 ## Reading test output
 
 - Killed background clients report "failed, exit code 1" — that's the kill,

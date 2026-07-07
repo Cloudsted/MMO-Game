@@ -590,6 +590,55 @@ show their block tile).
     admin?key=<KEY>#<tab>"` (new-mode headless wrote no file on this box;
     writes land async — wait for the file, don't trust the exit).
 
+- 2026-07-07 **MOB SPAWN/REACH/LEASH + ATTACK WHIFF + NIGHT LIGHT batch**
+  (owner bug list). Verified: 139 vitest (11 new), combat/cheat/separation
+  bots, new `scripts/mob-floor-probe.mjs` (168 mobs across 4 wild rooms, 0
+  on canopies), night screenshots tools/out/nightlight-*.png.
+  - **Mobs spawn on the FLOOR**: `VoxelWorld.floorY(x,z)` = lowest walkable
+    gap (solid below + 2 non-solid above) — the ground UNDER canopies/roofs
+    where standY returns their tops. findSpawnPoint + spawnMob use it, and
+    spawnPack VALIDATES each ±1.5 scatter offset (floor within 2 of the pack
+    point, no solids/liquid; that blind scatter was how boar packs landed in
+    trees). Loot bags spawn at `dropY` (groundBelow from the dier's feet),
+    not column standY — kills under trees no longer pop bags onto canopies.
+  - **Drop-down movement**: `MoveIntent.maxDrop` — chase/flee/return moves
+    may step DOWN up to 8 blocks (PURPOSEFUL_MAX_DROP; tallest canopy ~7),
+    so a stranded mob always gets down when it has somewhere to be; wander
+    keeps the 1.05 limit (no cliff-diving). Step-UP stays capped at 1.05.
+  - **Vertical combat gates**: `combat.meleeVerticalReach` (2.0, constants
+    .json) — inMeleeCone rejects |feetY delta| beyond it, and tickBrain's
+    new `attackReachY` param makes 2D-in-range-but-high targets CHASE
+    (drop-down) instead of attack. Projectile mobs pass Infinity and now aim
+    with REAL PITCH (mobAttack: muzzle 1.45 → target chest 1.0) — the old
+    "mob bolts fly flat" caveat is gone; their telegraph aim still freezes
+    at windup start by design.
+  - **Ranged leash feel** (bow maxRange 45 outranged every leash 20–36):
+    (1) beyond-leash reset only fires when the TARGET is also outside the
+    leash circle — fighting near the camp keeps mobs engaged, kiting away
+    still resets; (2) a returning mob RE-ENGAGES an attacker whose position
+    is inside the circle (threat re-accumulates via applyDamage — no more
+    invincible runback while you stand at the camp); (3) leashRadius +~40%
+    across mobs.json (slime 30, wolf 36 ... lich 48).
+  - **Attack whiffs** ("animation but nothing happened") had three causes,
+    all fixed: (a) advanceFsm restarted each stage's timer from the tick
+    that noticed it (10 Hz), stretching a 3-stage ability up to ~300 ms past
+    client prediction — stages now time from the PREVIOUS stage's end;
+    (b) handleAttack judged clicks against tick-stale FSM state —
+    `advanceCombat` (the factored step-1 advance, loops ≤4 transitions)
+    now catches the entity up at packet arrival, and a still-blocked click
+    is buffered (`combat.attackBufferMs` 200, `session.pendingAttack`) and
+    retried from tick() step 1b; (c) client: self-stagger now mirrors the
+    server (busy + movement lock for staggerMs, refunds the interrupted
+    ability's local cooldown) instead of zeroing bodyBusyUntil, and casts
+    check mana BEFORE animating ("not enough mana" flash).
+  - **Per-room night light**: room-def `nightLight` (default **1.35** ≈ 35%
+    brighter nights, owner: too dark; 0–4) ships in the `world` message →
+    voxel.frag `u_nightLight` scales the night skylight endpoint, CPU
+    mirror = `VoxelLighting.nightLight` (static, set on room entry — tints
+    billboards/viewmodel/items). No room def sets it yet; the schema
+    default covers all rooms. Torch/blocklight and DayNight sky/fog are
+    untouched — only the skylight floor lifts.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -1023,3 +1072,13 @@ Quick reference only — the stories behind these (and more) live in
   Gloomfen note: the causeway deliberately lays gravel old-road on dry
   hummocks and rotting planks only over flooded runs (a screenshot of a
   dry stretch is not a material bug). Mix balance = owner ear, pending.
+- 2026-07-07 **Owner bug-list batch SHIPPED** (see the decisions-log entry):
+  floor spawns + canopy drop-down, vertical melee gates + ranged-mob pitch
+  aim, leash keeps target-in-circle fights engaged (+~40% radii), attack
+  whiff-proofing (FSM stage backdating + catch-up + input buffer + client
+  stagger/mana mirrors), per-room `nightLight` (default 1.35). Verified:
+  139 vitest, combat/cheat/separation bots, mob-floor-probe (168 mobs, 0
+  on canopies), night screenshots tools/out/nightlight-*.png. Feel checks
+  still owned by the owner: bow-fight leash chase, spam-click melee, and
+  the night brightness level (the 1.35 default is a first guess — it's a
+  one-number knob in shared/rooms/*.json / the schema default).

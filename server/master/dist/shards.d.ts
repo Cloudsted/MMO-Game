@@ -1,5 +1,13 @@
 import type { Server } from "node:http";
+import { type RoomAdminInfo } from "@fantasy-mmo/common";
 import type { Collections, CharacterDoc } from "./db.js";
+/** One point on the dashboard's population/memory timeline. */
+export interface HistorySample {
+    t: number;
+    players: number;
+    rooms: Record<string, number>;
+    memMB: number;
+}
 /**
  * Owns the shard control channel, the room registry (each defined room has
  * exactly one live instance globally), and transfer-ticket minting.
@@ -13,8 +21,13 @@ export declare class ShardManager {
     private roomAssignment;
     /** expired ephemeral rooms sit out their downtime before reopening fresh */
     private reopenNotBefore;
+    /** population/memory timeline for the admin dashboard (in-memory ring) */
+    private history;
     constructor(cols: Collections, secret: string);
     attach(httpServer: Server): void;
+    /** Sample the live population for the dashboard timeline. */
+    private sampleHistory;
+    historySamples(): HistorySample[];
     private onConnection;
     private registerShard;
     private handleMessage;
@@ -56,6 +69,10 @@ export declare class ShardManager {
     /** Admin: close (→ auto-reopen = restart) a room. Stateful rooms resume
      *  from their last snapshot; ephemeral rooms come back fresh. */
     closeRoomAdmin(roomId: string): boolean;
+    /** Admin: kick one player out of their room (client auto-recovers via login). */
+    kickPlayer(roomId: string, characterId: string, reason: string): boolean;
+    /** Admin: server-wide announcement, delivered as global chat in every room. */
+    broadcast(from: string, text: string): void;
     /** Live status for the admin/status endpoint. */
     status(): {
         shards: {
@@ -64,16 +81,105 @@ export declare class ShardManager {
             capacity: number;
             lastSeen: number;
             rooms: {
+                roomId: string;
                 port: number;
                 players: number;
                 status: string;
-                roomId: string;
             }[];
         }[];
         rooms: {
             shardId: string;
             status: "opening" | "open";
             roomId: string;
+        }[];
+    };
+    /** Flattened online-player list across every shard (admin dashboard). */
+    livePlayers(): ({
+        x: number;
+        z: number;
+        name: string;
+        level: number;
+        gold: number;
+        y: number;
+        hp: number;
+        maxHp: number;
+        charId: string;
+    } & {
+        roomId: string;
+        shardId: string;
+    })[];
+    /** Everything the admin dashboard's overview needs in one payload. */
+    adminOverview(): {
+        shards: {
+            shardId: string;
+            gameHost: string;
+            capacity: number;
+            lastSeenMsAgo: number;
+            connectedForSec: number;
+            info: {
+                pid: number;
+                memMB: number;
+                uptimeSec: number;
+            } | null;
+            rooms: {
+                port: number;
+                players: number;
+                status: string;
+                info?: RoomAdminInfo;
+                roomId: string;
+            }[];
+        }[];
+        assignments: {
+            shardId: string;
+            status: "opening" | "open";
+            roomId: string;
+        }[];
+        reopenAt: {
+            roomId: string;
+            at: number;
+        }[];
+        defs: {
+            id: string;
+            name: string;
+            type: "building" | "hub" | "wilderness" | "dungeon";
+            biome: string;
+            size: {
+                w: number;
+                h: number;
+            };
+            persistence: "stateful" | "ephemeral";
+            lifecycle: {
+                lifetimeSec: number;
+                downtimeSec: number;
+                warnAtSecLeft: number[];
+            } | null;
+            fixedTime: number | null;
+            wind: number;
+            flags: {
+                pvp: boolean;
+                safeZone: boolean;
+                buildingEnabled: boolean;
+            };
+            portals: {
+                id: string;
+                label: string;
+                target: string;
+            }[];
+            spawnTables: {
+                id: string;
+                maxAlive: number;
+                respawnSec: number;
+                mobs: string[];
+            }[];
+            prefabs: {
+                prefab: string;
+                count: number;
+            }[];
+            npcs: {
+                id: string;
+                name: string;
+                shop: boolean;
+            }[];
         }[];
     };
 }
