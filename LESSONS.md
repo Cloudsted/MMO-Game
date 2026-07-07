@@ -191,6 +191,24 @@ really empty — cheap forensics beat re-launching five times.
   with the same latent order — invisible only because consecutive tags are
   usually the same color.)
 
+- **ShapeRenderer silently ignores in-place projection-matrix mutation.**
+  "Icons shift against their slot frames when the window resizes" — icons,
+  text (SpriteBatch) tracked the new size while every ShapeRenderer frame,
+  bar and minimap dot stretched with the OLD one. Cause: ShapeRenderer
+  caches its combined matrix and only rebuilds when `setProjectionMatrix()`
+  is CALLED (it sets an internal `matrixDirty`); mutating
+  `getProjectionMatrix().setToOrtho2D(...)` — which the resize path did —
+  changes values the renderer never re-reads. SpriteBatch re-reads the
+  matrix every `begin()`, which is what let the two drift apart, and fresh
+  launches were always correct (first `begin()` builds the cache after the
+  ctor's mutation) so launch-at-size screenshots kept "proving" it worked.
+  Found by measuring the same UI landmark across a fresh launch vs an
+  in-app `Gdx.graphics.setWindowedMode` resize (`MMO_RESIZE_TEST`) — the
+  numbers decoded as layout-new/ortho-old in one glance. **Rules:** always
+  go through `setProjectionMatrix()` on BOTH batch types; and when two
+  render paths disagree only after a state change, diff a landmark under
+  fresh-state vs mutated-state — don't keep re-verifying fresh state.
+
 ## Art pipeline (Time Fantasy sheets)
 
 - **Alpha-trim welds in anything the window touches.** tree1's window

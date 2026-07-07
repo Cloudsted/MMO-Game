@@ -304,6 +304,24 @@ show their block tile).
   never `Gdx.graphics.getWidth/Height`, never raw `Gdx.input.getX/getY`
   without dividing by uiScale.** Verified by screenshots at 1280x720,
   1920x1080 (scale 1, anchored) and forced scale 2.
+  **Pixel-snap addendum** (owner: icons/dots wobbled against their frames
+  during resizes): (1) the HUD ortho spans EXACTLY width/uiScale units —
+  rounding the canvas up and stretching it back made a virtual pixel
+  fractionally smaller than uiScale physical px (everything shimmered at
+  2x); (2) centered panel origins (hotbar — an ODD 403 wide, inventory,
+  dialog, tooltip) are `MathUtils.floor`ed to whole virtual pixels, since
+  a .5 origin makes nearest-filtered icons round differently than the
+  ShapeRenderer slot rects behind them. **Convention: any centered layout
+  origin gets floored.** Verified at 1283x719 (worst case).
+  **The actual "items shift on resize" root cause** was a third thing:
+  ShapeRenderer ignores in-place projection mutation (see LESSONS.md) —
+  applyHudViewport now goes through `setProjectionMatrix()` on both
+  batches. `MMO_RESIZE_TEST=WxH` resizes the live window ~4s after entry
+  for verifying the runtime-resize path unattended (fresh launches mask
+  this class of bug). Verified: post-resize frame placement is
+  pixel-identical to a fresh launch, including through a human drag.
+  Minimap is also nearest-filtered now and drawn at an integer texel scale
+  (was linear + 160→172 stretch = smeared blocks under crisp dots).
 
 - 2026-07-06 **Hotbar selection is client-predicted** (owner: scroll wheel
   felt laggy and ate fast clicks). The old handler sent `equip` and waited

@@ -171,6 +171,13 @@ public class WorldScreen extends ScreenAdapter {
     private float pingTimer = 0;
     private float roomW = 128, roomH = 128;
 
+    // test hook: MMO_RESIZE_TEST=WxH resizes the live window ~4s after entering
+    // the world — exercises the real runtime resize path (a fresh launch AT a
+    // size can behave differently from a window resized TO it)
+    private final String resizeTest = System.getenv("MMO_RESIZE_TEST");
+    private float resizeTestT = 0;
+    private boolean resizeTestDone = false;
+
     // test hook: MMO_SHOT=<dirOrPrefix> writes glReadPixels screenshots from
     // inside the render loop — immune to window occlusion/session lock, which
     // makes external PrintWindow captures come back white.
@@ -1319,6 +1326,18 @@ public class WorldScreen extends ScreenAdapter {
             }
         }
 
+        // runtime-resize hook (see field comment)
+        if (resizeTest != null && !resizeTestDone && ready) {
+            resizeTestT += dt;
+            if (resizeTestT > 4f && resizeTest.contains("x")) {
+                resizeTestDone = true;
+                try {
+                    String[] parts = resizeTest.toLowerCase().split("x");
+                    Gdx.graphics.setWindowedMode(Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()));
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+
         // framebuffer screenshot hook (see field comment)
         if (shotPrefix != null && ready) {
             shotTimer += dt;
@@ -1533,13 +1552,29 @@ public class WorldScreen extends ScreenAdapter {
         postFx.resize(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
     }
 
-    /** Point the 2D batches at the virtual HUD canvas for this window size. */
+    private final Matrix4 hudOrtho = new Matrix4();
+
+    /** Point the 2D batches at the virtual HUD canvas for this window size.
+     *  The ortho spans EXACTLY width/scale units so one virtual pixel is
+     *  always exactly uiScale physical pixels — rounding the canvas to whole
+     *  units and stretching it back re-scaled every pixel fractionally and
+     *  made icons swim against their slot frames during resizes.
+     *
+     *  MUST go through setProjectionMatrix(): ShapeRenderer caches its
+     *  combined matrix and only rebuilds when that setter is CALLED —
+     *  mutating getProjectionMatrix() in place is silently ignored after the
+     *  first begin(). That was the resize bug: SpriteBatch re-reads the
+     *  matrix every begin(), so icons/text tracked the new window while
+     *  every ShapeRenderer frame/bar/dot kept the stale projection and
+     *  stretched — "items shift against their slots". */
     private void applyHudViewport(int width, int height) {
         uiScale = mmo.client.ui.UiKit.uiScale(width, height);
-        vw = (width + uiScale - 1) / uiScale;
-        vh = (height + uiScale - 1) / uiScale;
-        hudBatch.getProjectionMatrix().setToOrtho2D(0, 0, vw, vh);
-        shapes.getProjectionMatrix().setToOrtho2D(0, 0, vw, vh);
+        float ow = width / (float) uiScale, oh = height / (float) uiScale;
+        vw = (int) ow; // layout anchors stay on whole virtual pixels
+        vh = (int) oh;
+        hudOrtho.setToOrtho2D(0, 0, ow, oh);
+        hudBatch.setProjectionMatrix(hudOrtho);
+        shapes.setProjectionMatrix(hudOrtho);
         ui.setViewport(vw, vh, uiScale);
     }
 

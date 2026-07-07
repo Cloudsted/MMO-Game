@@ -271,6 +271,9 @@ public class GameUi {
             }
         }
         minimap = new Texture(pm);
+        // nearest, like every other pixel surface — linear sampling smeared
+        // the block colors when the panel size wasn't a texel multiple
+        minimap.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         pm.dispose();
     }
 
@@ -413,10 +416,12 @@ public class GameUi {
         Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
 
-        // hotbar geometry
+        // hotbar geometry (origin floored to a whole pixel: the bar is an odd
+        // width, so raw centering lands on .5 and nearest-filtered icons
+        // round differently than the slot rects — icons wobble on resize)
         float cell = 46, gap = 5;
         float hbW = 8 * cell + 7 * gap;
-        float hbX = w / 2f - hbW / 2f, hbY = 14;
+        float hbX = MathUtils.floor(w / 2f - hbW / 2f), hbY = 14;
 
         // hp/mana bars above the hotbar
         float barW = hbW / 2f - 6, barH = 16;
@@ -459,8 +464,11 @@ public class GameUi {
             }
         }
 
-        // minimap panel
-        float mmSize = 172, mmX = w - mmSize - 12, mmY = h - mmSize - 12;
+        // minimap panel: drawn at an exact integer texel scale (1 world block
+        // = N whole pixels) so the map can't smear and dots sit on true cells
+        float mmWorldMax = Math.max(minimapWorldW, minimapWorldH);
+        float mmSize = mmWorldMax <= 172 ? Math.max(1, (int) (172f / mmWorldMax)) * mmWorldMax : 172;
+        float mmX = w - mmSize - 12, mmY = h - mmSize - 12;
         shapes.setColor(0.06f, 0.06f, 0.09f, 0.75f);
         shapes.rect(mmX - 3, mmY - 3, mmSize + 6, mmSize + 6);
         shapes.end();
@@ -715,8 +723,8 @@ public class GameUi {
         font.getData().setScale(1f);
         th += pad - lineGap;
         tw += pad * 2;
-        float tx = Math.min(mx + 18, w - tw - 6);
-        float ty = Math.min(my + 12, h - th - 6);
+        float tx = MathUtils.floor(Math.min(mx + 18, w - tw - 6));
+        float ty = MathUtils.floor(Math.min(my + 12, h - th - 6));
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         panel(shapes, tx, ty, tw, th);
@@ -766,7 +774,9 @@ public class GameUi {
         int cols = 6, rows = 4;
         float gw = cols * cell + (cols - 1) * gap;
         float gh = rows * cell + (rows - 1) * gap;
-        float px = w / 2f - gw / 2f - 18, py = h / 2f - gh / 2f - 30;
+        // whole-pixel panel origin: fractional centering makes the icons
+        // round against the slot squares (see hotbar note)
+        float px = MathUtils.floor(w / 2f - gw / 2f - 18), py = MathUtils.floor(h / 2f - gh / 2f - 30);
         float pw = gw + 36, ph = gh + 96;
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
@@ -815,7 +825,7 @@ public class GameUi {
     private void renderDialog(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, int w, int h) {
         float pw = shopOpen ? 560 : 460;
         float ph = shopOpen ? 420 : 200;
-        float px = w / 2f - pw / 2f, py = h / 2f - ph / 2f;
+        float px = MathUtils.floor(w / 2f - pw / 2f), py = MathUtils.floor(h / 2f - ph / 2f);
         shopRowRects.clear();
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
