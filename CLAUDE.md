@@ -430,8 +430,8 @@ show their block tile).
     only hub bytes near NPCs change. Regression test asserts every hub NPC
     column's standY === terrain+1.
 
-- 2026-07-07 **SOUND ENGINE UPGRADE** (owner spec in scratchpad
-  sound-design.md): occlusion + variant/pitch controls + per-block
+- 2026-07-07 **SOUND ENGINE UPGRADE** (owner spec at
+  docs/sound-design.md): occlusion + variant/pitch controls + per-block
   step/break/place + local/remote footsteps + per-mob vocals. 123 manifest
   groups (16 legacy untouched), 344 sfx oggs, 7 ambient beds.
   - **Manifest params** (build-sounds.mjs → AudioEngine): per-group
@@ -481,7 +481,7 @@ show their block tile).
     Footsteps cap at 1 s; mob vocals keep the 3 s cap.
 
 - 2026-07-07 **WORLDGEN OVERHAUL + ROOM GRAPH** (owner directive; design doc
-  archived in the session scratchpad, agent-built in 4 batches, each
+  at docs/worldgen-design.md (sound: docs/sound-design.md) — future content passes should extend them; agent-built in 4 batches, each
   committed once green — 128 vitest at the end).
   - **25 new blocks (ids 26–50, append-only)**: mud, murk_water, pale_log,
     dead_leaves, reeds, vines, glow_shroom(9), web, dark_stone, dark_bricks,

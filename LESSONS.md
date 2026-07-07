@@ -110,6 +110,14 @@ window/session state. Corollary: a pixel histogram of the "blank" capture
 (finding 58 sky-blue pixels at the margins) is what proved the frame wasn't
 really empty — cheap forensics beat re-launching five times.
 
+### A running game client locks the audio files it streams (EBUSY)
+The sound-pipeline rebuild died mid-`rmSync` of the audio output tree: the
+owner's live client was streaming ambient/music oggs and Windows holds locks
+on streamed files, so the delete aborted HALFWAY — leaving a half-empty
+assets dir under a running game. **Rule:** asset pipelines overwrite in
+place and never delete an output tree a live process may hold open; keep
+locked-but-existing files with a warning and carry on.
+
 ## libGDX / rendering
 
 - `TextureRegionDrawable.tint()` returns a **SpriteDrawable** — assigning it
@@ -355,6 +363,28 @@ wiring it in, and make batch pipelines report missing inputs and keep going
   toolchain), then verify count 0 before relaunching. A supervisor that
   RESPAWNS its children (shard host → RoomHosts) has the same shape: kill the
   parent, or the corpses reanimate.
+
+### Capacity constants embedded when the world was small fail SILENTLY when it grows
+Two in one session, both symptomless: (1) `findPath` in scripts/lib.mjs had
+a 60,000-node BFS cap from the 160-block-room era — on 480-block rooms long
+walks just truncated and bots stalled with no error; (2) the shard host's
+default capacity was 8 rooms — adding the 9th room def meant the master
+quietly never opened it (status showed 8 open rooms, nothing failed).
+**Rule:** when scaling world size or room count, grep for magic numbers born
+at the old scale (caps, budgets, capacities) — a limit that fails silent is
+a limit you find by symptom, so make new limits either scale with input or
+log loudly when hit.
+
+### "Stuck in a tree" means standing ON generated content, not IN it
+The hub's arcanist spawned on TOP of a tree canopy: a generated tree grew
+2 blocks from her authored position and `standY` — which returns the first
+open gap above the HIGHEST solid block — lifted her spawn onto the leaves
+(y18 vs floor 13). Static analysis kept clearing the AUTHORED landmark tree;
+the culprit was procedural. **Rules:** spawn-height helpers happily put
+entities on canopies/roofs — exclude generation (trees/decorations) around
+every authored entity position, same as the existing spawn/portal
+exclusions; and when an entity is misplaced, check the generated world at
+its column (probe the grid) before auditing authored coordinates.
 
 ## Reading test output
 
