@@ -403,3 +403,29 @@ its column (probe the grid) before auditing authored coordinates.
   every combat system working at once. When a staged scene changes state by
   itself, list what SHOULD act on it (mob aggro, loot expiry, respawns)
   before suspecting the code.
+
+## Concurrent sessions on one working tree
+
+Two Claude sessions worked the same checkout at once (admin dashboard +
+mob-AI tuning, 2026-07-07). Costs paid and rules derived:
+
+- **A full-suite failure may not be YOUR failure.** `npm test` failed on a
+  mob-leash test the dashboard work never touched — the other session's
+  half-done mobs.ts was in the tree. Before debugging a red test in code you
+  didn't edit, `git status` + `git diff <file>` to see whose change broke it;
+  stash-and-rerun proved it in one step.
+- **The session-start "clean" git snapshot goes stale.** Files can appear
+  modified (or committed!) mid-session by the other party. Re-check
+  `git log`/`git status` immediately before committing — here the other
+  session COMMITTED mid-way, and blindly committing files staged from the
+  older base would have silently reverted their commit.
+- **Commit only your hunks.** When both sessions touched the same file
+  (protocol.ts, room.ts, protocol.json): back up the combined working copy
+  to the scratchpad, `git checkout HEAD -- <file>`, re-apply ONLY your edits
+  (Edit tool, not patches), `git add`, then restore the combined copy over
+  the working tree. The index carries just your work; theirs stays unstaged.
+- **PowerShell `git show HEAD:file | Set-Content -NoNewline` destroys the
+  file** (5.1 pipes line objects and -NoNewline joins them without
+  separators — the file collapses to one line). Use `git checkout HEAD --
+  <file>` to restore content; never round-trip file bytes through the PS
+  pipeline.

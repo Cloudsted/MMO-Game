@@ -552,6 +552,44 @@ show their block tile).
     twin gates both ways via auto-pairing. Shard capacity default 8→12 —
     at 8, the 9th room would SILENTLY never open on a single-shard boot.
 
+- 2026-07-07 **ADMIN DASHBOARD** (owner: "full admin dashboard with all the
+  features I could possibly need") — the crude /admin table is now a real
+  ops console. Verified live (9 rooms' telemetry, bot kick, broadcast,
+  401 on bad key), screenshots tools/out/admin-*.png, 139 vitest.
+  - **Telemetry plumbing**: RoomSim.adminInfo() (entity/drop/projectile
+    counts, block edits, clock, live player list w/ hp/gold/pos) rides the
+    existing 5 s stats IPC → shard heartbeat → master (`RoomAdminInfo` in
+    protocol.ts; RoomHost stamps uptime/tick avg+max/rss/lifecycle expiry;
+    shard adds pid/mem/uptime). Master keeps a 3 h in-memory history ring
+    (10 s samples: total players, per-room, master rss). `/api/status`
+    shape is UNCHANGED (scripts depend on it) — the rich payload lives at
+    `/api/admin/overview`.
+  - **API** (admin.ts, all ADMIN_KEY-gated; an UNSET ADMIN_KEY now locks
+    the API out — empty string used to pass the === check): overview,
+    history, players, characters?q= (+account join, online flags),
+    character?id= (full inventory), accounts?q= (+char lists), set-role
+    (admin only, POST), roomstate?roomId= (persisted snapshot summary),
+    broadcast (global chat as [SERVER]), kick (new `kick` masterToShard +
+    HostToRoom message → RoomSim.adminKick = same evict+remove as dup
+    login), restart-room, logs (500-line ring).
+  - **Page** (`adminpage.ts`, exported HTML string, no build step; embedded
+    JS uses string-concat only — template literals can't nest in the TS
+    template). Tabs: Overview (stat tiles, two single-series SVG timelines
+    w/ crosshair tooltips, shard cards w/ tick-health coloring ≥5 ms warn
+    ≥15 ms crit), Rooms (def+live cards: portals w/ sealed state, spawn
+    tables, prefabs, npcs, collapse countdown, persisted-state expander),
+    Players (hp bars, view/kick), Characters (read-only browser + rarity/
+    roll/durability inventory drawer — deliberately NO edits: live reports
+    would clobber them; use in-game /commands), Accounts (grant/revoke
+    admin, applies next login), Logs (level+text filters), Actions
+    (broadcast + command crib sheet). `/admin?key=X` seeds localStorage
+    (how headless screenshots authorize); tab = location.hash; 2.5 s
+    refresh of the active tab only.
+  - Headless page screenshots: `msedge --headless=old --user-data-dir=<tmp>
+    --virtual-time-budget=9000 --screenshot=... "http://127.0.0.1:4000/
+    admin?key=<KEY>#<tab>"` (new-mode headless wrote no file on this box;
+    writes land async — wait for the file, don't trust the exit).
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
