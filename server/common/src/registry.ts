@@ -76,6 +76,20 @@ export const AbilityDefSchema = z.object({
 });
 export type AbilityDef = z.infer<typeof AbilityDefSchema>;
 
+/** One option in a mob's attack kit. The mob picks among options that are
+ *  usable right now (range window, cooldown, melee vertical reach) with a
+ *  weighted roll — see chooseAttack in the shard sim. */
+export const MobAttackSchema = z.object({
+  ability: z.string(),
+  /** damage override for this attack (default: the mob's base damage) */
+  damage: z.number().optional(),
+  /** don't use inside this 2D distance (bows prefer melee point-blank) */
+  minRange: z.number().optional(),
+  /** weighted-random share when several options are usable at once */
+  weight: z.number().positive().default(1),
+});
+export type MobAttackDef = z.infer<typeof MobAttackSchema>;
+
 export const MobDefSchema = z.object({
   name: z.string(),
   sprite: z.string(),
@@ -83,7 +97,10 @@ export const MobDefSchema = z.object({
   hp: z.number(),
   damage: z.number(),
   moveSpeed: z.number(),
-  ability: z.string(),
+  /** legacy single-attack form; multi-attack mobs author `attacks` instead */
+  ability: z.string().optional(),
+  /** attack kit — bosses/bigger mobs carry 2+ options (melee + ranged...) */
+  attacks: z.array(MobAttackSchema).min(1).optional(),
   aggroRadius: z.number(),
   attackRange: z.number(),
   leashRadius: z.number(),
@@ -101,6 +118,13 @@ export const MobDefSchema = z.object({
     .optional(),
 });
 export type MobDef = z.infer<typeof MobDefSchema>;
+
+/** A mob's attack kit, normalized: multi-attack mobs author `attacks`;
+ *  single-attack mobs keep the legacy `ability` field (kit of one). */
+export function mobAttacks(def: MobDef): MobAttackDef[] {
+  if (def.attacks && def.attacks.length > 0) return def.attacks;
+  return def.ability ? [{ ability: def.ability, weight: 1 }] : [];
+}
 
 /** Weighted entry: exactly one of item / table / nothing (weight only). */
 export const LootEntrySchema = z.object({
@@ -152,7 +176,11 @@ export class RegistryService {
       if (item.block && !BLOCK[item.block]) throw new Error(`item ${id}: unknown block ${item.block}`);
     }
     for (const [id, mob] of Object.entries(mobs)) {
-      if (!abilities[mob.ability]) throw new Error(`mob ${id}: unknown ability ${mob.ability}`);
+      const attacks = mobAttacks(mob);
+      if (attacks.length === 0) throw new Error(`mob ${id}: needs an ability or an attacks kit`);
+      for (const a of attacks) {
+        if (!abilities[a.ability]) throw new Error(`mob ${id}: unknown ability ${a.ability}`);
+      }
       if (!loot[mob.loot]) throw new Error(`mob ${id}: unknown loot table ${mob.loot}`);
     }
     for (const [id, table] of Object.entries(loot)) {

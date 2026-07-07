@@ -11,9 +11,11 @@ import {
   loadRoomDefs,
   makeLogger,
   mintItem,
+  mobAttacks,
   RegistryService,
   WORLD_HEIGHT,
   type AbilityDef,
+  type MobDef,
   type CharacterSnapshot,
   type CombatEvent,
   type DropState,
@@ -51,7 +53,17 @@ import {
   type Projectile,
 } from "./combat.js";
 import { addItem, HOTBAR_SIZE, INV_SIZE, normalizeInventory, removeFromSlot, rollLoot } from "./loot.js";
-import { applyGravity, applyMove, findSpawnPoint, pickMob, separateEntities, tickBrain } from "./mobs.js";
+import {
+  applyGravity,
+  applyMove,
+  chooseAttack,
+  findSpawnPoint,
+  pickMob,
+  PURPOSEFUL_MAX_DROP,
+  separateEntities,
+  tickBrain,
+  type AttackOption,
+} from "./mobs.js";
 import { EditRecorder, PREFABS, stampPrefab } from "./prefabs.js";
 import { VoxelWorld } from "./voxel.js";
 import { Builder } from "./voxelstructures.js";
@@ -962,22 +974,47 @@ export class RoomSim {
     session.dirtyInv = true;
   }
 
-  /** Mob brain wants to attack: same FSM, different intent producer. */
-  private mobAttack(mob: Entity, target: Entity, now: number): void {
+  /** A mob's attack kit resolved against the ability registry. */
+  private attackOptionsOf(def: MobDef): AttackOption[] {
+    const out: AttackOption[] = [];
+    for (const a of mobAttacks(def)) {
+      const ability = this.reg.abilities[a.ability];
+      if (!ability) continue;
+      out.push({ id: a.ability, ability, damage: a.damage ?? def.damage, minRange: a.minRange ?? 0, weight: a.weight });
+    }
+    return out;
+  }
+
+  /** Mob brain wants to attack: pick a usable option from the mob's kit
+   *  (range windows, cooldowns, melee vertical gate — weighted when several
+   *  qualify) and start it on the shared FSM. "close" tells the caller
+   *  nothing connects from this distance (dead band between melee reach and
+   *  a bow's minRange, target up a ledge, reloading while a melee option
+   *  exists) — the tick advances the mob instead. */
+  private mobAttack(mob: Entity, target: Entity, now: number): "started" | "wait" | "close" {
     const def = this.reg.mobs[mob.brain!.mobId];
-    if (!def) return;
-    const ability = this.reg.abilities[def.ability];
-    if (!ability) return;
+    if (!def) return "wait";
+    const choice = chooseAttack(
+      mob,
+      target,
+      this.attackOptionsOf(def),
+      now,
+      def.attackRange,
+      this.consts.combat.meleeRangeGrace,
+      this.consts.combat.meleeVerticalReach
+    );
+    if (choice.kind !== "use") return choice.kind;
+    const { option } = choice;
     const dx = target.pos.x - mob.pos.x;
     const dz = target.pos.z - mob.pos.z;
     const aimYaw = Math.atan2(dx, dz);
     // ranged mobs aim the muzzle (~eye 1.45) at the target's chest (~1.0)
     // so bolts connect up and down slopes; melee ignores pitch entirely
     let aimPitch = 0;
-    if (ability.kind === "projectile") {
+    if (option.ability.kind === "projectile") {
       aimPitch = Math.atan2(target.pos.y + 1.0 - (mob.pos.y + 1.45), Math.max(0.1, Math.hypot(dx, dz)));
     }
-    startAbility(mob, def.ability, ability, def.damage, aimYaw, aimPitch, now);
+    return startAbility(mob, option.id, option.ability, option.damage, aimYaw, aimPitch, now) ? "started" : "wait";
   }
 
   private resolveMeleeHit(attacker: Entity, ability: AbilityDef): void {
@@ -1777,21 +1814,37 @@ export class RoomSim {
         e.renderable.anim = "idle";
         continue;
       }
-      // melee mobs can only land blows within the vertical reach; ranged
-      // mobs aim with real pitch, so height barely matters to them
-      const mobAbility = this.reg.abilities[def.ability];
-      const reachY =
-        mobAbility?.kind === "projectile" ? Number.POSITIVE_INFINITY : this.consts.combat.meleeVerticalReach;
+      // melee attacks only land within the vertical reach; a kit with any
+      // projectile aims with real pitch, so height barely matters to it
+      const reachY = this.attackOptionsOf(def).some((o) => o.ability.kind === "projectile")
+        ? Number.POSITIVE_INFINITY
+        : this.consts.combat.meleeVerticalReach;
       const decision = tickBrain(e, def, players, now, reachY);
+      let speed = def.moveSpeed;
+      if (e.combat!.slowUntil > now) speed *= 1 - e.combat!.slowPct;
       let moved = false;
       if (decision.move) {
-        let speed = def.moveSpeed;
-        if (e.combat!.slowUntil > now) speed *= 1 - e.combat!.slowPct;
         moved = applyMove(e, decision.move, speed, dt, this.world, this.def.size, this.waterLevel(), aliveMobs);
       }
-      e.renderable.anim = moved ? "move" : "idle";
       if (decision.faceYaw !== null) e.pos.yaw = decision.faceYaw;
-      if (decision.attack) this.mobAttack(e, decision.attack, now);
+      if (decision.attack) {
+        const res = this.mobAttack(e, decision.attack, now);
+        // nothing in the kit connects from here (bow minRange dead band,
+        // reloading with a melee option, target up a ledge): close in
+        if (res === "close" && !moved) {
+          moved = applyMove(
+            e,
+            { x: decision.attack.pos.x, z: decision.attack.pos.z, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP, wade: true },
+            speed,
+            dt,
+            this.world,
+            this.def.size,
+            this.waterLevel(),
+            aliveMobs
+          );
+        }
+      }
+      e.renderable.anim = moved ? "move" : "idle";
     }
     // 2b. overlapping mobs push apart so packs never stack inside each other
     separateEntities(aliveMobs, dt, this.world, this.def.size);

@@ -127,6 +127,30 @@
     "canMoveWhile": false, "interruptible": false, "cooldownMs": 2000, "manaCost": 0,
     "fx": "frost"
   },
+  "bone_bow": {
+    "kind": "projectile", "windupMs": 650, "activeMs": 80, "recoverMs": 400,
+    "projSpeed": 26, "maxRange": 30,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 2500, "manaCost": 0,
+    "fx": "arrow"
+  },
+  "minotaur_gore": {
+    "kind": "melee", "windupMs": 500, "activeMs": 140, "recoverMs": 480,
+    "range": 2.6, "arcDeg": 70,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 3500, "manaCost": 0,
+    "fx": "slash"
+  },
+  "ember_burst": {
+    "kind": "projectile", "castTimeMs": 900, "recoverMs": 300,
+    "projSpeed": 18, "maxRange": 18,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 3200, "manaCost": 0,
+    "fx": "firebolt"
+  },
+  "lich_scythe": {
+    "kind": "melee", "windupMs": 650, "activeMs": 170, "recoverMs": 520,
+    "range": 2.4, "arcDeg": 120,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 1800, "manaCost": 0,
+    "fx": "slash"
+  },
   "cleave": {
     "kind": "melee", "windupMs": 380, "activeMs": 150, "recoverMs": 420,
     "range": 2.5, "arcDeg": 130,

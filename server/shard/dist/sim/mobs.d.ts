@@ -4,7 +4,7 @@
  * only through intents: "move toward X", "use ability at Y". That seam is
  * where behavior trees swap in later.
  */
-import type { MobDef, SpawnTable } from "@fantasy-mmo/common";
+import type { AbilityDef, MobDef, SpawnTable } from "@fantasy-mmo/common";
 import type { Entity } from "./entities.js";
 import type { VoxelWorld } from "./voxel.js";
 /** Min center-to-center distance between alive mobs (owner-tuned: 0.9 read
@@ -33,6 +33,32 @@ export interface BrainDecision {
     attack: Entity | null;
     faceYaw: number | null;
 }
+/** One resolved entry of a mob's attack kit (registry data + ability def). */
+export interface AttackOption {
+    id: string;
+    ability: AbilityDef;
+    damage: number;
+    minRange: number;
+    weight: number;
+}
+/** What a mob should do about a target it decided to attack. */
+export type AttackChoice = {
+    kind: "use";
+    option: AttackOption;
+} | {
+    kind: "wait";
+} | {
+    kind: "close";
+};
+/**
+ * Pick from a mob's attack kit against a target: options must be inside
+ * their range window (minRange..reach — melee reach is ability.range+grace
+ * with the vertical gate, projectiles use the mob's attackRange and aim
+ * with pitch) and off cooldown; several usable at once → weighted roll.
+ * When everything in range is cooling down, mixed kits CLOSE toward melee
+ * (a skeleton advances between bow shots) while pure-ranged mobs hold.
+ */
+export declare function chooseAttack(mob: Entity, target: Entity, options: AttackOption[], now: number, attackRange: number, meleeGrace: number, meleeReachY: number): AttackChoice;
 /**
  * One brain tick. Pure decision — the caller applies movement (with terrain)
  * and routes attack intents into the shared action FSM. `attackReachY` is

@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { CharacterSnapshot, ItemStack, ServerToClient } from "@fantasy-mmo/common";
-import { loadRoomDef, RegistryService } from "@fantasy-mmo/common";
+import { loadRoomDef, mobAttacks, RegistryService } from "@fantasy-mmo/common";
 import { RoomSim, type PlayerSession } from "../src/sim/room.js";
 import { rollLoot } from "../src/sim/loot.js";
 import { gameConstants } from "@fantasy-mmo/common";
@@ -27,14 +27,17 @@ describe("worldgen registries", () => {
   it("loads all 12 new mobs with resolvable ability + loot refs", () => {
     for (const id of NEW_MOBS) {
       const mob = reg.mob(id); // throws on missing
-      expect(reg.abilities[mob.ability], `${id} ability`).toBeDefined();
+      const kit = mobAttacks(mob);
+      expect(kit.length, `${id} attack kit`).toBeGreaterThan(0);
+      for (const a of kit) expect(reg.abilities[a.ability], `${id} ability ${a.ability}`).toBeDefined();
       expect(reg.loot[mob.loot], `${id} loot`).toBeDefined();
       expect(mob.hp).toBeGreaterThan(0);
     }
     // ranged mobs carry bolt-range attackRange (brains hand to the FSM there)
     expect(reg.mob("marsh_wisp").attackRange).toBe(11);
     expect(reg.mob("fire_elemental").attackRange).toBe(12);
-    expect(reg.abilities[reg.mob("lich_boss").ability]!.kind).toBe("projectile");
+    // the lich keeps a ranged lance in its kit (plus a point-blank scythe now)
+    expect(mobAttacks(reg.mob("lich_boss")).some((a) => reg.ability(a.ability).kind === "projectile")).toBe(true);
     // the poison carriers actually carry poison
     expect(reg.ability("spider_bite").debuff?.dotTotal).toBe(10);
     expect(reg.ability("quick_stab").debuff?.dotTotal).toBe(12);

@@ -172,7 +172,14 @@ export declare class RoomSim {
     private tryHeldAbility;
     /** Durability tick: at zero the weapon breaks and the slot empties. */
     private wearHeldItem;
-    /** Mob brain wants to attack: same FSM, different intent producer. */
+    /** A mob's attack kit resolved against the ability registry. */
+    private attackOptionsOf;
+    /** Mob brain wants to attack: pick a usable option from the mob's kit
+     *  (range windows, cooldowns, melee vertical gate — weighted when several
+     *  qualify) and start it on the shared FSM. "close" tells the caller
+     *  nothing connects from this distance (dead band between melee reach and
+     *  a bow's minRange, target up a ledge, reloading while a melee option
+     *  exists) — the tick advances the mob instead. */
     private mobAttack;
     private resolveMeleeHit;
     /** Which entities this attacker can damage. Player-vs-player needs BOTH

@@ -4,7 +4,7 @@
  * only through intents: "move toward X", "use ability at Y". That seam is
  * where behavior trees swap in later.
  */
-import type { MobDef, SpawnTable } from "@fantasy-mmo/common";
+import type { AbilityDef, MobDef, SpawnTable } from "@fantasy-mmo/common";
 import type { Entity } from "./entities.js";
 import type { VoxelWorld } from "./voxel.js";
 
@@ -55,6 +55,71 @@ export interface BrainDecision {
   move: MoveIntent | null;
   attack: Entity | null; // face + use ability on this target
   faceYaw: number | null;
+}
+
+/** One resolved entry of a mob's attack kit (registry data + ability def). */
+export interface AttackOption {
+  id: string; // ability id (also the cooldown key)
+  ability: AbilityDef;
+  damage: number;
+  minRange: number;
+  weight: number;
+}
+
+/** What a mob should do about a target it decided to attack. */
+export type AttackChoice =
+  | { kind: "use"; option: AttackOption } // start this ability
+  | { kind: "wait" } // usable option exists but is cooling down: hold ground
+  | { kind: "close" }; // nothing in the kit connects from here: move closer
+
+/**
+ * Pick from a mob's attack kit against a target: options must be inside
+ * their range window (minRange..reach — melee reach is ability.range+grace
+ * with the vertical gate, projectiles use the mob's attackRange and aim
+ * with pitch) and off cooldown; several usable at once → weighted roll.
+ * When everything in range is cooling down, mixed kits CLOSE toward melee
+ * (a skeleton advances between bow shots) while pure-ranged mobs hold.
+ */
+export function chooseAttack(
+  mob: Entity,
+  target: Entity,
+  options: AttackOption[],
+  now: number,
+  attackRange: number,
+  meleeGrace: number,
+  meleeReachY: number
+): AttackChoice {
+  const d = Math.hypot(target.pos.x - mob.pos.x, target.pos.z - mob.pos.z);
+  const dy = Math.abs(target.pos.y - mob.pos.y);
+  const usable: AttackOption[] = [];
+  let inRange = false;
+  let meleeInRange = false;
+  let hasMelee = false;
+  for (const o of options) {
+    if (o.ability.kind === "melee") hasMelee = true;
+    if (d < o.minRange) continue;
+    if (o.ability.kind === "melee") {
+      if (d > (o.ability.range ?? 2) + meleeGrace || dy > meleeReachY) continue;
+      meleeInRange = true;
+    } else if (o.ability.kind === "projectile") {
+      if (d > attackRange) continue;
+    }
+    inRange = true;
+    if ((mob.combat!.cooldowns.get(o.id) ?? 0) > now) continue;
+    usable.push(o);
+  }
+  if (usable.length === 0) {
+    if (!inRange) return { kind: "close" };
+    return hasMelee && !meleeInRange ? { kind: "close" } : { kind: "wait" };
+  }
+  let total = 0;
+  for (const o of usable) total += o.weight;
+  let roll = Math.random() * total;
+  for (const o of usable) {
+    roll -= o.weight;
+    if (roll <= 0) return { kind: "use", option: o };
+  }
+  return { kind: "use", option: usable[usable.length - 1]! };
 }
 
 /**

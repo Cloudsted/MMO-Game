@@ -23,7 +23,11 @@
   "skeleton": {
     "name": "Skeleton", "sprite": "skeleton", "level": 6,
     "hp": 95, "damage": 11, "moveSpeed": 2.8,
-    "ability": "skeleton_slash", "aggroRadius": 10, "attackRange": 2.0,
+    "attacks": [
+      { "ability": "skeleton_slash" },
+      { "ability": "bone_bow", "damage": 9, "minRange": 3.5 }
+    ],
+    "aggroRadius": 10, "attackRange": 11,
     "leashRadius": 34, "fleeAtHpPct": 0, "xp": 58, "loot": "skeleton_drops",
     "sounds": { "idle": "skeleton_idle", "attack": "skeleton_attack", "hurt": "skeleton_hurt", "die": "skeleton_die" }
   },
@@ -44,7 +48,11 @@
   "minotaur_boss": {
     "name": "Gravelord Minotaur", "sprite": "minotaur", "level": 10,
     "hp": 680, "damage": 27, "moveSpeed": 3.1,
-    "ability": "boss_slam", "aggroRadius": 15, "attackRange": 3.0,
+    "attacks": [
+      { "ability": "boss_slam" },
+      { "ability": "minotaur_gore", "damage": 18, "weight": 2 }
+    ],
+    "aggroRadius": 15, "attackRange": 3.0,
     "leashRadius": 44, "fleeAtHpPct": 0, "xp": 520, "loot": "boss_drops",
     "sounds": { "idle": "minotaur_boss_idle", "attack": "minotaur_boss_attack", "hurt": "minotaur_boss_hurt", "die": "minotaur_boss_die" }
   },
@@ -121,14 +129,22 @@
   "cinder_golem_boss": {
     "name": "Furnace Golem", "sprite": "cinder_golem", "level": 13,
     "hp": 950, "damage": 40, "moveSpeed": 2.6,
-    "ability": "golem_slam", "aggroRadius": 15, "attackRange": 3.2,
+    "attacks": [
+      { "ability": "golem_slam" },
+      { "ability": "ember_burst", "damage": 24, "minRange": 4 }
+    ],
+    "aggroRadius": 15, "attackRange": 14,
     "leashRadius": 46, "fleeAtHpPct": 0, "xp": 900, "loot": "golem_boss_drops",
     "sounds": { "idle": "cinder_golem_boss_idle", "attack": "cinder_golem_boss_attack", "hurt": "cinder_golem_boss_hurt", "die": "cinder_golem_boss_die" }
   },
   "lich_boss": {
     "name": "Morvane the Hollow", "sprite": "lich", "level": 15,
     "hp": 1150, "damage": 36, "moveSpeed": 2.9,
-    "ability": "shadow_lance", "aggroRadius": 16, "attackRange": 12,
+    "attacks": [
+      { "ability": "shadow_lance", "minRange": 3 },
+      { "ability": "lich_scythe", "damage": 30 }
+    ],
+    "aggroRadius": 16, "attackRange": 12,
     "leashRadius": 48, "fleeAtHpPct": 0, "xp": 1400, "loot": "lich_boss_drops",
     "sounds": { "idle": "lich_boss_idle", "attack": "lich_boss_attack", "hurt": "lich_boss_hurt", "die": "lich_boss_die" }
   }

@@ -54,9 +54,9 @@ export declare const ItemDefSchema: z.ZodObject<{
         cureDot?: boolean | undefined;
     }>>;
 }, "strip", z.ZodTypeAny, {
+    value: number;
     name: string;
     kind: "weapon" | "consumable" | "building" | "trophy" | "misc";
-    value: number;
     stack: number;
     icon: [number, number];
     ability?: string | undefined;
@@ -72,9 +72,9 @@ export declare const ItemDefSchema: z.ZodObject<{
         cureDot?: boolean | undefined;
     } | undefined;
 }, {
+    value: number;
     name: string;
     kind: "weapon" | "consumable" | "building" | "trophy" | "misc";
-    value: number;
     stack: number;
     icon: [number, number];
     ability?: string | undefined;
@@ -169,6 +169,29 @@ export declare const AbilityDefSchema: z.ZodObject<{
     } | undefined;
 }>;
 export type AbilityDef = z.infer<typeof AbilityDefSchema>;
+/** One option in a mob's attack kit. The mob picks among options that are
+ *  usable right now (range window, cooldown, melee vertical reach) with a
+ *  weighted roll — see chooseAttack in the shard sim. */
+export declare const MobAttackSchema: z.ZodObject<{
+    ability: z.ZodString;
+    /** damage override for this attack (default: the mob's base damage) */
+    damage: z.ZodOptional<z.ZodNumber>;
+    /** don't use inside this 2D distance (bows prefer melee point-blank) */
+    minRange: z.ZodOptional<z.ZodNumber>;
+    /** weighted-random share when several options are usable at once */
+    weight: z.ZodDefault<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    weight: number;
+    ability: string;
+    damage?: number | undefined;
+    minRange?: number | undefined;
+}, {
+    ability: string;
+    weight?: number | undefined;
+    damage?: number | undefined;
+    minRange?: number | undefined;
+}>;
+export type MobAttackDef = z.infer<typeof MobAttackSchema>;
 export declare const MobDefSchema: z.ZodObject<{
     name: z.ZodString;
     sprite: z.ZodString;
@@ -176,7 +199,28 @@ export declare const MobDefSchema: z.ZodObject<{
     hp: z.ZodNumber;
     damage: z.ZodNumber;
     moveSpeed: z.ZodNumber;
-    ability: z.ZodString;
+    /** legacy single-attack form; multi-attack mobs author `attacks` instead */
+    ability: z.ZodOptional<z.ZodString>;
+    /** attack kit — bosses/bigger mobs carry 2+ options (melee + ranged...) */
+    attacks: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        ability: z.ZodString;
+        /** damage override for this attack (default: the mob's base damage) */
+        damage: z.ZodOptional<z.ZodNumber>;
+        /** don't use inside this 2D distance (bows prefer melee point-blank) */
+        minRange: z.ZodOptional<z.ZodNumber>;
+        /** weighted-random share when several options are usable at once */
+        weight: z.ZodDefault<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        weight: number;
+        ability: string;
+        damage?: number | undefined;
+        minRange?: number | undefined;
+    }, {
+        ability: string;
+        weight?: number | undefined;
+        damage?: number | undefined;
+        minRange?: number | undefined;
+    }>, "many">>;
     aggroRadius: z.ZodNumber;
     attackRange: z.ZodNumber;
     leashRadius: z.ZodNumber;
@@ -202,7 +246,6 @@ export declare const MobDefSchema: z.ZodObject<{
     }>>;
 }, "strip", z.ZodTypeAny, {
     name: string;
-    ability: string;
     damage: number;
     sprite: string;
     level: number;
@@ -214,6 +257,13 @@ export declare const MobDefSchema: z.ZodObject<{
     fleeAtHpPct: number;
     xp: number;
     loot: string;
+    ability?: string | undefined;
+    attacks?: {
+        weight: number;
+        ability: string;
+        damage?: number | undefined;
+        minRange?: number | undefined;
+    }[] | undefined;
     sounds?: {
         idle?: string | undefined;
         attack?: string | undefined;
@@ -222,7 +272,6 @@ export declare const MobDefSchema: z.ZodObject<{
     } | undefined;
 }, {
     name: string;
-    ability: string;
     damage: number;
     sprite: string;
     level: number;
@@ -234,6 +283,13 @@ export declare const MobDefSchema: z.ZodObject<{
     fleeAtHpPct: number;
     xp: number;
     loot: string;
+    ability?: string | undefined;
+    attacks?: {
+        ability: string;
+        weight?: number | undefined;
+        damage?: number | undefined;
+        minRange?: number | undefined;
+    }[] | undefined;
     sounds?: {
         idle?: string | undefined;
         attack?: string | undefined;
@@ -242,6 +298,9 @@ export declare const MobDefSchema: z.ZodObject<{
     } | undefined;
 }>;
 export type MobDef = z.infer<typeof MobDefSchema>;
+/** A mob's attack kit, normalized: multi-attack mobs author `attacks`;
+ *  single-attack mobs keep the legacy `ability` field (kit of one). */
+export declare function mobAttacks(def: MobDef): MobAttackDef[];
 /** Weighted entry: exactly one of item / table / nothing (weight only). */
 export declare const LootEntrySchema: z.ZodObject<{
     weight: z.ZodNumber;
