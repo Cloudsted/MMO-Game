@@ -703,6 +703,61 @@ show their block tile).
     to platform height first (ground-level looting is exactly the killed
     exploit).
 
+- 2026-07-07 **MOB GRAVITY + ATTACK KITS + BOSS SUMMONS + ENTITY-LINKED
+  EVENTS batch** (owner feature list). Verified: 173 vitest (24 new),
+  combat/travel/floor/separation/wade regressions, new
+  `scripts/boss-events-probe.mjs` (full arc live, first run), client
+  screenshot of the event-sealed gate. All server-side — no wire or
+  client-code changes (the seal rides the existing portals/portalState
+  messages; new mob abilities reuse existing fx strips).
+  - **Mob gravity** (`applyGravity` in mobs.ts, room tick step 2 before the
+    brain): airborne mobs accelerate down at the shared `-22` and land on
+    `groundBelow`; no air control while falling. `applyMove` snaps down only
+    step-sized drops (≤1.05) — deeper purposeful drops walk OFF the ledge
+    and fall over ticks instead of teleporting to the floor. In liquid,
+    gravity is off and buoyancy floats the mob to the swim surface (feet in
+    the top liquid cell) so banks stay climbable after a plunge. Entity
+    gains transient `vy`.
+  - **Attack kits**: MobDef `attacks: [{ability, damage?, minRange?,
+    weight}]` (legacy single `ability` = kit of one; registry cross-checks
+    every entry). `chooseAttack` (mobs.ts) picks per swing: melee gates on
+    `ability.range`+grace and `meleeVerticalReach`, projectiles on the
+    mob's `attackRange` (aimed with real pitch), `minRange` keeps bows out
+    of point-blank; several usable → weighted roll. Everything-reloading:
+    mixed kits CLOSE toward melee (skeletons advance between bow shots),
+    pure-ranged mobs hold ground; a dead band (nothing connects) also
+    advances. Kits: skeleton slash+bone_bow (attackRange 11), minotaur
+    slam+gore, golem slam+ember_burst (anti-kiting, attackRange 14), lich
+    lance(minRange 3)+scythe+summon — the "lich casts point-blank" caveat
+    is fixed. Convention: **a projectile ability's maxRange must cover its
+    mob's attackRange** (test-enforced in bosses.test.ts).
+  - **Boss summons** two ways, per the owner's spec: (1) summon abilities —
+    self-kind ability + `summon {mob,count,radius,cap,text}`; on release
+    the wave rises around the caster WITH the caster's threat table (adds
+    charge straight in), topping up to `cap`; at cap the option drops out
+    of the kit. Morvane casts lich_summon (3 bone bats, cap 5, 15 s cd,
+    weight 8). (2) room events (below) — the Gravelord and Furnace Golem
+    both trigger a 3-add rally at half health.
+  - **Entity-linked room events** (RoomDef `events`, rooms.ts schemas):
+    triggers `bossDeath` (every death of that mob id) and `bossHpBelowPct`
+    (once per boss life; re-arms when the boss respawns — spawnMob hook).
+    Actions `openPortal` / `spawnMobs` / `setRoomTimer` / `announce`, run
+    in order, anchored on the boss entity. Portal gates: sealed while the
+    trigger boss lives (derived at boot from live mobs, so a stateful room
+    resuming with the boss on a respawn timer boots OPEN), open on death,
+    RESEAL the moment the boss respawns. Event seals combine with
+    roomStatus through one `portalOpen()` — destination-down keeps an
+    event-opened gate shut. `setRoomTimer` re-arms the lifecycle collapse
+    via the same scheduleExpiry path as `/expire` (extends a shorter
+    remainder, cuts a longer one; warnings re-arm). Shipped: dungeon's
+    Vaults portal gated on the Gravelord (+ his 50% skeleton rally);
+    Morvane's death gives crypt_depths 60 s to loot and run; Furnace Golem
+    rallies ash husks at 50%. RoomSim warns on dangling event refs at boot
+    (room defs aren't registry-cross-checked at load).
+  - Summoned mobs: spawner "" (never respawn), `brain.summonerId` = the
+    caster (caps live-minion counts), corpse cleanup as normal. They grant
+    normal XP/loot — an intentional risk/reward, revisit if farmed.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -1146,3 +1201,17 @@ Quick reference only — the stories behind these (and more) live in
   still owned by the owner: bow-fight leash chase, spam-click melee, and
   the night brightness level (the 1.35 default is a first guess — it's a
   one-number knob in shared/rooms/*.json / the schema default).
+- 2026-07-07 **Boss/event batch SHIPPED** (see the decisions-log entry):
+  mob fall gravity (no more instant drops), multi-attack kits (skeleton
+  sword+bow; every boss 2+ attacks), boss summons (lich raises bone bats;
+  Gravelord/Furnace-Golem hp-rallies), and entity-linked room events —
+  the dungeon's Vaults portal now opens only over the Gravelord's corpse
+  (reseals on respawn), and killing Morvane collapses crypt_depths in
+  60 s. Verified: 173 vitest, `boss-events-probe.mjs` PASSED the whole
+  arc live first run (sealed gate → rally at 50% → gate opens → walk
+  through → lich fight w/ 14 summoned bats → T-10 warning → evicted 74 s
+  after the kill), all five movement/portal regression bots green,
+  screenshot tools/out/sealed-gate-*.png (a real client rendering the
+  event-sealed gate gray + "(sealed)"). Feel checks owner-owned: falling
+  mobs read right in motion, skeleton skirmisher cadence, boss fight
+  difficulty (potion math assumed level ~10+ groups for bosses).
