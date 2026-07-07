@@ -20,8 +20,11 @@ export declare class ShardManager {
     private handleMessage;
     /**
      * Portal transfer: persist the live character state first (with the target
-     * room + position reset to its spawn), then mint a ticket and route the
-     * grant back to the requesting shard → RoomHost → client.
+     * room + position reset), then mint a ticket and route the grant back to
+     * the requesting shard → RoomHost → client. Position: portal uses carry
+     * viaPortalId and land at the PAIRED portal in the target room (y=0 =
+     * ground-snap sentinel; addPlayer snaps to the voxel floor); everything
+     * else (respawn, H key, no pair found) nulls x/y/z → target default spawn.
      */
     private handleTransferRequest;
     /** Apply batched character state from a shard to MongoDB without re-simulating. */

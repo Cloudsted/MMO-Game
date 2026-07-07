@@ -84,6 +84,8 @@ class RoomHost {
     const def = loadRoomDef(roomId);
     this.sim = new RoomSim(def, snapshot);
     this.sim.onGlobalChat = (from, text) => this.sendHost({ t: "globalChat", from, text });
+    // hub-bound transfers the sim initiates itself (respawn away from home, H key)
+    this.sim.onTransferRequest = (session, targetRoomId) => this.requestTransfer(session, targetRoomId);
     this.log = makeLogger(`roomhost/${roomId}`);
     const consts = gameConstants();
 
@@ -194,16 +196,13 @@ class RoomHost {
             send({ t: "transferFailed", reason: "not at a portal" });
             break;
           }
-          if (this.pendingTransfers.has(session.character.id)) break; // already in flight
-          this.pendingTransfers.set(session.character.id, session);
-          this.sendHost({
-            t: "requestTransfer",
-            characterId: session.character.id,
-            targetRoomId: portal.target,
-            patch: this.sim!.buildReport(session)[0]!,
-          });
+          // viaPortalId lands the player at the paired portal in the target
+          this.requestTransfer(session, portal.target, portal.id);
           break;
         }
+        case "returnToHub":
+          this.sim!.handleReturnToHub(session);
+          break;
         case "attack":
           this.sim!.handleAttack(session, msg.yaw, msg.pitch);
           break;
@@ -269,6 +268,24 @@ class RoomHost {
         this.pendingTransfers.delete(session.character.id);
         session = null;
       }
+    });
+  }
+
+  /**
+   * Start a master-mediated transfer for a session (portal use, hub-bound
+   * respawn, H key). No-op when a transfer is already in flight or granted —
+   * the grant path sets session.transferring so the coming disconnect report
+   * can't clobber the transfer patch.
+   */
+  private requestTransfer(session: PlayerSession, targetRoomId: string, viaPortalId?: string): void {
+    if (session.transferring || this.pendingTransfers.has(session.character.id)) return;
+    this.pendingTransfers.set(session.character.id, session);
+    this.sendHost({
+      t: "requestTransfer",
+      characterId: session.character.id,
+      targetRoomId,
+      viaPortalId,
+      patch: this.sim!.buildReport(session)[0]!,
     });
   }
 

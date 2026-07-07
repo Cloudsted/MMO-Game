@@ -35,6 +35,13 @@ export interface Combat {
     /** heal-over-time from food: hpPerSec until hotUntil */
     hotPerSec: number;
     hotUntil: number;
+    /** damage-over-time (poison): hp/sec until dotUntil, mirror of the food
+     *  HoT. Fractions accumulate in dotAcc and land as whole-point bites
+     *  through the room's damage path, attributed to dotSrcId (the applier). */
+    dotPerSec: number;
+    dotUntil: number;
+    dotAcc: number;
+    dotSrcId: number;
 }
 export declare function freshCombat(): Combat;
 export interface Health {

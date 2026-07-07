@@ -78,10 +78,11 @@
         "roomState": "RoomState?"
       },
       "requestTransfer": {
-        "$comment": "portal use: persist live state, then mint a ticket to the target room",
+        "$comment": "persist live state, then mint a ticket to the target room. viaPortalId = source portal on portal use; master lands the player at the paired portal in the target (portal with target===source, or the source portal's exitPortalId). Unset (respawn/H-key/eviction) = target default spawn.",
         "roomId": "s",
         "characterId": "s",
         "targetRoomId": "s",
+        "viaPortalId": "s?",
         "patch": "CharacterPatch"
       },
       "globalChat": {
@@ -190,7 +191,12 @@
         "$comment": "'/g ' prefix = global; admin: /give /tp /spawnmob /time /reload /clearblocks /expire",
         "text": "s"
       },
-      "respawn": {},
+      "respawn": {
+        "$comment": "R while dead. In the hub: local spawn snap + full heal. Elsewhere: hub-bound transfer (arrive alive at hub spawn)"
+      },
+      "returnToHub": {
+        "$comment": "H key: hub-bound transfer from anywhere; ignored when dead or already transferring; system chat if already in the hub"
+      },
       "ping": {
         "n": "n"
       },

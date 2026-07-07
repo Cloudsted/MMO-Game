@@ -8,6 +8,7 @@ import {
   BLOCKS,
   ensureItemInstance,
   gameConstants,
+  loadRoomDefs,
   makeLogger,
   mintItem,
   RegistryService,
@@ -109,6 +110,9 @@ export class RoomSim {
   private chunkCache: Array<{ cx: number; cz: number; data: string }> | null = null;
   /** set by the RoomHost: routes '/g' chat up the control channel */
   onGlobalChat: ((from: string, text: string) => void) | null = null;
+  /** set by the RoomHost: sim-initiated transfers (hub-bound respawn, H key)
+   *  go through the same requestTransfer machinery as portal use */
+  onTransferRequest: ((session: PlayerSession, targetRoomId: string) => void) | null = null;
   /** set by the RoomHost on lifecycle rooms: admin /expire re-arms the timer */
   onExpireRequest: ((sec: number) => void) | null = null;
 
@@ -458,9 +462,20 @@ export class RoomSim {
       existing.send({ t: "evict", reason: "logged in elsewhere" });
       this.removePlayer(existing);
     }
-    // snap to the voxel ground: persisted y may predate this room's world
+    // snap to the voxel ground: persisted y may predate this room's world,
+    // and paired-portal arrivals carry y=0 as a ground-snap sentinel
     const groundY = this.world.standY(character.x, character.z);
-    const spawnY = Math.abs(character.y - groundY) > 2.5 ? groundY : Math.max(character.y, groundY);
+    let spawnY =
+      character.y <= 0 || Math.abs(character.y - groundY) > 2.5
+        ? groundY
+        : Math.max(character.y, groundY);
+    // never admit embedded in solids (arrival next to a wall/arch whose
+    // neighbouring columns overlap the AABB): climb to the first free gap
+    const pr = this.consts.movement.playerRadius;
+    const ph = this.consts.movement.playerHeight;
+    for (let i = 0; i < 8 && this.world.collidesAABB(character.x, spawnY + 0.05, character.z, pr, ph - 0.1); i++) {
+      spawnY += 1;
+    }
     const level = Math.max(1, character.level);
     const prog = this.consts.progression;
     const maxHp = prog.baseHp + prog.hpPerLevel * (level - 1);
@@ -690,6 +705,8 @@ export class RoomSim {
     for (const target of this.targetsOf(attacker)) {
       if (inMeleeCone(attacker, target, range, arc, this.consts.combat.meleeRangeGrace)) {
         this.applyDamage(attacker, target, attacker.combat!.pendingDamage);
+        // melee on-hit debuffs (spider venom, envenomed daggers)
+        if (ability.debuff) this.applyDebuff(target, ability.debuff, attacker);
       }
     }
   }
@@ -781,13 +798,47 @@ export class RoomSim {
     if (tgt.health.hp <= 0) this.kill(tgt, src);
   }
 
-  applyDebuff(tgt: Entity, slowPct: number, durMs: number): void {
+  /** Apply an on-hit debuff: frost-style slow and/or poison-style DoT.
+   *  DoT damage is attributed to src (threat/XP credit via applyDotDamage);
+   *  reapplication refreshes rate + clock. Only slows go on the wire — DoT
+   *  feedback is the damage events its bites broadcast. */
+  applyDebuff(tgt: Entity, debuff: { slowPct?: number; dotTotal?: number; durMs: number }, src: Entity): void {
     const c = tgt.combat;
     if (!c || c.act === "dead") return;
     const now = Date.now();
-    c.slowPct = Math.max(c.slowPct > 0 && c.slowUntil > now ? c.slowPct : 0, slowPct);
-    c.slowUntil = now + durMs;
-    this.broadcastNear(tgt.pos.x, tgt.pos.z, { t: "debuff", id: tgt.id, slowPct, durMs });
+    if (debuff.slowPct !== undefined && debuff.slowPct > 0) {
+      c.slowPct = Math.max(c.slowPct > 0 && c.slowUntil > now ? c.slowPct : 0, debuff.slowPct);
+      c.slowUntil = now + debuff.durMs;
+      this.broadcastNear(tgt.pos.x, tgt.pos.z, { t: "debuff", id: tgt.id, slowPct: debuff.slowPct, durMs: debuff.durMs });
+    }
+    if (debuff.dotTotal !== undefined && debuff.dotTotal > 0) {
+      c.dotPerSec = debuff.dotTotal / (debuff.durMs / 1000);
+      c.dotUntil = now + debuff.durMs;
+      c.dotSrcId = src.id;
+    }
+  }
+
+  /** One DoT bite: normal damage path minus crits/interrupts (a poison tick
+   *  interrupting every cast for its whole duration would be a stunlock).
+   *  Threat + damage-log credit go to the applier when it still exists. */
+  private applyDotDamage(tgt: Entity, amount: number): void {
+    if (!tgt.health || tgt.combat?.act === "dead") return;
+    const now = Date.now();
+    const src = this.entities.get(tgt.combat!.dotSrcId) ?? tgt;
+    tgt.health.hp -= amount;
+    tgt.combat!.lastDamagedAt = now;
+    this.broadcastEvent({ kind: "dmg", src: src.id, tgt: tgt.id, amount, crit: false }, tgt.pos.x, tgt.pos.z);
+    if (tgt.kind === "mob" && src !== tgt) {
+      const srcSession = this.sessions.get(src.id);
+      if (srcSession) {
+        const log = this.damageLog.get(tgt.id) ?? new Map<string, number>();
+        log.set(srcSession.character.id, (log.get(srcSession.character.id) ?? 0) + amount);
+        this.damageLog.set(tgt.id, log);
+      }
+      tgt.brain!.threat.set(src.id, (tgt.brain!.threat.get(src.id) ?? 0) + amount);
+    }
+    this.markStatsDirty(tgt);
+    if (tgt.health.hp <= 0) this.kill(tgt, src);
   }
 
   private kill(tgt: Entity, by: Entity): void {
@@ -869,6 +920,14 @@ export class RoomSim {
   handleRespawn(session: PlayerSession): void {
     const e = session.entity;
     if (e.combat!.act !== "dead") return;
+    // death away from home sends you back to the hub: same transfer machinery
+    // as portals (no viaPortalId → hub default spawn). The patch's inventory
+    // is already empty (death dropped it) and hp isn't part of patches —
+    // addPlayer always admits at full hp/mana, so arrival revives.
+    if (this.def.id !== "hub" && this.onTransferRequest) {
+      this.onTransferRequest(session, "hub");
+      return;
+    }
     const { spawn } = this.def;
     e.pos.x = spawn.x;
     e.pos.z = spawn.z;
@@ -882,6 +941,18 @@ export class RoomSim {
     session.dirtyStats = true;
     // the client reconciles against this like any rejected move
     session.send({ t: "correct", seq: session.lastSeq, x: e.pos.x, y: e.pos.y, z: e.pos.z });
+  }
+
+  /** H key: hub-bound transfer from anywhere. Dead players use R instead;
+   *  in the hub it's just a chat line. The RoomHost's requestTransfer
+   *  ignores sessions already transferring. */
+  handleReturnToHub(session: PlayerSession): void {
+    if (session.entity.combat!.act === "dead") return;
+    if (this.def.id === "hub") {
+      this.system(session, "You are already in the hub.");
+      return;
+    }
+    this.onTransferRequest?.(session, "hub");
   }
 
   private awardXp(session: PlayerSession, amount: number): void {
@@ -991,6 +1062,11 @@ export class RoomSim {
     if (fx.hotTotal && fx.hotDurMs) {
       e.combat!.hotPerSec = fx.hotTotal / (fx.hotDurMs / 1000);
       e.combat!.hotUntil = Date.now() + fx.hotDurMs;
+    }
+    if (fx.cureDot) {
+      e.combat!.dotPerSec = 0;
+      e.combat!.dotUntil = 0;
+      e.combat!.dotAcc = 0;
     }
     removeFromSlot(session.slots, slot, 1);
     session.dirtyInv = true;
@@ -1234,8 +1310,39 @@ export class RoomSim {
         this.system(session, `Room will expire in ${sec}s.`);
         break;
       }
+      case "room": {
+        // admin self-transfer to any open room by id (skips portal proximity);
+        // rides the same requestTransfer machinery as portal use / respawns
+        const roomId = args[0] ?? "";
+        let known: string[];
+        try {
+          known = [...loadRoomDefs().keys()];
+        } catch (err) {
+          this.system(session, `Room defs failed to load: ${err instanceof Error ? err.message : err}`);
+          return;
+        }
+        if (!known.includes(roomId)) {
+          this.system(session, `Unknown room '${roomId}'. Have: ${known.join(", ")}`);
+          return;
+        }
+        if (roomId === this.def.id) {
+          this.system(session, `You are already in ${roomId}.`);
+          return;
+        }
+        if (this.roomStatus.get(roomId) === false) {
+          this.system(session, `Room '${roomId}' is closed right now.`);
+          return;
+        }
+        if (!this.onTransferRequest) {
+          this.system(session, "Transfers are unavailable in this room.");
+          return;
+        }
+        this.onTransferRequest(session, roomId);
+        this.system(session, `Transferring to ${roomId}...`);
+        break;
+      }
       default:
-        this.system(session, `Unknown command /${cmd}. Have: give gold tp spawnmob time level reload clearblocks expire`);
+        this.system(session, `Unknown command /${cmd}. Have: give gold tp spawnmob time level reload clearblocks expire room`);
     }
   }
 
@@ -1288,6 +1395,30 @@ export class RoomSim {
       else if (fired === "release" && ability) this.releaseAbility(e, ability, now);
       // debuff expiry
       if (e.combat.slowPct > 0 && e.combat.slowUntil <= now) e.combat.slowPct = 0;
+      // poison DoT: accrue over the active window, land whole-point bites
+      // through applyDotDamage (mirror of the food HoT, inverted)
+      if (e.combat.dotUntil > 0) {
+        if (e.combat.act === "dead" || !e.health) {
+          e.combat.dotPerSec = 0;
+          e.combat.dotUntil = 0;
+          e.combat.dotAcc = 0;
+        } else {
+          const sliceStart = now - dt * 1000;
+          const activeDt = Math.max(0, Math.min(now, e.combat.dotUntil) - sliceStart) / 1000;
+          e.combat.dotAcc += e.combat.dotPerSec * Math.min(activeDt, dt);
+          const expired = e.combat.dotUntil <= now;
+          const bite = expired ? Math.round(e.combat.dotAcc) : Math.floor(e.combat.dotAcc);
+          if (bite > 0) {
+            e.combat.dotAcc -= bite;
+            this.applyDotDamage(e, bite);
+          }
+          if (expired) {
+            e.combat.dotPerSec = 0;
+            e.combat.dotUntil = 0;
+            e.combat.dotAcc = 0;
+          }
+        }
+      }
     }
 
     // 2. mob brains → intents → body
@@ -1417,7 +1548,7 @@ export class RoomSim {
           if (!projectileHits(p, tgt, this.consts.combat.projectileHitRadius)) continue;
           this.broadcastNear(p.x, p.z, { t: "projHit", id: p.id, x: p.x, y: p.y, z: p.z });
           if (owner) this.applyDamage(owner, tgt, p.damage);
-          if (p.debuff) this.applyDebuff(tgt, p.debuff.slowPct, p.debuff.durMs);
+          if (p.debuff && owner) this.applyDebuff(tgt, p.debuff, owner);
           alive = false;
           break;
         }

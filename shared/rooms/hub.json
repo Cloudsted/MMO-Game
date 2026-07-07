@@ -40,7 +40,7 @@
         "Bread for the road, potions for when the road bites back.",
         "Wolves hunt in packs out there. Carry more than you think you need."
       ],
-      "shop": { "items": ["bread", "health_potion", "mana_potion"], "buys": true }
+      "shop": { "items": ["bread", "health_potion", "mana_potion", "antidote"], "buys": true }
     },
     {
       "id": "arcanist", "name": "Zella the Arcanist", "sprite": "npc_arcanist",
@@ -58,7 +58,7 @@
         "Block by block — that's how anything worth keeping gets built.",
         "Take the west portal to the Building Grounds and stack whatever you like. Torches too, for the night work."
       ],
-      "shop": { "items": ["block_planks", "block_log", "block_cobblestone", "block_stone_bricks", "block_thatch", "block_glass", "block_torch"], "buys": true }
+      "shop": { "items": ["block_planks", "block_log", "block_cobblestone", "block_stone_bricks", "block_thatch", "block_glass", "block_torch", "block_dark_bricks", "block_marble", "block_lantern", "block_palisade", "block_hay", "block_iron_bars", "block_bookshelf"], "buys": true }
     },
     {
       "id": "gate-guard", "name": "Gate Guard", "sprite": "npc_guard",

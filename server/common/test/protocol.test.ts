@@ -62,4 +62,16 @@ describe("protocol", () => {
     const buf = Buffer.from(encode({ t: "ping", n: 42 }), "utf8");
     expect(decodeClientToServer(buf)).toEqual({ t: "ping", n: 42 });
   });
+
+  it("round-trips returnToHub (H key)", () => {
+    expect(decodeClientToServer(encode({ t: "returnToHub" }))).toEqual({ t: "returnToHub" });
+  });
+
+  it("accepts requestTransfer with and without viaPortalId", () => {
+    const base = { t: "requestTransfer", roomId: "hub", characterId: "c1", targetRoomId: "forest", patch: { id: "c1" } };
+    expect(decodeShardToMaster(encode(base)).t).toBe("requestTransfer");
+    const withPortal = decodeShardToMaster(encode({ ...base, viaPortalId: "hub-forest" }));
+    expect(withPortal.t === "requestTransfer" && withPortal.viaPortalId).toBe("hub-forest");
+    expect(() => decodeShardToMaster(encode({ ...base, viaPortalId: 7 }))).toThrow();
+  });
 });

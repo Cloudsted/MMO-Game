@@ -22,6 +22,8 @@ public final class ItemRegistry {
         public final int durability;
         /** consumables: effect payload (0 = absent) */
         public final float effectHeal, effectMana, effectHotTotal, effectHotDurMs;
+        /** consumables: clears active poison DoTs (antidote) */
+        public final boolean effectCureDot;
 
         Item(String id, JsonObject o) {
             this.id = id;
@@ -38,6 +40,7 @@ public final class ItemRegistry {
             effectMana = fx != null && fx.has("mana") ? fx.get("mana").getAsFloat() : 0;
             effectHotTotal = fx != null && fx.has("hotTotal") ? fx.get("hotTotal").getAsFloat() : 0;
             effectHotDurMs = fx != null && fx.has("hotDurMs") ? fx.get("hotDurMs").getAsFloat() : 0;
+            effectCureDot = fx != null && fx.has("cureDot") && fx.get("cureDot").getAsBoolean();
             JsonArray icon = o.getAsJsonArray("icon");
             iconCol = icon.get(0).getAsInt();
             iconRow = icon.get(1).getAsInt();

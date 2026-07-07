@@ -40,5 +40,77 @@
     "hp": 680, "damage": 27, "moveSpeed": 3.1,
     "ability": "boss_slam", "aggroRadius": 15, "attackRange": 3.0,
     "leashRadius": 34, "fleeAtHpPct": 0, "xp": 520, "loot": "boss_drops"
+  },
+  "boar": {
+    "name": "Bristleback Boar", "sprite": "boar", "level": 2,
+    "hp": 45, "damage": 6, "moveSpeed": 3.0,
+    "ability": "boar_gore", "aggroRadius": 9, "attackRange": 1.8,
+    "leashRadius": 24, "fleeAtHpPct": 0.2, "xp": 24, "loot": "boar_drops"
+  },
+  "giant_spider": {
+    "name": "Fen Weaver", "sprite": "giant_spider", "level": 8,
+    "hp": 150, "damage": 17, "moveSpeed": 3.4,
+    "ability": "spider_bite", "aggroRadius": 10, "attackRange": 1.9,
+    "leashRadius": 26, "fleeAtHpPct": 0, "xp": 170, "loot": "spider_drops"
+  },
+  "bog_serpent": {
+    "name": "Bog Serpent", "sprite": "bog_serpent", "level": 9,
+    "hp": 170, "damage": 19, "moveSpeed": 3.8,
+    "ability": "raptor_bite", "aggroRadius": 9, "attackRange": 1.8,
+    "leashRadius": 24, "fleeAtHpPct": 0, "xp": 220, "loot": "serpent_drops"
+  },
+  "mantrap": {
+    "name": "Strangler Bloom", "sprite": "mantrap", "level": 9,
+    "hp": 230, "damage": 24, "moveSpeed": 0.8,
+    "ability": "mantrap_snap", "aggroRadius": 5, "attackRange": 2.0,
+    "leashRadius": 10, "fleeAtHpPct": 0, "xp": 240, "loot": "mantrap_drops"
+  },
+  "lizardman": {
+    "name": "Fenblade Lizardman", "sprite": "lizardman", "level": 11,
+    "hp": 240, "damage": 26, "moveSpeed": 3.2,
+    "ability": "bandit_slash", "aggroRadius": 10, "attackRange": 2.1,
+    "leashRadius": 26, "fleeAtHpPct": 0.1, "xp": 330, "loot": "lizardman_drops"
+  },
+  "marsh_wisp": {
+    "name": "Marsh Wisp", "sprite": "marsh_wisp", "level": 10,
+    "hp": 130, "damage": 20, "moveSpeed": 2.4,
+    "ability": "wisp_bolt", "aggroRadius": 12, "attackRange": 11,
+    "leashRadius": 26, "fleeAtHpPct": 0, "xp": 270, "loot": "wisp_drops"
+  },
+  "ash_husk": {
+    "name": "Ash-Choked Husk", "sprite": "ash_husk", "level": 11,
+    "hp": 260, "damage": 25, "moveSpeed": 1.9,
+    "ability": "skeleton_slash", "aggroRadius": 11, "attackRange": 2.0,
+    "leashRadius": 28, "fleeAtHpPct": 0, "xp": 320, "loot": "husk_drops"
+  },
+  "fire_elemental": {
+    "name": "Cinder Elemental", "sprite": "fire_elemental", "level": 12,
+    "hp": 180, "damage": 28, "moveSpeed": 2.6,
+    "ability": "elemental_bolt", "aggroRadius": 12, "attackRange": 12,
+    "leashRadius": 26, "fleeAtHpPct": 0, "xp": 380, "loot": "fire_elemental_drops"
+  },
+  "bone_bat": {
+    "name": "Crypt Shrieker", "sprite": "bone_bat", "level": 12,
+    "hp": 110, "damage": 18, "moveSpeed": 4.6,
+    "ability": "raptor_bite", "aggroRadius": 13, "attackRange": 1.7,
+    "leashRadius": 30, "fleeAtHpPct": 0, "xp": 300, "loot": "bone_bat_drops"
+  },
+  "wraith": {
+    "name": "Vault Wraith", "sprite": "wraith", "level": 13,
+    "hp": 300, "damage": 30, "moveSpeed": 2.8,
+    "ability": "wraith_touch", "aggroRadius": 11, "attackRange": 2.2,
+    "leashRadius": 26, "fleeAtHpPct": 0, "xp": 480, "loot": "wraith_drops"
+  },
+  "cinder_golem_boss": {
+    "name": "Furnace Golem", "sprite": "cinder_golem", "level": 13,
+    "hp": 950, "damage": 40, "moveSpeed": 2.6,
+    "ability": "golem_slam", "aggroRadius": 15, "attackRange": 3.2,
+    "leashRadius": 34, "fleeAtHpPct": 0, "xp": 900, "loot": "golem_boss_drops"
+  },
+  "lich_boss": {
+    "name": "Morvane the Hollow", "sprite": "lich", "level": 15,
+    "hp": 1150, "damage": 36, "moveSpeed": 2.9,
+    "ability": "shadow_lance", "aggroRadius": 16, "attackRange": 12,
+    "leashRadius": 36, "fleeAtHpPct": 0, "xp": 1400, "loot": "lich_boss_drops"
   }
 }

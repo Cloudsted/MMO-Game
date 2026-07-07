@@ -48,6 +48,7 @@ export type RoomToHost = {
     t: "requestTransfer";
     characterId: string;
     targetRoomId: string;
+    viaPortalId?: string;
     patch: {
         id: string;
     } & Record<string, unknown>;

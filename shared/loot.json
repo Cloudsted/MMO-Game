@@ -3,9 +3,10 @@
     "gold": [1, 3],
     "rolls": [1, 1],
     "entries": [
-      { "weight": 55 },
-      { "weight": 33, "item": "bread", "qty": [1, 1] },
+      { "weight": 49 },
+      { "weight": 31, "item": "bread", "qty": [1, 1] },
       { "weight": 10, "item": "health_potion", "qty": [1, 1] },
+      { "weight": 8, "item": "slime_gel", "qty": [1, 1] },
       { "weight": 2, "table": "weapons_basic" }
     ]
   },
@@ -13,10 +14,11 @@
     "gold": [2, 6],
     "rolls": [1, 1],
     "entries": [
-      { "weight": 42 },
-      { "weight": 26, "item": "bread", "qty": [1, 2] },
-      { "weight": 14, "item": "health_potion", "qty": [1, 1] },
+      { "weight": 36 },
+      { "weight": 24, "item": "bread", "qty": [1, 2] },
+      { "weight": 12, "item": "health_potion", "qty": [1, 1] },
       { "weight": 10, "item": "mana_potion", "qty": [1, 1] },
+      { "weight": 10, "item": "wolf_pelt", "qty": [1, 1] },
       { "weight": 8, "table": "weapons_basic" }
     ]
   },
@@ -57,9 +59,10 @@
     "gold": [4, 10],
     "rolls": [1, 1],
     "entries": [
-      { "weight": 40 },
-      { "weight": 18, "item": "mana_potion", "qty": [1, 1] },
-      { "weight": 14, "item": "health_potion", "qty": [1, 1] },
+      { "weight": 34 },
+      { "weight": 16, "item": "mana_potion", "qty": [1, 1] },
+      { "weight": 12, "item": "health_potion", "qty": [1, 1] },
+      { "weight": 10, "item": "bone_charm", "qty": [1, 1] },
       { "weight": 18, "table": "weapons_basic" },
       { "weight": 10, "table": "weapons_fine" }
     ]
@@ -78,9 +81,10 @@
     "gold": [4, 9],
     "rolls": [1, 1],
     "entries": [
-      { "weight": 48 },
-      { "weight": 18, "item": "health_potion", "qty": [1, 1] },
-      { "weight": 16, "item": "mana_potion", "qty": [1, 1] },
+      { "weight": 40 },
+      { "weight": 16, "item": "health_potion", "qty": [1, 1] },
+      { "weight": 14, "item": "mana_potion", "qty": [1, 1] },
+      { "weight": 12, "item": "raptor_talon", "qty": [1, 1] },
       { "weight": 18, "table": "weapons_fine" }
     ]
   },
@@ -94,6 +98,223 @@
     ],
     "guaranteed": [
       { "weight": 1, "table": "weapons_fine", "minRarity": "epic" }
+    ]
+  },
+  "weapons_steel": {
+    "gold": [0, 0],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 28, "item": "steel_sword" },
+      { "weight": 18, "item": "war_axe" },
+      { "weight": 18, "item": "ranger_crossbow" },
+      { "weight": 14, "item": "wisp_wand" },
+      { "weight": 12, "item": "fen_staff" },
+      { "weight": 10, "item": "venom_dagger" }
+    ]
+  },
+  "weapons_rift": {
+    "gold": [0, 0],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 22, "item": "emberpike" },
+      { "weight": 20, "item": "rift_greataxe" },
+      { "weight": 18, "item": "dwarven_arbalest" },
+      { "weight": 16, "item": "ashen_scepter" },
+      { "weight": 14, "item": "tidecaller_staff" },
+      { "weight": 10, "item": "gravewind_scythe" }
+    ]
+  },
+  "weapons_rift_gravewind": {
+    "gold": [0, 0],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 22, "item": "emberpike" },
+      { "weight": 20, "item": "rift_greataxe" },
+      { "weight": 18, "item": "dwarven_arbalest" },
+      { "weight": 16, "item": "ashen_scepter" },
+      { "weight": 14, "item": "tidecaller_staff" },
+      { "weight": 20, "item": "gravewind_scythe" }
+    ]
+  },
+  "boar_drops": {
+    "gold": [2, 5],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 40 },
+      { "weight": 30, "item": "roast_boar_leg", "qty": [1, 2] },
+      { "weight": 22, "item": "boar_tusk", "qty": [1, 1] },
+      { "weight": 8, "item": "health_potion", "qty": [1, 1] }
+    ]
+  },
+  "spider_drops": {
+    "gold": [6, 14],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 33 },
+      { "weight": 28, "item": "venom_sac", "qty": [1, 1] },
+      { "weight": 12, "table": "weapons_steel" },
+      { "weight": 3, "item": "venom_dagger" },
+      { "weight": 12, "item": "greater_health_potion", "qty": [1, 1] },
+      { "weight": 12, "item": "antidote", "qty": [1, 1] }
+    ]
+  },
+  "serpent_drops": {
+    "gold": [8, 16],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 32 },
+      { "weight": 20, "item": "greater_health_potion", "qty": [1, 1] },
+      { "weight": 16, "item": "greater_mana_potion", "qty": [1, 1] },
+      { "weight": 20, "table": "weapons_steel" },
+      { "weight": 12, "item": "antidote", "qty": [1, 1] }
+    ]
+  },
+  "mantrap_drops": {
+    "gold": [6, 14],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 30 },
+      { "weight": 32, "item": "antidote", "qty": [1, 2] },
+      { "weight": 14, "item": "greater_health_potion", "qty": [1, 1] },
+      { "weight": 16, "table": "weapons_steel" },
+      { "weight": 8, "table": "weapons_steel", "minRarity": "rare" }
+    ]
+  },
+  "lizardman_drops": {
+    "gold": [10, 20],
+    "rolls": [1, 2],
+    "entries": [
+      { "weight": 28 },
+      { "weight": 22, "table": "weapons_steel" },
+      { "weight": 6, "table": "weapons_steel", "minRarity": "rare" },
+      { "weight": 15, "item": "ancient_coin", "qty": [1, 1] },
+      { "weight": 16, "item": "greater_health_potion", "qty": [1, 1] },
+      { "weight": 13, "item": "greater_mana_potion", "qty": [1, 1] }
+    ]
+  },
+  "wisp_drops": {
+    "gold": [5, 12],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 34 },
+      { "weight": 26, "item": "greater_mana_potion", "qty": [1, 1] },
+      { "weight": 22, "item": "spirit_essence", "qty": [1, 1] },
+      { "weight": 12, "table": "weapons_steel" },
+      { "weight": 6, "item": "greater_health_potion", "qty": [1, 1] }
+    ]
+  },
+  "husk_drops": {
+    "gold": [8, 18],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 44 },
+      { "weight": 12, "item": "ember_core", "qty": [1, 1] },
+      { "weight": 6, "table": "weapons_rift" },
+      { "weight": 20, "item": "greater_health_potion", "qty": [1, 1] },
+      { "weight": 18, "item": "greater_mana_potion", "qty": [1, 1] }
+    ]
+  },
+  "fire_elemental_drops": {
+    "gold": [10, 20],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 34 },
+      { "weight": 30, "item": "ember_core", "qty": [1, 1] },
+      { "weight": 10, "table": "weapons_rift" },
+      { "weight": 14, "item": "greater_mana_potion", "qty": [1, 1] },
+      { "weight": 12, "item": "greater_health_potion", "qty": [1, 1] }
+    ]
+  },
+  "bone_bat_drops": {
+    "gold": [4, 10],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 45 },
+      { "weight": 25, "item": "bone_charm", "qty": [1, 1] },
+      { "weight": 14, "item": "greater_mana_potion", "qty": [1, 1] },
+      { "weight": 10, "item": "greater_health_potion", "qty": [1, 1] },
+      { "weight": 6, "table": "weapons_rift" }
+    ]
+  },
+  "wraith_drops": {
+    "gold": [12, 24],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 31 },
+      { "weight": 35, "item": "spirit_essence", "qty": [1, 1] },
+      { "weight": 14, "table": "weapons_rift" },
+      { "weight": 12, "item": "greater_mana_potion", "qty": [1, 1] },
+      { "weight": 8, "item": "greater_health_potion", "qty": [1, 1] }
+    ]
+  },
+  "golem_boss_drops": {
+    "gold": [150, 260],
+    "rolls": [2, 2],
+    "entries": [
+      { "weight": 40, "table": "weapons_rift", "minRarity": "rare" },
+      { "weight": 30, "item": "greater_health_potion", "qty": [2, 3] },
+      { "weight": 30, "item": "greater_mana_potion", "qty": [2, 3] }
+    ],
+    "guaranteed": [
+      { "weight": 1, "table": "weapons_rift", "minRarity": "epic" },
+      { "weight": 1, "item": "ember_core", "qty": [2, 3] }
+    ]
+  },
+  "lich_boss_drops": {
+    "gold": [200, 320],
+    "rolls": [2, 2],
+    "entries": [
+      { "weight": 40, "table": "weapons_rift", "minRarity": "rare" },
+      { "weight": 30, "item": "greater_mana_potion", "qty": [2, 3] },
+      { "weight": 30, "item": "greater_health_potion", "qty": [2, 3] }
+    ],
+    "guaranteed": [
+      { "weight": 1, "table": "weapons_rift_gravewind", "minRarity": "epic" },
+      { "weight": 1, "item": "spirit_essence", "qty": [2, 4] }
+    ]
+  },
+  "cache_forest": {
+    "gold": [8, 20],
+    "rolls": [1, 2],
+    "entries": [
+      { "weight": 30, "item": "health_potion", "qty": [1, 2] },
+      { "weight": 20, "item": "bread", "qty": [2, 4] },
+      { "weight": 25, "table": "weapons_basic" },
+      { "weight": 15, "table": "weapons_fine" },
+      { "weight": 10, "table": "weapons_fine", "minRarity": "rare" }
+    ]
+  },
+  "cache_gloomfen": {
+    "gold": [15, 35],
+    "rolls": [1, 2],
+    "entries": [
+      { "weight": 30, "table": "weapons_steel" },
+      { "weight": 10, "table": "weapons_steel", "minRarity": "rare" },
+      { "weight": 22, "item": "antidote", "qty": [1, 2] },
+      { "weight": 20, "item": "ancient_coin", "qty": [1, 1] },
+      { "weight": 18, "item": "greater_health_potion", "qty": [1, 2] }
+    ]
+  },
+  "cache_cinderrift": {
+    "gold": [25, 50],
+    "rolls": [1, 2],
+    "entries": [
+      { "weight": 28, "table": "weapons_rift" },
+      { "weight": 8, "table": "weapons_rift", "minRarity": "rare" },
+      { "weight": 26, "item": "ember_core", "qty": [1, 2] },
+      { "weight": 20, "item": "greater_health_potion", "qty": [1, 2] },
+      { "weight": 18, "item": "greater_mana_potion", "qty": [1, 2] }
+    ]
+  },
+  "cache_crypt": {
+    "gold": [30, 60],
+    "rolls": [1, 2],
+    "entries": [
+      { "weight": 26, "table": "weapons_rift" },
+      { "weight": 10, "table": "weapons_rift", "minRarity": "rare" },
+      { "weight": 28, "item": "spirit_essence", "qty": [1, 1] },
+      { "weight": 20, "item": "greater_mana_potion", "qty": [1, 2] },
+      { "weight": 16, "item": "bone_charm", "qty": [1, 1] }
     ]
   }
 }

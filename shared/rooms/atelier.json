@@ -1,0 +1,34 @@
+{
+  "id": "atelier",
+  "name": "The Atelier",
+  "type": "building",
+  "biome": "grass",
+  "wind": 0,
+  "persistence": "stateful",
+  "size": {
+    "w": 128,
+    "h": 128
+  },
+  "spawn": {
+    "x": 64,
+    "z": 64,
+    "yaw": 0
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 1,
+    "base": 12,
+    "amplitude": 0,
+    "frequency": 0.03,
+    "plateauRadius": 90,
+    "treeDensity": 0
+  },
+  "flags": {
+    "safeZone": true,
+    "buildingEnabled": true,
+    "pvp": false
+  },
+  "portals": [],
+  "spawnTables": [],
+  "npcs": []
+}

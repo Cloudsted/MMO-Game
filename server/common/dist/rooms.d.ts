@@ -6,6 +6,13 @@ export declare const PortalDefSchema: z.ZodObject<{
     x: z.ZodNumber;
     z: z.ZodNumber;
     r: z.ZodNumber;
+    /** authored arrival point for players coming IN through this portal
+     *  (omit to auto-offset from the portal toward the room spawn) */
+    exitX: z.ZodOptional<z.ZodNumber>;
+    exitZ: z.ZodOptional<z.ZodNumber>;
+    /** explicit pairing: the portal id in `target` to arrive at (for rooms
+     *  with multiple portals back to the same source room) */
+    exitPortalId: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     id: string;
     label: string;
@@ -13,6 +20,9 @@ export declare const PortalDefSchema: z.ZodObject<{
     x: number;
     z: number;
     r: number;
+    exitX?: number | undefined;
+    exitZ?: number | undefined;
+    exitPortalId?: string | undefined;
 }, {
     id: string;
     label: string;
@@ -20,8 +30,27 @@ export declare const PortalDefSchema: z.ZodObject<{
     x: number;
     z: number;
     r: number;
+    exitX?: number | undefined;
+    exitZ?: number | undefined;
+    exitPortalId?: string | undefined;
 }>;
 export type PortalDef = z.infer<typeof PortalDefSchema>;
+/** Where a paired-portal transfer lands (y is ground-snapped on arrival). */
+export interface PortalArrival {
+    x: number;
+    z: number;
+    yaw: number;
+}
+/**
+ * Arrival point in `targetDef` for a player transferring from `sourceRoomId`
+ * through portal `via` (via.target === targetDef.id). The paired portal Q is
+ * via.exitPortalId when authored, else the first portal in the target whose
+ * target points back at the source room. Position = (Q.exitX, Q.exitZ) when
+ * authored, else a point offset (Q.r + 1.0) from Q toward the target's spawn;
+ * yaw faces away from the portal (the one yaw convention: 0 faces +Z).
+ * Returns null when no paired portal exists (caller falls back to def.spawn).
+ */
+export declare function computePortalArrival(targetDef: RoomDef, sourceRoomId: string, via: PortalDef): PortalArrival | null;
 export declare const SpawnTableSchema: z.ZodObject<{
     id: z.ZodString;
     region: z.ZodObject<{
@@ -237,7 +266,9 @@ export declare const RoomDefSchema: z.ZodObject<{
     }>;
     /** Voxel terrain parameters — all vertical units are BLOCK Y levels.
      *  base = mean surface height, amplitude = noise relief in blocks,
-     *  waterLevel = water fills terrain below this level (omit for none),
+     *  waterLevel = liquid fills terrain below this level (omit for none),
+     *  liquid = which block fills up to waterLevel (murk_water for swamps,
+     *  lava for volcanic rooms; existing rooms keep the default water),
      *  plateauRadius = flatten radius around spawn,
      *  treeDensity = per-column tree chance multiplier (biome default 1). */
     terrain: z.ZodObject<{
@@ -248,6 +279,7 @@ export declare const RoomDefSchema: z.ZodObject<{
         frequency: z.ZodNumber;
         plateauRadius: z.ZodOptional<z.ZodNumber>;
         waterLevel: z.ZodOptional<z.ZodNumber>;
+        liquid: z.ZodDefault<z.ZodEnum<["water", "murk_water", "lava"]>>;
         treeDensity: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         kind: "blocks";
@@ -255,6 +287,7 @@ export declare const RoomDefSchema: z.ZodObject<{
         base: number;
         amplitude: number;
         frequency: number;
+        liquid: "water" | "murk_water" | "lava";
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
         treeDensity?: number | undefined;
@@ -266,6 +299,7 @@ export declare const RoomDefSchema: z.ZodObject<{
         frequency: number;
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
+        liquid?: "water" | "murk_water" | "lava" | undefined;
         treeDensity?: number | undefined;
     }>;
     flags: z.ZodObject<{
@@ -288,6 +322,13 @@ export declare const RoomDefSchema: z.ZodObject<{
         x: z.ZodNumber;
         z: z.ZodNumber;
         r: z.ZodNumber;
+        /** authored arrival point for players coming IN through this portal
+         *  (omit to auto-offset from the portal toward the room spawn) */
+        exitX: z.ZodOptional<z.ZodNumber>;
+        exitZ: z.ZodOptional<z.ZodNumber>;
+        /** explicit pairing: the portal id in `target` to arrive at (for rooms
+         *  with multiple portals back to the same source room) */
+        exitPortalId: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         id: string;
         label: string;
@@ -295,6 +336,9 @@ export declare const RoomDefSchema: z.ZodObject<{
         x: number;
         z: number;
         r: number;
+        exitX?: number | undefined;
+        exitZ?: number | undefined;
+        exitPortalId?: string | undefined;
     }, {
         id: string;
         label: string;
@@ -302,6 +346,9 @@ export declare const RoomDefSchema: z.ZodObject<{
         x: number;
         z: number;
         r: number;
+        exitX?: number | undefined;
+        exitZ?: number | undefined;
+        exitPortalId?: string | undefined;
     }>, "many">;
     spawnTables: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
@@ -440,6 +487,7 @@ export declare const RoomDefSchema: z.ZodObject<{
         base: number;
         amplitude: number;
         frequency: number;
+        liquid: "water" | "murk_water" | "lava";
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
         treeDensity?: number | undefined;
@@ -456,6 +504,9 @@ export declare const RoomDefSchema: z.ZodObject<{
         x: number;
         z: number;
         r: number;
+        exitX?: number | undefined;
+        exitZ?: number | undefined;
+        exitPortalId?: string | undefined;
     }[];
     spawnTables: {
         id: string;
@@ -516,6 +567,7 @@ export declare const RoomDefSchema: z.ZodObject<{
         frequency: number;
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
+        liquid?: "water" | "murk_water" | "lava" | undefined;
         treeDensity?: number | undefined;
     };
     flags: {
@@ -530,6 +582,9 @@ export declare const RoomDefSchema: z.ZodObject<{
         x: number;
         z: number;
         r: number;
+        exitX?: number | undefined;
+        exitZ?: number | undefined;
+        exitPortalId?: string | undefined;
     }[];
     spawnTables: {
         id: string;

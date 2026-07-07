@@ -65,7 +65,10 @@ export declare class VoxelWorld {
     }>;
     /** Terrain surface height (block y of the top solid terrain block). */
     terrainHeight(def: RoomDef, x: number, z: number): number;
-    /** Trunk height at a column (0 = no tree here). Deterministic per column. */
+    /** Trunk height at a column (0 = no tree here). Deterministic per column.
+     *  Grass grows oaks; swamp grows pale dead trees; volcanic grows charred
+     *  snags (same column/height rolls — the branch only opens for NEW biomes,
+     *  so existing grass rooms stay byte-identical). */
     private treeAt;
     private generate;
 }

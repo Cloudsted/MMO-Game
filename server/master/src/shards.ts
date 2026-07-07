@@ -2,6 +2,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import type { Server } from "node:http";
 import { randomBytes } from "node:crypto";
 import {
+  computePortalArrival,
   decodeShardToMaster,
   encode,
   gameConstants,
@@ -9,6 +10,7 @@ import {
   makeLogger,
   type CharacterSnapshot,
   type MasterToShard,
+  type PortalArrival,
 } from "@fantasy-mmo/common";
 import type { Collections, CharacterDoc } from "./db.js";
 import { ObjectId } from "mongodb";
@@ -156,7 +158,7 @@ export class ShardManager {
         }
         break;
       case "requestTransfer":
-        await this.handleTransferRequest(shard, msg.roomId, msg.characterId, msg.targetRoomId, msg.patch);
+        await this.handleTransferRequest(shard, msg.roomId, msg.characterId, msg.targetRoomId, msg.patch, msg.viaPortalId);
         break;
       case "globalChat":
         // relay to every shard (including the sender — single delivery path)
@@ -169,15 +171,19 @@ export class ShardManager {
 
   /**
    * Portal transfer: persist the live character state first (with the target
-   * room + position reset to its spawn), then mint a ticket and route the
-   * grant back to the requesting shard → RoomHost → client.
+   * room + position reset), then mint a ticket and route the grant back to
+   * the requesting shard → RoomHost → client. Position: portal uses carry
+   * viaPortalId and land at the PAIRED portal in the target room (y=0 =
+   * ground-snap sentinel; addPlayer snaps to the voxel floor); everything
+   * else (respawn, H key, no pair found) nulls x/y/z → target default spawn.
    */
   private async handleTransferRequest(
     shard: ShardConn,
     sourceRoomId: string,
     characterId: string,
     targetRoomId: string,
-    patch: { id: string } & Record<string, unknown>
+    patch: { id: string } & Record<string, unknown>,
+    viaPortalId?: string
   ): Promise<void> {
     const deny = (reason: string) => {
       this.send(shard, { t: "transferDeny", roomId: sourceRoomId, characterId, reason });
@@ -197,9 +203,20 @@ export class ShardManager {
     for (const key of ["level", "xp", "gold", "inventory", "yaw"]) {
       if (key in stats) allowed[key] = stats[key];
     }
+    // portal use: arrive at the paired portal in the target room, facing away
+    // from it. y=0 is the ground-snap sentinel (a null y with non-null x
+    // fails the ticket snapshot's zod validation). No pair → default spawn.
+    let arrival: PortalArrival | null = null;
+    if (viaPortalId) {
+      const via = this.roomDefs.get(sourceRoomId)?.portals.find((p) => p.id === viaPortalId);
+      if (via) arrival = computePortalArrival(this.roomDefs.get(targetRoomId)!, sourceRoomId, via);
+    }
+    const pos = arrival
+      ? { x: arrival.x, y: 0, z: arrival.z, yaw: arrival.yaw }
+      : { x: null, y: null, z: null };
     await this.cols.characters.updateOne(
       { _id: new ObjectId(characterId) },
-      { $set: { ...allowed, roomId: targetRoomId, x: null, y: null, z: null } }
+      { $set: { ...allowed, roomId: targetRoomId, ...pos } }
     );
 
     const character = await this.cols.characters.findOne({ _id: new ObjectId(characterId) });

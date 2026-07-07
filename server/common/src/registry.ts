@@ -21,7 +21,8 @@ export type RarityDef = z.infer<typeof RaritySchema>;
 
 export const ItemDefSchema = z.object({
   name: z.string(),
-  kind: z.enum(["weapon", "consumable", "building", "misc"]),
+  /** trophy: no use action — a trinket that exists to be sold */
+  kind: z.enum(["weapon", "consumable", "building", "trophy", "misc"]),
   ability: z.string().optional(), // weapons: the ability this item grants
   damage: z.number().optional(), // weapons: base damage before rarity/level
   /** weapons: base uses before breaking (scaled per instance by rarity + roll) */
@@ -38,6 +39,8 @@ export const ItemDefSchema = z.object({
       mana: z.number().optional(),
       hotTotal: z.number().optional(),
       hotDurMs: z.number().optional(),
+      /** clears any active damage-over-time debuff (antidote) */
+      cureDot: z.boolean().optional(),
     })
     .optional(),
 });
@@ -56,7 +59,15 @@ export const AbilityDefSchema = z.object({
   maxRange: z.number().optional(), // projectile lifetime range
   damage: z.number().optional(), // fallback when no item/mob damage applies
   heal: z.number().optional(),
-  debuff: z.object({ slowPct: z.number(), durMs: z.number().int() }).optional(),
+  /** on-hit debuff: slowPct = frost-style move slow, dotTotal = poison-style
+   *  damage over time (total hp dealt across durMs). Either or both. */
+  debuff: z
+    .object({
+      slowPct: z.number().optional(),
+      dotTotal: z.number().optional(),
+      durMs: z.number().int(),
+    })
+    .optional(),
   canMoveWhile: z.boolean(),
   interruptible: z.boolean(),
   cooldownMs: z.number().int(),

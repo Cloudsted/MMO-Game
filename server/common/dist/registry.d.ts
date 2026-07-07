@@ -21,7 +21,8 @@ export declare const RaritySchema: z.ZodObject<{
 export type RarityDef = z.infer<typeof RaritySchema>;
 export declare const ItemDefSchema: z.ZodObject<{
     name: z.ZodString;
-    kind: z.ZodEnum<["weapon", "consumable", "building", "misc"]>;
+    /** trophy: no use action — a trinket that exists to be sold */
+    kind: z.ZodEnum<["weapon", "consumable", "building", "trophy", "misc"]>;
     ability: z.ZodOptional<z.ZodString>;
     damage: z.ZodOptional<z.ZodNumber>;
     /** weapons: base uses before breaking (scaled per instance by rarity + roll) */
@@ -37,26 +38,30 @@ export declare const ItemDefSchema: z.ZodObject<{
         mana: z.ZodOptional<z.ZodNumber>;
         hotTotal: z.ZodOptional<z.ZodNumber>;
         hotDurMs: z.ZodOptional<z.ZodNumber>;
+        /** clears any active damage-over-time debuff (antidote) */
+        cureDot: z.ZodOptional<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
         heal?: number | undefined;
         mana?: number | undefined;
         hotTotal?: number | undefined;
         hotDurMs?: number | undefined;
+        cureDot?: boolean | undefined;
     }, {
         heal?: number | undefined;
         mana?: number | undefined;
         hotTotal?: number | undefined;
         hotDurMs?: number | undefined;
+        cureDot?: boolean | undefined;
     }>>;
 }, "strip", z.ZodTypeAny, {
     value: number;
     name: string;
-    kind: "building" | "weapon" | "consumable" | "misc";
+    kind: "weapon" | "consumable" | "building" | "trophy" | "misc";
     stack: number;
     icon: [number, number];
-    durability?: number | undefined;
     ability?: string | undefined;
     damage?: number | undefined;
+    durability?: number | undefined;
     block?: string | undefined;
     viewmodel?: string | undefined;
     effect?: {
@@ -64,16 +69,17 @@ export declare const ItemDefSchema: z.ZodObject<{
         mana?: number | undefined;
         hotTotal?: number | undefined;
         hotDurMs?: number | undefined;
+        cureDot?: boolean | undefined;
     } | undefined;
 }, {
     value: number;
     name: string;
-    kind: "building" | "weapon" | "consumable" | "misc";
+    kind: "weapon" | "consumable" | "building" | "trophy" | "misc";
     stack: number;
     icon: [number, number];
-    durability?: number | undefined;
     ability?: string | undefined;
     damage?: number | undefined;
+    durability?: number | undefined;
     block?: string | undefined;
     viewmodel?: string | undefined;
     effect?: {
@@ -81,6 +87,7 @@ export declare const ItemDefSchema: z.ZodObject<{
         mana?: number | undefined;
         hotTotal?: number | undefined;
         hotDurMs?: number | undefined;
+        cureDot?: boolean | undefined;
     } | undefined;
 }>;
 export type ItemDef = z.infer<typeof ItemDefSchema>;
@@ -96,15 +103,20 @@ export declare const AbilityDefSchema: z.ZodObject<{
     maxRange: z.ZodOptional<z.ZodNumber>;
     damage: z.ZodOptional<z.ZodNumber>;
     heal: z.ZodOptional<z.ZodNumber>;
+    /** on-hit debuff: slowPct = frost-style move slow, dotTotal = poison-style
+     *  damage over time (total hp dealt across durMs). Either or both. */
     debuff: z.ZodOptional<z.ZodObject<{
-        slowPct: z.ZodNumber;
+        slowPct: z.ZodOptional<z.ZodNumber>;
+        dotTotal: z.ZodOptional<z.ZodNumber>;
         durMs: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        slowPct: number;
         durMs: number;
+        slowPct?: number | undefined;
+        dotTotal?: number | undefined;
     }, {
-        slowPct: number;
         durMs: number;
+        slowPct?: number | undefined;
+        dotTotal?: number | undefined;
     }>>;
     canMoveWhile: z.ZodBoolean;
     interruptible: z.ZodBoolean;
@@ -129,8 +141,9 @@ export declare const AbilityDefSchema: z.ZodObject<{
     projSpeed?: number | undefined;
     maxRange?: number | undefined;
     debuff?: {
-        slowPct: number;
         durMs: number;
+        slowPct?: number | undefined;
+        dotTotal?: number | undefined;
     } | undefined;
 }, {
     kind: "melee" | "projectile" | "self";
@@ -150,8 +163,9 @@ export declare const AbilityDefSchema: z.ZodObject<{
     projSpeed?: number | undefined;
     maxRange?: number | undefined;
     debuff?: {
-        slowPct: number;
         durMs: number;
+        slowPct?: number | undefined;
+        dotTotal?: number | undefined;
     } | undefined;
 }>;
 export type AbilityDef = z.infer<typeof AbilityDefSchema>;
@@ -209,14 +223,14 @@ export declare const LootEntrySchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     weight: number;
     item?: string | undefined;
-    qty?: [number, number] | undefined;
     table?: string | undefined;
+    qty?: [number, number] | undefined;
     minRarity?: string | undefined;
 }, {
     weight: number;
     item?: string | undefined;
-    qty?: [number, number] | undefined;
     table?: string | undefined;
+    qty?: [number, number] | undefined;
     minRarity?: string | undefined;
 }>;
 export declare const LootTableSchema: z.ZodObject<{
@@ -231,14 +245,14 @@ export declare const LootTableSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }, {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }>, "many">;
     /** boss-style guaranteed-drop slots: every entry always rolls once */
@@ -251,22 +265,22 @@ export declare const LootTableSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }, {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }>, "many">>;
 }, "strip", z.ZodTypeAny, {
     entries: {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }[];
     gold: [number, number];
@@ -274,16 +288,16 @@ export declare const LootTableSchema: z.ZodObject<{
     guaranteed: {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }[];
 }, {
     entries: {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }[];
     gold: [number, number];
@@ -291,8 +305,8 @@ export declare const LootTableSchema: z.ZodObject<{
     guaranteed?: {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }[] | undefined;
 }>;

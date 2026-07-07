@@ -212,4 +212,80 @@ describe("RoomSim", () => {
       expect(sim.world.get(Math.round(p.x) + dx, fl, Math.round(p.z) + dz)).toBe(bricks);
     }
   });
+
+  it("keeps generated trees off every NPC standing column", () => {
+    // regression: a generated tree at (77,54) used to canopy over the
+    // arcanist at (76,52), lifting her spawn onto the treetop
+    for (const npc of sim.def.npcs) {
+      const feet = sim.world.terrainHeight(sim.def, Math.floor(npc.x), Math.floor(npc.z)) + 1;
+      expect(sim.world.standY(npc.x, npc.z)).toBe(feet);
+    }
+  });
+});
+
+describe("hub-bound transfers (respawn away from home + H key)", () => {
+  function makeClient(sim: RoomSim, id: string, name: string, x: number, z: number): TestClient {
+    const messages: ServerToClient[] = [];
+    const session = sim.addPlayer(makeCharacter(id, name, x, z), (m) => messages.push(m));
+    return { session, messages, last: (t) => [...messages].reverse().find((m) => m.t === t) as never };
+  }
+
+  function kill(sim: RoomSim, c: TestClient): void {
+    sim.applyDamage(c.session.entity, c.session.entity, 99999);
+    expect(c.session.entity.combat!.act).toBe("dead");
+  }
+
+  it("respawn in a non-hub room requests a hub transfer instead of a local snap", () => {
+    const sim = new RoomSim(loadRoomDef("forest"));
+    const requests: Array<{ id: string; target: string }> = [];
+    sim.onTransferRequest = (s, target) => requests.push({ id: s.character.id, target });
+    const a = makeClient(sim, "c1", "Alice", 80, 146);
+    kill(sim, a);
+    const deathPos = { ...a.session.entity.pos };
+    const corrections = a.messages.filter((m) => m.t === "correct").length;
+    sim.handleRespawn(a.session);
+    expect(requests).toEqual([{ id: "c1", target: "hub" }]);
+    // no local snap: still dead at the death spot, no correction sent —
+    // the hub's addPlayer revives at full hp when the transfer lands
+    expect(a.session.entity.combat!.act).toBe("dead");
+    expect(a.session.entity.pos.x).toBe(deathPos.x);
+    expect(a.messages.filter((m) => m.t === "correct").length).toBe(corrections);
+  });
+
+  it("respawn in the hub keeps the local spawn snap + full heal", () => {
+    const sim = new RoomSim(loadRoomDef("hub"));
+    const requests: string[] = [];
+    sim.onTransferRequest = (_s, target) => requests.push(target);
+    const a = makeClient(sim, "c1", "Alice", 64, 64);
+    kill(sim, a);
+    sim.handleRespawn(a.session);
+    expect(requests).toHaveLength(0);
+    expect(a.session.entity.combat!.act).toBe("idle");
+    expect(a.session.entity.health!.hp).toBe(a.session.entity.health!.maxHp);
+    expect(a.session.entity.pos.x).toBe(sim.def.spawn.x);
+    expect(a.last("correct")).toBeDefined();
+  });
+
+  it("returnToHub transfers from a wild room, no-ops when dead, chats in the hub", () => {
+    const forest = new RoomSim(loadRoomDef("forest"));
+    const requests: string[] = [];
+    forest.onTransferRequest = (_s, target) => requests.push(target);
+    const a = makeClient(forest, "c1", "Alice", 80, 146);
+    forest.handleReturnToHub(a.session);
+    expect(requests).toEqual(["hub"]);
+
+    kill(forest, a);
+    forest.handleReturnToHub(a.session);
+    expect(requests).toEqual(["hub"]); // dead: ignored
+
+    const hub = new RoomSim(loadRoomDef("hub"));
+    const hubRequests: string[] = [];
+    hub.onTransferRequest = (_s, target) => hubRequests.push(target);
+    const b = makeClient(hub, "c2", "Bob", 64, 64);
+    hub.handleReturnToHub(b.session);
+    expect(hubRequests).toHaveLength(0);
+    const chatMsg = b.last("chat");
+    expect(chatMsg?.channel).toBe("system");
+    expect(chatMsg?.text).toContain("already in the hub");
+  });
 });

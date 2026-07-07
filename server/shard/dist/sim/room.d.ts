@@ -50,6 +50,9 @@ export declare class RoomSim {
     private chunkCache;
     /** set by the RoomHost: routes '/g' chat up the control channel */
     onGlobalChat: ((from: string, text: string) => void) | null;
+    /** set by the RoomHost: sim-initiated transfers (hub-bound respawn, H key)
+     *  go through the same requestTransfer machinery as portal use */
+    onTransferRequest: ((session: PlayerSession, targetRoomId: string) => void) | null;
     /** set by the RoomHost on lifecycle rooms: admin /expire re-arms the timer */
     onExpireRequest: ((sec: number) => void) | null;
     /** destination-room availability (sealed dungeon portals) */
@@ -115,11 +118,27 @@ export declare class RoomSim {
     private releaseAbility;
     /** All damage funnels through here: crits, interrupts, threat, death. */
     applyDamage(src: Entity, tgt: Entity, base: number): void;
-    applyDebuff(tgt: Entity, slowPct: number, durMs: number): void;
+    /** Apply an on-hit debuff: frost-style slow and/or poison-style DoT.
+     *  DoT damage is attributed to src (threat/XP credit via applyDotDamage);
+     *  reapplication refreshes rate + clock. Only slows go on the wire — DoT
+     *  feedback is the damage events its bites broadcast. */
+    applyDebuff(tgt: Entity, debuff: {
+        slowPct?: number;
+        dotTotal?: number;
+        durMs: number;
+    }, src: Entity): void;
+    /** One DoT bite: normal damage path minus crits/interrupts (a poison tick
+     *  interrupting every cast for its whole duration would be a stunlock).
+     *  Threat + damage-log credit go to the applier when it still exists. */
+    private applyDotDamage;
     private kill;
     /** Death drops: the entire inventory becomes a bag at the death spot. */
     private dropPlayerInventory;
     handleRespawn(session: PlayerSession): void;
+    /** H key: hub-bound transfer from anywhere. Dead players use R instead;
+     *  in the hub it's just a chat line. The RoomHost's requestTransfer
+     *  ignores sessions already transferring. */
+    handleReturnToHub(session: PlayerSession): void;
     private awardXp;
     xpNext(level: number): number;
     private sendStats;

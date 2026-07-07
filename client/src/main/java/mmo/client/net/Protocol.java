@@ -180,6 +180,13 @@ public final class Protocol {
         return GSON.toJson(o);
     }
 
+    /** H key: hub-bound transfer from anywhere (server ignores when dead). */
+    public static String returnToHub() {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "returnToHub");
+        return GSON.toJson(o);
+    }
+
     public static String blockPlace(int slot, int x, int y, int z) {
         JsonObject o = new JsonObject();
         o.addProperty("t", "blockPlace");

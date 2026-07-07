@@ -282,14 +282,20 @@ export class VoxelWorld {
     return Math.max(3, Math.min(WORLD_HEIGHT - 10, Math.round(y)));
   }
 
-  /** Trunk height at a column (0 = no tree here). Deterministic per column. */
+  /** Trunk height at a column (0 = no tree here). Deterministic per column.
+   *  Grass grows oaks; swamp grows pale dead trees; volcanic grows charred
+   *  snags (same column/height rolls — the branch only opens for NEW biomes,
+   *  so existing grass rooms stay byte-identical). */
   private treeAt(def: RoomDef, x: number, z: number): number {
-    if (def.biome !== "grass") return 0;
+    if (def.biome !== "grass" && def.biome !== "swamp" && def.biome !== "volcanic") return 0;
     const density = (def.terrain.treeDensity ?? 1) * 0.012;
     if (hash2(def.terrain.seed ^ 0x7ee5, x, z) >= density) return 0;
-    // keep clear of spawn and portals
+    // keep clear of spawn, portals, and NPC posts (canopies reach 2 blocks
+    // out, so 4 keeps trunks AND leaves off every NPC's standing column) —
+    // per-column exclusions only; the noise functions stay untouched
     if (Math.hypot(x - def.spawn.x, z - def.spawn.z) < 8) return 0;
     for (const p of def.portals) if (Math.hypot(x - p.x, z - p.z) < 6) return 0;
+    for (const n of def.npcs) if (Math.hypot(x - n.x, z - n.z) < 4) return 0;
     const h = this.terrainHeight(def, x, z);
     if (this.waterLevel !== null && h <= this.waterLevel + 1) return 0;
     return 4 + Math.floor(hash2(def.terrain.seed ^ 0x555, x, z) * 3);
@@ -301,13 +307,21 @@ export class VoxelWorld {
     const DIRT = BLOCK.dirt!.id;
     const STONE = BLOCK.stone!.id;
     const SAND = BLOCK.sand!.id;
-    const WATER = BLOCK.water!.id;
     const BEDROCK = BLOCK.bedrock!.id;
     const LOG = BLOCK.log!.id;
     const LEAVES = BLOCK.leaves!.id;
     const MOSSY = BLOCK.mossy_cobblestone!.id;
     const PATH = BLOCK.path!.id;
     const SANDSTONE = BLOCK.sandstone!.id;
+    // terrain.liquid names the block that fills up to waterLevel (default water)
+    const LIQUID = (BLOCK[t.liquid ?? "water"] ?? BLOCK.water!).id;
+    // worldgen-overhaul biome palette (swamp / volcanic)
+    const MUD = BLOCK.mud!.id;
+    const DARK_STONE = BLOCK.dark_stone!.id;
+    const OBSIDIAN = BLOCK.obsidian!.id;
+    const ASH = BLOCK.ash!.id;
+    const swamp = def.biome === "swamp";
+    const volcanic = def.biome === "volcanic";
 
     for (let z = 0; z < this.h; z++) {
       for (let x = 0; x < this.w; x++) {
@@ -317,29 +331,71 @@ export class VoxelWorld {
         for (let y = 0; y <= h; y++) {
           let b: number;
           if (y === 0) b = BEDROCK;
-          else if (y < h - 3) b = STONE;
-          else if (y < h) b = def.biome === "desert" || beach ? SAND : DIRT;
-          else {
+          else if (y < h - 3) b = volcanic ? DARK_STONE : STONE;
+          else if (y < h) {
+            if (swamp) b = MUD;
+            else if (volcanic) b = DARK_STONE;
+            else b = def.biome === "desert" || beach ? SAND : DIRT;
+          } else {
             // surface block
             if (def.biome === "desert") b = patch > 0.9 ? SANDSTONE : SAND;
             else if (def.biome === "dungeon") b = patch > 0.82 ? PATH : patch < 0.14 ? MOSSY : STONE;
+            else if (swamp) b = beach ? MUD : patch > 0.62 ? GRASS : MUD;
+            else if (volcanic) b = patch > 0.85 ? OBSIDIAN : patch < 0.2 ? ASH : DARK_STONE;
             else if (beach) b = SAND;
             else b = GRASS;
           }
           this.data[this.idx(x, y, z)] = b;
         }
         if (this.waterLevel !== null) {
-          for (let y = h + 1; y <= this.waterLevel; y++) this.data[this.idx(x, y, z)] = WATER;
+          for (let y = h + 1; y <= this.waterLevel; y++) this.data[this.idx(x, y, z)] = LIQUID;
         }
       }
     }
 
     // trees: margin scan so canopies cross the whole room seamlessly
+    const PALE_LOG = BLOCK.pale_log!.id;
+    const DEAD_LEAVES = BLOCK.dead_leaves!.id;
+    const CHARRED_LOG = BLOCK.charred_log!.id;
+    const VINES = BLOCK.vines!.id;
     for (let z = -3; z < this.h + 3; z++) {
       for (let x = -3; x < this.w + 3; x++) {
         const th = this.treeAt(def, x, z);
         if (!th) continue;
         const h = this.terrainHeight(def, x, z);
+        if (volcanic) {
+          // charred snag: bare trunk, no canopy
+          for (let dy = 1; dy <= th; dy++) this.set(x, h + dy, z, CHARRED_LOG);
+          continue;
+        }
+        if (swamp) {
+          // pale dead tree: thin dead-leaves cap + vines hanging off the trunk
+          for (let dy = th; dy <= th + 1; dy++) {
+            const rad = 1;
+            for (let dx = -rad; dx <= rad; dx++) {
+              for (let dz = -rad; dz <= rad; dz++) {
+                if (Math.abs(dx) === rad && Math.abs(dz) === rad && hash2(t.seed ^ 0x3d1b, x + dx, z + dz + dy * 31) < 0.7)
+                  continue;
+                this.setIfAir(x + dx, h + 1 + dy, z + dz, DEAD_LEAVES);
+              }
+            }
+          }
+          for (let dy = 1; dy <= th; dy++) this.set(x, h + dy, z, PALE_LOG);
+          const sides = [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+          ] as const;
+          for (let dy = 1; dy < th; dy++) {
+            for (let s = 0; s < 4; s++) {
+              if (hash2(t.seed ^ 0x71e5, x * 4 + s, z + dy * 57) < 0.3) {
+                this.setIfAir(x + sides[s]![0], h + dy, z + sides[s]![1], VINES);
+              }
+            }
+          }
+          continue;
+        }
         for (let dy = th - 2; dy <= th + 1; dy++) {
           const rad = dy >= th ? 1 : 2;
           for (let dx = -rad; dx <= rad; dx++) {
@@ -360,12 +416,45 @@ export class VoxelWorld {
     const FLOWER_Y = BLOCK.flower_yellow!.id;
     const MUSH_R = BLOCK.mushroom_red!.id;
     const MUSH_B = BLOCK.mushroom_brown!.id;
+    const REEDS = BLOCK.reeds!.id;
+    const GLOW_SHROOM = BLOCK.glow_shroom!.id;
+    const EMBER_CRYSTAL = BLOCK.ember_crystal!.id;
+    const BONE_BLOCK = BLOCK.bone_block!.id;
+    // reeds hug the liquid: true when a column within 2 blocks is flooded
+    const nearLiquid = (x: number, z: number): boolean => {
+      if (this.waterLevel === null) return false;
+      for (let dz = -2; dz <= 2; dz++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          if (dx === 0 && dz === 0) continue;
+          if (this.terrainHeight(def, x + dx, z + dz) < this.waterLevel) return true;
+        }
+      }
+      return false;
+    };
     for (let z = 0; z < this.h; z++) {
       for (let x = 0; x < this.w; x++) {
         const h = this.terrainHeight(def, x, z);
         const surf = this.get(x, h, z);
         const r = hash2(t.seed ^ 0x999, x, z);
-        if (surf === GRASS) {
+        if (swamp) {
+          // new-biome branch (new hash salts; existing biomes untouched below)
+          if (surf === MUD || surf === GRASS) {
+            const r2 = hash2(t.seed ^ 0x51ee, x, z);
+            if (r2 < 0.1 && nearLiquid(x, z)) this.setIfAir(x, h + 1, z, REEDS);
+            else if (r2 < 0.008) this.setIfAir(x, h + 1, z, GLOW_SHROOM);
+            else if (surf === GRASS && r2 > 0.9) this.setIfAir(x, h + 1, z, TGRASS);
+          }
+        } else if (volcanic) {
+          if (surf === DARK_STONE || surf === ASH) {
+            const r2 = hash2(t.seed ^ 0xa5f1, x, z);
+            if (r2 < 0.004) this.setIfAir(x, h + 1, z, EMBER_CRYSTAL);
+            else if (r2 < 0.01) {
+              // bleached bone pairs mark the husk fields
+              this.setIfAir(x, h + 1, z, BONE_BLOCK);
+              this.setIfAir(x + 1, h + 1, z, BONE_BLOCK);
+            }
+          }
+        } else if (surf === GRASS) {
           if (r < 0.07) this.setIfAir(x, h + 1, z, TGRASS);
           else if (r < 0.085) this.setIfAir(x, h + 1, z, hash2(t.seed, x, z + 7) < 0.5 ? FLOWER_R : FLOWER_Y);
         } else if (def.biome === "dungeon" && (surf === STONE || surf === MOSSY)) {

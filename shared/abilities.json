@@ -76,5 +76,104 @@
     "range": 3.3, "arcDeg": 150,
     "canMoveWhile": false, "interruptible": false, "cooldownMs": 1500, "manaCost": 0,
     "fx": "hit"
+  },
+  "boar_gore": {
+    "kind": "melee", "windupMs": 300, "activeMs": 140, "recoverMs": 420,
+    "range": 1.8, "arcDeg": 80,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 300, "manaCost": 0,
+    "fx": "hit"
+  },
+  "spider_bite": {
+    "kind": "melee", "windupMs": 320, "activeMs": 140, "recoverMs": 450,
+    "range": 1.9, "arcDeg": 85,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 300, "manaCost": 0,
+    "debuff": { "dotTotal": 10, "durMs": 4000 },
+    "fx": "hit"
+  },
+  "mantrap_snap": {
+    "kind": "melee", "windupMs": 600, "activeMs": 170, "recoverMs": 800,
+    "range": 2.0, "arcDeg": 130,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 500, "manaCost": 0,
+    "fx": "hit"
+  },
+  "wisp_bolt": {
+    "kind": "projectile", "castTimeMs": 700, "recoverMs": 250,
+    "projSpeed": 16, "maxRange": 30,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 2200, "manaCost": 0,
+    "debuff": { "slowPct": 0.35, "durMs": 2500 },
+    "fx": "frost"
+  },
+  "elemental_bolt": {
+    "kind": "projectile", "castTimeMs": 850, "recoverMs": 260,
+    "projSpeed": 20, "maxRange": 34,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 1800, "manaCost": 0,
+    "fx": "firebolt"
+  },
+  "wraith_touch": {
+    "kind": "melee", "windupMs": 900, "activeMs": 180, "recoverMs": 600,
+    "range": 2.2, "arcDeg": 100,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 800, "manaCost": 0,
+    "fx": "hit"
+  },
+  "golem_slam": {
+    "kind": "melee", "windupMs": 1400, "activeMs": 220, "recoverMs": 900,
+    "range": 3.4, "arcDeg": 160,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 1500, "manaCost": 0,
+    "fx": "hit"
+  },
+  "shadow_lance": {
+    "kind": "projectile", "castTimeMs": 1100, "recoverMs": 300,
+    "projSpeed": 22, "maxRange": 36,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 2000, "manaCost": 0,
+    "fx": "frost"
+  },
+  "cleave": {
+    "kind": "melee", "windupMs": 380, "activeMs": 150, "recoverMs": 420,
+    "range": 2.5, "arcDeg": 130,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 0, "manaCost": 0,
+    "fx": "slash"
+  },
+  "quick_stab": {
+    "kind": "melee", "windupMs": 160, "activeMs": 100, "recoverMs": 240,
+    "range": 1.9, "arcDeg": 60,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 0, "manaCost": 0,
+    "debuff": { "dotTotal": 12, "durMs": 4000 },
+    "fx": "slash"
+  },
+  "bolt_shot": {
+    "kind": "projectile", "windupMs": 380, "activeMs": 80, "recoverMs": 260,
+    "projSpeed": 36, "maxRange": 42,
+    "canMoveWhile": false, "interruptible": true, "cooldownMs": 0, "manaCost": 0,
+    "fx": "arrow"
+  },
+  "greater_heal": {
+    "kind": "self", "castTimeMs": 1300, "recoverMs": 200, "heal": 60,
+    "canMoveWhile": false, "interruptible": true, "cooldownMs": 5000, "manaCost": 28,
+    "fx": "heal"
+  },
+  "thrust": {
+    "kind": "melee", "windupMs": 300, "activeMs": 130, "recoverMs": 380,
+    "range": 3.4, "arcDeg": 40,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 0, "manaCost": 0,
+    "fx": "slash"
+  },
+  "reap": {
+    "kind": "melee", "windupMs": 520, "activeMs": 180, "recoverMs": 560,
+    "range": 2.8, "arcDeg": 170,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 0, "manaCost": 0,
+    "fx": "slash"
+  },
+  "greater_firebolt": {
+    "kind": "projectile", "castTimeMs": 800, "recoverMs": 220,
+    "projSpeed": 24, "maxRange": 40,
+    "canMoveWhile": false, "interruptible": true, "cooldownMs": 1400, "manaCost": 16,
+    "fx": "firebolt"
+  },
+  "greater_frost": {
+    "kind": "projectile", "castTimeMs": 600, "recoverMs": 220,
+    "projSpeed": 18, "maxRange": 34,
+    "canMoveWhile": false, "interruptible": true, "cooldownMs": 2500, "manaCost": 14,
+    "debuff": { "slowPct": 0.6, "durMs": 3000 },
+    "fx": "frost"
   }
 }

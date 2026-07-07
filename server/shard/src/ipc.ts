@@ -14,7 +14,7 @@ export type RoomToHost =
   | { t: "ready"; port: number }
   | { t: "stats"; players: number }
   | { t: "report"; characters: Array<{ id: string } & Record<string, unknown>>; roomState?: RoomState }
-  | { t: "requestTransfer"; characterId: string; targetRoomId: string; patch: { id: string } & Record<string, unknown> }
+  | { t: "requestTransfer"; characterId: string; targetRoomId: string; viaPortalId?: string; patch: { id: string } & Record<string, unknown> }
   | { t: "globalChat"; from: string; text: string }
   /** announced before a deliberate exit so the master learns the real reason */
   | { t: "closing"; reason: string };

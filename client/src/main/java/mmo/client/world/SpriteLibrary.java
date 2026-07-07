@@ -41,6 +41,21 @@ public class SpriteLibrary {
         heights.put("cacto", 1.6f);
         heights.put("raptor", 1.25f);
         heights.put("minotaur", 2.8f);
+        // worldgen overhaul roster (frame proportions checked against the
+        // extracted sheets: quadrupeds/critters low, humanoids ~1.75-1.8,
+        // bosses tower)
+        heights.put("boar", 1.1f);
+        heights.put("giant_spider", 1.0f);
+        heights.put("bog_serpent", 1.0f);
+        heights.put("mantrap", 1.6f);
+        heights.put("lizardman", 1.8f);
+        heights.put("marsh_wisp", 1.3f);
+        heights.put("ash_husk", 1.75f);
+        heights.put("fire_elemental", 1.7f);
+        heights.put("bone_bat", 0.9f);
+        heights.put("wraith", 1.8f);
+        heights.put("cinder_golem", 2.4f);
+        heights.put("lich", 2.0f);
     }
 
     public PlayerSheet sheet(String key) {

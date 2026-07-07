@@ -215,6 +215,7 @@ class ShardHost {
           roomId: room.roomId,
           characterId: msg.characterId,
           targetRoomId: msg.targetRoomId,
+          viaPortalId: msg.viaPortalId,
           patch: msg.patch,
         });
         break;

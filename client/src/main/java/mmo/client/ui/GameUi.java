@@ -58,6 +58,8 @@ public class GameUi {
     public int held = 0;
     public boolean dead = false;
     public boolean admin = false;
+    /** current room id (from welcome) — death screen says where R sends you */
+    public String roomId = "hub";
 
     public Window window = Window.NONE;
     /** test hook: the next dialog opens straight onto its shop tab */
@@ -723,6 +725,8 @@ public class GameUi {
         if (def.effectHotTotal > 0) tip.add(new TipLine(
             "Regenerates " + (int) def.effectHotTotal + " health over " + (int) (def.effectHotDurMs / 1000) + "s",
             new Color(0.6f, 1f, 0.6f, 1f), 1f));
+        if (def.effectCureDot) tip.add(new TipLine("Cures poison", new Color(0.65f, 0.95f, 0.5f, 1f), 1f));
+        if ("trophy".equals(def.kind)) tip.add(new TipLine("Trinket — merchants pay well.", new Color(0.75f, 0.7f, 0.85f, 1f), 1f));
         if (def.block != null) tip.add(new TipLine("Places: " + capitalized(def.block.replace('_', ' ')), new Color(0.8f, 0.85f, 0.7f, 1f), 1f));
         int worth = Math.max(1, Math.round(def.value * rarityMult));
         tip.add(new TipLine("Worth " + worth + "g", new Color(1f, 0.85f, 0.4f, 1f), 1f));
@@ -1002,13 +1006,16 @@ public class GameUi {
         shapes.rect(0, 0, w, h);
         shapes.end();
         batch.begin();
+        // color BEFORE setText — GlyphLayout bakes the font color at setText time
         font.getData().setScale(2f); // pixel font: integer scales only
-        layout.setText(font, "You died");
         font.setColor(1f, 0.25f, 0.2f, 1f);
+        layout.setText(font, "You died");
         font.draw(batch, layout, w / 2f - layout.width / 2f, h * 0.62f);
         font.getData().setScale(1f);
-        layout.setText(font, "[R]  Respawn in town   —   your items wait where you fell");
+        // dying away from the hub respawns you there (server-side hub transfer)
+        String where = "hub".equals(roomId) ? "in town" : "in Hub City";
         font.setColor(1f, 0.9f, 0.85f, 1f);
+        layout.setText(font, "[R]  Respawn " + where + "   —   your items wait where you fell");
         font.draw(batch, layout, w / 2f - layout.width / 2f, h * 0.5f);
         batch.end();
     }

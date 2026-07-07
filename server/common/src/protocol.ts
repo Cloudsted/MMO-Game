@@ -147,6 +147,10 @@ export const ShardToMasterSchema = z.discriminatedUnion("t", [
     roomId: z.string(), // source room (routing key for the reply)
     characterId: z.string(),
     targetRoomId: z.string(),
+    /** source portal id when the transfer came from a portal use — the master
+     *  lands the player at the paired portal in the target room. Unset
+     *  (eviction/respawn/H-key/fallback) = target room's default spawn. */
+    viaPortalId: z.string().optional(),
     patch: z.object({ id: z.string() }).passthrough(), // live character state to persist first
   }),
   z.object({ t: z.literal("globalChat"), from: z.string(), text: z.string() }),
@@ -214,6 +218,8 @@ export const ClientToServerSchema = z.discriminatedUnion("t", [
   z.object({ t: z.literal("sell"), npc: z.number().int(), slot: z.number().int(), qty: z.number().int().positive() }),
   z.object({ t: z.literal("chat"), text: z.string().max(300) }),
   z.object({ t: z.literal("respawn") }),
+  /** H key: hub-bound transfer from anywhere (no-op when dead or in the hub) */
+  z.object({ t: z.literal("returnToHub") }),
   /** place the held block item into a world cell (building rooms) */
   z.object({
     t: z.literal("blockPlace"),

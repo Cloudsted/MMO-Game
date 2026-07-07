@@ -302,6 +302,7 @@ public class WorldScreen extends ScreenAdapter {
                     selfId = msg.get("selfId").getAsInt();
                     if (msg.has("sprite")) selfSprite = msg.get("sprite").getAsString();
                     roomName = msg.get("roomId").getAsString();
+                    ui.roomId = roomName; // death screen wording depends on the room
                     safeZone = !msg.has("safeZone") || msg.get("safeZone").getAsBoolean();
                     buildingEnabled = msg.has("buildingEnabled") && msg.get("buildingEnabled").getAsBoolean();
                     regions.clear();
@@ -987,6 +988,13 @@ public class WorldScreen extends ScreenAdapter {
             }
 
             if (!uiOpen && Gdx.input.isKeyJustPressed(Input.Keys.E)) interact();
+
+            // H returns to the hub from anywhere (server-mediated transfer;
+            // in the hub the server answers with a system chat line)
+            if (!uiOpen && !ui.dead && welcomed && Gdx.input.isKeyJustPressed(Input.Keys.H)) {
+                socket.sendSafe(Protocol.returnToHub());
+                if (!"hub".equals(roomName)) flash("returning to the hub...");
+            }
         }
 
         // mouse-look only while caught

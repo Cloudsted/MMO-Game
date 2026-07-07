@@ -99,8 +99,9 @@ public class Viewmodel {
         if (im == null) return;
 
         boolean isBlock = def.block != null;
-        boolean isStaff = def.ability != null && ("firebolt".equals(def.ability) || "frost".equals(def.ability) || "heal".equals(def.ability));
-        boolean isBow = "bow_shot".equals(def.ability);
+        boolean isStaff = def.ability != null && ("firebolt".equals(def.ability) || "frost".equals(def.ability) || "heal".equals(def.ability)
+            || "greater_firebolt".equals(def.ability) || "greater_frost".equals(def.ability) || "greater_heal".equals(def.ability));
+        boolean isBow = "bow_shot".equals(def.ability) || "bolt_shot".equals(def.ability);
 
         // grip pose (view space), Minecraft-style: handle tucked into the
         // lower-right edge, blade/tool tip angled up-LEFT toward the

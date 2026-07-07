@@ -7,8 +7,9 @@
 import type { MobDef, SpawnTable } from "@fantasy-mmo/common";
 import type { Entity } from "./entities.js";
 import type { VoxelWorld } from "./voxel.js";
-/** Min center-to-center distance between alive mobs (billboards ~1 m wide). */
-export declare const MOB_SEPARATION = 0.9;
+/** Min center-to-center distance between alive mobs (owner-tuned: 0.9 read
+ *  as too spread out — packs may bunch, just not merge into one sprite). */
+export declare const MOB_SEPARATION = 0.45;
 export interface MoveIntent {
     x: number;
     z: number;

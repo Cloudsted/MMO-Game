@@ -11,8 +11,55 @@ export const PortalDefSchema = z.object({
   x: z.number(),
   z: z.number(),
   r: z.number(), // trigger radius (metres)
+  /** authored arrival point for players coming IN through this portal
+   *  (omit to auto-offset from the portal toward the room spawn) */
+  exitX: z.number().optional(),
+  exitZ: z.number().optional(),
+  /** explicit pairing: the portal id in `target` to arrive at (for rooms
+   *  with multiple portals back to the same source room) */
+  exitPortalId: z.string().optional(),
 });
 export type PortalDef = z.infer<typeof PortalDefSchema>;
+
+/** Where a paired-portal transfer lands (y is ground-snapped on arrival). */
+export interface PortalArrival {
+  x: number;
+  z: number;
+  yaw: number;
+}
+
+/**
+ * Arrival point in `targetDef` for a player transferring from `sourceRoomId`
+ * through portal `via` (via.target === targetDef.id). The paired portal Q is
+ * via.exitPortalId when authored, else the first portal in the target whose
+ * target points back at the source room. Position = (Q.exitX, Q.exitZ) when
+ * authored, else a point offset (Q.r + 1.0) from Q toward the target's spawn;
+ * yaw faces away from the portal (the one yaw convention: 0 faces +Z).
+ * Returns null when no paired portal exists (caller falls back to def.spawn).
+ */
+export function computePortalArrival(
+  targetDef: RoomDef,
+  sourceRoomId: string,
+  via: PortalDef
+): PortalArrival | null {
+  const q = via.exitPortalId
+    ? targetDef.portals.find((p) => p.id === via.exitPortalId)
+    : targetDef.portals.find((p) => p.target === sourceRoomId);
+  if (!q) return null;
+  if (q.exitX !== undefined && q.exitZ !== undefined) {
+    let dx = q.exitX - q.x;
+    let dz = q.exitZ - q.z;
+    if (Math.hypot(dx, dz) < 1e-6) [dx, dz] = [0, 1]; // degenerate: face +Z
+    return { x: q.exitX, z: q.exitZ, yaw: Math.atan2(dx, dz) };
+  }
+  let dx = targetDef.spawn.x - q.x;
+  let dz = targetDef.spawn.z - q.z;
+  const len = Math.hypot(dx, dz);
+  if (len < 1e-6) [dx, dz] = [0, 1];
+  else [dx, dz] = [dx / len, dz / len];
+  const dist = q.r + 1.0;
+  return { x: q.x + dx * dist, z: q.z + dz * dist, yaw: Math.atan2(dx, dz) };
+}
 
 export const SpawnTableSchema = z.object({
   id: z.string(),
@@ -78,7 +125,9 @@ export const RoomDefSchema = z.object({
   spawn: z.object({ x: z.number(), z: z.number(), yaw: z.number() }),
   /** Voxel terrain parameters — all vertical units are BLOCK Y levels.
    *  base = mean surface height, amplitude = noise relief in blocks,
-   *  waterLevel = water fills terrain below this level (omit for none),
+   *  waterLevel = liquid fills terrain below this level (omit for none),
+   *  liquid = which block fills up to waterLevel (murk_water for swamps,
+   *  lava for volcanic rooms; existing rooms keep the default water),
    *  plateauRadius = flatten radius around spawn,
    *  treeDensity = per-column tree chance multiplier (biome default 1). */
   terrain: z.object({
@@ -89,6 +138,7 @@ export const RoomDefSchema = z.object({
     frequency: z.number(),
     plateauRadius: z.number().optional(),
     waterLevel: z.number().int().optional(),
+    liquid: z.enum(["water", "murk_water", "lava"]).default("water"),
     treeDensity: z.number().optional(),
   }),
   flags: z.object({

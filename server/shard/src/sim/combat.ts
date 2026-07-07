@@ -142,7 +142,7 @@ export interface Projectile {
   vy: number;
   vz: number;
   damage: number;
-  debuff: { slowPct: number; durMs: number } | null;
+  debuff: { slowPct?: number; dotTotal?: number; durMs: number } | null;
   startX: number;
   startZ: number;
   maxRangeSq: number;

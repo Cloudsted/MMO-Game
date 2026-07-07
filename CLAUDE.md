@@ -59,7 +59,9 @@ from the selected hotbar stack (Ctrl+Q the whole stack); dragging a stack
 out of the inventory window also drops it**, E interact
 (portal > loot > NPC), I/Tab inventory, Enter chat (`/g ` global; admins:
 `/give /gold /tp /spawnmob /time /level /reload /clearblocks /expire`),
-G god panel (admin), R respawn when dead, Esc close window / release mouse.
+G god panel (admin), R respawn when dead (hub: town spawn; elsewhere:
+transfer back to Hub City), **H return to the hub from anywhere** (alive,
+no window open), Esc close window / release mouse.
 Every item renders in the hand (held sprite = its icon cell; block items
 show their block tile).
 
@@ -394,6 +396,39 @@ show their block tile).
   Q/drag can't be injected into the GLFW window (LESSONS.md input rule) —
   wire path is server-proven (drop-bot/vitest); the keybind needs a human
   feel-check.
+
+- 2026-07-07 **World-mechanics batch** (portal pairing / hub respawn / H key /
+  NPC-tree fix). All verified by 82 vitest (12 new) + client compile only —
+  integration bot runs pending.
+  - **Portal enter/exit pairing**: `requestTransfer` (control wire + IPC) now
+    carries optional `viaPortalId`; the master looks up the PAIRED portal in
+    the target room (source portal's `exitPortalId` if authored, else the
+    target's portal whose `target` === source room) and persists x/z at
+    `(exitX, exitZ)` if authored else portal + (r+1.0) toward the target
+    spawn, **y=0 as the ground-snap sentinel** (a null y with non-null x
+    fails the ticket zod), yaw facing away from the portal.
+    `computePortalArrival` lives in common/rooms.ts (unit-tested); no pair /
+    no viaPortalId (respawn, H, eviction, crash) → nulls → default spawn.
+    PortalDefSchema += optional `exitX/exitZ/exitPortalId` (none authored
+    yet — auto-pairing covers all current rooms). addPlayer additionally
+    climbs out of solids (≤8 blocks) if the arrival AABB is embedded.
+  - **Death respawns in the hub**: `handleRespawn` outside the hub fires
+    `RoomSim.onTransferRequest` (wired to the RoomHost's shared
+    `requestTransfer` helper — same pendingTransfers/`transferring`
+    machinery as portals) instead of the local snap. Patches don't carry
+    hp; addPlayer always admits at full hp/mana, so arrival revives. Death
+    screen says "Respawn in Hub City" outside the hub (GameUi.roomId).
+  - **H key / `returnToHub` message**: client sends it (guards: welcomed,
+    alive, chat unfocused, no window); `RoomSim.handleReturnToHub` ignores
+    dead, chats "You are already in the hub." in the hub, else hub transfer.
+  - **Arcanist freed from a tree**: hub gen grew a tree at column (77,54)
+    whose canopy filled Zella the Arcanist's (76,52) standing column at head
+    height — standY lifted her spawn onto the treetop (y18 vs floor 13).
+    `treeAt` now excludes columns within 4 blocks of any def NPC (canopy
+    radius 2 ⇒ trunk within Chebyshev 2 of an NPC is impossible), same
+    per-column style as the spawn/portal exclusions — noise fns untouched,
+    only hub bytes near NPCs change. Regression test asserts every hub NPC
+    column's standY === terrain+1.
 
 ## Conventions
 

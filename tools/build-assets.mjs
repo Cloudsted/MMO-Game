@@ -147,6 +147,23 @@ function buildAtlas(sprites) {
     cacto: { file: resolve(MOBS, "monster_cacto.png"), single: true },
     raptor: { file: resolve(MOBS, "monster_raptor1.png"), single: true },
     minotaur: { file: resolve(MOBS, "monster_minotaur.png"), single: true },
+    // worldgen overhaul roster (every cell claim below was verified by eye
+    // against a rendered contact grid before mapping — LESSONS.md rule)
+    boar: { file: resolve(MOBS, "monster_boar.png"), single: true }, // golden tusked boar
+    giant_spider: { file: resolve(MOBS, "monster1.png"), char: [2, 0] }, // gray spider, red eyes
+    bog_serpent: { file: resolve(MOBS, "monster1.png"), char: [1, 1] }, // green serpent
+    bone_bat: { file: resolve(MOBS, "monster1.png"), char: [3, 1] }, // gray bat, blue wings
+    mantrap: { file: resolve(MOBS, "monster3.png"), char: [2, 0] }, // pink-bloom plant creature
+    lizardman: { file: resolve(MOBS, "monster_lizardman1.png"), single: true }, // armored lizard warrior
+    // elemental.png trap (like wizard.png): walk grids ONLY in the top half —
+    // the bottom half is off-grid single orb frames. Top-half chars (cy 0)
+    // extract clean with the standard 12x8 grid math (verified on the grid).
+    marsh_wisp: { file: resolve(MOBS, "elemental.png"), char: [0, 0] }, // blue water elemental
+    fire_elemental: { file: resolve(MOBS, "elemental.png"), char: [1, 0] }, // flame elemental
+    ash_husk: { file: resolve(MOBS, "monster4.png"), char: [2, 0] }, // tan shirtless zombie
+    wraith: { file: resolve(MOBS, "monster4.png"), char: [0, 0] }, // white bearded ghost
+    cinder_golem: { file: resolve(MOBS, "monster_golem1.png"), single: true }, // stone golem
+    lich: { file: resolve(MOBS, "monster_lich.png"), single: true }, // crowned skeletal king
   };
   const manifest = {};
   for (const [key, spec] of Object.entries(SHEETS)) {
@@ -208,6 +225,10 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
   const ff = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "farm and fort.png"));
   const outsideSheet = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "outside.png"));
   const icons16 = loadPng(resolve(SRC, "IconSet", "tf_icon_16.png"));
+  // worldgen-overhaul sheets (blocks 26-50)
+  const darkDim = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "dark dimension.png"));
+  const insideSheet = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "inside.png"));
+  const winter = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "Winter", "tf_winter_terrain.png"));
 
   const t16 = (sheet, x, y) => grab(sheet, x, y, 16, 16);
   // remove background pixels close to a set of key colors (sand behind plants)
@@ -260,6 +281,57 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
     [222, 206, 148], [231, 217, 166], [207, 190, 135], [237, 226, 182], [214, 198, 141],
   ];
 
+  // ---- worldgen-overhaul helpers ----
+  // lay src's opaque pixels over a copy of dst (bone scatter on sand, bale on straw)
+  const overlay = (dst, src) => {
+    const out = new PNG({ width: 16, height: 16 });
+    dst.data.copy(out.data);
+    for (let i = 0; i < out.data.length; i += 4) {
+      if (src.data[i + 3] > 8) {
+        out.data[i] = src.data[i];
+        out.data[i + 1] = src.data[i + 1];
+        out.data[i + 2] = src.data[i + 2];
+        out.data[i + 3] = 255;
+      }
+    }
+    return out;
+  };
+  // vertical flip (upward grass tufts become hanging vines)
+  const flipV = (png) => {
+    const out = new PNG({ width: png.width, height: png.height });
+    for (let y = 0; y < png.height; y++) {
+      for (let x = 0; x < png.width; x++) {
+        const s = (y * png.width + x) * 4;
+        const d = ((png.height - 1 - y) * png.width + x) * 4;
+        for (let k = 0; k < 4; k++) out.data[d + k] = png.data[s + k];
+      }
+    }
+    return out;
+  };
+  // nearest-neighbour resample any sprite to 16x16 (PoC grabSquashed precedent)
+  const squash16 = (png) => {
+    const out = new PNG({ width: 16, height: 16 });
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) {
+        const sx = Math.min(png.width - 1, Math.floor((x * png.width) / 16));
+        const sy = Math.min(png.height - 1, Math.floor((y * png.height) / 16));
+        const s = (sy * png.width + sx) * 4;
+        const d = (y * 16 + x) * 4;
+        for (let k = 0; k < 4; k++) out.data[d + k] = png.data[s + k];
+      }
+    }
+    return out;
+  };
+  // drop water-splash blues off a plant sprite (reeds stand in a painted pool)
+  const stripBlue = (png) => {
+    for (let i = 0; i < png.data.length; i += 4) {
+      if (png.data[i + 3] === 0) continue;
+      const r = png.data[i], g = png.data[i + 1], b = png.data[i + 2];
+      if (b > r + 40 && b > g + 25) png.data[i + 3] = 0;
+    }
+    return png;
+  };
+
   const grassTop = t16(terrain, 80, 16);
   const dirt = t16(terrain, 32, 96);
   const logSide = t16(house, 176, 144);
@@ -294,6 +366,56 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
     }
   }
 
+  // ---- worldgen-overhaul composites (blocks 26-50) ----
+  // pale (swamp) log cross-section: silver bark ring + bleached rings core
+  const paleLogSide = t16(outsideSheet, 760, 96); // big white dead tree trunk (probed: fully opaque)
+  const paleLogTop = new PNG({ width: 16, height: 16 });
+  paleLogSide.data.copy(paleLogTop.data);
+  const paleRings = tint(planks, [190, 196, 188], 0.75);
+  for (let y = 2; y < 14; y++) {
+    for (let x = 2; x < 14; x++) {
+      const i = (y * 16 + x) * 4;
+      paleLogTop.data[i] = paleRings.data[i];
+      paleLogTop.data[i + 1] = paleRings.data[i + 1];
+      paleLogTop.data[i + 2] = paleRings.data[i + 2];
+      paleLogTop.data[i + 3] = 255;
+    }
+  }
+
+  // painted cobweb: radial spokes + two rings at ~40% alpha (painted-glass precedent)
+  const web = new PNG({ width: 16, height: 16 });
+  {
+    const put = (x, y, a) => {
+      if (x < 0 || y < 0 || x > 15 || y > 15) return;
+      const i = (y * 16 + x) * 4;
+      web.data[i] = 226; web.data[i + 1] = 232; web.data[i + 2] = 238;
+      web.data[i + 3] = Math.max(web.data[i + 3], a);
+    };
+    for (let t = 0; t < 16; t++) {
+      put(t, t, 120); put(t, 15 - t, 120); // diagonals
+      put(t, 7, 130); put(t, 8, 90); put(7, t, 130); put(8, t, 90); // cross
+    }
+    // rings (square approximations of anchor threads)
+    for (let t = 4; t <= 11; t++) {
+      put(t, 4, 100); put(t, 11, 100); put(4, t, 100); put(11, t, 100);
+    }
+    for (let t = 1; t <= 14; t++) {
+      if ((t + 1) % 3 === 0) continue; // ragged outer ring
+      put(t, 1, 80); put(t, 14, 80); put(1, t, 80); put(14, t, 80);
+    }
+  }
+
+  // bone block: stacked-bone bundle (desert graves row, probed at y48) over pale
+  // sand, then bleached — TF bones are golden-tan; unbleached it read as firewood
+  const boneBase = tint(t16(terrain, 32, 144), [214, 204, 178], 0.8);
+  const boneBlock = tint(overlay(boneBase, t16(desertSheet, 176, 48)), [226, 218, 194], 0.55);
+
+  // hay: the square strapped-bale face at (560,192) over thatch (corners fill in straw)
+  const hayBlock = overlay(t16(ff, 400, 256), t16(ff, 560, 192));
+
+  const crystalTile = t16(dungeonSheet, 496, 224);
+  const snowTop = t16(winter, 256, 16);
+
   const recipes = {
     grass_top: () => grassTop,
     grass_side: () => topStrip(dirt, grassTop),
@@ -322,8 +444,37 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
     flower_yellow: () => chromaKey(t16(terrain, 144, 160), SAND_KEY),
     mushroom_red: () => tint(t16(icons16, 12 * 16, 15 * 16), [225, 70, 60], 0.55),
     mushroom_brown: () => tint(t16(icons16, 13 * 16, 15 * 16), [195, 145, 85], 0.5),
-    crystal: () => t16(dungeonSheet, 496, 224),
+    crystal: () => crystalTile,
     glass: () => glass,
+    // ---- worldgen overhaul (blocks 26-50; every grab probed by alpha-scan/zoom) ----
+    mud: () => t16(ff, 112, 64), // tilled-soil band (probed at y64, not the design's ~y160)
+    // autotile trap: teal deep-water group x336-464; (400,64) is a fully-opaque center
+    murk_water: () => t16(waterSheet, 400, 64),
+    pale_log: () => paleLogSide,
+    pale_log_top: () => paleLogTop,
+    dead_leaves: () => t16(outsideSheet, 448, 128), // autumn-orange canopy interior
+    reeds: () => stripBlue(t16(outsideSheet, 240, 224)), // cattail tuft, water splash keyed out
+    vines: () => tint(flipV(chromaKey(t16(terrain, 96, 160), SAND_KEY)), [88, 150, 92], 0.45),
+    glow_shroom: () => tint(t16(icons16, 12 * 16, 15 * 16), [70, 225, 195], 0.6),
+    web: () => web,
+    dark_stone: () => t16(dungeonSheet, 16, 176), // dark blue-gray pebbled rock band
+    dark_bricks: () => t16(darkDim, 160, 80), // fortress masonry wall face
+    obsidian: () => t16(darkDim, 112, 240), // near-black void cell (subtle speck, no bright star)
+    ash: () => tint(t16(terrain, 32, 144), [126, 124, 122], 0.7),
+    charred_log: () => tint(logSide, [58, 50, 46], 0.85),
+    ember_crystal: () => tint(crystalTile, [255, 122, 45], 0.75),
+    bone_block: () => boneBlock,
+    snow: () => snowTop,
+    snow_side: () => topStrip(dirt, snowTop),
+    ice: () => t16(winter, 224, 304), // diagonal-streak slab interior (crust border starts ~x251)
+    blue_crystal: () => tint(crystalTile, [92, 172, 255], 0.75),
+    marble: () => t16(dungeonSheet, 32, 128), // pale polished grid floor
+    bookshelf: () => squash16(grabComponent(insideSheet, 505, 420)),
+    hay: () => hayBlock,
+    palisade: () => t16(ff, 416, 192), // vertical sharpened-log wall body
+    iron_bars: () => t16(ff, 608, 544), // cage grid (cutout: gaps stay transparent)
+    lantern: () => t16(icons16, 5 * 16, 12 * 16), // lit lantern icon
+    banner: () => t16(castle, 224, 224), // small shield pennant
   };
 
   const names = Object.keys(recipes);
@@ -356,7 +507,12 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
   const icons = loadPng(resolve(SRC, "IconSet", "tf_icon_16.png"));
   // append one extra row of icons for block items: their icon IS their tile.
   // items.json references these as (col, <original rows>) — currently row 21.
-  const BLOCK_ITEM_TILES = ["planks", "log", "cobblestone", "stone_bricks", "thatch", "glass", "torch"];
+  // Order is LOAD-BEARING: col i = position i (block_dark_bricks..block_bookshelf
+  // are cols 7-13). Append only.
+  const BLOCK_ITEM_TILES = [
+    "planks", "log", "cobblestone", "stone_bricks", "thatch", "glass", "torch",
+    "dark_bricks", "marble", "lantern", "palisade", "hay", "iron_bars", "bookshelf",
+  ];
   const baseRows = Math.floor(icons.height / 16);
   const extended = new PNG({ width: icons.width, height: (baseRows + 1) * 16 });
   PNG.bitblt(icons, extended, 0, 0, icons.width, icons.height, 0, 0);
