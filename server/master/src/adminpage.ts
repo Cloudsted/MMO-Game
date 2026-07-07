@@ -134,8 +134,10 @@ export const PAGE = `<!doctype html>
 
 <main>
   <div id="lockout" class="lockout" style="display:none">
-    <h2>Locked</h2>
-    <p class="muted">Enter the ADMIN_KEY from <code>.env</code> in the field above to unlock the dashboard.</p>
+    <h2 style="color:var(--gold);font-size:18px">🔒 Dashboard locked</h2>
+    <p>Paste the <b>ADMIN_KEY</b> from <code>.env</code> into the field at the top right.</p>
+    <p class="muted">It's remembered in this browser afterwards. You can also open
+      <code>/admin?key=&lt;ADMIN_KEY&gt;</code> once to seed it.</p>
   </div>
 
   <section id="tab-overview" class="active">
@@ -687,7 +689,11 @@ function restartRoom(roomId) {
 
 // ---------- refresh loop ----------
 function refreshTab() {
-  if (!keyEl.value) return;
+  // no key yet: show the lock panel prominently instead of a blank page
+  $('lockout').style.display = keyEl.value ? 'none' : 'block';
+  var secs = document.querySelectorAll('main section');
+  for (var si = 0; si < secs.length; si++) secs[si].style.display = keyEl.value ? '' : 'none';
+  if (!keyEl.value) { keyEl.focus(); return; }
   if (activeTab === 'overview' || activeTab === 'rooms') {
     api('overview').then(function(data) {
       ov = data;
