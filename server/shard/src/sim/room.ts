@@ -51,7 +51,7 @@ import {
   type Projectile,
 } from "./combat.js";
 import { addItem, HOTBAR_SIZE, INV_SIZE, normalizeInventory, removeFromSlot, rollLoot } from "./loot.js";
-import { applyMove, findSpawnPoint, pickMob, separateEntities, tickBrain } from "./mobs.js";
+import { applyGravity, applyMove, findSpawnPoint, pickMob, separateEntities, tickBrain } from "./mobs.js";
 import { EditRecorder, PREFABS, stampPrefab } from "./prefabs.js";
 import { VoxelWorld } from "./voxel.js";
 import { Builder } from "./voxelstructures.js";
@@ -1771,6 +1771,12 @@ export class RoomSim {
       if (!e.brain) continue;
       const def = this.reg.mobs[e.brain.mobId];
       if (!def) continue;
+      // gravity first: an airborne mob (walked off a ledge/canopy) falls with
+      // no air control and resumes deciding/walking the tick it lands
+      if (applyGravity(e, dt, this.world, this.consts.movement.gravity)) {
+        e.renderable.anim = "idle";
+        continue;
+      }
       // melee mobs can only land blows within the vertical reach; ranged
       // mobs aim with real pitch, so height barely matters to them
       const mobAbility = this.reg.abilities[def.ability];

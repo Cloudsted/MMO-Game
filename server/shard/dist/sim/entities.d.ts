@@ -81,6 +81,8 @@ export interface Entity {
     id: number;
     kind: "player" | "mob" | "npc" | "loot";
     pos: Position;
+    /** vertical velocity while airborne (mob gravity — see applyGravity) */
+    vy?: number;
     renderable: Renderable;
     level?: number;
     health?: Health;

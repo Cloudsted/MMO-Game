@@ -241,7 +241,11 @@ export declare class RoomSim {
     private removeEntity;
     /** Snapshot broadcast (12 Hz): per-viewer enter/leave + exact field deltas. */
     snapshot(): void;
-    /** Character patches for persistence (batched via shard host → master). */
+    /** Character patches for persistence (batched via shard host → master).
+     *  Sessions with a granted transfer are excluded from batch reports: the
+     *  master already persisted their state for the TARGET room, and a report
+     *  from here would clobber it with stale source-room data (same rule the
+     *  disconnect path applies). */
     buildReport(only?: PlayerSession): Array<{
         id: string;
     } & Record<string, unknown>>;

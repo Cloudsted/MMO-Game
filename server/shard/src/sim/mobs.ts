@@ -24,9 +24,15 @@ const SEPARATION_Y_TOLERANCE = 1.5;
  *  step — a mob that somehow ends up on a tree canopy or ledge can always
  *  get DOWN to its target. Wandering keeps the 1-block limit so idle mobs
  *  don't dive off cliffs. Tallest oak canopy top is ~7 above the floor. */
-const PURPOSEFUL_MAX_DROP = 8;
+export const PURPOSEFUL_MAX_DROP = 8;
 /** Default per-step drop for wander/separation (mirror of the 1-step-up). */
 const DEFAULT_MAX_DROP = 1.05;
+/** Drops up to this deep snap to the lower floor like walking down a step;
+ *  anything deeper means the mob walks OFF the ledge and FALLS under
+ *  gravity (applyGravity) instead of teleporting to the ground. */
+const STEP_SNAP_DOWN = 1.05;
+/** How fast a submerged mob floats up toward the swim surface (m/s). */
+const BUOYANCY_RISE_SPEED = 3.0;
 /** Liquid this deep or less is waded on the flooded floor; deeper columns
  *  are swum at the surface. (Mob height is 1.6 — 1.5 keeps the head out.) */
 const WADE_DEPTH = 1.5;
@@ -232,14 +238,52 @@ export function applyMove(
       if (surf - ny > WADE_DEPTH) ny = surf - 1;
     }
     if (ny - e.pos.y > 1.05 || e.pos.y - ny > maxDrop) continue;
-    if (world.collidesAABB(nx, ny, nz, 0.3, 1.6)) continue; // headroom/blockers
+    // steps and shallow drops snap like stairs; deeper drops walk OFF the
+    // ledge at the current height — applyGravity then pulls the mob down
+    // over the following ticks (no more instant teleport-to-the-floor)
+    const applyY = e.pos.y - ny > STEP_SNAP_DOWN ? e.pos.y : ny;
+    if (world.collidesAABB(nx, applyY, nz, 0.3, 1.6)) continue; // headroom/blockers
     e.pos.x = nx;
     e.pos.z = nz;
-    e.pos.y = ny;
+    e.pos.y = applyY;
     e.pos.yaw = ang;
     return true;
   }
   return false;
+}
+
+/**
+ * Per-tick vertical physics for mobs (players run their own client-predicted
+ * physics). An entity above the ground under its feet accelerates downward
+ * and lands when it reaches it — mobs walking off ledges/canopies FALL like
+ * players do instead of snapping instantly. In liquid gravity is off and
+ * buoyancy floats the mob up to the swim surface (feet in the top liquid
+ * cell) so 1-block banks stay climbable after a plunge.
+ * Returns true while airborne — callers skip walking (no air control).
+ */
+export function applyGravity(e: Entity, dt: number, world: VoxelWorld, gravity: number): boolean {
+  if (world.liquidAt(e.pos.x, e.pos.y + 0.1, e.pos.z)) {
+    e.vy = 0;
+    let surf = Math.floor(e.pos.y);
+    while (surf - e.pos.y < 12 && world.liquidAt(e.pos.x, surf + 0.1, e.pos.z)) surf++;
+    const surface = surf - 1;
+    if (e.pos.y < surface) e.pos.y = Math.min(surface, e.pos.y + BUOYANCY_RISE_SPEED * dt);
+    return false;
+  }
+  const floor = world.groundBelow(e.pos.x, e.pos.y + 0.05, e.pos.z, 0.25);
+  if (e.pos.y <= floor + 1e-4) {
+    e.vy = 0;
+    return false;
+  }
+  e.vy = (e.vy ?? 0) + gravity * dt;
+  const ny = e.pos.y + e.vy * dt;
+  if (ny <= floor) {
+    e.pos.y = floor;
+    e.vy = 0;
+    return false; // landed this tick — walking resumes immediately
+  }
+  e.pos.y = ny;
+  return true;
 }
 
 /**

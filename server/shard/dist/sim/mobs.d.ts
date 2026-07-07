@@ -10,6 +10,11 @@ import type { VoxelWorld } from "./voxel.js";
 /** Min center-to-center distance between alive mobs (owner-tuned: 0.9 read
  *  as too spread out — packs may bunch, just not merge into one sprite). */
 export declare const MOB_SEPARATION = 0.45;
+/** Purposeful movement (chase/flee/return) may drop this many blocks in a
+ *  step — a mob that somehow ends up on a tree canopy or ledge can always
+ *  get DOWN to its target. Wandering keeps the 1-block limit so idle mobs
+ *  don't dive off cliffs. Tallest oak canopy top is ~7 above the floor. */
+export declare const PURPOSEFUL_MAX_DROP = 8;
 export interface MoveIntent {
     x: number;
     z: number;
@@ -50,6 +55,16 @@ export declare function applyMove(e: Entity, intent: MoveIntent, baseSpeed: numb
     w: number;
     h: number;
 }, _waterLevel: number | null, others?: Entity[]): boolean;
+/**
+ * Per-tick vertical physics for mobs (players run their own client-predicted
+ * physics). An entity above the ground under its feet accelerates downward
+ * and lands when it reaches it — mobs walking off ledges/canopies FALL like
+ * players do instead of snapping instantly. In liquid gravity is off and
+ * buoyancy floats the mob up to the swim surface (feet in the top liquid
+ * cell) so 1-block banks stay climbable after a plunge.
+ * Returns true while airborne — callers skip walking (no air control).
+ */
+export declare function applyGravity(e: Entity, dt: number, world: VoxelWorld, gravity: number): boolean;
 /**
  * Soft-separate overlapping mobs: every pair closer than MOB_SEPARATION
  * pushes apart at SEPARATION_PUSH_SPEED (handles spawn stacks and mobs

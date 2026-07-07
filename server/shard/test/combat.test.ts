@@ -4,7 +4,7 @@ import { BLOCK, gameConstants, loadRoomDef, mintItem, RegistryService } from "@f
 import { RoomSim, type PlayerSession } from "../src/sim/room.js";
 import { advanceFsm, inMeleeCone, interruptIfCasting, startAbility } from "../src/sim/combat.js";
 import { addItem, rollLoot, normalizeInventory, INV_SIZE } from "../src/sim/loot.js";
-import { applyMove, MOB_SEPARATION, separateEntities, tickBrain } from "../src/sim/mobs.js";
+import { applyGravity, applyMove, MOB_SEPARATION, separateEntities, tickBrain } from "../src/sim/mobs.js";
 import { freshCombat, type Entity } from "../src/sim/entities.js";
 
 const reg = new RegistryService();
@@ -370,10 +370,107 @@ describe("floor spawns + canopy drop-down", () => {
     // wander-style intent (default 1-block drop): stuck pacing the edge
     for (let i = 0; i < 60; i++) applyMove(e, { x: tx, z: e.pos.z, speedMult: 1 }, 3, 0.1, world, bounds, null);
     expect(e.pos.y).toBe(flat.y + 5);
-    // chase-style intent may drop off the edge and reach the target
-    for (let i = 0; i < 60; i++) applyMove(e, { x: tx, z: e.pos.z, speedMult: 1, maxDrop: 8 }, 3, 0.1, world, bounds, null);
+    // chase-style intent walks OFF the edge; gravity (interleaved exactly
+    // like the room tick) lands it over several steps, never instantly
+    let airborneTicks = 0;
+    for (let i = 0; i < 80; i++) {
+      if (applyGravity(e, 0.1, world, -22)) {
+        airborneTicks++;
+        continue; // no air control, same as the room tick
+      }
+      applyMove(e, { x: tx, z: e.pos.z, speedMult: 1, maxDrop: 8 }, 3, 0.1, world, bounds, null);
+    }
+    expect(airborneTicks).toBeGreaterThan(2); // a real fall, not a teleport
     expect(e.pos.y).toBe(flat.y);
     expect(Math.abs(e.pos.x - tx)).toBeLessThan(0.5);
+  });
+});
+
+describe("mob gravity", () => {
+  const sim = new RoomSim(loadRoomDef("hub"));
+  const world = sim.world;
+  const bounds = sim.def.size;
+
+  /** A flat, unobstructed, dry 7×7 patch away from structures. */
+  function findFlatSpot(): { x: number; z: number; y: number } {
+    for (let z = 8; z < bounds.h - 8; z += 4) {
+      for (let x = 8; x < bounds.w - 8; x += 4) {
+        const y = world.standY(x, z);
+        let ok = true;
+        for (let dx = -3; dx <= 3 && ok; dx++)
+          for (let dz = -3; dz <= 3 && ok; dz++) {
+            const yy = world.standY(x + dx, z + dz);
+            if (yy !== y || world.collidesAABB(x + dx, yy, z + dz, 0.3, 1.6) || world.liquidAt(x + dx, yy + 0.1, z + dz)) ok = false;
+          }
+        if (ok) return { x, z, y };
+      }
+    }
+    throw new Error("no flat spot in hub");
+  }
+  const flat = findFlatSpot();
+
+  it("accelerates an airborne mob down and lands it on the floor", () => {
+    const e = testEntity(flat.x, flat.z);
+    e.kind = "mob";
+    e.pos.y = flat.y + 6;
+    const ys: number[] = [];
+    let ticks = 0;
+    while (applyGravity(e, 0.1, world, -22) && ticks < 50) {
+      ys.push(e.pos.y);
+      ticks++;
+    }
+    expect(e.pos.y).toBe(flat.y);
+    expect(e.vy).toBe(0);
+    expect(ticks).toBeGreaterThan(3); // 6 blocks take ~0.74 s at g=-22, not one tick
+    for (let i = 1; i < ys.length; i++) {
+      expect(ys[i]!).toBeLessThan(ys[i - 1]!);
+      // accelerating: each step at least as large as the previous
+      if (i >= 2) expect(ys[i - 1]! - ys[i]!).toBeGreaterThanOrEqual(ys[i - 2]! - ys[i - 1]! - 1e-9);
+    }
+  });
+
+  it("is inert on the ground", () => {
+    const e = testEntity(flat.x, flat.z);
+    e.kind = "mob";
+    e.pos.y = flat.y;
+    expect(applyGravity(e, 0.1, world, -22)).toBe(false);
+    expect(e.pos.y).toBe(flat.y);
+  });
+
+  it("floats a submerged mob up to the swim surface instead of sinking", () => {
+    // 3-deep pool: water cells replace the top 3 solid blocks of one column
+    const px = Math.floor(flat.x) - 2;
+    const pz = Math.floor(flat.z);
+    const WATER = BLOCK.water!.id;
+    const top = world.standY(px, pz) - 1;
+    for (let d = 0; d < 3; d++) world.set(px, top - d, pz, WATER);
+    const e = testEntity(px + 0.5, pz + 0.5);
+    e.kind = "mob";
+    e.pos.y = top - 2; // dumped at the pool floor
+    for (let i = 0; i < 30; i++) applyGravity(e, 0.1, world, -22);
+    expect(e.pos.y).toBe(top); // feet in the top liquid cell = swim surface
+  });
+
+  it("RoomSim ticks a hoisted mob down gradually (integration)", () => {
+    vi.useFakeTimers();
+    try {
+      const sim2 = new RoomSim(loadRoomDef("hub"));
+      const mob = sim2.spawnMob("slime", flat.x, flat.z, "")!;
+      const ground = mob.pos.y;
+      mob.pos.y = ground + 6;
+      const ys: number[] = [];
+      for (let i = 0; i < 20; i++) {
+        vi.setSystemTime(Date.now() + 100);
+        sim2.tick();
+        ys.push(mob.pos.y);
+      }
+      const landedAt = ys.findIndex((y) => y <= ground + 1e-6);
+      expect(landedAt).toBeGreaterThan(2); // several ticks in the air
+      for (let i = 1; i <= landedAt; i++) expect(ys[i]!).toBeLessThan(ys[i - 1]! + 1e-9);
+      expect(ys[ys.length - 1]).toBe(ground);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
