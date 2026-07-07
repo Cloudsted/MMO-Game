@@ -128,7 +128,8 @@ const main = async () => {
   }
 
   // walk into the slime meadow so the pack aggros and converges on us
-  await goTo(ws, state, 55, 105, 2.0);
+  // (480² retune: slime-meadow-e at 318,348 is the closest meadow to spawn)
+  await goTo(ws, state, 318, 348, 2.0);
   log(`standing at ${state.x.toFixed(1)}, ${state.z.toFixed(1)} — soaking ${SOAK_MS / 1000}s`);
 
   let samples = 0;

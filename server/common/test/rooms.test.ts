@@ -25,9 +25,9 @@ describe("computePortalArrival", () => {
     const forest = loadRoomDef("forest");
     const via = hub.portals.find((p) => p.id === "hub-forest")!;
     const arrival = computePortalArrival(forest, "hub", via)!;
-    // paired portal forest-hub at (80,152) r2.2; forest spawn (80,146) is due -Z
-    expect(arrival.x).toBeCloseTo(80);
-    expect(arrival.z).toBeCloseTo(152 - (2.2 + 1.0));
+    // 480² retune: paired portal forest-hub at (240,472) r2.2; spawn (240,466) is due -Z
+    expect(arrival.x).toBeCloseTo(240);
+    expect(arrival.z).toBeCloseTo(472 - (2.2 + 1.0));
     expect(arrival.yaw).toBeCloseTo(Math.atan2(0, -1)); // facing -Z, away from the portal
   });
 

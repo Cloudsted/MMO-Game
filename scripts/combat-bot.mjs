@@ -168,10 +168,11 @@ const main = async () => {
     }
     return best;
   };
-  // mobs may be outside interest — wander toward the slime meadow until one shows
+  // mobs may be outside interest — wander toward the slime meadow until one
+  // shows (480² retune: slime-meadow-e sits at 318,348 — nearest to spawn)
   for (let tries = 0; tries < 5 && !nearestMob(); tries++) {
     log("no mob in interest, heading toward the slime meadow...");
-    await goTo(ws, state, 55 + tries * 3, 105, 2.0);
+    await goTo(ws, state, 318 + tries * 3, 348, 2.0);
     await sleep(500);
   }
   let target = nearestMob();

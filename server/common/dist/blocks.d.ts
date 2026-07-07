@@ -18,6 +18,20 @@ declare const BlockDefSchema: z.ZodObject<{
     glow: z.ZodOptional<z.ZodBoolean>;
     light: z.ZodOptional<z.ZodNumber>;
     tex: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
+    /** client sound-group suffixes (manifest names step_X/break_X/place_X) */
+    sounds: z.ZodOptional<z.ZodObject<{
+        step: z.ZodOptional<z.ZodString>;
+        break: z.ZodOptional<z.ZodString>;
+        place: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        step?: string | undefined;
+        break?: string | undefined;
+        place?: string | undefined;
+    }, {
+        step?: string | undefined;
+        break?: string | undefined;
+        place?: string | undefined;
+    }>>;
 }, "strip", z.ZodTypeAny, {
     id: number;
     name: string;
@@ -28,6 +42,11 @@ declare const BlockDefSchema: z.ZodObject<{
     glow?: boolean | undefined;
     light?: number | undefined;
     tex?: Record<string, string> | undefined;
+    sounds?: {
+        step?: string | undefined;
+        break?: string | undefined;
+        place?: string | undefined;
+    } | undefined;
 }, {
     id: number;
     name: string;
@@ -38,6 +57,11 @@ declare const BlockDefSchema: z.ZodObject<{
     glow?: boolean | undefined;
     light?: number | undefined;
     tex?: Record<string, string> | undefined;
+    sounds?: {
+        step?: string | undefined;
+        break?: string | undefined;
+        place?: string | undefined;
+    } | undefined;
 }>;
 export type BlockDef = z.infer<typeof BlockDefSchema>;
 /** Dense array indexed by block id. */

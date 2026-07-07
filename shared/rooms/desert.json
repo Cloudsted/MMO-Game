@@ -6,12 +6,12 @@
   "wind": 0.85,
   "persistence": "stateful",
   "size": {
-    "w": 160,
-    "h": 160
+    "w": 480,
+    "h": 480
   },
   "spawn": {
-    "x": 80,
-    "z": 146,
+    "x": 240,
+    "z": 466,
     "yaw": 3.14159
   },
   "terrain": {
@@ -33,8 +33,8 @@
       "id": "desert-hub",
       "label": "Hub City",
       "target": "hub",
-      "x": 80,
-      "z": 152,
+      "x": 240,
+      "z": 472,
       "r": 2.2
     }
   ],
@@ -43,8 +43,8 @@
       "id": "cacto-grove",
       "region": {
         "kind": "circle",
-        "x": 62,
-        "z": 108,
+        "x": 186,
+        "z": 324,
         "r": 15
       },
       "mobs": [
@@ -53,7 +53,7 @@
           "weight": 1
         }
       ],
-      "maxAlive": 5,
+      "maxAlive": 10,
       "packSize": [
         1,
         1
@@ -64,8 +64,8 @@
       "id": "skeleton-ruin-w",
       "region": {
         "kind": "circle",
-        "x": 38,
-        "z": 62,
+        "x": 114,
+        "z": 186,
         "r": 16
       },
       "mobs": [
@@ -74,7 +74,7 @@
           "weight": 1
         }
       ],
-      "maxAlive": 6,
+      "maxAlive": 12,
       "packSize": [
         2,
         3
@@ -85,8 +85,8 @@
       "id": "skeleton-ruin-e",
       "region": {
         "kind": "circle",
-        "x": 118,
-        "z": 70,
+        "x": 354,
+        "z": 210,
         "r": 15
       },
       "mobs": [
@@ -95,7 +95,7 @@
           "weight": 1
         }
       ],
-      "maxAlive": 5,
+      "maxAlive": 10,
       "packSize": [
         2,
         2
@@ -106,9 +106,30 @@
       "id": "raptor-flats",
       "region": {
         "kind": "circle",
-        "x": 88,
-        "z": 34,
+        "x": 264,
+        "z": 102,
         "r": 18
+      },
+      "mobs": [
+        {
+          "mob": "raptor",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 10,
+      "packSize": [
+        2,
+        3
+      ],
+      "respawnSec": 50
+    },
+    {
+      "id": "raptor-canyon",
+      "region": {
+        "kind": "circle",
+        "x": 150,
+        "z": 260,
+        "r": 16
       },
       "mobs": [
         {
@@ -119,7 +140,7 @@
       "maxAlive": 5,
       "packSize": [
         2,
-        3
+        2
       ],
       "respawnSec": 50
     },
@@ -127,8 +148,8 @@
       "id": "oasis-slimes",
       "region": {
         "kind": "circle",
-        "x": 108,
-        "z": 118,
+        "x": 324,
+        "z": 354,
         "r": 13
       },
       "mobs": [
@@ -137,12 +158,42 @@
           "weight": 1
         }
       ],
-      "maxAlive": 4,
+      "maxAlive": 8,
       "packSize": [
         1,
         2
       ],
       "respawnSec": 25
+    }
+  ],
+  "prefabs": [
+    {
+      "prefab": "ruined_watchtower",
+      "count": 2,
+      "minSpacing": 80,
+      "ruinBias": 1
+    },
+    {
+      "prefab": "ruined_aqueduct",
+      "count": 1,
+      "minSpacing": 0
+    },
+    {
+      "prefab": "graveyard",
+      "count": 1,
+      "minSpacing": 0
+    },
+    {
+      "prefab": "wayshrine",
+      "count": 3,
+      "minSpacing": 70,
+      "nearPortals": true
+    },
+    {
+      "prefab": "abandoned_camp",
+      "count": 3,
+      "minSpacing": 60,
+      "ruinBias": 2
     }
   ],
   "npcs": []

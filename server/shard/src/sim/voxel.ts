@@ -19,6 +19,7 @@ import {
   type RoomDef,
 } from "@fantasy-mmo/common";
 import { stampStructures } from "./voxelstructures.js";
+import type { ScatterResult } from "./prefabs.js";
 
 // ---------- deterministic noise (shared style with the old heightmap gen) ----------
 
@@ -79,6 +80,9 @@ export class VoxelWorld {
   readonly waterLevel: number | null;
   /** player edits keyed "x,y,z" — the persistence overlay */
   readonly edits = new Map<string, BlockEdit>();
+  /** prefab-scatter output: placements, loot caches, spawn bindings —
+   *  deterministic per def, so RoomSim can consume it every boot */
+  readonly features: ScatterResult;
   /** pristine post-generation snapshot — edits that restore it are dropped */
   private genData!: Uint8Array;
 
@@ -88,7 +92,7 @@ export class VoxelWorld {
     this.data = new Uint8Array(this.w * this.h * WORLD_HEIGHT);
     this.waterLevel = def.terrain.waterLevel ?? null;
     this.generate(def);
-    stampStructures(this, def);
+    this.features = stampStructures(this, def);
     this.genData = this.data.slice();
   }
 

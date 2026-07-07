@@ -303,7 +303,7 @@ describe("RoomSim gameplay", () => {
   it("spawns forest mobs from its spawn tables", () => {
     const forest = new RoomSim(loadRoomDef("forest"));
     const mobs = [...forest.allEntities()].filter((e) => e.kind === "mob");
-    // 5 tables: 6+4+5+4+4 = 23 max alive
+    // 480² retune: 9 tables (slimes ×2, wolves ×3, bandits, boars ×2, spiders)
     expect(mobs.length).toBeGreaterThan(10);
     for (const m of mobs) {
       expect(m.health!.hp).toBeGreaterThan(0);

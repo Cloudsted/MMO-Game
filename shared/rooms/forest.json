@@ -6,12 +6,12 @@
   "wind": 1.0,
   "persistence": "stateful",
   "size": {
-    "w": 160,
-    "h": 160
+    "w": 480,
+    "h": 480
   },
   "spawn": {
-    "x": 80,
-    "z": 146,
+    "x": 240,
+    "z": 466,
     "yaw": 3.14159
   },
   "terrain": {
@@ -32,8 +32,8 @@
   "regions": [
     {
       "kind": "circle",
-      "x": 28,
-      "z": 118,
+      "x": 84,
+      "z": 354,
       "r": 12,
       "pvp": true
     }
@@ -43,8 +43,8 @@
       "id": "forest-hub",
       "label": "Hub City",
       "target": "hub",
-      "x": 80,
-      "z": 152,
+      "x": 240,
+      "z": 472,
       "r": 2.2
     }
   ],
@@ -53,8 +53,8 @@
       "id": "slime-meadow-w",
       "region": {
         "kind": "circle",
-        "x": 55,
-        "z": 105,
+        "x": 165,
+        "z": 315,
         "r": 16
       },
       "mobs": [
@@ -63,7 +63,7 @@
           "weight": 1
         }
       ],
-      "maxAlive": 6,
+      "maxAlive": 12,
       "packSize": [
         1,
         2
@@ -74,8 +74,8 @@
       "id": "slime-meadow-e",
       "region": {
         "kind": "circle",
-        "x": 106,
-        "z": 116,
+        "x": 318,
+        "z": 348,
         "r": 14
       },
       "mobs": [
@@ -84,7 +84,7 @@
           "weight": 1
         }
       ],
-      "maxAlive": 4,
+      "maxAlive": 8,
       "packSize": [
         1,
         2
@@ -95,8 +95,8 @@
       "id": "wolf-den-w",
       "region": {
         "kind": "circle",
-        "x": 40,
-        "z": 55,
+        "x": 120,
+        "z": 165,
         "r": 18
       },
       "mobs": [
@@ -105,7 +105,7 @@
           "weight": 1
         }
       ],
-      "maxAlive": 5,
+      "maxAlive": 10,
       "packSize": [
         2,
         3
@@ -116,8 +116,8 @@
       "id": "wolf-den-e",
       "region": {
         "kind": "circle",
-        "x": 120,
-        "z": 60,
+        "x": 360,
+        "z": 180,
         "r": 16
       },
       "mobs": [
@@ -126,7 +126,7 @@
           "weight": 1
         }
       ],
-      "maxAlive": 4,
+      "maxAlive": 8,
       "packSize": [
         2,
         2
@@ -134,11 +134,32 @@
       "respawnSec": 40
     },
     {
+      "id": "wolf-den-n",
+      "region": {
+        "kind": "circle",
+        "x": 240,
+        "z": 240,
+        "r": 18
+      },
+      "mobs": [
+        {
+          "mob": "wolf",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [
+        2,
+        3
+      ],
+      "respawnSec": 40
+    },
+    {
       "id": "bandit-camp",
       "region": {
         "kind": "circle",
-        "x": 85,
-        "z": 30,
+        "x": 255,
+        "z": 90,
         "r": 13
       },
       "mobs": [
@@ -147,12 +168,145 @@
           "weight": 1
         }
       ],
-      "maxAlive": 4,
+      "maxAlive": 8,
       "packSize": [
         2,
         2
       ],
       "respawnSec": 60
+    },
+    {
+      "id": "boar-meadow-s",
+      "region": {
+        "kind": "circle",
+        "x": 200,
+        "z": 400,
+        "r": 20
+      },
+      "mobs": [
+        {
+          "mob": "boar",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [
+        1,
+        2
+      ],
+      "respawnSec": 30
+    },
+    {
+      "id": "boar-meadow-e",
+      "region": {
+        "kind": "circle",
+        "x": 330,
+        "z": 410,
+        "r": 16
+      },
+      "mobs": [
+        {
+          "mob": "boar",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [
+        1,
+        2
+      ],
+      "respawnSec": 30
+    },
+    {
+      "id": "fen-approach-spiders",
+      "region": {
+        "kind": "circle",
+        "x": 240,
+        "z": 80,
+        "r": 14
+      },
+      "mobs": [
+        {
+          "mob": "giant_spider",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 2,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 60
+    }
+  ],
+  "prefabs": [
+    {
+      "prefab": "bandit_fort",
+      "count": 1,
+      "minSpacing": 0,
+      "near": {
+        "x": 255,
+        "z": 90,
+        "within": 30
+      },
+      "bindSpawnTable": "bandit-camp"
+    },
+    {
+      "prefab": "spider_hollow",
+      "count": 1,
+      "minSpacing": 0,
+      "near": {
+        "x": 240,
+        "z": 80,
+        "within": 25
+      },
+      "bindSpawnTable": "fen-approach-spiders"
+    },
+    {
+      "prefab": "mine_adit",
+      "count": 2,
+      "minSpacing": 90
+    },
+    {
+      "prefab": "ruined_watchtower",
+      "count": 3,
+      "minSpacing": 60,
+      "ruinBias": 1
+    },
+    {
+      "prefab": "stone_circle",
+      "count": 2,
+      "minSpacing": 80
+    },
+    {
+      "prefab": "graveyard",
+      "count": 1,
+      "minSpacing": 0
+    },
+    {
+      "prefab": "hermit_hut",
+      "count": 1,
+      "minSpacing": 0
+    },
+    {
+      "prefab": "fallen_giant",
+      "count": 4,
+      "minSpacing": 55
+    },
+    {
+      "prefab": "wayshrine",
+      "count": 4,
+      "minSpacing": 70,
+      "nearPortals": true
+    },
+    {
+      "prefab": "abandoned_camp",
+      "count": 5,
+      "minSpacing": 45,
+      "nearPrefab": {
+        "id": "mine_adit",
+        "within": 60
+      }
     }
   ],
   "npcs": []

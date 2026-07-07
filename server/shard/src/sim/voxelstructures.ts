@@ -11,6 +11,7 @@
  */
 import { BLOCK, WORLD_HEIGHT, type RoomDef } from "@fantasy-mmo/common";
 import { hash2, type VoxelWorld } from "./voxel.js";
+import { scatterPrefabs, type Rect, type ScatterResult } from "./prefabs.js";
 
 const id = (name: string): number => {
   const def = BLOCK[name];
@@ -18,8 +19,39 @@ const id = (name: string): number => {
   return def.id;
 };
 
-export function stampStructures(world: VoxelWorld, def: RoomDef): void {
+/** The block surface Builder (and prefabs) write through. VoxelWorld
+ *  satisfies it structurally; /prefab's EditRecorder satisfies it too, so
+ *  admin stamps route through the persistence overlay instead of gen. */
+export interface BlockGrid {
+  get(x: number, y: number, z: number): number;
+  set(x: number, y: number, z: number, id: number): void;
+  setIfAir(x: number, y: number, z: number, id: number): void;
+  solidAt(x: number, y: number, z: number): boolean;
+  terrainHeight(def: RoomDef, x: number, z: number): number;
+}
+
+/** Rects claimed by authored builders — prefab scatter must not overlap them.
+ *  Kept beside the builders so the constants can't drift apart. */
+function authoredExclusions(def: RoomDef): Rect[] {
+  const out: Rect[] = [];
+  // flagged regions (the forest PvP arena) are always authored ground
+  for (const r of def.regions) {
+    out.push({ x0: r.x - r.r - 3, z0: r.z - r.r - 3, x1: r.x + r.r + 3, z1: r.z + r.r + 3 });
+  }
+  if (def.id === "desert") {
+    // sunken ruins + the oasis (same constants as buildDesertRuins)
+    out.push({ x0: DESERT_RUIN_W.cx - 9, z0: DESERT_RUIN_W.cz - 8, x1: DESERT_RUIN_W.cx + 9, z1: DESERT_RUIN_W.cz + 8 });
+    out.push({ x0: DESERT_RUIN_E.cx - 8, z0: DESERT_RUIN_E.cz - 7, x1: DESERT_RUIN_E.cx + 8, z1: DESERT_RUIN_E.cz + 7 });
+    out.push({ x0: DESERT_OASIS.x - 10, z0: DESERT_OASIS.z - 10, x1: DESERT_OASIS.x + 10, z1: DESERT_OASIS.z + 10 });
+  }
+  return out;
+}
+
+export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult {
   const b = new Builder(world, def);
+  // prefab scatter first: authored builders overwrite it where they must,
+  // exclusion rects keep prefabs clear of authored ground entirely
+  const features = scatterPrefabs(b, def, authoredExclusions(def));
   switch (def.id) {
     case "hub":
       buildHubCity(b, def);
@@ -37,15 +69,17 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): void {
       buildGroundsPavilion(b, def);
       break;
   }
-  // every portal gets a stone archway + a path apron facing the room spawn
+  // every portal gets a stone archway + a path apron facing the room spawn —
+  // stamped LAST so arches always win over scatter and authored ground
   for (const p of def.portals) {
     b.portalArch(Math.round(p.x), Math.round(p.z), Math.abs(def.spawn.x - p.x) > Math.abs(def.spawn.z - p.z));
   }
+  return features;
 }
 
-class Builder {
+export class Builder {
   constructor(
-    readonly world: VoxelWorld,
+    readonly world: BlockGrid,
     readonly def: RoomDef
   ) {}
 
@@ -394,7 +428,13 @@ function buildForestArena(b: Builder, def: RoomDef): void {
 
 // ---------------------------------------------------------------------------
 // Desert — sunken sandstone ruins at the skeleton camps, palms at the oasis.
+// Constants shared with authoredExclusions so scatter stays clear of them.
+// (480² retune: the old 160² coords ×3.)
 // ---------------------------------------------------------------------------
+const DESERT_RUIN_W = { cx: 114, cz: 186, w: 14, d: 11 };
+const DESERT_RUIN_E = { cx: 354, cz: 210, w: 12, d: 10 };
+const DESERT_OASIS = { x: 324, z: 354 };
+
 function buildDesertRuins(b: Builder, def: RoomDef): void {
   const seed = def.terrain.seed;
   const ruin = (cx: number, cz: number, w: number, d: number) => {
@@ -427,12 +467,12 @@ function buildDesertRuins(b: Builder, def: RoomDef): void {
       b.set(x, b.g(x, z), z, "sandstone");
     }
   };
-  ruin(38, 62, 14, 11);
-  ruin(118, 70, 12, 10);
+  ruin(DESERT_RUIN_W.cx, DESERT_RUIN_W.cz, DESERT_RUIN_W.w, DESERT_RUIN_W.d);
+  ruin(DESERT_RUIN_E.cx, DESERT_RUIN_E.cz, DESERT_RUIN_E.w, DESERT_RUIN_E.d);
 
   // oasis: carve a pond bowl and ring it with palms
-  const OX = 108,
-    OZ = 118;
+  const OX = DESERT_OASIS.x,
+    OZ = DESERT_OASIS.z;
   const wl = def.terrain.waterLevel ?? 10;
   for (let z = OZ - 6; z <= OZ + 6; z++)
     for (let x = OX - 6; x <= OX + 6; x++) {
@@ -444,14 +484,15 @@ function buildDesertRuins(b: Builder, def: RoomDef): void {
       b.world.set(x, floor, z, id("sand"));
       for (let y = floor + 1; y <= wl; y++) b.world.set(x, y, z, id("water"));
     }
-  for (const [px, pz] of [
-    [101, 116],
-    [104, 124],
-    [112, 111],
-    [115, 122],
-    [108, 110],
+  // palms keep their old offsets around the (moved) oasis center
+  for (const [dx, dz] of [
+    [-7, -2],
+    [-4, 6],
+    [4, -7],
+    [7, 4],
+    [0, -8],
   ] as const) {
-    b.palm(px, pz);
+    b.palm(OX + dx, OZ + dz);
   }
 }
 

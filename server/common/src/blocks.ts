@@ -23,6 +23,10 @@ const BlockDefSchema = z.object({
   glow: z.boolean().optional(),
   light: z.number().int().min(0).max(15).optional(),
   tex: z.record(z.string(), z.string()).optional(),
+  /** client sound-group suffixes (manifest names step_X/break_X/place_X) */
+  sounds: z
+    .object({ step: z.string().optional(), break: z.string().optional(), place: z.string().optional() })
+    .optional(),
 });
 export type BlockDef = z.infer<typeof BlockDefSchema>;
 

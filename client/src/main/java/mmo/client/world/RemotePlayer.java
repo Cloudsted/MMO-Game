@@ -57,6 +57,20 @@ public class RemotePlayer {
     private float hitFlash = 0f;
     private final Vector3 tmp = new Vector3();
 
+    // audio cues, consumed by WorldScreen (which owns the AudioEngine calls):
+    // footsteps accumulate over interpolated motion while anim=="move";
+    // attack cue fires on the act transition into windup/cast (the mob's
+    // telegraph moment); idle vocals run a per-mob 7-15 s timer that skips
+    // ticks while the mob is mid-action.
+    private static final float STEP_LEN_M = 1.8f;
+    private float stepAccum = 0;
+    private float lastStepX, lastStepZ;
+    private boolean haveStepPrev = false;
+    private boolean stepDue = false;
+    private boolean attackCue = false;
+    private float idleVocalT = MathUtils.random(7f, 15f);
+    private boolean idleVocalDue = false;
+
     private static class Sample {
         long t;
         float x, y, z, yaw;
@@ -109,9 +123,31 @@ public class RemotePlayer {
 
     private void setAct(String newAct, float msLeft) {
         if (newAct == null) return;
+        if (!newAct.equals(act) && ("windup".equals(newAct) || "cast".equals(newAct))) attackCue = true;
         act = newAct;
         actStartedAt = System.currentTimeMillis();
         actEndsAt = actStartedAt + (long) msLeft;
+    }
+
+    /** True once when a footstep distance threshold was crossed. */
+    public boolean consumeStep() {
+        boolean due = stepDue;
+        stepDue = false;
+        return due;
+    }
+
+    /** True once when the entity entered windup/cast (attack telegraph). */
+    public boolean consumeAttackCue() {
+        boolean due = attackCue;
+        attackCue = false;
+        return due;
+    }
+
+    /** True once when the periodic idle-vocal timer fired while unengaged. */
+    public boolean consumeIdleVocal() {
+        boolean due = idleVocalDue;
+        idleVocalDue = false;
+        return due;
     }
 
     public void applyDelta(com.google.gson.JsonObject d) {
@@ -187,6 +223,30 @@ public class RemotePlayer {
         boolean moving = "move".equals(anim) && !isDead();
         if (moving) animTime += dt;
         bobTime += dt;
+
+        // footstep accumulation over the interpolated path (WorldScreen
+        // consumes stepDue, budgets globally, and plays the material step)
+        if (haveStepPrev && moving && !"loot".equals(kind)) {
+            float sdx = pos.x - lastStepX, sdz = pos.z - lastStepZ;
+            stepAccum += (float) Math.sqrt(sdx * sdx + sdz * sdz);
+            if (stepAccum >= STEP_LEN_M) {
+                stepAccum %= STEP_LEN_M;
+                stepDue = true;
+            }
+        }
+        lastStepX = pos.x;
+        lastStepZ = pos.z;
+        haveStepPrev = true;
+
+        // idle vocal timer (mobs only; a tick that lands mid-action is
+        // skipped rather than deferred — telegraphs own that moment)
+        if ("mob".equals(kind) && !isDead()) {
+            idleVocalT -= dt;
+            if (idleVocalT <= 0f) {
+                idleVocalT = MathUtils.random(7f, 15f);
+                if ("idle".equals(act) || "move".equals(act)) idleVocalDue = true;
+            }
+        }
 
         // row selection vs. camera angle
         float toCam = MathUtils.atan2(cam.position.x - pos.x, cam.position.z - pos.z);

@@ -117,6 +117,9 @@ export const RoomStateSchema = z.object({
   spawners: z.record(z.string(), z.array(z.number())).default({}),
   /** sparse voxel edits applied over deterministic generation */
   blocks: z.array(BlockEditWireSchema).default([]),
+  /** prefab loot caches: "x,y,z" cache key → lastLootedAt ms epoch, so a
+   *  restart doesn't refill freshly-looted caches instantly */
+  caches: z.record(z.string(), z.number()).default({}),
 });
 export type RoomState = z.infer<typeof RoomStateSchema>;
 

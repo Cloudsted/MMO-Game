@@ -71,6 +71,27 @@ export const SpawnTableSchema = z.object({
 });
 export type SpawnTable = z.infer<typeof SpawnTableSchema>;
 
+/** Deterministic prefab scatter config (worldgen prefab system). Entries
+ *  place in array order — earlier entries claim ground first. near/nearPrefab/
+ *  nearPortals are SOFT constraints: if the constrained candidate pass
+ *  under-fills, remaining candidates fall back to unconstrained placement. */
+export const PrefabScatterSchema = z.object({
+  prefab: z.string(),
+  count: z.number().int().positive(),
+  minSpacing: z.number().nonnegative().default(0),
+  /** scales the distance-based ruin gradient (higher = more ruined) */
+  ruinBias: z.number().optional(),
+  /** prefer sites near the room's portals */
+  nearPortals: z.boolean().optional(),
+  /** prefer sites within `within` of an already-placed prefab of `id` */
+  nearPrefab: z.object({ id: z.string(), within: z.number() }).optional(),
+  /** prefer sites within `within` of a fixed point (authored anchor) */
+  near: z.object({ x: z.number(), z: z.number(), within: z.number() }).optional(),
+  /** re-center this room spawn table onto the prefab's spawnRegion hook */
+  bindSpawnTable: z.string().optional(),
+});
+export type PrefabScatterDef = z.infer<typeof PrefabScatterSchema>;
+
 export const NpcDefSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -148,6 +169,8 @@ export const RoomDefSchema = z.object({
   }),
   portals: z.array(PortalDefSchema),
   spawnTables: z.array(SpawnTableSchema),
+  /** deterministic prefab scatter (ruins, camps, shrines...) — optional */
+  prefabs: z.array(PrefabScatterSchema).default([]),
   npcs: z.array(NpcDefSchema),
 });
 

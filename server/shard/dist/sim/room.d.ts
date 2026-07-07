@@ -3,7 +3,7 @@
  * FSM, mob AI, loot, XP, economy, chat, and interest-managed delta snapshots.
  * Networking and IPC stay in roomhost.ts — this module never touches ws.
  */
-import { RegistryService, type CharacterSnapshot, type CombatEvent, type ItemStack, type PortalDef, type PortalWire, type RoomDef, type RoomState, type ServerToClient } from "@fantasy-mmo/common";
+import { RegistryService, type CharacterSnapshot, type CombatEvent, type ItemStack, type PortalDef, type PortalWire, type RoomDef, type RoomState, type ServerToClient, type SpawnTable } from "@fantasy-mmo/common";
 import { type Entity, type ReplicatedState } from "./entities.js";
 import { VoxelWorld } from "./voxel.js";
 export interface PlayerSession {
@@ -27,6 +27,17 @@ export interface PlayerSession {
     lastSentHp: number;
     lastSentMana: number;
     send: (msg: ServerToClient) => void;
+}
+/** A prefab loot cache the room keeps stocked (world coords, live state). */
+interface CacheState {
+    key: string;
+    x: number;
+    y: number;
+    z: number;
+    table: string;
+    respawnSec: number;
+    lastLootedAt: number;
+    hadBag: boolean;
 }
 export declare class RoomSim {
     def: RoomDef;
@@ -57,6 +68,10 @@ export declare class RoomSim {
     onExpireRequest: ((sec: number) => void) | null;
     /** destination-room availability (sealed dungeon portals) */
     private roomStatus;
+    /** def spawn tables + prefab bindings/payload tables — mobs use THESE */
+    private liveTables;
+    /** prefab loot caches the room tick keeps stocked */
+    private caches;
     constructor(def: RoomDef, snapshot?: RoomState | null);
     private initSpawners;
     private spawnPack;
@@ -64,6 +79,17 @@ export declare class RoomSim {
     private initNpcs;
     private restoreDrops;
     private spawnLootBag;
+    /** Cache table "auto" resolves per room: cache_<roomId> when it exists. */
+    private resolveCacheTable;
+    /** Keep prefab caches stocked: when a cache has no bag, its respawn window
+     *  has elapsed since it was last looted, and nobody is close enough to see
+     *  it pop in, roll the cache table into a fresh unowned bag that never
+     *  expires. Runs ~1 Hz from tick(). */
+    private tickCaches;
+    /** Test/tooling access: live cache states. */
+    allCaches(): ReadonlyArray<CacheState>;
+    /** Test/tooling access: spawn tables after prefab bindings/merges. */
+    liveSpawnTables(): ReadonlyArray<SpawnTable>;
     /** Representative bag contents for replication: rarest first, capped at 3. */
     private lootViewOf;
     private waterLevel;
@@ -184,4 +210,5 @@ export declare class RoomSim {
     allEntities(): IterableIterator<Entity>;
     getSession(entityId: number): PlayerSession | undefined;
 }
+export {};
 //# sourceMappingURL=room.d.ts.map

@@ -28,6 +28,7 @@ import {
   type RoomState,
   type ServerToClient,
   type ShopWire,
+  type SpawnTable,
 } from "@fantasy-mmo/common";
 import {
   allocEntityId,
@@ -50,7 +51,9 @@ import {
 } from "./combat.js";
 import { addItem, HOTBAR_SIZE, INV_SIZE, normalizeInventory, removeFromSlot, rollLoot } from "./loot.js";
 import { applyMove, findSpawnPoint, pickMob, separateEntities, tickBrain } from "./mobs.js";
+import { EditRecorder, PREFABS, stampPrefab } from "./prefabs.js";
 import { VoxelWorld } from "./voxel.js";
+import { Builder } from "./voxelstructures.js";
 
 /** Chunks per `chunks` message — a whole room ships in a handful of frames. */
 const CHUNKS_PER_MSG = 12;
@@ -89,6 +92,21 @@ interface Spawner {
   respawnAts: number[];
 }
 
+/** A prefab loot cache the room keeps stocked (world coords, live state). */
+interface CacheState {
+  key: string; // "x,y,z" — persistence key in RoomState.caches
+  x: number;
+  y: number;
+  z: number;
+  table: string; // "auto" resolves to cache_<roomId> (cache_forest fallback)
+  respawnSec: number;
+  lastLootedAt: number;
+  hadBag: boolean; // a bag was present last sweep — absence now means looted
+}
+
+/** No cache bag spawns while a player is this close (they'd see it pop in). */
+const CACHE_PLAYER_EXCLUSION_M = 20;
+
 export class RoomSim {
   private log;
   private consts = gameConstants();
@@ -119,6 +137,11 @@ export class RoomSim {
   /** destination-room availability (sealed dungeon portals) */
   private roomStatus = new Map<string, boolean>();
 
+  /** def spawn tables + prefab bindings/payload tables — mobs use THESE */
+  private liveTables: SpawnTable[];
+  /** prefab loot caches the room tick keeps stocked */
+  private caches: CacheState[];
+
   constructor(public def: RoomDef, snapshot: RoomState | null = null) {
     this.log = makeLogger(`room/${def.id}`);
     this.world = new VoxelWorld(def);
@@ -129,6 +152,36 @@ export class RoomSim {
     // resume the room clock from the last snapshot — survives restarts/moves
     this.clockBase = snapshot ? snapshot.timeOfDay : 0.35;
     if (snapshot) this.log.info(`resumed room clock at ${snapshot.timeOfDay.toFixed(3)}`);
+    // live spawn tables: prefab spawnRegion bindings re-center def tables onto
+    // their prefab site (bandit fort); prefab-carried tables merge in. All of
+    // it is deterministic gen output — same tables every boot.
+    this.liveTables = this.def.spawnTables.map((t) => ({ ...t, region: { ...t.region } }));
+    for (const bind of this.world.features.bindings) {
+      const t = this.liveTables.find((lt) => lt.id === bind.tableId);
+      if (t) {
+        t.region.x = bind.x;
+        t.region.z = bind.z;
+        this.log.info(`spawn table '${t.id}' bound to prefab site (${bind.x}, ${bind.z})`);
+      } else {
+        this.log.warn(`prefab binding references unknown spawn table '${bind.tableId}'`);
+      }
+    }
+    this.liveTables.push(...this.world.features.extraTables);
+    // prefab loot caches (+ persisted lastLootedAt so restarts don't refill)
+    this.caches = this.world.features.caches.map((c) => ({
+      key: `${Math.floor(c.x)},${Math.floor(c.y)},${Math.floor(c.z)}`,
+      x: c.x,
+      y: c.y,
+      z: c.z,
+      table: c.table,
+      respawnSec: c.respawnSec,
+      lastLootedAt: 0,
+      hadBag: false,
+    }));
+    if (snapshot?.caches) {
+      for (const c of this.caches) c.lastLootedAt = snapshot.caches[c.key] ?? 0;
+    }
+    if (this.caches.length > 0) this.log.info(`${this.caches.length} prefab loot cache(s) registered`);
     this.initSpawners(snapshot);
     this.initNpcs();
     this.restoreDrops(snapshot);
@@ -138,7 +191,7 @@ export class RoomSim {
 
   private initSpawners(snapshot: RoomState | null): void {
     const now = Date.now();
-    for (const table of this.def.spawnTables) {
+    for (const table of this.liveTables) {
       const persisted = snapshot?.spawners?.[table.id] ?? [];
       const pending = persisted.filter((t) => t > now);
       const spawner: Spawner = { id: table.id, alive: new Set(), respawnAts: pending };
@@ -152,11 +205,11 @@ export class RoomSim {
       }
     }
     const mobCount = [...this.entities.values()].filter((e) => e.kind === "mob").length;
-    if (mobCount > 0) this.log.info(`spawned ${mobCount} mobs from ${this.def.spawnTables.length} tables`);
+    if (mobCount > 0) this.log.info(`spawned ${mobCount} mobs from ${this.liveTables.length} tables`);
   }
 
   private spawnPack(spawnerId: string, count: number): void {
-    const table = this.def.spawnTables.find((t) => t.id === spawnerId);
+    const table = this.liveTables.find((t) => t.id === spawnerId);
     const spawner = this.spawners.get(spawnerId);
     if (!table || !spawner) return;
     const at = findSpawnPoint(table, this.world, this.waterLevel());
@@ -232,7 +285,9 @@ export class RoomSim {
     let restored = 0;
     for (const d of snapshot.drops) {
       if (d.expireAt !== null && d.expireAt < now) continue;
-      this.spawnLootBag(d.x, d.z, d.items, d.gold, d.owner, d.unlockAt, d.expireAt);
+      // restore at the persisted y: cache bags can sit INSIDE structures
+      // (mine tunnels) where the column's standY is the hilltop above
+      this.spawnLootBag(d.x, d.z, d.items, d.gold, d.owner, d.unlockAt, d.expireAt, d.y);
       restored++;
     }
     if (restored > 0) this.log.info(`restored ${restored} loot drop(s) from snapshot`);
@@ -245,18 +300,91 @@ export class RoomSim {
     gold: number,
     owner: string | null,
     unlockAt: number,
-    expireAt: number | null
+    expireAt: number | null,
+    atY?: number
   ): Entity {
     const e: Entity = {
       id: allocEntityId(),
       kind: "loot",
-      pos: { x, y: this.world.standY(x, z), z, yaw: 0 },
+      pos: { x, y: atY ?? this.world.standY(x, z), z, yaw: 0 },
       renderable: { sprite: "loot_bag", anim: "idle" },
       loot: { items, gold, owner, unlockAt, expireAt },
       lootView: this.lootViewOf(items),
     };
     this.entities.set(e.id, e);
     return e;
+  }
+
+  // ---------- prefab loot caches ----------
+
+  /** Cache table "auto" resolves per room: cache_<roomId> when it exists. */
+  private resolveCacheTable(table: string): string {
+    if (table !== "auto") return table;
+    const roomTable = `cache_${this.def.id}`;
+    return this.reg.loot[roomTable] ? roomTable : "cache_forest";
+  }
+
+  /** Keep prefab caches stocked: when a cache has no bag, its respawn window
+   *  has elapsed since it was last looted, and nobody is close enough to see
+   *  it pop in, roll the cache table into a fresh unowned bag that never
+   *  expires. Runs ~1 Hz from tick(). */
+  private tickCaches(now: number): void {
+    for (const cache of this.caches) {
+      // is the cache's bag still out there? (position match, not identity —
+      // survives restarts where bags come back via restoreDrops)
+      let present = false;
+      for (const e of this.entities.values()) {
+        if (e.kind !== "loot") continue;
+        if (
+          Math.abs(e.pos.x - cache.x) <= 1.5 &&
+          Math.abs(e.pos.z - cache.z) <= 1.5 &&
+          Math.abs(e.pos.y - cache.y) <= 3
+        ) {
+          present = true;
+          break;
+        }
+      }
+      if (present) {
+        cache.hadBag = true;
+        continue;
+      }
+      if (cache.hadBag) {
+        // the bag vanished since last sweep — somebody emptied it
+        cache.hadBag = false;
+        cache.lastLootedAt = now;
+        continue;
+      }
+      if (now - cache.lastLootedAt < cache.respawnSec * 1000) continue;
+      let playerNear = false;
+      for (const s of this.sessions.values()) {
+        if (Math.hypot(s.entity.pos.x - cache.x, s.entity.pos.z - cache.z) < CACHE_PLAYER_EXCLUSION_M) {
+          playerNear = true;
+          break;
+        }
+      }
+      if (playerNear) continue;
+      const rolled = rollLoot(this.reg, this.consts, this.resolveCacheTable(cache.table));
+      if (rolled.items.length === 0 && rolled.gold === 0) {
+        cache.lastLootedAt = now; // all-nothing roll: try again next window
+        continue;
+      }
+      // snap to the surface when the cache sits on open ground; keep the
+      // authored y when it's inside a structure (tunnel, tower top)
+      const surface = this.world.standY(cache.x, cache.z);
+      const bagY = Math.abs(surface - cache.y) <= 2 ? surface : cache.y;
+      this.spawnLootBag(cache.x, cache.z, rolled.items, rolled.gold, null, 0, null, bagY);
+      cache.hadBag = true;
+    }
+  }
+
+  /** Test/tooling access: live cache states. */
+  allCaches(): ReadonlyArray<CacheState> {
+    return this.caches;
+  }
+
+  /** Test/tooling access: spawn tables after prefab bindings/merges. */
+  liveSpawnTables(): ReadonlyArray<SpawnTable> {
+    return this.liveTables;
   }
 
   /** Representative bag contents for replication: rarest first, capped at 3. */
@@ -445,7 +573,11 @@ export class RoomSim {
     for (const s of this.spawners.values()) {
       if (s.respawnAts.length > 0) spawners[s.id] = s.respawnAts;
     }
-    return { timeOfDay: this.timeOfDay(), savedAt: Date.now(), drops, spawners, blocks: this.world.serializeEdits() };
+    const caches: Record<string, number> = {};
+    for (const c of this.caches) {
+      if (c.lastLootedAt > 0) caches[c.key] = c.lastLootedAt;
+    }
+    return { timeOfDay: this.timeOfDay(), savedAt: Date.now(), drops, spawners, blocks: this.world.serializeEdits(), caches };
   }
 
   playerCount(): number {
@@ -880,7 +1012,7 @@ export class RoomSim {
       }
       this.damageLog.delete(tgt.id);
       // schedule respawn + corpse removal
-      const table = this.def.spawnTables.find((t) => t.id === tgt.brain!.spawnerId);
+      const table = this.liveTables.find((t) => t.id === tgt.brain!.spawnerId);
       const spawner = this.spawners.get(tgt.brain!.spawnerId);
       if (table && spawner) {
         spawner.alive.delete(tgt.id);
@@ -1341,8 +1473,39 @@ export class RoomSim {
         this.system(session, `Transferring to ${roomId}...`);
         break;
       }
+      case "prefab": {
+        // stamp a prefab through the EDIT overlay (applyEdit, owner null):
+        // /clearblocks wipes it, it persists in RoomState — never gen-time
+        // set(). This is the Atelier iteration loop.
+        const pid = args[0] ?? "";
+        if (!PREFABS[pid]) {
+          this.system(session, `Unknown prefab '${pid}'. Have: ${Object.keys(PREFABS).join(", ")}`);
+          return;
+        }
+        const rot = Math.min(3, Math.max(0, parseInt(args[1] ?? "0", 10) || 0)) as 0 | 1 | 2 | 3;
+        const ruin = Math.min(2, Math.max(0, parseInt(args[2] ?? "0", 10) || 0)) as 0 | 1 | 2;
+        // origin ~3 blocks ahead of the player along their facing, floored
+        const p = session.entity.pos;
+        const ox = Math.floor(p.x + Math.sin(p.yaw) * 3);
+        const oz = Math.floor(p.z + Math.cos(p.yaw) * 3);
+        const rec = new EditRecorder(this.world);
+        try {
+          stampPrefab(new Builder(rec, this.def), pid, ox, oz, rot, ruin);
+        } catch (err) {
+          this.system(session, `Stamp failed: ${err instanceof Error ? err.message : err}`);
+          return;
+        }
+        const cells = rec.cells();
+        for (const c of cells) this.world.applyEdit(c.x, c.y, c.z, c.id, null);
+        this.chunkCache = null;
+        for (const c of cells) {
+          for (const sess of this.sessions.values()) sess.send({ t: "blockSet", x: c.x, y: c.y, z: c.z, id: c.id });
+        }
+        this.system(session, `Stamped ${pid} (rot ${rot}, ruin ${ruin}) at ${ox},${oz} — ${cells.length} block(s). /clearblocks reverts.`);
+        break;
+      }
       default:
-        this.system(session, `Unknown command /${cmd}. Have: give gold tp spawnmob time level reload clearblocks expire room`);
+        this.system(session, `Unknown command /${cmd}. Have: give gold tp spawnmob time level reload clearblocks expire room prefab`);
     }
   }
 
@@ -1493,6 +1656,9 @@ export class RoomSim {
       spawner.respawnAts = spawner.respawnAts.filter((t) => t > now);
       for (const _ of due) this.spawnPack(spawner.id, 1);
     }
+
+    // 6b. prefab loot caches (~1 Hz is plenty; bags are position-matched)
+    if (this.tickNo % 10 === 0) this.tickCaches(now);
 
     // 7. corpse removal + loot expiry
     for (const pending of this.pendingRemovals.filter((p) => p.at <= now)) this.removeEntity(pending.id);

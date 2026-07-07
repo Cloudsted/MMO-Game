@@ -430,6 +430,56 @@ show their block tile).
     only hub bytes near NPCs change. Regression test asserts every hub NPC
     column's standY === terrain+1.
 
+- 2026-07-07 **SOUND ENGINE UPGRADE** (owner spec in scratchpad
+  sound-design.md): occlusion + variant/pitch controls + per-block
+  step/break/place + local/remote footsteps + per-mob vocals. 123 manifest
+  groups (16 legacy untouched), 344 sfx oggs, 7 ambient beds.
+  - **Manifest params** (build-sounds.mjs → AudioEngine): per-group
+    `pitchVar/volVar/pitch/vol`; variant pick never repeats the last index;
+    libGDX one-shot pitch IS tempo (resampling) — one knob covers both.
+  - **Occlusion** in playAt: voxel raymarch listener→source, 0.5 m steps,
+    0.75 m skipped at BOTH ends (own block never occludes), consecutive-dup
+    cells count once; 1 hit = ×0.6 vol, 2+ = ×0.4, pan ×0.7 (muffled reads
+    less directional). `AudioEngine.setWorld` wired on `world` msg + nulled
+    in WorldScreen.dispose (dispose runs after setScreen, before the next
+    screen's first render — can't clobber the newer world).
+  - **Blocks**: every blocks.json block carries `sounds:{step,break,place}`
+    group suffixes (shared groups: stone/wood/plant/glass/metal...; registry
+    defaults cube→stone, cross→plant, liquid→water step). blockSet handler
+    reads the OLD id BEFORE applying — id 0 = break, sound from what died;
+    else place sound of the new block. `build` group orphaned but kept.
+  - **Footsteps**: local = 1.8 m walked (grounded or wading) → quiet
+    non-positional `step_<material under feet>` (water when swimming);
+    remote (players+mobs+NPCs) accumulate over interpolated motion while
+    anim=="move", ≤20 m, global token bucket ~6 steps/s nearest-first.
+  - **Mob vocals**: mobs.json `sounds:{idle,attack,hurt,die}` for all 19
+    mobs (AudioEngine loads it via SharedJson, keyed by SPRITE — the only
+    mob identity on the wire). attack = act transition into windup/cast
+    (RemotePlayer.setAct cue), hurt = dmg evt layered under generic "hit",
+    die = replaces generic mob_die, idle = per-mob 7–15 s timer ≤22 m that
+    SKIPS ticks mid-action + global 800 ms anti-chorus gap. Sources:
+    Monsters Sounds Pro size classes, Troll/Goblin/Zombie/Ghost voice packs,
+    Animal packs (wolf=howls+dog attacks/cries, boar=pig, serpent=snake),
+    DOGLS mp3 grunts (bandit), fire whooshes layered into the elemental's
+    variant pools; bone_bat = wings+critter squeals at base pitch 1.25.
+  - **New-room ambience pre-wired**: gloomfen→swamp_gloom(frogs),
+    cinderrift→wind_storm, crypt_depths→drone_crypt(graveyard),
+    atelier→hub bed. setContext logs bed changes under MMO_AUDIO_LOG.
+  - **MMO_AUDIO_LOG=1** logs every play decision `[audio] play <group>
+    var=N vol=X pan=Y occl=H` EVEN under MMO_MUTE (manifest defs parse
+    muted; Sounds just don't load) — unattended runs prove audio by grep.
+    Verified live: hub soak logged 130 NPC footsteps in 3 materials
+    (stone/grass/gravel roads) + 1 occluded play; zero MISSING groups.
+  - **Pipeline**: build-sounds.mjs validates every source (existsSync,
+    warn-and-continue), then a completeness check FAILS the build (exit 1)
+    unless every blocks.json/mobs.json sound ref resolves to a manifest
+    group with ≥1 variant. `--paths` = dry-run existence check only.
+    **TRAP: never rmSync the audio output tree** — a running client
+    STREAMS ambient/music oggs and Windows EBUSY kills the delete halfway,
+    leaving a half-empty dir under the owner's live client; the build now
+    overwrites in place and keeps locked-but-existing files (LOCKED warn).
+    Footsteps cap at 1 s; mob vocals keep the 3 s cap.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes

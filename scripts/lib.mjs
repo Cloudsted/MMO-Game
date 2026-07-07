@@ -72,7 +72,9 @@ export function findPath(terrain, sx, sz, tx, tz) {
   let best = [sxi, szi];
   let bestD = Math.hypot(sxi - txi, szi - tzi);
   const standAt = (x, z) => terrain.heightAt(x + 0.5, z + 0.5);
-  for (let head = 0; head < queue.length && head < 60000; head++) {
+  // cap covers a full 480² wild room (was 60k — a 160²-era assumption that
+  // silently truncated long walks after the retune)
+  for (let head = 0; head < queue.length && head < 250000; head++) {
     const [x, z] = queue[head];
     const d = Math.hypot(x - txi, z - tzi);
     if (d < bestD) {

@@ -3,114 +3,133 @@
     "name": "Slime", "sprite": "slime", "level": 1,
     "hp": 30, "damage": 4, "moveSpeed": 1.7,
     "ability": "slime_bounce", "aggroRadius": 7, "attackRange": 1.5,
-    "leashRadius": 20, "fleeAtHpPct": 0, "xp": 14, "loot": "slime_drops"
+    "leashRadius": 20, "fleeAtHpPct": 0, "xp": 14, "loot": "slime_drops",
+    "sounds": { "idle": "slime_idle", "attack": "slime_attack", "hurt": "slime_hurt", "die": "slime_die" }
   },
   "wolf": {
     "name": "Wolf", "sprite": "wolf", "level": 3,
     "hp": 62, "damage": 8, "moveSpeed": 3.4,
     "ability": "wolf_bite", "aggroRadius": 11, "attackRange": 1.7,
-    "leashRadius": 26, "fleeAtHpPct": 0.15, "xp": 34, "loot": "wolf_drops"
+    "leashRadius": 26, "fleeAtHpPct": 0.15, "xp": 34, "loot": "wolf_drops",
+    "sounds": { "idle": "wolf_idle", "attack": "wolf_attack", "hurt": "wolf_hurt", "die": "wolf_die" }
   },
   "bandit": {
     "name": "Bandit", "sprite": "bandit", "level": 5,
     "hp": 115, "damage": 12, "moveSpeed": 3.0,
     "ability": "bandit_slash", "aggroRadius": 10, "attackRange": 2.1,
-    "leashRadius": 24, "fleeAtHpPct": 0.1, "xp": 72, "loot": "bandit_drops"
+    "leashRadius": 24, "fleeAtHpPct": 0.1, "xp": 72, "loot": "bandit_drops",
+    "sounds": { "idle": "bandit_idle", "attack": "bandit_attack", "hurt": "bandit_hurt", "die": "bandit_die" }
   },
   "skeleton": {
     "name": "Skeleton", "sprite": "skeleton", "level": 6,
     "hp": 95, "damage": 11, "moveSpeed": 2.8,
     "ability": "skeleton_slash", "aggroRadius": 10, "attackRange": 2.0,
-    "leashRadius": 24, "fleeAtHpPct": 0, "xp": 58, "loot": "skeleton_drops"
+    "leashRadius": 24, "fleeAtHpPct": 0, "xp": 58, "loot": "skeleton_drops",
+    "sounds": { "idle": "skeleton_idle", "attack": "skeleton_attack", "hurt": "skeleton_hurt", "die": "skeleton_die" }
   },
   "cacto": {
     "name": "Cacto", "sprite": "cacto", "level": 5,
     "hp": 140, "damage": 15, "moveSpeed": 1.4,
     "ability": "cacto_spike", "aggroRadius": 6, "attackRange": 1.7,
-    "leashRadius": 15, "fleeAtHpPct": 0, "xp": 62, "loot": "cacto_drops"
+    "leashRadius": 15, "fleeAtHpPct": 0, "xp": 62, "loot": "cacto_drops",
+    "sounds": { "idle": "cacto_idle", "attack": "cacto_attack", "hurt": "cacto_hurt", "die": "cacto_die" }
   },
   "raptor": {
     "name": "Raptor", "sprite": "raptor", "level": 7,
     "hp": 78, "damage": 13, "moveSpeed": 4.3,
     "ability": "raptor_bite", "aggroRadius": 13, "attackRange": 1.7,
-    "leashRadius": 30, "fleeAtHpPct": 0.12, "xp": 74, "loot": "raptor_drops"
+    "leashRadius": 30, "fleeAtHpPct": 0.12, "xp": 74, "loot": "raptor_drops",
+    "sounds": { "idle": "raptor_idle", "attack": "raptor_attack", "hurt": "raptor_hurt", "die": "raptor_die" }
   },
   "minotaur_boss": {
     "name": "Gravelord Minotaur", "sprite": "minotaur", "level": 10,
     "hp": 680, "damage": 27, "moveSpeed": 3.1,
     "ability": "boss_slam", "aggroRadius": 15, "attackRange": 3.0,
-    "leashRadius": 34, "fleeAtHpPct": 0, "xp": 520, "loot": "boss_drops"
+    "leashRadius": 34, "fleeAtHpPct": 0, "xp": 520, "loot": "boss_drops",
+    "sounds": { "idle": "minotaur_boss_idle", "attack": "minotaur_boss_attack", "hurt": "minotaur_boss_hurt", "die": "minotaur_boss_die" }
   },
   "boar": {
     "name": "Bristleback Boar", "sprite": "boar", "level": 2,
     "hp": 45, "damage": 6, "moveSpeed": 3.0,
     "ability": "boar_gore", "aggroRadius": 9, "attackRange": 1.8,
-    "leashRadius": 24, "fleeAtHpPct": 0.2, "xp": 24, "loot": "boar_drops"
+    "leashRadius": 24, "fleeAtHpPct": 0.2, "xp": 24, "loot": "boar_drops",
+    "sounds": { "idle": "boar_idle", "attack": "boar_attack", "hurt": "boar_hurt", "die": "boar_die" }
   },
   "giant_spider": {
     "name": "Fen Weaver", "sprite": "giant_spider", "level": 8,
     "hp": 150, "damage": 17, "moveSpeed": 3.4,
     "ability": "spider_bite", "aggroRadius": 10, "attackRange": 1.9,
-    "leashRadius": 26, "fleeAtHpPct": 0, "xp": 170, "loot": "spider_drops"
+    "leashRadius": 26, "fleeAtHpPct": 0, "xp": 170, "loot": "spider_drops",
+    "sounds": { "idle": "giant_spider_idle", "attack": "giant_spider_attack", "hurt": "giant_spider_hurt", "die": "giant_spider_die" }
   },
   "bog_serpent": {
     "name": "Bog Serpent", "sprite": "bog_serpent", "level": 9,
     "hp": 170, "damage": 19, "moveSpeed": 3.8,
     "ability": "raptor_bite", "aggroRadius": 9, "attackRange": 1.8,
-    "leashRadius": 24, "fleeAtHpPct": 0, "xp": 220, "loot": "serpent_drops"
+    "leashRadius": 24, "fleeAtHpPct": 0, "xp": 220, "loot": "serpent_drops",
+    "sounds": { "idle": "bog_serpent_idle", "attack": "bog_serpent_attack", "hurt": "bog_serpent_hurt", "die": "bog_serpent_die" }
   },
   "mantrap": {
     "name": "Strangler Bloom", "sprite": "mantrap", "level": 9,
     "hp": 230, "damage": 24, "moveSpeed": 0.8,
     "ability": "mantrap_snap", "aggroRadius": 5, "attackRange": 2.0,
-    "leashRadius": 10, "fleeAtHpPct": 0, "xp": 240, "loot": "mantrap_drops"
+    "leashRadius": 10, "fleeAtHpPct": 0, "xp": 240, "loot": "mantrap_drops",
+    "sounds": { "idle": "mantrap_idle", "attack": "mantrap_attack", "hurt": "mantrap_hurt", "die": "mantrap_die" }
   },
   "lizardman": {
     "name": "Fenblade Lizardman", "sprite": "lizardman", "level": 11,
     "hp": 240, "damage": 26, "moveSpeed": 3.2,
     "ability": "bandit_slash", "aggroRadius": 10, "attackRange": 2.1,
-    "leashRadius": 26, "fleeAtHpPct": 0.1, "xp": 330, "loot": "lizardman_drops"
+    "leashRadius": 26, "fleeAtHpPct": 0.1, "xp": 330, "loot": "lizardman_drops",
+    "sounds": { "idle": "lizardman_idle", "attack": "lizardman_attack", "hurt": "lizardman_hurt", "die": "lizardman_die" }
   },
   "marsh_wisp": {
     "name": "Marsh Wisp", "sprite": "marsh_wisp", "level": 10,
     "hp": 130, "damage": 20, "moveSpeed": 2.4,
     "ability": "wisp_bolt", "aggroRadius": 12, "attackRange": 11,
-    "leashRadius": 26, "fleeAtHpPct": 0, "xp": 270, "loot": "wisp_drops"
+    "leashRadius": 26, "fleeAtHpPct": 0, "xp": 270, "loot": "wisp_drops",
+    "sounds": { "idle": "marsh_wisp_idle", "attack": "marsh_wisp_attack", "hurt": "marsh_wisp_hurt", "die": "marsh_wisp_die" }
   },
   "ash_husk": {
     "name": "Ash-Choked Husk", "sprite": "ash_husk", "level": 11,
     "hp": 260, "damage": 25, "moveSpeed": 1.9,
     "ability": "skeleton_slash", "aggroRadius": 11, "attackRange": 2.0,
-    "leashRadius": 28, "fleeAtHpPct": 0, "xp": 320, "loot": "husk_drops"
+    "leashRadius": 28, "fleeAtHpPct": 0, "xp": 320, "loot": "husk_drops",
+    "sounds": { "idle": "ash_husk_idle", "attack": "ash_husk_attack", "hurt": "ash_husk_hurt", "die": "ash_husk_die" }
   },
   "fire_elemental": {
     "name": "Cinder Elemental", "sprite": "fire_elemental", "level": 12,
     "hp": 180, "damage": 28, "moveSpeed": 2.6,
     "ability": "elemental_bolt", "aggroRadius": 12, "attackRange": 12,
-    "leashRadius": 26, "fleeAtHpPct": 0, "xp": 380, "loot": "fire_elemental_drops"
+    "leashRadius": 26, "fleeAtHpPct": 0, "xp": 380, "loot": "fire_elemental_drops",
+    "sounds": { "idle": "fire_elemental_idle", "attack": "fire_elemental_attack", "hurt": "fire_elemental_hurt", "die": "fire_elemental_die" }
   },
   "bone_bat": {
     "name": "Crypt Shrieker", "sprite": "bone_bat", "level": 12,
     "hp": 110, "damage": 18, "moveSpeed": 4.6,
     "ability": "raptor_bite", "aggroRadius": 13, "attackRange": 1.7,
-    "leashRadius": 30, "fleeAtHpPct": 0, "xp": 300, "loot": "bone_bat_drops"
+    "leashRadius": 30, "fleeAtHpPct": 0, "xp": 300, "loot": "bone_bat_drops",
+    "sounds": { "idle": "bone_bat_idle", "attack": "bone_bat_attack", "hurt": "bone_bat_hurt", "die": "bone_bat_die" }
   },
   "wraith": {
     "name": "Vault Wraith", "sprite": "wraith", "level": 13,
     "hp": 300, "damage": 30, "moveSpeed": 2.8,
     "ability": "wraith_touch", "aggroRadius": 11, "attackRange": 2.2,
-    "leashRadius": 26, "fleeAtHpPct": 0, "xp": 480, "loot": "wraith_drops"
+    "leashRadius": 26, "fleeAtHpPct": 0, "xp": 480, "loot": "wraith_drops",
+    "sounds": { "idle": "wraith_idle", "attack": "wraith_attack", "hurt": "wraith_hurt", "die": "wraith_die" }
   },
   "cinder_golem_boss": {
     "name": "Furnace Golem", "sprite": "cinder_golem", "level": 13,
     "hp": 950, "damage": 40, "moveSpeed": 2.6,
     "ability": "golem_slam", "aggroRadius": 15, "attackRange": 3.2,
-    "leashRadius": 34, "fleeAtHpPct": 0, "xp": 900, "loot": "golem_boss_drops"
+    "leashRadius": 34, "fleeAtHpPct": 0, "xp": 900, "loot": "golem_boss_drops",
+    "sounds": { "idle": "cinder_golem_boss_idle", "attack": "cinder_golem_boss_attack", "hurt": "cinder_golem_boss_hurt", "die": "cinder_golem_boss_die" }
   },
   "lich_boss": {
     "name": "Morvane the Hollow", "sprite": "lich", "level": 15,
     "hp": 1150, "damage": 36, "moveSpeed": 2.9,
     "ability": "shadow_lance", "aggroRadius": 16, "attackRange": 12,
-    "leashRadius": 36, "fleeAtHpPct": 0, "xp": 1400, "loot": "lich_boss_drops"
+    "leashRadius": 36, "fleeAtHpPct": 0, "xp": 1400, "loot": "lich_boss_drops",
+    "sounds": { "idle": "lich_boss_idle", "attack": "lich_boss_attack", "hurt": "lich_boss_hurt", "die": "lich_boss_die" }
   }
 }

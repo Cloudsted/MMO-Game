@@ -54,9 +54,9 @@ export declare const ItemDefSchema: z.ZodObject<{
         cureDot?: boolean | undefined;
     }>>;
 }, "strip", z.ZodTypeAny, {
-    value: number;
     name: string;
     kind: "weapon" | "consumable" | "building" | "trophy" | "misc";
+    value: number;
     stack: number;
     icon: [number, number];
     ability?: string | undefined;
@@ -72,9 +72,9 @@ export declare const ItemDefSchema: z.ZodObject<{
         cureDot?: boolean | undefined;
     } | undefined;
 }, {
-    value: number;
     name: string;
     kind: "weapon" | "consumable" | "building" | "trophy" | "misc";
+    value: number;
     stack: number;
     icon: [number, number];
     ability?: string | undefined;
@@ -183,6 +183,23 @@ export declare const MobDefSchema: z.ZodObject<{
     fleeAtHpPct: z.ZodNumber;
     xp: z.ZodNumber;
     loot: z.ZodString;
+    /** client vocal sound groups in the audio manifest (all optional; omitted = silent category) */
+    sounds: z.ZodOptional<z.ZodObject<{
+        idle: z.ZodOptional<z.ZodString>;
+        attack: z.ZodOptional<z.ZodString>;
+        hurt: z.ZodOptional<z.ZodString>;
+        die: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        idle?: string | undefined;
+        attack?: string | undefined;
+        hurt?: string | undefined;
+        die?: string | undefined;
+    }, {
+        idle?: string | undefined;
+        attack?: string | undefined;
+        hurt?: string | undefined;
+        die?: string | undefined;
+    }>>;
 }, "strip", z.ZodTypeAny, {
     name: string;
     ability: string;
@@ -197,6 +214,12 @@ export declare const MobDefSchema: z.ZodObject<{
     fleeAtHpPct: number;
     xp: number;
     loot: string;
+    sounds?: {
+        idle?: string | undefined;
+        attack?: string | undefined;
+        hurt?: string | undefined;
+        die?: string | undefined;
+    } | undefined;
 }, {
     name: string;
     ability: string;
@@ -211,6 +234,12 @@ export declare const MobDefSchema: z.ZodObject<{
     fleeAtHpPct: number;
     xp: number;
     loot: string;
+    sounds?: {
+        idle?: string | undefined;
+        attack?: string | undefined;
+        hurt?: string | undefined;
+        die?: string | undefined;
+    } | undefined;
 }>;
 export type MobDef = z.infer<typeof MobDefSchema>;
 /** Weighted entry: exactly one of item / table / nothing (weight only). */

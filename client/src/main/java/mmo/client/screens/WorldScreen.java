@@ -171,6 +171,17 @@ public class WorldScreen extends ScreenAdapter {
     private float pingTimer = 0;
     private float roomW = 128, roomH = 128;
 
+    // footstep/vocal audio state: the local player accumulates walked
+    // distance (a step every 1.8 m); remote steps burn a global token
+    // bucket (~6/s, nearest first) so a crowd never turns into rain
+    private static final float STEP_LEN_M = 1.8f;
+    private static final float REMOTE_STEP_RANGE = 20f;
+    private static final float IDLE_VOCAL_RANGE = 22f;
+    private float footAccum = 0;
+    private float remoteStepTokens = 6f;
+    private final List<RemotePlayer> stepQueue = new ArrayList<>();
+    private long lastIdleVocalAt = 0; // global min-gap so packs don't chorus
+
     // test hook: MMO_RESIZE_TEST=WxH resizes the live window ~4s after entering
     // the world — exercises the real runtime resize path (a fresh launch AT a
     // size can behave differently from a window resized TO it)
@@ -344,6 +355,7 @@ public class WorldScreen extends ScreenAdapter {
                     roomW = world.w;
                     roomH = world.h;
                     worldInit = false;
+                    game.audio.setWorld(world); // occlusion raycasts sample the live grid
                     if (voxels != null) voxels.dispose();
                     voxels = new VoxelRenderer(world);
                     voxels.wind = msg.has("wind") ? msg.get("wind").getAsFloat() : 0f;
@@ -368,9 +380,16 @@ public class WorldScreen extends ScreenAdapter {
                 case "blockSet" -> {
                     int bx = msg.get("x").getAsInt(), by = msg.get("y").getAsInt(), bz = msg.get("z").getAsInt();
                     int id = msg.get("id").getAsInt();
+                    // the OLD block id must be read BEFORE the edit applies:
+                    // id==0 means BREAK and the sound belongs to what died
+                    int oldId = world != null ? world.get(bx, by, bz) : 0;
                     if (voxels != null) voxels.applyBlockSet(bx, by, bz, id);
                     else if (world != null) world.set(bx, by, bz, id);
-                    game.audio.playAt("build", bx + 0.5f, by + 0.5f, bz + 0.5f);
+                    BlockRegistry.Block sndBlock = game.blocks.get(id == 0 ? oldId : id);
+                    String sndGroup = sndBlock == null ? null : (id == 0 ? sndBlock.breakSound : sndBlock.placeSound);
+                    if (sndGroup != null) {
+                        game.audio.playAt((id == 0 ? "break_" : "place_") + sndGroup, bx + 0.5f, by + 0.5f, bz + 0.5f);
+                    }
                     minimapDirty = true;
                     flamesDirty = true;
                 }
@@ -534,6 +553,11 @@ public class WorldScreen extends ScreenAdapter {
                     RemotePlayer rp = remotes.get(tgt);
                     if (rp != null) {
                         game.audio.playAt("hit", rp.pos.x, rp.pos.y + 1f, rp.pos.z);
+                        // mob hurt vocal layers under the generic impact
+                        if ("mob".equals(rp.kind)) {
+                            String vocal = game.audio.mobSound(rp.sprite, "hurt");
+                            if (vocal != null) game.audio.playAt(vocal, rp.pos.x, rp.pos.y + 1f, rp.pos.z);
+                        }
                         rp.hit();
                         tmp.set(rp.pos.x, rp.pos.y + rp.height + 0.3f, rp.pos.z);
                         ui.addFloater(tmp, amount + (crit ? "!" : ""), crit ? new Color(1f, 0.75f, 0.1f, 1f) : Color.WHITE, crit ? 1.5f : 1.05f);
@@ -583,7 +607,11 @@ public class WorldScreen extends ScreenAdapter {
                 RemotePlayer rp = remotes.get(id);
                 if (rp != null && world != null) {
                     fx.spawn("hit", rp.pos.x, rp.pos.y + rp.height * 0.5f, rp.pos.z, 1.1f);
-                    if ("mob".equals(rp.kind)) game.audio.playAt("mob_die", rp.pos.x, rp.pos.y + 1f, rp.pos.z);
+                    if ("mob".equals(rp.kind)) {
+                        // a mob with its own death vocal replaces the generic
+                        String vocal = game.audio.mobSound(rp.sprite, "die");
+                        game.audio.playAt(vocal != null ? vocal : "mob_die", rp.pos.x, rp.pos.y + 1f, rp.pos.z);
+                    }
                 }
             }
             default -> {}
@@ -1047,6 +1075,7 @@ public class WorldScreen extends ScreenAdapter {
         velY = Math.max(-50f, velY);
 
         // integrate axis by axis against the block grid
+        float preX = pos.x, preZ = pos.z; // footstep distance baseline
         boolean hitX = !tryMoveAxis(0, velX * dt);
         boolean hitZ = !tryMoveAxis(2, velZ * dt);
         if (hitX) velX = 0;
@@ -1080,7 +1109,30 @@ public class WorldScreen extends ScreenAdapter {
         pos.z = MathUtils.clamp(pos.z, m, roomH - m);
         pos.y = MathUtils.clamp(pos.y, 0f, world.height);
 
+        // local footsteps: a quiet non-positional step (the material under
+        // your own boots) every STEP_LEN_M of actual grounded/wading travel
+        if (movingNow && (onGround || inWater)) {
+            float stepDx = pos.x - preX, stepDz = pos.z - preZ;
+            footAccum += (float) Math.sqrt(stepDx * stepDx + stepDz * stepDz);
+            if (footAccum >= STEP_LEN_M) {
+                footAccum = 0;
+                String grp = inWater ? "water" : stepGroupUnderfoot(pos.x, pos.y, pos.z);
+                if (grp != null) game.audio.play("step_" + grp, 0.5f);
+            }
+        }
+
         correctionOffset.scl(Math.max(0f, 1f - dt * 10f));
+    }
+
+    /** Step sound group of the solid block under feet at y (or one below —
+     *  feet can hover a hair over the surface); null = airborne/no sound. */
+    private String stepGroupUnderfoot(float x, float y, float z) {
+        int xi = (int) Math.floor(x), zi = (int) Math.floor(z);
+        int yi = (int) Math.floor(y - 0.1f);
+        int id = world.get(xi, yi, zi);
+        if (!game.blocks.solid(id)) id = world.get(xi, yi - 1, zi);
+        BlockRegistry.Block b = game.blocks.get(id);
+        return b != null && b.solid ? b.stepSound : null;
     }
 
     /** Move one axis if the player AABB stays clear of solid blocks. */
@@ -1271,6 +1323,9 @@ public class WorldScreen extends ScreenAdapter {
         }
 
         lootMeshBags.clear();
+        stepQueue.clear();
+        remoteStepTokens = Math.min(6f, remoteStepTokens + dt * 6f); // ~6 remote steps/s
+        long vocalNow = System.currentTimeMillis();
         for (RemotePlayer rp : remotes.values()) {
             // per-entity voxel light (torch pools, cave dark) via the CPU
             // mirror. NO directional sun-shadow dimming: sprites used to hard-
@@ -1281,12 +1336,45 @@ public class WorldScreen extends ScreenAdapter {
                 ? voxels.lightColorAt(rp.pos.x, rp.pos.y + 0.8f, rp.pos.z, dayNight.sunFactor)
                 : dayNight.entityLight;
             rp.update(dt, cam, world, tint);
+            // audio cues banked during the interp update / act transitions
+            if ("mob".equals(rp.kind) && !rp.isDead()) {
+                if (rp.consumeAttackCue()) {
+                    String vocal = game.audio.mobSound(rp.sprite, "attack");
+                    if (vocal != null) game.audio.playAt(vocal, rp.pos.x, rp.pos.y + 1f, rp.pos.z);
+                }
+                if (rp.consumeIdleVocal()
+                    && cam.position.dst2(rp.pos) <= IDLE_VOCAL_RANGE * IDLE_VOCAL_RANGE
+                    && vocalNow - lastIdleVocalAt > 800) {
+                    String vocal = game.audio.mobSound(rp.sprite, "idle");
+                    if (vocal != null) {
+                        lastIdleVocalAt = vocalNow;
+                        game.audio.playAt(vocal, rp.pos.x, rp.pos.y + 1f, rp.pos.z);
+                    }
+                }
+            }
+            if (rp.consumeStep() && ready && !rp.isDead()
+                && cam.position.dst2(rp.pos) <= REMOTE_STEP_RANGE * REMOTE_STEP_RANGE) {
+                stepQueue.add(rp);
+            }
             // bags with replicated contents render as spinning 3D items below
             if ("loot".equals(rp.kind) && rp.lootItems != null && rp.lootItems.length > 0) {
                 lootMeshBags.add(rp);
                 continue;
             }
             decalBatch.add(rp.decal);
+        }
+        // remote footsteps, nearest first while the global budget lasts
+        if (!stepQueue.isEmpty() && ready) {
+            stepQueue.sort((a, b) -> Float.compare(cam.position.dst2(a.pos), cam.position.dst2(b.pos)));
+            for (RemotePlayer rp : stepQueue) {
+                if (remoteStepTokens < 1f) break;
+                String grp = world.liquidAt(rp.pos.x, rp.pos.y + 0.4f, rp.pos.z)
+                    ? "water"
+                    : stepGroupUnderfoot(rp.pos.x, rp.pos.y, rp.pos.z);
+                if (grp == null) continue;
+                remoteStepTokens -= 1f;
+                game.audio.playAt("step_" + grp, rp.pos.x, rp.pos.y + 0.1f, rp.pos.z);
+            }
         }
         // dropped items as true 3D meshes: the item's sprite pixels extruded
         // (blocks as mini cubes), spinning + hovering, voxel-lit like every
@@ -1614,6 +1702,10 @@ public class WorldScreen extends ScreenAdapter {
 
     @Override
     public void dispose() {
+        // drop the occlusion world: the next screen re-sets it when its own
+        // world message lands (dispose runs after setScreen, before the new
+        // screen's first render, so this can't clobber a newer world)
+        game.audio.setWorld(null);
         if (voxels != null) voxels.dispose();
         if (shadowMap != null) shadowMap.dispose();
         sunTexture.dispose();

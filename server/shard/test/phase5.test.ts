@@ -118,14 +118,16 @@ describe("pvp regions", () => {
   });
 
   it("flags the clearing and nowhere else", () => {
-    expect(forest.inPvpZone(28, 118)).toBe(true);
-    expect(forest.inPvpZone(80, 146)).toBe(false);
+    // 480² retune: the arena moved ×3 to (84,354)
+    expect(forest.inPvpZone(84, 354)).toBe(true);
+    expect(forest.inPvpZone(240, 466)).toBe(false); // spawn
+    expect(forest.inPvpZone(28, 118)).toBe(false); // the old 160² spot
   });
 
   it("lets players hit each other only inside the zone", () => {
     // both inside the clearing
-    const a = joinRoom(forest, "c1", "Alice", 28, 118);
-    const b = joinRoom(forest, "c2", "Bob", 28, 119.2);
+    const a = joinRoom(forest, "c1", "Alice", 84, 354);
+    const b = joinRoom(forest, "c2", "Bob", 84, 355.2);
     forest.handleAttack(a.session, 0, 0); // punch, facing +Z toward Bob
     spin(260); // windup 200 + margin
     forest.tick();
@@ -133,8 +135,8 @@ describe("pvp regions", () => {
     expect(hit).toBe(true);
 
     // outside the zone the same swing is a whiff
-    const c = joinRoom(forest, "c3", "Cara", 80, 140);
-    const d = joinRoom(forest, "c4", "Dane", 80, 141.2);
+    const c = joinRoom(forest, "c3", "Cara", 240, 440);
+    const d = joinRoom(forest, "c4", "Dane", 240, 441.2);
     forest.handleAttack(c.session, 0, 0);
     spin(260);
     forest.tick();
@@ -144,8 +146,8 @@ describe("pvp regions", () => {
 
   it("drops free-for-all bags on deaths inside the zone", () => {
     const inv: Array<ItemStack | null> = [{ item: "iron_sword", qty: 1, rarity: "rare" }];
-    const a = joinRoom(forest, "c1", "Alice", 28, 118, inv);
-    const b = joinRoom(forest, "c2", "Bob", 28, 119, inv);
+    const a = joinRoom(forest, "c1", "Alice", 84, 354, inv);
+    const b = joinRoom(forest, "c2", "Bob", 84, 355, inv);
     forest.applyDamage(b.session.entity, a.session.entity, 9999);
     const bag = [...forest.allEntities()].find((e) => e.kind === "loot")!;
     expect(bag.loot!.owner).toBeNull(); // FFA immediately

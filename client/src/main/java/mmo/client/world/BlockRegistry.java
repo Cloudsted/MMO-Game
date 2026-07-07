@@ -25,6 +25,9 @@ public final class BlockRegistry {
         public int tileTop, tileBottom, tileSide;
         /** average tile color 0..1 (minimap) */
         public float mr, mg, mb;
+        /** sound-group suffixes (manifest names step_X/break_X/place_X);
+         *  null = silent (air, liquid break/place) */
+        public String stepSound, breakSound, placeSound;
     }
 
     public final Block[] blocks = new Block[256];
@@ -57,6 +60,17 @@ public final class BlockRegistry {
                 case "liquid" -> CULL_LIQUID;
                 default -> CULL_NONE;
             };
+            // per-block sounds; omitted keys fall back by kind (cube->stone,
+            // cross->plant, liquid->water step and no break/place — liquids
+            // are never placed or broken directly)
+            if (b.id != 0) {
+                JsonObject snd = o.has("sounds") ? o.getAsJsonObject("sounds") : null;
+                boolean liquid = b.cull == CULL_LIQUID;
+                String def = b.cross ? "plant" : "stone";
+                b.stepSound = soundKey(snd, "step", liquid ? "water" : def);
+                b.breakSound = soundKey(snd, "break", liquid ? null : def);
+                b.placeSound = soundKey(snd, "place", liquid ? null : def);
+            }
             JsonObject tex = o.has("tex") ? o.getAsJsonObject("tex") : null;
             b.tileTop = tileIndex(tiles, texName(tex, "top", b.name));
             b.tileBottom = tileIndex(tiles, texName(tex, "bottom", b.name));
@@ -77,6 +91,10 @@ public final class BlockRegistry {
                 : (b.cull == CULL_LIQUID || "leaves".equals(b.name)) ? 3 : 1;
         }
         opacity[0] = 1;
+    }
+
+    private static String soundKey(JsonObject snd, String key, String fallback) {
+        return snd != null && snd.has(key) ? snd.get(key).getAsString() : fallback;
     }
 
     private static String texName(JsonObject tex, String face, String fallback) {

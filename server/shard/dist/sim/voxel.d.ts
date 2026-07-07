@@ -1,4 +1,5 @@
 import { type RoomDef } from "@fantasy-mmo/common";
+import type { ScatterResult } from "./prefabs.js";
 export declare function hash2(seed: number, x: number, y: number): number;
 export interface BlockEdit {
     x: number;
@@ -15,6 +16,9 @@ export declare class VoxelWorld {
     readonly waterLevel: number | null;
     /** player edits keyed "x,y,z" — the persistence overlay */
     readonly edits: Map<string, BlockEdit>;
+    /** prefab-scatter output: placements, loot caches, spawn bindings —
+     *  deterministic per def, so RoomSim can consume it every boot */
+    readonly features: ScatterResult;
     /** pristine post-generation snapshot — edits that restore it are dropped */
     private genData;
     constructor(def: RoomDef);

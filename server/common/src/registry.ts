@@ -90,6 +90,15 @@ export const MobDefSchema = z.object({
   fleeAtHpPct: z.number(),
   xp: z.number(),
   loot: z.string(),
+  /** client vocal sound groups in the audio manifest (all optional; omitted = silent category) */
+  sounds: z
+    .object({
+      idle: z.string().optional(),
+      attack: z.string().optional(),
+      hurt: z.string().optional(),
+      die: z.string().optional(),
+    })
+    .optional(),
 });
 export type MobDef = z.infer<typeof MobDefSchema>;
 

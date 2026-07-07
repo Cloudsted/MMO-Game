@@ -59,25 +59,25 @@ export declare const SpawnTableSchema: z.ZodObject<{
         z: z.ZodNumber;
         r: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
     }, {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
     }>;
     mobs: z.ZodArray<z.ZodObject<{
         mob: z.ZodString;
         weight: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        mob: string;
         weight: number;
+        mob: string;
     }, {
-        mob: string;
         weight: number;
+        mob: string;
     }>, "many">;
     maxAlive: z.ZodNumber;
     packSize: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -85,14 +85,14 @@ export declare const SpawnTableSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     id: string;
     region: {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
     };
     mobs: {
-        mob: string;
         weight: number;
+        mob: string;
     }[];
     maxAlive: number;
     packSize: [number, number];
@@ -100,20 +100,93 @@ export declare const SpawnTableSchema: z.ZodObject<{
 }, {
     id: string;
     region: {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
     };
     mobs: {
-        mob: string;
         weight: number;
+        mob: string;
     }[];
     maxAlive: number;
     packSize: [number, number];
     respawnSec: number;
 }>;
 export type SpawnTable = z.infer<typeof SpawnTableSchema>;
+/** Deterministic prefab scatter config (worldgen prefab system). Entries
+ *  place in array order — earlier entries claim ground first. near/nearPrefab/
+ *  nearPortals are SOFT constraints: if the constrained candidate pass
+ *  under-fills, remaining candidates fall back to unconstrained placement. */
+export declare const PrefabScatterSchema: z.ZodObject<{
+    prefab: z.ZodString;
+    count: z.ZodNumber;
+    minSpacing: z.ZodDefault<z.ZodNumber>;
+    /** scales the distance-based ruin gradient (higher = more ruined) */
+    ruinBias: z.ZodOptional<z.ZodNumber>;
+    /** prefer sites near the room's portals */
+    nearPortals: z.ZodOptional<z.ZodBoolean>;
+    /** prefer sites within `within` of an already-placed prefab of `id` */
+    nearPrefab: z.ZodOptional<z.ZodObject<{
+        id: z.ZodString;
+        within: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        id: string;
+        within: number;
+    }, {
+        id: string;
+        within: number;
+    }>>;
+    /** prefer sites within `within` of a fixed point (authored anchor) */
+    near: z.ZodOptional<z.ZodObject<{
+        x: z.ZodNumber;
+        z: z.ZodNumber;
+        within: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        x: number;
+        z: number;
+        within: number;
+    }, {
+        x: number;
+        z: number;
+        within: number;
+    }>>;
+    /** re-center this room spawn table onto the prefab's spawnRegion hook */
+    bindSpawnTable: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    prefab: string;
+    count: number;
+    minSpacing: number;
+    ruinBias?: number | undefined;
+    nearPortals?: boolean | undefined;
+    nearPrefab?: {
+        id: string;
+        within: number;
+    } | undefined;
+    near?: {
+        x: number;
+        z: number;
+        within: number;
+    } | undefined;
+    bindSpawnTable?: string | undefined;
+}, {
+    prefab: string;
+    count: number;
+    minSpacing?: number | undefined;
+    ruinBias?: number | undefined;
+    nearPortals?: boolean | undefined;
+    nearPrefab?: {
+        id: string;
+        within: number;
+    } | undefined;
+    near?: {
+        x: number;
+        z: number;
+        within: number;
+    } | undefined;
+    bindSpawnTable?: string | undefined;
+}>;
+export type PrefabScatterDef = z.infer<typeof PrefabScatterSchema>;
 export declare const NpcDefSchema: z.ZodObject<{
     id: z.ZodString;
     name: z.ZodString;
@@ -135,10 +208,10 @@ export declare const NpcDefSchema: z.ZodObject<{
     }>>;
 }, "strip", z.ZodTypeAny, {
     id: string;
-    x: number;
-    z: number;
     name: string;
     sprite: string;
+    x: number;
+    z: number;
     yaw: number;
     wanderRadius: number;
     dialog: string[];
@@ -148,10 +221,10 @@ export declare const NpcDefSchema: z.ZodObject<{
     } | undefined;
 }, {
     id: string;
-    x: number;
-    z: number;
     name: string;
     sprite: string;
+    x: number;
+    z: number;
     dialog: string[];
     yaw?: number | undefined;
     wanderRadius?: number | undefined;
@@ -169,16 +242,16 @@ export declare const RegionSchema: z.ZodObject<{
     r: z.ZodNumber;
     pvp: z.ZodDefault<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
+    kind: "circle";
     x: number;
     z: number;
     r: number;
-    kind: "circle";
     pvp: boolean;
 }, {
+    kind: "circle";
     x: number;
     z: number;
     r: number;
-    kind: "circle";
     pvp?: boolean | undefined;
 }>;
 export type RegionDef = z.infer<typeof RegionSchema>;
@@ -229,16 +302,16 @@ export declare const RoomDefSchema: z.ZodObject<{
         r: z.ZodNumber;
         pvp: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
         pvp: boolean;
     }, {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
         pvp?: boolean | undefined;
     }>, "many">>;
     size: z.ZodObject<{
@@ -283,11 +356,11 @@ export declare const RoomDefSchema: z.ZodObject<{
         treeDensity: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         kind: "blocks";
+        liquid: "water" | "murk_water" | "lava";
         seed: number;
         base: number;
         amplitude: number;
         frequency: number;
-        liquid: "water" | "murk_water" | "lava";
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
         treeDensity?: number | undefined;
@@ -297,9 +370,9 @@ export declare const RoomDefSchema: z.ZodObject<{
         base: number;
         amplitude: number;
         frequency: number;
+        liquid?: "water" | "murk_water" | "lava" | undefined;
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
-        liquid?: "water" | "murk_water" | "lava" | undefined;
         treeDensity?: number | undefined;
     }>;
     flags: z.ZodObject<{
@@ -358,25 +431,25 @@ export declare const RoomDefSchema: z.ZodObject<{
             z: z.ZodNumber;
             r: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
+            kind: "circle";
             x: number;
             z: number;
             r: number;
-            kind: "circle";
         }, {
+            kind: "circle";
             x: number;
             z: number;
             r: number;
-            kind: "circle";
         }>;
         mobs: z.ZodArray<z.ZodObject<{
             mob: z.ZodString;
             weight: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
-            mob: string;
             weight: number;
+            mob: string;
         }, {
-            mob: string;
             weight: number;
+            mob: string;
         }>, "many">;
         maxAlive: z.ZodNumber;
         packSize: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -384,14 +457,14 @@ export declare const RoomDefSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         id: string;
         region: {
+            kind: "circle";
             x: number;
             z: number;
             r: number;
-            kind: "circle";
         };
         mobs: {
-            mob: string;
             weight: number;
+            mob: string;
         }[];
         maxAlive: number;
         packSize: [number, number];
@@ -399,19 +472,88 @@ export declare const RoomDefSchema: z.ZodObject<{
     }, {
         id: string;
         region: {
+            kind: "circle";
             x: number;
             z: number;
             r: number;
-            kind: "circle";
         };
         mobs: {
-            mob: string;
             weight: number;
+            mob: string;
         }[];
         maxAlive: number;
         packSize: [number, number];
         respawnSec: number;
     }>, "many">;
+    /** deterministic prefab scatter (ruins, camps, shrines...) — optional */
+    prefabs: z.ZodDefault<z.ZodArray<z.ZodObject<{
+        prefab: z.ZodString;
+        count: z.ZodNumber;
+        minSpacing: z.ZodDefault<z.ZodNumber>;
+        /** scales the distance-based ruin gradient (higher = more ruined) */
+        ruinBias: z.ZodOptional<z.ZodNumber>;
+        /** prefer sites near the room's portals */
+        nearPortals: z.ZodOptional<z.ZodBoolean>;
+        /** prefer sites within `within` of an already-placed prefab of `id` */
+        nearPrefab: z.ZodOptional<z.ZodObject<{
+            id: z.ZodString;
+            within: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            id: string;
+            within: number;
+        }, {
+            id: string;
+            within: number;
+        }>>;
+        /** prefer sites within `within` of a fixed point (authored anchor) */
+        near: z.ZodOptional<z.ZodObject<{
+            x: z.ZodNumber;
+            z: z.ZodNumber;
+            within: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            x: number;
+            z: number;
+            within: number;
+        }, {
+            x: number;
+            z: number;
+            within: number;
+        }>>;
+        /** re-center this room spawn table onto the prefab's spawnRegion hook */
+        bindSpawnTable: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        prefab: string;
+        count: number;
+        minSpacing: number;
+        ruinBias?: number | undefined;
+        nearPortals?: boolean | undefined;
+        nearPrefab?: {
+            id: string;
+            within: number;
+        } | undefined;
+        near?: {
+            x: number;
+            z: number;
+            within: number;
+        } | undefined;
+        bindSpawnTable?: string | undefined;
+    }, {
+        prefab: string;
+        count: number;
+        minSpacing?: number | undefined;
+        ruinBias?: number | undefined;
+        nearPortals?: boolean | undefined;
+        nearPrefab?: {
+            id: string;
+            within: number;
+        } | undefined;
+        near?: {
+            x: number;
+            z: number;
+            within: number;
+        } | undefined;
+        bindSpawnTable?: string | undefined;
+    }>, "many">>;
     npcs: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
         name: z.ZodString;
@@ -433,10 +575,10 @@ export declare const RoomDefSchema: z.ZodObject<{
         }>>;
     }, "strip", z.ZodTypeAny, {
         id: string;
-        x: number;
-        z: number;
         name: string;
         sprite: string;
+        x: number;
+        z: number;
         yaw: number;
         wanderRadius: number;
         dialog: string[];
@@ -446,10 +588,10 @@ export declare const RoomDefSchema: z.ZodObject<{
         } | undefined;
     }, {
         id: string;
-        x: number;
-        z: number;
         name: string;
         sprite: string;
+        x: number;
+        z: number;
         dialog: string[];
         yaw?: number | undefined;
         wanderRadius?: number | undefined;
@@ -460,16 +602,16 @@ export declare const RoomDefSchema: z.ZodObject<{
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
     id: string;
-    type: "hub" | "wilderness" | "dungeon" | "building";
     name: string;
+    type: "building" | "hub" | "wilderness" | "dungeon";
     biome: string;
     wind: number;
     persistence: "stateful" | "ephemeral";
     regions: {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
         pvp: boolean;
     }[];
     size: {
@@ -483,11 +625,11 @@ export declare const RoomDefSchema: z.ZodObject<{
     };
     terrain: {
         kind: "blocks";
+        liquid: "water" | "murk_water" | "lava";
         seed: number;
         base: number;
         amplitude: number;
         frequency: number;
-        liquid: "water" | "murk_water" | "lava";
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
         treeDensity?: number | undefined;
@@ -511,25 +653,42 @@ export declare const RoomDefSchema: z.ZodObject<{
     spawnTables: {
         id: string;
         region: {
+            kind: "circle";
             x: number;
             z: number;
             r: number;
-            kind: "circle";
         };
         mobs: {
-            mob: string;
             weight: number;
+            mob: string;
         }[];
         maxAlive: number;
         packSize: [number, number];
         respawnSec: number;
     }[];
+    prefabs: {
+        prefab: string;
+        count: number;
+        minSpacing: number;
+        ruinBias?: number | undefined;
+        nearPortals?: boolean | undefined;
+        nearPrefab?: {
+            id: string;
+            within: number;
+        } | undefined;
+        near?: {
+            x: number;
+            z: number;
+            within: number;
+        } | undefined;
+        bindSpawnTable?: string | undefined;
+    }[];
     npcs: {
         id: string;
-        x: number;
-        z: number;
         name: string;
         sprite: string;
+        x: number;
+        z: number;
         yaw: number;
         wanderRadius: number;
         dialog: string[];
@@ -546,8 +705,8 @@ export declare const RoomDefSchema: z.ZodObject<{
     } | undefined;
 }, {
     id: string;
-    type: "hub" | "wilderness" | "dungeon" | "building";
     name: string;
+    type: "building" | "hub" | "wilderness" | "dungeon";
     biome: string;
     persistence: "stateful" | "ephemeral";
     size: {
@@ -565,9 +724,9 @@ export declare const RoomDefSchema: z.ZodObject<{
         base: number;
         amplitude: number;
         frequency: number;
+        liquid?: "water" | "murk_water" | "lava" | undefined;
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
-        liquid?: "water" | "murk_water" | "lava" | undefined;
         treeDensity?: number | undefined;
     };
     flags: {
@@ -589,14 +748,14 @@ export declare const RoomDefSchema: z.ZodObject<{
     spawnTables: {
         id: string;
         region: {
+            kind: "circle";
             x: number;
             z: number;
             r: number;
-            kind: "circle";
         };
         mobs: {
-            mob: string;
             weight: number;
+            mob: string;
         }[];
         maxAlive: number;
         packSize: [number, number];
@@ -604,10 +763,10 @@ export declare const RoomDefSchema: z.ZodObject<{
     }[];
     npcs: {
         id: string;
-        x: number;
-        z: number;
         name: string;
         sprite: string;
+        x: number;
+        z: number;
         dialog: string[];
         yaw?: number | undefined;
         wanderRadius?: number | undefined;
@@ -624,11 +783,28 @@ export declare const RoomDefSchema: z.ZodObject<{
         warnAtSecLeft: number[];
     } | undefined;
     regions?: {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
         pvp?: boolean | undefined;
+    }[] | undefined;
+    prefabs?: {
+        prefab: string;
+        count: number;
+        minSpacing?: number | undefined;
+        ruinBias?: number | undefined;
+        nearPortals?: boolean | undefined;
+        nearPrefab?: {
+            id: string;
+            within: number;
+        } | undefined;
+        near?: {
+            x: number;
+            z: number;
+            within: number;
+        } | undefined;
+        bindSpawnTable?: string | undefined;
     }[] | undefined;
 }>;
 export type RoomDef = z.infer<typeof RoomDefSchema>;
