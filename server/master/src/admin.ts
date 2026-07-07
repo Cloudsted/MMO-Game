@@ -1,17 +1,28 @@
 /**
  * Admin web dashboard API. The page itself lives in adminpage.ts (plain
  * HTML+JS, no build step); this module serves it at /admin and exposes the
- * ADMIN_KEY-gated JSON API under /api/admin/*. Everything is read from live
- * shard telemetry (heartbeats) or MongoDB — character writes are deliberately
- * NOT offered here: a connected client's periodic report would clobber them
- * (see "Known traps" in CLAUDE.md); use the in-game admin commands instead.
+ * ADMIN_KEY-gated JSON API under /api/admin/*. Data comes from live shard
+ * telemetry (heartbeats) or MongoDB. Character WRITES are allowed only while
+ * the character is OFFLINE — a connected client's periodic report would
+ * clobber them (see "Known traps" in CLAUDE.md); online players are managed
+ * through the in-game admin commands or the teleport/kick controls here.
  */
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { ObjectId } from "mongodb";
-import { logSink } from "@fantasy-mmo/common";
+import { gameConstants, logSink, makeLogger, mintItem, RegistryService } from "@fantasy-mmo/common";
 import type { Collections } from "./db.js";
 import type { ShardManager } from "./shards.js";
 import { PAGE } from "./adminpage.js";
+
+const log = makeLogger("master/admin");
+
+/** Item registry for offline-character edits + economy analytics (the same
+ *  shared JSON both runtimes load; the master only reads it). */
+const reg = new RegistryService();
+
+/** Mirrors INV_SIZE in server/shard/src/sim/loot.ts — inventory slot count. */
+const INV_SIZE = 24;
+const RARITIES = ["common", "uncommon", "rare", "epic"];
 
 const LOG_LINES = 500;
 const logBuffer: string[] = [];
@@ -242,6 +253,200 @@ export async function handleAdmin(
   if (path === "/api/admin/restart-room" && method === "POST") {
     const ok = shards.closeRoomAdmin(q("roomId"));
     json(res, ok ? 200 : 404, ok ? { ok: true } : { error: "room not assigned" });
+    return true;
+  }
+
+  if (path === "/api/admin/map") {
+    const roomId = q("roomId");
+    const map = shards.roomMap(roomId);
+    if (map) {
+      json(res, 200, map);
+    } else {
+      // cache miss (master restarted after the room opened): ask for a push
+      // and let the page retry in a moment
+      const asked = shards.requestMap(roomId);
+      json(res, asked ? 202 : 404, asked ? { pending: true } : { error: "room not assigned" });
+    }
+    return true;
+  }
+
+  if (path === "/api/admin/teleport" && method === "POST") {
+    const roomId = q("roomId"); // room the player is in NOW
+    const targetRoomId = q("targetRoomId") || roomId;
+    const x = q("x") === "" ? undefined : Number(q("x"));
+    const z = q("z") === "" ? undefined : Number(q("z"));
+    if ((x !== undefined && !isFinite(x)) || (z !== undefined && !isFinite(z))) {
+      json(res, 400, { error: "bad coordinates" });
+      return true;
+    }
+    if (roomId === targetRoomId && (x === undefined || z === undefined)) {
+      json(res, 400, { error: "same-room teleport needs x and z" });
+      return true;
+    }
+    const ok = shards.adminMove(roomId, q("characterId"), targetRoomId, x, z);
+    json(res, ok ? 200 : 404, ok ? { ok: true } : { error: "room not assigned or unknown target" });
+    return true;
+  }
+
+  if (path === "/api/admin/items") {
+    json(res, 200, {
+      items: Object.entries(reg.items).map(([id, def]) => ({
+        id,
+        label: def.name,
+        kind: def.kind,
+        value: def.value,
+      })),
+    });
+    return true;
+  }
+
+  // ---- offline-character editing (online = 409: live reports would clobber it) ----
+
+  if (path.startsWith("/api/admin/character-") && method === "POST") {
+    if (!ObjectId.isValid(q("id"))) {
+      json(res, 400, { error: "bad character id" });
+      return true;
+    }
+    const _id = new ObjectId(q("id"));
+    const character = await cols.characters.findOne({ _id });
+    if (!character) {
+      json(res, 404, { error: "character not found" });
+      return true;
+    }
+    if (shards.livePlayers().some((p) => p.charId === q("id"))) {
+      json(res, 409, { error: "character is online — edits would be overwritten by live reports" });
+      return true;
+    }
+
+    if (path === "/api/admin/character-edit") {
+      const set: Record<string, unknown> = {};
+      const fields: Array<[string, number, number]> = [
+        ["gold", 0, 1_000_000_000],
+        ["level", 1, 99],
+        ["xp", 0, 1_000_000_000],
+      ];
+      for (const [name, min, max] of fields) {
+        if (q(name) === "") continue;
+        const v = Math.floor(Number(q(name)));
+        if (!isFinite(v) || v < min || v > max) {
+          json(res, 400, { error: `bad ${name}` });
+          return true;
+        }
+        set[name] = v;
+      }
+      if (Object.keys(set).length === 0) {
+        json(res, 400, { error: "nothing to change" });
+        return true;
+      }
+      await cols.characters.updateOne({ _id }, { $set: set });
+      log.info(`admin edited ${character.name}: ${JSON.stringify(set)}`);
+      json(res, 200, { ok: true });
+      return true;
+    }
+
+    if (path === "/api/admin/character-item-add") {
+      const itemId = q("item");
+      const def = reg.items[itemId];
+      if (!def) {
+        json(res, 400, { error: `unknown item '${itemId}'` });
+        return true;
+      }
+      const rarity = q("rarity") || "common";
+      if (!RARITIES.includes(rarity)) {
+        json(res, 400, { error: "bad rarity" });
+        return true;
+      }
+      // weapons are per-instance (stat rolls + durability) — never stacked
+      const qty = def.kind === "weapon" ? 1 : Math.min(99, Math.max(1, Math.floor(Number(q("qty")) || 1)));
+      const stack = mintItem(reg, gameConstants(), itemId, qty, rarity);
+      const inventory = [...character.inventory];
+      let slot = inventory.findIndex((s) => s === null);
+      if (slot < 0 && inventory.length < INV_SIZE) {
+        slot = inventory.length;
+        inventory.push(null);
+      }
+      if (slot < 0) {
+        json(res, 400, { error: "inventory full" });
+        return true;
+      }
+      inventory[slot] = stack;
+      await cols.characters.updateOne({ _id }, { $set: { inventory } });
+      log.info(`admin gave ${character.name}: ${qty}x ${rarity} ${itemId}`);
+      json(res, 200, { ok: true });
+      return true;
+    }
+
+    if (path === "/api/admin/character-item-remove") {
+      const slot = Math.floor(Number(q("slot")));
+      if (!isFinite(slot) || slot < 0 || slot >= character.inventory.length || !character.inventory[slot]) {
+        json(res, 400, { error: "bad slot" });
+        return true;
+      }
+      const removed = character.inventory[slot]!;
+      const inventory = [...character.inventory];
+      inventory[slot] = null;
+      await cols.characters.updateOne({ _id }, { $set: { inventory } });
+      log.info(`admin removed from ${character.name}: slot ${slot} (${removed.item})`);
+      json(res, 200, { ok: true });
+      return true;
+    }
+  }
+
+  if (path === "/api/admin/economy") {
+    const [goldAgg, topWealth, itemsAgg, rarityAgg, levelAgg, states] = await Promise.all([
+      cols.characters
+        .aggregate<{ _id: null; total: number; avg: number; max: number; count: number }>([
+          { $group: { _id: null, total: { $sum: "$gold" }, avg: { $avg: "$gold" }, max: { $max: "$gold" }, count: { $sum: 1 } } },
+        ])
+        .toArray(),
+      cols.characters.find().sort({ gold: -1 }).limit(10).project({ name: 1, gold: 1, level: 1 }).toArray(),
+      cols.characters
+        .aggregate<{ _id: string; qty: number; stacks: number }>([
+          { $unwind: "$inventory" },
+          { $match: { inventory: { $ne: null } } },
+          { $group: { _id: "$inventory.item", qty: { $sum: "$inventory.qty" }, stacks: { $sum: 1 } } },
+          { $sort: { qty: -1 } },
+        ])
+        .toArray(),
+      cols.characters
+        .aggregate<{ _id: string; qty: number }>([
+          { $unwind: "$inventory" },
+          { $match: { inventory: { $ne: null } } },
+          { $group: { _id: "$inventory.rarity", qty: { $sum: "$inventory.qty" } } },
+        ])
+        .toArray(),
+      cols.characters
+        .aggregate<{ _id: number; count: number }>([{ $group: { _id: "$level", count: { $sum: 1 } } }, { $sort: { _id: 1 } }])
+        .toArray(),
+      cols.roomStates.find().toArray(),
+    ]);
+    // gold + items sitting in dropped bags (persisted room state)
+    let floorGold = 0;
+    let floorBags = 0;
+    let floorItems = 0;
+    for (const st of states) {
+      for (const d of st.state.drops) {
+        floorBags++;
+        floorGold += d.gold;
+        for (const i of d.items) floorItems += i.qty;
+      }
+    }
+    const gold = goldAgg[0] ?? { total: 0, avg: 0, max: 0, count: 0 };
+    json(res, 200, {
+      gold: { total: gold.total, avg: Math.round(gold.avg ?? 0), max: gold.max, characters: gold.count },
+      floor: { gold: floorGold, bags: floorBags, items: floorItems },
+      topWealth: topWealth.map((c) => ({ name: c.name, gold: c.gold, level: c.level })),
+      items: itemsAgg.map((i) => ({
+        item: i._id,
+        qty: i.qty,
+        stacks: i.stacks,
+        label: reg.items[i._id]?.name ?? i._id,
+        kind: reg.items[i._id]?.kind ?? "?",
+        value: reg.items[i._id]?.value ?? 0,
+      })),
+      rarities: Object.fromEntries(rarityAgg.map((r) => [r._id, r.qty])),
+      levels: levelAgg.map((l) => ({ level: l._id, count: l.count })),
+    });
     return true;
   }
 

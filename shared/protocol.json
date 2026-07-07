@@ -80,16 +80,24 @@
         "roomState": "RoomState?"
       },
       "requestTransfer": {
-        "$comment": "persist live state, then mint a ticket to the target room. viaPortalId = source portal on portal use; master lands the player at the paired portal in the target (portal with target===source, or the source portal's exitPortalId). Unset (respawn/H-key/eviction) = target default spawn.",
+        "$comment": "persist live state, then mint a ticket to the target room. viaPortalId = source portal on portal use; master lands the player at the paired portal in the target (portal with target===source, or the source portal's exitPortalId). arrival = admin-teleport landing coordinates (clamped into the room, ground-snapped). Neither = target default spawn.",
         "roomId": "s",
         "characterId": "s",
         "targetRoomId": "s",
         "viaPortalId": "s?",
+        "arrival": "{x:n,z:n}?",
         "patch": "CharacterPatch"
       },
       "globalChat": {
         "from": "s",
         "text": "s"
+      },
+      "mapData": {
+        "$comment": "top-down room map for the admin dashboard (pushed on open + when the edit overlay changes). data = base64 raw-deflate RGB, row-major, x-fastest",
+        "roomId": "s",
+        "w": "n",
+        "h": "n",
+        "data": "s"
       }
     },
     "masterToShard": {
@@ -137,6 +145,18 @@
         "roomId": "s",
         "characterId": "s",
         "reason": "s"
+      },
+      "adminMove": {
+        "$comment": "admin dashboard teleport: same room + x/z = local snap; different room = transfer (arrive at x/z if given, else spawn)",
+        "roomId": "s",
+        "characterId": "s",
+        "targetRoomId": "s",
+        "x": "n?",
+        "z": "n?"
+      },
+      "requestMap": {
+        "$comment": "admin dashboard: ask a room to (re)send mapData",
+        "roomId": "s"
       }
     }
   },

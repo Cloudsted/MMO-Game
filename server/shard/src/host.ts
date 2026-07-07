@@ -171,6 +171,24 @@ class ShardHost {
         if (room) this.sendToRoom(room, { t: "kick", characterId: msg.characterId, reason: msg.reason });
         break;
       }
+      case "adminMove": {
+        const room = this.rooms.get(msg.roomId);
+        if (room) {
+          this.sendToRoom(room, {
+            t: "adminMove",
+            characterId: msg.characterId,
+            targetRoomId: msg.targetRoomId,
+            x: msg.x,
+            z: msg.z,
+          });
+        }
+        break;
+      }
+      case "requestMap": {
+        const room = this.rooms.get(msg.roomId);
+        if (room) this.sendToRoom(room, { t: "requestMap" });
+        break;
+      }
     }
   }
 
@@ -234,8 +252,12 @@ class ShardHost {
           characterId: msg.characterId,
           targetRoomId: msg.targetRoomId,
           viaPortalId: msg.viaPortalId,
+          arrival: msg.arrival,
           patch: msg.patch,
         });
+        break;
+      case "mapData":
+        this.send({ t: "mapData", roomId: room.roomId, w: msg.w, h: msg.h, data: msg.data });
         break;
       case "globalChat":
         this.send({ t: "globalChat", from: msg.from, text: msg.text });

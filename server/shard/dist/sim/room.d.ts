@@ -69,9 +69,13 @@ export declare class RoomSim {
     private chunkCache;
     /** set by the RoomHost: routes '/g' chat up the control channel */
     onGlobalChat: ((from: string, text: string) => void) | null;
-    /** set by the RoomHost: sim-initiated transfers (hub-bound respawn, H key)
-     *  go through the same requestTransfer machinery as portal use */
-    onTransferRequest: ((session: PlayerSession, targetRoomId: string) => void) | null;
+    /** set by the RoomHost: sim-initiated transfers (hub-bound respawn, H key,
+     *  admin teleport) go through the same requestTransfer machinery as portal
+     *  use; arrival = admin-teleport landing coordinates in the target room */
+    onTransferRequest: ((session: PlayerSession, targetRoomId: string, arrival?: {
+        x: number;
+        z: number;
+    }) => void) | null;
     /** set by the RoomHost on lifecycle rooms: admin /expire re-arms the timer */
     onExpireRequest: ((sec: number) => void) | null;
     /** destination-room availability (sealed dungeon portals) */
@@ -130,10 +134,15 @@ export declare class RoomSim {
     playerCount(): number;
     /** Sim-side live telemetry for the admin dashboard; the RoomHost stamps the
      *  process-side fields (uptime/tick timings/memory/expiry) on top. */
-    adminInfo(): Pick<RoomAdminInfo, "mobs" | "npcs" | "drops" | "projectiles" | "blockEdits" | "timeOfDay" | "players">;
+    adminInfo(): Pick<RoomAdminInfo, "mobs" | "npcs" | "drops" | "projectiles" | "blockEdits" | "timeOfDay" | "players" | "ents">;
     /** Admin dashboard kick: evict a player by character id (same evict +
      *  immediate-remove sequence as duplicate-login handling). */
     adminKick(characterId: string, reason: string): boolean;
+    /** Admin dashboard teleport. Same room + coordinates = local snap (the
+     *  /tp recipe: set pos, ground-snap, send a correct); another room =
+     *  master-mediated transfer, landing at `x/z` if given, else the target's
+     *  default spawn. */
+    adminMove(characterId: string, targetRoomId: string, x?: number, z?: number): boolean;
     /** Admit a ticketed character. Returns the session (already welcomed). */
     addPlayer(character: CharacterSnapshot, send: (msg: ServerToClient) => void): PlayerSession;
     removePlayer(session: PlayerSession): void;

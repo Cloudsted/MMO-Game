@@ -57,6 +57,8 @@ export class ShardManager {
   private reopenNotBefore = new Map<string, number>();
   /** population/memory timeline for the admin dashboard (in-memory ring) */
   private history: HistorySample[] = [];
+  /** latest top-down map render per room (pushed by RoomHosts) */
+  private roomMaps = new Map<string, { w: number; h: number; data: string; at: number }>();
 
   constructor(
     private cols: Collections,
@@ -210,13 +212,24 @@ export class ShardManager {
         }
         break;
       case "requestTransfer":
-        await this.handleTransferRequest(shard, msg.roomId, msg.characterId, msg.targetRoomId, msg.patch, msg.viaPortalId);
+        await this.handleTransferRequest(
+          shard,
+          msg.roomId,
+          msg.characterId,
+          msg.targetRoomId,
+          msg.patch,
+          msg.viaPortalId,
+          msg.arrival
+        );
         break;
       case "globalChat":
         // relay to every shard (including the sender — single delivery path)
         for (const s of this.shards.values()) {
           this.send(s, { t: "globalChat", from: msg.from, text: msg.text });
         }
+        break;
+      case "mapData":
+        this.roomMaps.set(msg.roomId, { w: msg.w, h: msg.h, data: msg.data, at: Date.now() });
         break;
     }
   }
@@ -235,7 +248,8 @@ export class ShardManager {
     characterId: string,
     targetRoomId: string,
     patch: { id: string } & Record<string, unknown>,
-    viaPortalId?: string
+    viaPortalId?: string,
+    adminArrival?: { x: number; z: number }
   ): Promise<void> {
     const deny = (reason: string) => {
       this.send(shard, { t: "transferDeny", roomId: sourceRoomId, characterId, reason });
@@ -257,9 +271,17 @@ export class ShardManager {
     }
     // portal use: arrive at the paired portal in the target room, facing away
     // from it. y=0 is the ground-snap sentinel (a null y with non-null x
-    // fails the ticket snapshot's zod validation). No pair → default spawn.
+    // fails the ticket snapshot's zod validation). Admin teleports carry an
+    // explicit arrival (clamped into the room). No pair → default spawn.
     let arrival: PortalArrival | null = null;
-    if (viaPortalId) {
+    if (adminArrival) {
+      const size = this.roomDefs.get(targetRoomId)!.size;
+      arrival = {
+        x: Math.min(Math.max(adminArrival.x, 1), size.w - 1),
+        z: Math.min(Math.max(adminArrival.z, 1), size.h - 1),
+        yaw: 0,
+      };
+    } else if (viaPortalId) {
       const via = this.roomDefs.get(sourceRoomId)?.portals.find((p) => p.id === viaPortalId);
       if (via) arrival = computePortalArrival(this.roomDefs.get(targetRoomId)!, sourceRoomId, via);
     }
@@ -466,6 +488,33 @@ export class ShardManager {
       this.send(s, { t: "globalChat", from, text });
     }
     log.info(`admin broadcast: ${text}`);
+  }
+
+  /** Admin: teleport a player — same-room snap or cross-room transfer. */
+  adminMove(roomId: string, characterId: string, targetRoomId: string, x?: number, z?: number): boolean {
+    if (!this.roomDefs.has(targetRoomId)) return false;
+    const assignment = this.roomAssignment.get(roomId);
+    if (!assignment) return false;
+    const shard = this.shards.get(assignment.shardId);
+    if (!shard) return false;
+    this.send(shard, { t: "adminMove", roomId, characterId, targetRoomId, x, z });
+    log.info(`admin teleport requested: ${characterId} ${roomId} -> ${targetRoomId}`);
+    return true;
+  }
+
+  /** Latest top-down map render for a room (null until its RoomHost pushes). */
+  roomMap(roomId: string): { w: number; h: number; data: string; at: number } | null {
+    return this.roomMaps.get(roomId) ?? null;
+  }
+
+  /** Ask a room to (re)send its map — used on cache miss after a master restart. */
+  requestMap(roomId: string): boolean {
+    const assignment = this.roomAssignment.get(roomId);
+    if (!assignment) return false;
+    const shard = this.shards.get(assignment.shardId);
+    if (!shard) return false;
+    this.send(shard, { t: "requestMap", roomId });
+    return true;
   }
 
   /** Live status for the admin/status endpoint. */

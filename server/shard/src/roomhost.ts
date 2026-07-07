@@ -37,6 +37,8 @@ class RoomHost {
   private tickCount = 0;
   /** ephemeral rooms: ms epoch of the scheduled collapse */
   private expiresAtMs: number | null = null;
+  /** edit-overlay size at the last map push (map re-sent on change) */
+  private lastMapEdits = -1;
 
   start(): void {
     if (!process.send) {
@@ -83,18 +85,32 @@ class RoomHost {
       case "kick":
         this.sim?.adminKick(msg.characterId, msg.reason);
         break;
+      case "adminMove":
+        this.sim?.adminMove(msg.characterId, msg.targetRoomId, msg.x, msg.z);
+        break;
+      case "requestMap":
+        this.sendMap();
+        break;
       case "close":
         this.close(msg.reason);
         break;
     }
   }
 
+  /** Render + push the top-down map for the admin dashboard. */
+  private sendMap(): void {
+    if (!this.sim) return;
+    this.lastMapEdits = this.sim.world.edits.size;
+    this.sendHost({ t: "mapData", ...this.sim.world.renderTopDown() });
+  }
+
   private init(roomId: string, port: number, snapshot: import("@fantasy-mmo/common").RoomState | null): void {
     const def = loadRoomDef(roomId);
     this.sim = new RoomSim(def, snapshot);
     this.sim.onGlobalChat = (from, text) => this.sendHost({ t: "globalChat", from, text });
-    // hub-bound transfers the sim initiates itself (respawn away from home, H key)
-    this.sim.onTransferRequest = (session, targetRoomId) => this.requestTransfer(session, targetRoomId);
+    // sim-initiated transfers: hub-bound respawn/H key, admin teleports
+    this.sim.onTransferRequest = (session, targetRoomId, arrival) =>
+      this.requestTransfer(session, targetRoomId, undefined, arrival);
     this.log = makeLogger(`roomhost/${roomId}`);
     const consts = gameConstants();
 
@@ -103,6 +119,7 @@ class RoomHost {
     this.wss.on("listening", () => {
       this.log.info(`gameplay WS listening on :${port}`);
       this.sendHost({ t: "ready", port });
+      this.sendMap(); // dashboard map (re-sent when the edit overlay changes)
     });
 
     setInterval(() => {
@@ -142,6 +159,8 @@ class RoomHost {
     this.tickDurMax = 0;
     this.tickCount = 0;
     this.sendHost({ t: "stats", players: this.sim.playerCount(), info });
+    // block edits changed (build/break/clearblocks): refresh the dashboard map
+    if (this.sim.world.edits.size !== this.lastMapEdits) this.sendMap();
   }
 
   private expiryTimers: NodeJS.Timeout[] = [];
@@ -311,7 +330,12 @@ class RoomHost {
    * the grant path sets session.transferring so the coming disconnect report
    * can't clobber the transfer patch.
    */
-  private requestTransfer(session: PlayerSession, targetRoomId: string, viaPortalId?: string): void {
+  private requestTransfer(
+    session: PlayerSession,
+    targetRoomId: string,
+    viaPortalId?: string,
+    arrival?: { x: number; z: number }
+  ): void {
     if (session.transferring || this.pendingTransfers.has(session.character.id)) return;
     this.pendingTransfers.set(session.character.id, session);
     this.sendHost({
@@ -319,6 +343,7 @@ class RoomHost {
       characterId: session.character.id,
       targetRoomId,
       viaPortalId,
+      arrival,
       patch: this.sim!.buildReport(session)[0]!,
     });
   }

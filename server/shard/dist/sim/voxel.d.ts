@@ -74,6 +74,14 @@ export declare class VoxelWorld {
         cz: number;
         data: string;
     }>;
+    /** Top-down map render for the admin dashboard: per-column color of the
+     *  top-visible block, height-shaded (higher = brighter), as base64
+     *  raw-deflate RGB bytes, row-major, x-fastest. ~w×h×3 bytes pre-deflate. */
+    renderTopDown(): {
+        w: number;
+        h: number;
+        data: string;
+    };
     /** Terrain surface height (block y of the top solid terrain block). */
     terrainHeight(def: RoomDef, x: number, z: number): number;
     /** Trunk height at a column (0 = no tree here). Deterministic per column.

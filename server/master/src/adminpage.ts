@@ -128,6 +128,7 @@ export const PAGE = `<!doctype html>
   <button data-tab="players">Players</button>
   <button data-tab="characters">Characters</button>
   <button data-tab="accounts">Accounts</button>
+  <button data-tab="economy">Economy</button>
   <button data-tab="logs">Logs</button>
   <button data-tab="actions">Actions</button>
 </nav>
@@ -179,6 +180,17 @@ export const PAGE = `<!doctype html>
     <div id="accttable" class="muted pad8">…</div>
   </section>
 
+  <section id="tab-economy">
+    <div class="tiles" id="ecotiles" style="margin-top:8px"></div>
+    <div class="cardgrid" style="grid-template-columns: repeat(auto-fill, minmax(360px, 1fr))">
+      <div class="card"><h3>Top wealth</h3><div id="ecowealth" class="muted">…</div></div>
+      <div class="card"><h3>Levels</h3><div id="ecolevels" class="muted">…</div></div>
+      <div class="card" style="grid-column: 1 / -1"><h3>Items in circulation</h3>
+        <div id="ecorarity" class="row" style="margin-top:6px"></div>
+        <div id="ecoitems" class="muted">…</div></div>
+    </div>
+  </section>
+
   <section id="tab-logs">
     <div class="filters">
       <button id="lf-all" class="on" onclick="setLogFilter('all')">all</button>
@@ -223,6 +235,24 @@ export const PAGE = `<!doctype html>
 
 <div id="detail"></div>
 <div id="toast" class="toast"></div>
+
+<div id="mapmodal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:40; overflow:auto">
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; margin:3vh auto; padding:14px 16px; width:fit-content; max-width:94vw">
+    <div class="row">
+      <h3 id="maptitle" style="margin:0"></h3>
+      <span class="badge"><span class="dot" style="background:#fff"></span>player</span>
+      <span class="badge"><span class="dot" style="background:#e66767"></span>mob</span>
+      <span class="badge"><span class="dot" style="background:#ffd37a"></span>npc</span>
+      <span class="badge"><span class="dot" style="background:#19c2a0"></span>loot</span>
+      <span class="spacer"></span>
+      <select id="maptp"><option value="">teleport: pick a player…</option></select>
+      <button onclick="closeMap()">✕ close</button>
+    </div>
+    <canvas id="mapcanvas" style="display:block; margin-top:10px; image-rendering:pixelated; cursor:crosshair; border:1px solid var(--border)"></canvas>
+    <div id="maphint" class="muted" style="margin-top:6px">&nbsp;</div>
+  </div>
+</div>
+<datalist id="itemlist"></datalist>
 
 <script>
 'use strict';
@@ -359,7 +389,17 @@ function statusPill(st) { return '<span class="pill ' + esc(st) + '">' + esc(st)
 function renderOverview() {
   if (!ov) return;
   var playersOnline = 0, roomsOpen = 0, roomsTotal = ov.defs.length;
-  ov.shards.forEach(function(s) { s.rooms.forEach(function(r) { playersOnline += r.players; roomsOpen++; }); });
+  var live = [];
+  ov.shards.forEach(function(s) {
+    s.rooms.forEach(function(r) {
+      playersOnline += r.players;
+      roomsOpen++;
+      ((r.info && r.info.players) || []).forEach(function(p) {
+        live.push({ charId: p.charId, name: p.name, roomId: r.roomId, x: p.x, z: p.z });
+      });
+    });
+  });
+  window.lastPlayers = live;
   $('c-players').textContent = playersOnline;
   $('c-rooms').textContent = roomsOpen + '/' + roomsTotal;
   $('c-shards').textContent = ov.shards.length;
@@ -507,6 +547,7 @@ function renderRooms() {
       }).join(', ') + '</div></div>';
     }
     html += '<div class="row" style="margin-top:8px">' +
+      '<button class="small" onclick="openMap(\\'' + esc(d.id) + '\\')">live map</button>' +
       '<button class="small" onclick="restartRoom(\\'' + esc(d.id) + '\\')">restart</button>';
     if (d.persistence === 'stateful') {
       html += '<button class="small" onclick="showRoomState(\\'' + esc(d.id) + '\\', this)">persisted state</button>';
@@ -544,8 +585,127 @@ function showRoomState(roomId, btn) {
   }).catch(function(e) { el.innerHTML = '<div class="muted pad8">' + esc(e.message) + '</div>'; });
 }
 
+// ---------- live room map ----------
+var mapState = null; // {roomId, base, w, h, scale, timer, hover}
+
+function inflateRaw(b64) {
+  var bin = atob(b64);
+  var bytes = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  var ds = new DecompressionStream('deflate-raw');
+  var stream = new Blob([bytes]).stream().pipeThrough(ds);
+  return new Response(stream).arrayBuffer().then(function(buf) { return new Uint8Array(buf); });
+}
+
+function openMap(roomId, attempt) {
+  attempt = attempt || 0;
+  $('mapmodal').style.display = 'block';
+  $('maptitle').textContent = roomId + ' — live map';
+  $('maphint').textContent = 'loading map…';
+  fetch('/api/admin/map?roomId=' + encodeURIComponent(roomId) + '&key=' + k()).then(function(r) {
+    if (r.status === 202) {
+      // room hasn't pushed since the master started — it will within a second
+      if (attempt < 10) setTimeout(function() { if ($('mapmodal').style.display !== 'none') openMap(roomId, attempt + 1); }, 1000);
+      else $('maphint').textContent = 'map unavailable (room not pushing)';
+      return null;
+    }
+    if (!r.ok) { $('maphint').textContent = 'map unavailable'; return null; }
+    return r.json();
+  }).then(function(m) {
+    if (!m) return;
+    inflateRaw(m.data).then(function(rgb) {
+      var base = document.createElement('canvas');
+      base.width = m.w; base.height = m.h;
+      var img = base.getContext('2d').createImageData(m.w, m.h);
+      for (var i = 0, j = 0; i < rgb.length; i += 3, j += 4) {
+        img.data[j] = rgb[i]; img.data[j + 1] = rgb[i + 1]; img.data[j + 2] = rgb[i + 2]; img.data[j + 3] = 255;
+      }
+      base.getContext('2d').putImageData(img, 0, 0);
+      var scale = Math.max(1, Math.floor(760 / m.w));
+      if (mapState && mapState.timer) clearInterval(mapState.timer);
+      mapState = { roomId: roomId, base: base, w: m.w, h: m.h, scale: scale, timer: null, hover: null };
+      var cv = $('mapcanvas');
+      cv.width = m.w * scale; cv.height = m.h * scale;
+      cv.style.width = Math.min(m.w * scale * (scale === 1 ? 1.5 : 1), window.innerWidth * 0.88) + 'px';
+      drawMap();
+      mapState.timer = setInterval(function() {
+        api('overview').then(function(data) { ov = data; drawMap(); }).catch(function() {});
+      }, 2500);
+      $('maphint').textContent = 'hover for names — pick a player above, then click the map to teleport them there';
+    });
+  }).catch(function() { $('maphint').textContent = 'map unavailable'; });
+}
+function closeMap() {
+  if (mapState && mapState.timer) clearInterval(mapState.timer);
+  mapState = null;
+  $('mapmodal').style.display = 'none';
+}
+function mapEnts() {
+  if (!mapState) return { ents: [], players: [] };
+  var live = liveInfoFor(mapState.roomId);
+  var i = live && live.room.info;
+  return { ents: (i && i.ents) || [], players: (i && i.players) || [] };
+}
+function drawMap() {
+  if (!mapState) return;
+  var cv = $('mapcanvas'), ctx = cv.getContext('2d'), s = mapState.scale;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(mapState.base, 0, 0, cv.width, cv.height);
+  var d = mapEnts();
+  var colors = { mob: '#e66767', npc: '#ffd37a', loot: '#19c2a0' };
+  d.ents.forEach(function(e) {
+    ctx.fillStyle = colors[e.k] || '#aaa';
+    ctx.beginPath(); ctx.arc(e.x * s, e.z * s, Math.max(2, s * 0.8), 0, 6.284); ctx.fill();
+  });
+  ctx.font = 'bold 11px Consolas, monospace';
+  d.players.forEach(function(p) {
+    ctx.fillStyle = '#0e0f14';
+    ctx.beginPath(); ctx.arc(p.x * s, p.z * s, Math.max(4, s), 0, 6.284); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(p.x * s, p.z * s, Math.max(3, s * 0.75), 0, 6.284); ctx.fill();
+    ctx.fillText(p.name, p.x * s + 6, p.z * s - 5);
+  });
+  // refresh the teleport picker (all online players, any room)
+  var sel = $('maptp'), prev = sel.value, opts = '<option value="">teleport: pick a player…</option>';
+  (window.lastPlayers || []).forEach(function(p) {
+    opts += '<option value="' + esc(p.charId) + '|' + esc(p.roomId) + '">' + esc(p.name) + ' (' + esc(p.roomId) + ')</option>';
+  });
+  if (sel.innerHTML !== opts) { sel.innerHTML = opts; sel.value = prev; }
+}
+$('mapcanvas').addEventListener('mousemove', function(e) {
+  if (!mapState) return;
+  var r = $('mapcanvas').getBoundingClientRect();
+  var sx = mapState.w * mapState.scale / r.width; // CSS scale correction
+  var mx = (e.clientX - r.left) * sx / mapState.scale, mz = (e.clientY - r.top) * sx / mapState.scale;
+  var d = mapEnts(), best = null, bd = 4;
+  d.players.concat(d.ents).forEach(function(en) {
+    var dist = Math.hypot(en.x - mx, en.z - mz);
+    if (dist < bd) { bd = dist; best = en; }
+  });
+  $('maphint').textContent = best
+    ? ((best.name || best.n || best.k) + ' @ ' + Math.round(best.x) + ', ' + Math.round(best.z))
+    : ('(' + Math.round(mx) + ', ' + Math.round(mz) + ')');
+});
+$('mapcanvas').addEventListener('click', function(e) {
+  if (!mapState) return;
+  var pick = $('maptp').value;
+  if (!pick) { toast('Pick a player in the dropdown first to teleport'); return; }
+  var r = $('mapcanvas').getBoundingClientRect();
+  var sx = mapState.w * mapState.scale / r.width;
+  var x = Math.round((e.clientX - r.left) * sx / mapState.scale * 10) / 10;
+  var z = Math.round((e.clientY - r.top) * sx / mapState.scale * 10) / 10;
+  var charId = pick.split('|')[0], fromRoom = pick.split('|')[1];
+  var name = $('maptp').options[$('maptp').selectedIndex].text;
+  if (!confirm('Teleport ' + name + ' to ' + mapState.roomId + ' (' + x + ', ' + z + ')?')) return;
+  post('teleport?characterId=' + encodeURIComponent(charId) + '&roomId=' + encodeURIComponent(fromRoom) +
+       '&targetRoomId=' + encodeURIComponent(mapState.roomId) + '&x=' + x + '&z=' + z)
+    .then(function() { toast('Teleported ' + name); })
+    .catch(function(err) { toast('Teleport failed: ' + err.message); });
+});
+
 // ---------- players ----------
 function renderPlayers(players) {
+  window.lastPlayers = players;
   if (!players.length) { $('playertable').innerHTML = '<div class="muted pad8">nobody online</div>'; return; }
   var html = '<table><tr><th>name</th><th>lvl</th><th>hp</th><th class="num">gold</th><th>room</th><th>position</th><th>shard</th><th></th></tr>';
   players.forEach(function(p) {
@@ -556,9 +716,49 @@ function renderPlayers(players) {
       '<td class="num">' + fmtGold(p.gold) + '</td><td class="mono">' + esc(p.roomId) + '</td>' +
       '<td class="mono muted">' + p.x + ', ' + p.y + ', ' + p.z + '</td><td class="muted">' + esc(p.shardId) + '</td>' +
       '<td><button class="small" onclick="viewCharacter(\\'' + esc(p.charId) + '\\')">view</button> ' +
+      '<button class="small" onclick="teleportDialog(\\'' + esc(p.charId) + '\\',\\'' + esc(p.name) + '\\',\\'' + esc(p.roomId) + '\\')">teleport</button> ' +
       '<button class="small danger" onclick="kickPlayer(\\'' + esc(p.roomId) + '\\',\\'' + esc(p.charId) + '\\',\\'' + esc(p.name) + '\\')">kick</button></td></tr>';
   });
   $('playertable').innerHTML = html + '</table>';
+}
+
+/** Teleport dialog in the side panel: pick a destination room (+ optional
+ *  coordinates) or land on another online player (summon). */
+function teleportDialog(charId, name, roomId) {
+  var rooms = (ov ? ov.defs : []).map(function(d) {
+    return '<option value="' + esc(d.id) + '"' + (d.id === roomId ? ' selected' : '') + '>' + esc(d.name) + ' (' + esc(d.id) + ')</option>';
+  }).join('');
+  var others = (window.lastPlayers || []).filter(function(p) { return p.charId !== charId; }).map(function(p) {
+    return '<option value="' + esc(p.roomId) + '|' + p.x + '|' + p.z + '">' + esc(p.name) + ' (' + esc(p.roomId) + ')</option>';
+  }).join('');
+  $('detail').innerHTML =
+    '<button class="close" onclick="closeDetail()">✕</button>' +
+    '<h3 style="margin:0">Teleport ' + esc(name) + '</h3>' +
+    '<div class="muted">currently in ' + esc(roomId) + '</div>' +
+    '<div class="kv" style="margin-top:12px">' +
+    '<div>room</div><div><select id="tp-room" style="width:100%">' + rooms + '</select></div>' +
+    '<div>x</div><div><input id="tp-x" size="8" placeholder="spawn"></div>' +
+    '<div>z</div><div><input id="tp-z" size="8" placeholder="spawn"></div>' +
+    (others ? '<div>summon to</div><div><select id="tp-summon" style="width:100%"><option value="">— pick a player —</option>' + others + '</select></div>' : '') +
+    '</div>' +
+    '<div class="row" style="margin-top:12px"><button onclick="doTeleport(\\'' + esc(charId) + '\\',\\'' + esc(name) + '\\',\\'' + esc(roomId) + '\\')">Teleport</button>' +
+    '<span class="muted">same room needs x/z; other rooms land at spawn unless given</span></div>';
+  var summon = $('tp-summon');
+  if (summon) summon.addEventListener('change', function() {
+    if (!summon.value) return;
+    var parts = summon.value.split('|');
+    $('tp-room').value = parts[0]; $('tp-x').value = parts[1]; $('tp-z').value = parts[2];
+  });
+  $('detail').className = 'open';
+}
+function doTeleport(charId, name, roomId) {
+  var target = $('tp-room').value, x = $('tp-x').value.trim(), z = $('tp-z').value.trim();
+  if (target === roomId && (x === '' || z === '')) { toast('Same-room teleport needs x and z'); return; }
+  post('teleport?characterId=' + encodeURIComponent(charId) + '&roomId=' + encodeURIComponent(roomId) +
+       '&targetRoomId=' + encodeURIComponent(target) + (x !== '' ? '&x=' + encodeURIComponent(x) : '') +
+       (z !== '' ? '&z=' + encodeURIComponent(z) : ''))
+    .then(function() { toast('Teleported ' + name); closeDetail(); setTimeout(refreshTab, 900); })
+    .catch(function(e) { toast('Teleport failed: ' + e.message); });
 }
 function kickPlayer(roomId, charId, name) {
   if (!confirm('Kick ' + name + ' from ' + roomId + '?')) return;
@@ -585,19 +785,40 @@ function loadCharacters() {
   }).catch(function(e) { $('chartable').innerHTML = '<div class="muted pad8">' + esc(e.message) + '</div>'; });
 }
 var RARITY = { common: 'var(--rarity-common)', uncommon: 'var(--rarity-uncommon)', rare: 'var(--rarity-rare)', epic: 'var(--rarity-epic)' };
+var itemCatalogLoaded = false;
+function ensureItemCatalog() {
+  if (itemCatalogLoaded) return;
+  itemCatalogLoaded = true;
+  api('items').then(function(d) {
+    $('itemlist').innerHTML = d.items.map(function(i) {
+      return '<option value="' + esc(i.id) + '">' + esc(i.label) + ' (' + esc(i.kind) + ')</option>';
+    }).join('');
+  }).catch(function() { itemCatalogLoaded = false; });
+}
 function viewCharacter(id) {
   api('character?id=' + encodeURIComponent(id)).then(function(data) {
     var c = data.character;
+    var editable = !c.online;
     var html = '<button class="close" onclick="closeDetail()">✕</button>' +
       '<h3 style="margin:0">' + esc(c.name) + (c.online ? ' <span class="dot" style="background:var(--good)"></span>' : '') + '</h3>' +
       '<div class="muted">account ' + esc(c.account) + (c.roles.indexOf('admin') >= 0 ? ' · <span style="color:var(--gold)">admin</span>' : '') + '</div>' +
       '<div class="kv" style="margin-top:10px">' +
-      '<div>level</div><div>' + c.level + ' (' + c.xp + ' xp)</div>' +
-      '<div>gold</div><div>' + fmtGold(c.gold) + '</div>' +
       '<div>room</div><div class="mono">' + esc(c.roomId) + '</div>' +
       '<div>position</div><div class="mono">' + (c.x === null ? 'room spawn' : c.x.toFixed(1) + ', ' + c.y.toFixed(1) + ', ' + c.z.toFixed(1)) + '</div>' +
       '<div>created</div><div>' + new Date(c.createdAt).toLocaleString() + '</div>' +
-      '</div><h2>Inventory</h2>';
+      '</div>';
+    if (editable) {
+      html += '<h2>Stats <span class="muted" style="font-weight:normal">(editable while offline)</span></h2>' +
+        '<div class="kv">' +
+        '<div>level</div><div><input id="ed-level" size="6" value="' + c.level + '"></div>' +
+        '<div>xp</div><div><input id="ed-xp" size="8" value="' + c.xp + '"></div>' +
+        '<div>gold</div><div><input id="ed-gold" size="8" value="' + c.gold + '"></div>' +
+        '</div><div class="row" style="margin-top:8px"><button class="small" onclick="saveCharacter(\\'' + esc(c.id) + '\\')">Save stats</button></div>';
+    } else {
+      html += '<div class="kv"><div>level</div><div>' + c.level + ' (' + c.xp + ' xp)</div>' +
+        '<div>gold</div><div>' + fmtGold(c.gold) + '</div></div>';
+    }
+    html += '<h2>Inventory</h2>';
     var any = false;
     c.inventory.forEach(function(s, idx) {
       if (!s) return;
@@ -611,13 +832,46 @@ function viewCharacter(id) {
       if (s.dur !== undefined) extra.push('dur ' + s.dur + '/' + s.maxDur);
       html += '<div class="invitem"><span><span class="muted mono">' + (idx < 8 ? idx + 1 : '·') + '</span> ' +
         '<b style="color:' + col + '">' + esc(s.item) + '</b>' + (s.qty > 1 ? ' ×' + s.qty : '') + '</span>' +
-        '<span class="muted">' + esc(extra.join(' · ')) + '</span></div>';
+        '<span class="muted">' + esc(extra.join(' · ')) +
+        (editable ? ' <button class="small danger" onclick="removeItem(\\'' + esc(c.id) + '\\',' + idx + ')">✕</button>' : '') +
+        '</span></div>';
     });
     if (!any) html += '<div class="muted">empty</div>';
-    if (c.online) html += '<p class="warn-text" style="font-size:12px">Online now — do not hand-edit this character in the DB (live reports would overwrite it).</p>';
+    if (editable) {
+      html += '<div class="row" style="margin-top:10px">' +
+        '<input id="ai-item" list="itemlist" placeholder="item id…" size="16">' +
+        '<input id="ai-qty" size="3" value="1" title="qty (weapons always 1)">' +
+        '<select id="ai-rarity"><option>common</option><option>uncommon</option><option>rare</option><option>epic</option></select>' +
+        '<button class="small" onclick="addItem(\\'' + esc(c.id) + '\\')">Add item</button></div>' +
+        '<p class="muted" style="font-size:12px">Weapons are minted with fresh stat rolls + durability, like any loot drop.</p>';
+      ensureItemCatalog();
+    } else {
+      html += '<p class="warn-text" style="font-size:12px">Online now — stats/inventory are read-only (live reports would overwrite edits). Use in-game /commands, or wait for logout.</p>';
+    }
     $('detail').innerHTML = html;
     $('detail').className = 'open';
   }).catch(function(e) { toast(e.message); });
+}
+function saveCharacter(id) {
+  post('character-edit?id=' + encodeURIComponent(id) +
+       '&gold=' + encodeURIComponent($('ed-gold').value.trim()) +
+       '&level=' + encodeURIComponent($('ed-level').value.trim()) +
+       '&xp=' + encodeURIComponent($('ed-xp').value.trim()))
+    .then(function() { toast('Saved'); viewCharacter(id); loadCharacters(); })
+    .catch(function(e) { toast('Save failed: ' + e.message); });
+}
+function addItem(id) {
+  var item = $('ai-item').value.trim();
+  if (!item) { toast('Enter an item id'); return; }
+  post('character-item-add?id=' + encodeURIComponent(id) + '&item=' + encodeURIComponent(item) +
+       '&qty=' + encodeURIComponent($('ai-qty').value.trim() || '1') + '&rarity=' + encodeURIComponent($('ai-rarity').value))
+    .then(function() { toast('Added ' + item); viewCharacter(id); })
+    .catch(function(e) { toast('Add failed: ' + e.message); });
+}
+function removeItem(id, slot) {
+  post('character-item-remove?id=' + encodeURIComponent(id) + '&slot=' + slot)
+    .then(function() { toast('Removed'); viewCharacter(id); })
+    .catch(function(e) { toast('Remove failed: ' + e.message); });
 }
 function closeDetail() { $('detail').className = ''; }
 
@@ -644,6 +898,56 @@ function setRole(id, name, grant) {
   post('set-role?accountId=' + encodeURIComponent(id) + '&role=admin&grant=' + grant)
     .then(function() { toast('Updated ' + name + ' (applies next login)'); loadAccounts(); })
     .catch(function(e) { toast('Failed: ' + e.message); });
+}
+
+// ---------- economy ----------
+var lastEconomyAt = 0;
+function loadEconomy(force) {
+  if (!force && Date.now() - lastEconomyAt < 10000) return; // aggregation — don't hammer it
+  lastEconomyAt = Date.now();
+  api('economy').then(renderEconomy).catch(function() {});
+}
+function renderEconomy(e) {
+  var tiles = [
+    ['Gold held by characters', fmtGold(e.gold.total)],
+    ['Avg gold / character', fmtGold(e.gold.avg)],
+    ['Richest character', fmtGold(e.gold.max)],
+    ['Gold on the floor', fmtGold(e.floor.gold)],
+    ['Loot bags on the floor', e.floor.bags + ' (' + e.floor.items + ' items)'],
+    ['Distinct item types', e.items.length]
+  ];
+  $('ecotiles').innerHTML = tiles.map(function(t) {
+    return '<div class="tile"><div class="v">' + t[1] + '</div><div class="l">' + t[0] + '</div></div>';
+  }).join('');
+
+  var wh = '<table><tr><th>#</th><th>name</th><th>lvl</th><th class="num">gold</th></tr>';
+  e.topWealth.forEach(function(c, i) {
+    wh += '<tr><td class="muted">' + (i + 1) + '</td><td><b>' + esc(c.name) + '</b></td><td>' + c.level +
+      '</td><td class="num">' + fmtGold(c.gold) + '</td></tr>';
+  });
+  $('ecowealth').innerHTML = wh + '</table>';
+
+  var maxCount = 1;
+  e.levels.forEach(function(l) { if (l.count > maxCount) maxCount = l.count; });
+  $('ecolevels').innerHTML = e.levels.map(function(l) {
+    var w = Math.max(2, Math.round(l.count / maxCount * 100));
+    return '<div class="row" style="gap:6px; margin-top:4px"><span class="mono muted" style="width:34px; text-align:right">L' + l.level + '</span>' +
+      '<span style="flex:1; background:var(--surface2); border-radius:3px; height:14px; overflow:hidden">' +
+      '<span style="display:block; width:' + w + '%; height:100%; background:#3987e5"></span></span>' +
+      '<span class="mono" style="width:30px">' + l.count + '</span></div>';
+  }).join('') || '<div class="muted">no characters</div>';
+
+  $('ecorarity').innerHTML = ['common', 'uncommon', 'rare', 'epic'].map(function(r) {
+    return '<span class="badge"><b style="color:' + (RARITY[r] || 'var(--ink)') + '">' + r + '</b> ' + fmtGold(e.rarities[r] || 0) + '</span>';
+  }).join(' ');
+
+  var it = '<table><tr><th>item</th><th>kind</th><th class="num">qty</th><th class="num">stacks</th><th class="num">est. value</th></tr>';
+  e.items.forEach(function(i) {
+    it += '<tr><td><b>' + esc(i.label) + '</b> <span class="muted mono">' + esc(i.item) + '</span></td>' +
+      '<td class="muted">' + esc(i.kind) + '</td><td class="num">' + fmtGold(i.qty) + '</td>' +
+      '<td class="num">' + i.stacks + '</td><td class="num">' + fmtGold(i.qty * i.value) + 'g</td></tr>';
+  });
+  $('ecoitems').innerHTML = it + '</table>';
 }
 
 // ---------- logs ----------
@@ -705,6 +1009,8 @@ function refreshTab() {
   } else if (activeTab === 'players') {
     api('overview').then(function(data) { ov = data; renderOverview(); }).catch(function() {});
     api('players').then(function(d) { renderPlayers(d.players); }).catch(function() {});
+  } else if (activeTab === 'economy') {
+    loadEconomy();
   } else if (activeTab === 'logs') {
     api('logs').then(function(d) { logLines = d.lines; renderLogs(); }).catch(function() {});
   }
@@ -714,6 +1020,10 @@ function refreshAll() {
   if (keyEl.value) { loadCharacters(); loadAccounts(); }
 }
 setInterval(refreshTab, 2500);
-if (location.hash) switchTab(location.hash.slice(1));
+// deep links: #<tab>, #map-<roomId> (opens the live map), #char-<id> (opens the drawer)
+var boot = location.hash.slice(1);
+if (boot.indexOf('map-') === 0) { switchTab('rooms'); openMap(boot.slice(4)); }
+else if (boot.indexOf('char-') === 0) { switchTab('characters'); viewCharacter(boot.slice(5)); }
+else if (boot) switchTab(boot);
 refreshAll();
 </script></body></html>`;

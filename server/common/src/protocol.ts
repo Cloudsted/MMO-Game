@@ -154,6 +154,10 @@ export const RoomAdminInfoSchema = z.object({
       z: z.number(),
     })
   ),
+  /** non-player entity positions for the dashboard's live room map */
+  ents: z
+    .array(z.object({ k: z.string(), x: z.number(), z: z.number(), n: z.string().optional() }))
+    .optional(),
 });
 export type RoomAdminInfo = z.infer<typeof RoomAdminInfoSchema>;
 
@@ -196,9 +200,22 @@ export const ShardToMasterSchema = z.discriminatedUnion("t", [
      *  lands the player at the paired portal in the target room. Unset
      *  (eviction/respawn/H-key/fallback) = target room's default spawn. */
     viaPortalId: z.string().optional(),
+    /** admin teleport: land at these coordinates in the target room instead
+     *  of the portal pairing / default spawn (y is ground-snapped) */
+    arrival: z.object({ x: z.number(), z: z.number() }).optional(),
     patch: z.object({ id: z.string() }).passthrough(), // live character state to persist first
   }),
   z.object({ t: z.literal("globalChat"), from: z.string(), text: z.string() }),
+  /** top-down room map render for the admin dashboard (pushed on room open
+   *  and whenever the block-edit overlay changes). data = base64 raw-deflate
+   *  RGB bytes, row-major, x-fastest. */
+  z.object({
+    t: z.literal("mapData"),
+    roomId: z.string(),
+    w: z.number().int(),
+    h: z.number().int(),
+    data: z.string(),
+  }),
 ]);
 export type ShardToMaster = z.infer<typeof ShardToMasterSchema>;
 
@@ -232,6 +249,18 @@ export const MasterToShardSchema = z.discriminatedUnion("t", [
   z.object({ t: z.literal("roomStatus"), roomId: z.string(), open: z.boolean() }),
   /** admin dashboard: evict one player from a room */
   z.object({ t: z.literal("kick"), roomId: z.string(), characterId: z.string(), reason: z.string() }),
+  /** admin dashboard: teleport a player. Same room + x/z = local snap;
+   *  different room = transfer (arriving at x/z if given, else spawn). */
+  z.object({
+    t: z.literal("adminMove"),
+    roomId: z.string(),
+    characterId: z.string(),
+    targetRoomId: z.string(),
+    x: z.number().optional(),
+    z: z.number().optional(),
+  }),
+  /** admin dashboard: ask a room to (re)send its mapData */
+  z.object({ t: z.literal("requestMap"), roomId: z.string() }),
 ]);
 export type MasterToShard = z.infer<typeof MasterToShardSchema>;
 

@@ -133,9 +133,12 @@ export class RoomSim {
   private chunkCache: Array<{ cx: number; cz: number; data: string }> | null = null;
   /** set by the RoomHost: routes '/g' chat up the control channel */
   onGlobalChat: ((from: string, text: string) => void) | null = null;
-  /** set by the RoomHost: sim-initiated transfers (hub-bound respawn, H key)
-   *  go through the same requestTransfer machinery as portal use */
-  onTransferRequest: ((session: PlayerSession, targetRoomId: string) => void) | null = null;
+  /** set by the RoomHost: sim-initiated transfers (hub-bound respawn, H key,
+   *  admin teleport) go through the same requestTransfer machinery as portal
+   *  use; arrival = admin-teleport landing coordinates in the target room */
+  onTransferRequest:
+    | ((session: PlayerSession, targetRoomId: string, arrival?: { x: number; z: number }) => void)
+    | null = null;
   /** set by the RoomHost on lifecycle rooms: admin /expire re-arms the timer */
   onExpireRequest: ((sec: number) => void) | null = null;
 
@@ -618,15 +621,24 @@ export class RoomSim {
    *  process-side fields (uptime/tick timings/memory/expiry) on top. */
   adminInfo(): Pick<
     RoomAdminInfo,
-    "mobs" | "npcs" | "drops" | "projectiles" | "blockEdits" | "timeOfDay" | "players"
+    "mobs" | "npcs" | "drops" | "projectiles" | "blockEdits" | "timeOfDay" | "players" | "ents"
   > {
     let mobs = 0;
     let npcs = 0;
     let drops = 0;
+    const ents: NonNullable<RoomAdminInfo["ents"]> = [];
     for (const e of this.entities.values()) {
       if (e.kind === "mob") mobs++;
       else if (e.kind === "npc") npcs++;
       else if (e.kind === "loot") drops++;
+      if (e.kind !== "player") {
+        ents.push({
+          k: e.kind,
+          x: Math.round(e.pos.x * 10) / 10,
+          z: Math.round(e.pos.z * 10) / 10,
+          n: e.renderable.name,
+        });
+      }
     }
     const players = [...this.sessions.values()].map((s) => ({
       charId: s.character.id,
@@ -647,6 +659,7 @@ export class RoomSim {
       blockEdits: this.world.edits.size,
       timeOfDay: this.timeOfDay(),
       players,
+      ents,
     };
   }
 
@@ -658,6 +671,33 @@ export class RoomSim {
     this.log.info(`admin kick: ${session.character.name} (${reason})`);
     session.send({ t: "evict", reason });
     this.removePlayer(session);
+    return true;
+  }
+
+  /** Admin dashboard teleport. Same room + coordinates = local snap (the
+   *  /tp recipe: set pos, ground-snap, send a correct); another room =
+   *  master-mediated transfer, landing at `x/z` if given, else the target's
+   *  default spawn. */
+  adminMove(characterId: string, targetRoomId: string, x?: number, z?: number): boolean {
+    const session = this.byCharacterId.get(characterId);
+    if (!session) return false;
+    if (targetRoomId === this.def.id) {
+      if (x === undefined || z === undefined) return false; // same-room needs a destination
+      const tx = Math.min(Math.max(x, 0), this.def.size.w);
+      const tz = Math.min(Math.max(z, 0), this.def.size.h);
+      const e = session.entity;
+      e.pos.x = tx;
+      e.pos.z = tz;
+      e.pos.y = this.world.standY(tx, tz);
+      session.send({ t: "correct", seq: session.lastSeq, x: e.pos.x, y: e.pos.y, z: e.pos.z });
+      this.system(session, "An admin moved you.");
+      this.log.info(`admin teleport: ${session.character.name} -> (${tx.toFixed(1)}, ${tz.toFixed(1)})`);
+      return true;
+    }
+    if (!this.onTransferRequest) return false;
+    this.system(session, `An admin is sending you to ${targetRoomId}...`);
+    this.log.info(`admin teleport: ${session.character.name} -> room ${targetRoomId}`);
+    this.onTransferRequest(session, targetRoomId, x !== undefined && z !== undefined ? { x, z } : undefined);
     return true;
   }
 
@@ -1914,9 +1954,13 @@ export class RoomSim {
     }
   }
 
-  /** Character patches for persistence (batched via shard host → master). */
+  /** Character patches for persistence (batched via shard host → master).
+   *  Sessions with a granted transfer are excluded from batch reports: the
+   *  master already persisted their state for the TARGET room, and a report
+   *  from here would clobber it with stale source-room data (same rule the
+   *  disconnect path applies). */
   buildReport(only?: PlayerSession): Array<{ id: string } & Record<string, unknown>> {
-    const sessions = only ? [only] : [...this.sessions.values()];
+    const sessions = only ? [only] : [...this.sessions.values()].filter((s) => !s.transferring);
     return sessions.map((s) => ({
       id: s.character.id,
       roomId: this.def.id,

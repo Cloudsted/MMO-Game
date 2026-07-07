@@ -21,6 +21,63 @@ import {
 import { stampStructures } from "./voxelstructures.js";
 import type { ScatterResult } from "./prefabs.js";
 
+/** Block-name → top-face color for the admin dashboard's room map. Values
+ *  are the client atlas tile avgColors (client/assets/blocks/tiles.json),
+ *  baked as literals so the server never depends on client assets. Unknown
+ *  blocks render magenta so a missing entry is obvious on the map. */
+const MAP_COLORS: Record<string, [number, number, number]> = {
+  grass: [80, 149, 65],
+  dirt: [180, 124, 78],
+  stone: [97, 106, 110],
+  sand: [224, 207, 134],
+  water: [70, 107, 180],
+  log: [177, 131, 84],
+  leaves: [59, 151, 87],
+  planks: [200, 160, 103],
+  cobblestone: [186, 200, 195],
+  stone_bricks: [192, 204, 199],
+  mossy_cobblestone: [168, 182, 171],
+  sandstone: [185, 139, 91],
+  thatch: [214, 201, 127],
+  roof: [173, 34, 47],
+  path: [151, 152, 148],
+  bedrock: [72, 65, 83],
+  torch: [186, 124, 68],
+  tall_grass: [116, 145, 64],
+  flower_red: [130, 137, 85],
+  flower_yellow: [134, 151, 88],
+  mushroom_red: [107, 63, 65],
+  mushroom_brown: [116, 102, 87],
+  crystal: [143, 133, 120],
+  lava: [147, 43, 25],
+  glass: [168, 192, 204],
+  mud: [154, 93, 62],
+  murk_water: [56, 105, 126],
+  pale_log: [161, 162, 148],
+  dead_leaves: [143, 97, 51],
+  reeds: [73, 115, 74],
+  vines: [90, 124, 62],
+  glow_shroom: [60, 108, 103],
+  web: [226, 232, 238],
+  dark_stone: [96, 106, 110],
+  dark_bricks: [92, 100, 100],
+  obsidian: [38, 31, 49],
+  ash: [161, 155, 131],
+  charred_log: [57, 44, 37],
+  ember_crystal: [168, 99, 54],
+  bone_block: [183, 170, 146],
+  snow: [234, 252, 250],
+  ice: [100, 189, 255],
+  blue_crystal: [85, 125, 164],
+  marble: [158, 156, 145],
+  bookshelf: [153, 114, 89],
+  hay: [196, 174, 113],
+  palisade: [175, 127, 81],
+  iron_bars: [99, 118, 118],
+  lantern: [93, 92, 79],
+  banner: [139, 131, 180],
+};
+
 // ---------- deterministic noise (shared style with the old heightmap gen) ----------
 
 export function hash2(seed: number, x: number, y: number): number {
@@ -284,6 +341,31 @@ export class VoxelWorld {
       }
     }
     return out;
+  }
+
+  /** Top-down map render for the admin dashboard: per-column color of the
+   *  top-visible block, height-shaded (higher = brighter), as base64
+   *  raw-deflate RGB bytes, row-major, x-fastest. ~w×h×3 bytes pre-deflate. */
+  renderTopDown(): { w: number; h: number; data: string } {
+    const rgb = Buffer.alloc(this.w * this.h * 3);
+    let i = 0;
+    for (let z = 0; z < this.h; z++) {
+      for (let x = 0; x < this.w; x++) {
+        let y = WORLD_HEIGHT - 1;
+        let id = 0;
+        for (; y >= 0; y--) {
+          id = this.get(x, y, z);
+          if (id !== 0) break;
+        }
+        const name = BLOCKS[id]?.name ?? "";
+        const col = MAP_COLORS[name] ?? [255, 0, 255]; // magenta = unmapped block
+        const shade = Math.min(1.15, 0.6 + 0.8 * (y / WORLD_HEIGHT));
+        rgb[i++] = Math.min(255, Math.round(col[0]! * shade));
+        rgb[i++] = Math.min(255, Math.round(col[1]! * shade));
+        rgb[i++] = Math.min(255, Math.round(col[2]! * shade));
+      }
+    }
+    return { w: this.w, h: this.h, data: deflateRawSync(rgb).toString("base64") };
   }
 
   // ---------- generation ----------

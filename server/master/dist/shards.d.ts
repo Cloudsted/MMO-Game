@@ -23,6 +23,8 @@ export declare class ShardManager {
     private reopenNotBefore;
     /** population/memory timeline for the admin dashboard (in-memory ring) */
     private history;
+    /** latest top-down map render per room (pushed by RoomHosts) */
+    private roomMaps;
     constructor(cols: Collections, secret: string);
     attach(httpServer: Server): void;
     /** Sample the live population for the dashboard timeline. */
@@ -73,6 +75,17 @@ export declare class ShardManager {
     kickPlayer(roomId: string, characterId: string, reason: string): boolean;
     /** Admin: server-wide announcement, delivered as global chat in every room. */
     broadcast(from: string, text: string): void;
+    /** Admin: teleport a player — same-room snap or cross-room transfer. */
+    adminMove(roomId: string, characterId: string, targetRoomId: string, x?: number, z?: number): boolean;
+    /** Latest top-down map render for a room (null until its RoomHost pushes). */
+    roomMap(roomId: string): {
+        w: number;
+        h: number;
+        data: string;
+        at: number;
+    } | null;
+    /** Ask a room to (re)send its map — used on cache miss after a master restart. */
+    requestMap(roomId: string): boolean;
     /** Live status for the admin/status endpoint. */
     status(): {
         shards: {
@@ -95,12 +108,12 @@ export declare class ShardManager {
     };
     /** Flattened online-player list across every shard (admin dashboard). */
     livePlayers(): ({
-        x: number;
-        z: number;
         name: string;
         level: number;
         gold: number;
+        x: number;
         y: number;
+        z: number;
         hp: number;
         maxHp: number;
         charId: string;

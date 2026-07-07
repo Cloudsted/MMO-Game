@@ -33,6 +33,14 @@ export type HostToRoom = {
     characterId: string;
     reason: string;
 } | {
+    t: "adminMove";
+    characterId: string;
+    targetRoomId: string;
+    x?: number;
+    z?: number;
+} | {
+    t: "requestMap";
+} | {
     t: "close";
     reason: string;
 };
@@ -54,9 +62,21 @@ export type RoomToHost = {
     characterId: string;
     targetRoomId: string;
     viaPortalId?: string;
+    /** admin teleport: arrival coordinates in the target room */
+    arrival?: {
+        x: number;
+        z: number;
+    };
     patch: {
         id: string;
     } & Record<string, unknown>;
+}
+/** top-down map render (base64 raw-deflate RGB) for the admin dashboard */
+ | {
+    t: "mapData";
+    w: number;
+    h: number;
+    data: string;
 } | {
     t: "globalChat";
     from: string;
