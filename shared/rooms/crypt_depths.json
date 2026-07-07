@@ -154,5 +154,15 @@
       "respawnSec": 99999
     }
   ],
+  "events": [
+    {
+      "id": "morvane-collapse",
+      "on": { "kind": "bossDeath", "mob": "lich_boss" },
+      "actions": [
+        { "kind": "announce", "text": "Morvane is destroyed! The vaults begin to crumble — take your spoils and RUN!" },
+        { "kind": "setRoomTimer", "sec": 60 }
+      ]
+    }
+  ],
   "npcs": []
 }

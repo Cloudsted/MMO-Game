@@ -145,6 +145,12 @@
     "canMoveWhile": false, "interruptible": false, "cooldownMs": 3200, "manaCost": 0,
     "fx": "firebolt"
   },
+  "lich_summon": {
+    "kind": "self", "castTimeMs": 1400, "recoverMs": 400,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 15000, "manaCost": 0,
+    "summon": { "mob": "bone_bat", "count": 3, "radius": 5, "cap": 5, "text": "Morvane rasps: Rise and feast, my children!" },
+    "fx": "frost"
+  },
   "lich_scythe": {
     "kind": "melee", "windupMs": 650, "activeMs": 170, "recoverMs": 520,
     "range": 2.4, "arcDeg": 120,

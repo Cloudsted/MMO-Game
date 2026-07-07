@@ -100,8 +100,9 @@ describe("chooseAttack", () => {
   });
 
   it("lich: scythe point-blank (lance minRange), lance at range", () => {
-    expect(choose("lich_boss", 1.8)).toMatchObject({ kind: "use", option: { id: "lich_scythe" } });
-    expect(choose("lich_boss", 9)).toMatchObject({ kind: "use", option: { id: "shadow_lance" } });
+    // summon on cooldown so the weapon choice is deterministic here
+    expect(choose("lich_boss", 1.8, 0, ["lich_summon"])).toMatchObject({ kind: "use", option: { id: "lich_scythe" } });
+    expect(choose("lich_boss", 9, 0, ["lich_summon"])).toMatchObject({ kind: "use", option: { id: "shadow_lance" } });
   });
 
   it("golem: slam in melee (ember minRange), ember burst at range", () => {
@@ -162,6 +163,45 @@ describe("RoomSim multi-attack integration", () => {
     expect(skel.combat!.aimPitch).toBeGreaterThan(0.3);
   });
 
+  it("summons minions on release: threat inherited, capped, flavored", () => {
+    const a = join("c1", "Alice");
+    a.session.entity.health!.maxHp = 1_000_000; // bats must not kill the anchor mid-test
+    a.session.entity.health!.hp = 1_000_000;
+    const p = a.session.entity.pos;
+    const lich = sim.spawnMob("lich_boss", p.x + 8, p.z, "")!;
+    lich.pos.y = p.y;
+    lich.brain!.threat.set(a.session.entity.id, 50);
+    // force the summon: put the lance and scythe on long cooldowns
+    lich.combat!.cooldowns.set("shadow_lance", Date.now() + 300_000);
+    lich.combat!.cooldowns.set("lich_scythe", Date.now() + 300_000);
+    vi.setSystemTime(Date.now() + 100);
+    sim.tick();
+    expect(lich.combat!.act).toBe("cast");
+    expect(lich.combat!.ability).toBe("lich_summon");
+    vi.setSystemTime(Date.now() + 1500); // cast 1400 elapses
+    sim.tick();
+    const bats = () =>
+      [...sim.allEntities()].filter((e) => e.kind === "mob" && e.brain?.mobId === "bone_bat" && e.combat!.act !== "dead");
+    expect(bats()).toHaveLength(3);
+    for (const bat of bats()) {
+      expect(bat.brain!.summonerId).toBe(lich.id);
+      expect(bat.brain!.threat.get(a.session.entity.id)).toBe(50); // inherits the fight
+    }
+    expect(a.messages.some((m) => m.t === "chat" && m.text.includes("Rise and feast"))).toBe(true);
+    // second cast after the cooldown tops up to the cap (5), not past it
+    vi.setSystemTime(Date.now() + 15_000);
+    sim.tick();
+    vi.setSystemTime(Date.now() + 1500);
+    sim.tick();
+    expect(bats().length).toBe(5);
+    // at cap: the option drops out of the kit — no third wave
+    vi.setSystemTime(Date.now() + 15_000);
+    sim.tick();
+    vi.setSystemTime(Date.now() + 1500);
+    sim.tick();
+    expect(bats().length).toBe(5);
+  });
+
   it("advances toward the player while the bow reloads", () => {
     const a = join("c1", "Alice");
     const p = a.session.entity.pos;
@@ -182,5 +222,101 @@ describe("RoomSim multi-attack integration", () => {
     }
     const dAfter = Math.hypot(skel.pos.x - p.x, skel.pos.z - p.z);
     expect(dAfter).toBeLessThan(dBefore - 0.5);
+  });
+});
+
+describe("entity-linked room events", () => {
+  function joinRoom(sim: RoomSim, id = "c1", name = "Alice") {
+    const messages: ServerToClient[] = [];
+    const def = sim.def;
+    const session = sim.addPlayer(makeCharacter(id, name, def.spawn.x, def.spawn.z), (m) => messages.push(m));
+    return { session, messages };
+  }
+
+  it("boots the dungeon with the depths portal sealed behind the Gravelord", () => {
+    const sim = new RoomSim(loadRoomDef("dungeon"));
+    const wire = sim.portalsWire();
+    expect(wire.find((p) => p.id === "dungeon-depths")!.open).toBe(false);
+    expect(wire.find((p) => p.id === "dungeon-hub")!.open).toBe(true);
+  });
+
+  it("denies the sealed portal with a guardian message", () => {
+    const sim = new RoomSim(loadRoomDef("dungeon"));
+    const a = joinRoom(sim);
+    a.session.entity.pos.x = 46;
+    a.session.entity.pos.z = 6.5; // standing right at the depths gate
+    expect(sim.validatePortalUse(a.session, "dungeon-depths")).toBeNull();
+    expect(a.messages.some((m) => m.t === "chat" && m.text.includes("guardian"))).toBe(true);
+  });
+
+  it("rallies skeletal adds at half health, once per boss life", () => {
+    const sim = new RoomSim(loadRoomDef("dungeon"));
+    const a = joinRoom(sim);
+    const mino = [...sim.allEntities()].find((e) => e.kind === "mob" && e.brain?.mobId === "minotaur_boss")!;
+    const wave = () =>
+      [...sim.allEntities()].filter((e) => e.kind === "mob" && e.brain?.summonerId === mino.id).length;
+    expect(wave()).toBe(0);
+    sim.applyDamage(a.session.entity, mino, 400); // 680 → ≤280: crosses 50%
+    expect(mino.combat!.act).not.toBe("dead");
+    expect(wave()).toBe(3);
+    expect(a.messages.some((m) => m.t === "chat" && m.text.includes("bellows"))).toBe(true);
+    sim.applyDamage(a.session.entity, mino, 20); // still below the line: no refire
+    expect(wave()).toBe(3);
+  });
+
+  it("opens the depths gate on the Gravelord's death and reseals on respawn", () => {
+    const sim = new RoomSim(loadRoomDef("dungeon"));
+    const a = joinRoom(sim);
+    const mino = [...sim.allEntities()].find((e) => e.kind === "mob" && e.brain?.mobId === "minotaur_boss")!;
+    sim.applyDamage(a.session.entity, mino, 999_999);
+    expect(mino.combat!.act).toBe("dead");
+    expect(sim.portalsWire().find((p) => p.id === "dungeon-depths")!.open).toBe(true);
+    expect(a.messages.some((m) => m.t === "portalState" && m.target === "crypt_depths" && m.open)).toBe(true);
+    expect(a.messages.some((m) => m.t === "chat" && m.text.includes("grinds open"))).toBe(true);
+    // the gate is usable now
+    a.session.entity.pos.x = 46;
+    a.session.entity.pos.z = 6.5;
+    expect(sim.validatePortalUse(a.session, "dungeon-depths")).not.toBeNull();
+    // the guardian stirring anew seals the way again
+    sim.spawnMob("minotaur_boss", 46, 12, "boss-hall");
+    expect(sim.portalsWire().find((p) => p.id === "dungeon-depths")!.open).toBe(false);
+    expect(sim.validatePortalUse(a.session, "dungeon-depths")).toBeNull();
+    const lastState = [...a.messages].reverse().find((m) => m.t === "portalState");
+    expect(lastState).toMatchObject({ target: "crypt_depths", open: false });
+  });
+
+  it("keeps an event-opened gate sealed while the destination room is down", () => {
+    const sim = new RoomSim(loadRoomDef("dungeon"));
+    const a = joinRoom(sim);
+    const mino = [...sim.allEntities()].find((e) => e.kind === "mob" && e.brain?.mobId === "minotaur_boss")!;
+    sim.applyDamage(a.session.entity, mino, 999_999); // event says open...
+    sim.setRoomStatus("crypt_depths", false); // ...but the room is collapsed
+    expect(sim.portalsWire().find((p) => p.id === "dungeon-depths")!.open).toBe(false);
+    sim.setRoomStatus("crypt_depths", true);
+    expect(sim.portalsWire().find((p) => p.id === "dungeon-depths")!.open).toBe(true);
+  });
+
+  it("re-arms the collapse timer to 60s when the lich falls", () => {
+    const sim = new RoomSim(loadRoomDef("crypt_depths"));
+    const armed: number[] = [];
+    sim.onExpireRequest = (sec) => armed.push(sec);
+    const a = joinRoom(sim);
+    const lich = [...sim.allEntities()].find((e) => e.kind === "mob" && e.brain?.mobId === "lich_boss")!;
+    sim.applyDamage(a.session.entity, lich, 999_999);
+    expect(armed).toEqual([60]);
+    expect(a.messages.some((m) => m.t === "chat" && m.text.includes("crumble"))).toBe(true);
+  });
+
+  it("hp-threshold triggers re-arm when the boss respawns", () => {
+    const sim = new RoomSim(loadRoomDef("dungeon"));
+    const a = joinRoom(sim);
+    const mino = [...sim.allEntities()].find((e) => e.kind === "mob" && e.brain?.mobId === "minotaur_boss")!;
+    sim.applyDamage(a.session.entity, mino, 400); // rally #1
+    sim.applyDamage(a.session.entity, mino, 999_999); // dead
+    const fresh = sim.spawnMob("minotaur_boss", 46, 12, "boss-hall")!;
+    const freshWave = () =>
+      [...sim.allEntities()].filter((e) => e.kind === "mob" && e.brain?.summonerId === fresh.id).length;
+    sim.applyDamage(a.session.entity, fresh, 400); // rally #2 fires for the new life
+    expect(freshWave()).toBe(3);
   });
 });

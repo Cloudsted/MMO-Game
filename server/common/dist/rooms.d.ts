@@ -255,6 +255,195 @@ export declare const RegionSchema: z.ZodObject<{
     pvp?: boolean | undefined;
 }>;
 export type RegionDef = z.infer<typeof RegionSchema>;
+/** Entity-linked room events: a named boss mob fires room-level actions.
+ *  bossDeath fires on every death of that mob id; bossHpBelowPct fires once
+ *  per boss life (re-arms when the boss respawns). */
+export declare const RoomEventTriggerSchema: z.ZodDiscriminatedUnion<"kind", [z.ZodObject<{
+    kind: z.ZodLiteral<"bossDeath">;
+    mob: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    kind: "bossDeath";
+    mob: string;
+}, {
+    kind: "bossDeath";
+    mob: string;
+}>, z.ZodObject<{
+    kind: z.ZodLiteral<"bossHpBelowPct">;
+    mob: z.ZodString;
+    pct: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    kind: "bossHpBelowPct";
+    mob: string;
+    pct: number;
+}, {
+    kind: "bossHpBelowPct";
+    mob: string;
+    pct: number;
+}>]>;
+export type RoomEventTrigger = z.infer<typeof RoomEventTriggerSchema>;
+export declare const RoomEventActionSchema: z.ZodDiscriminatedUnion<"kind", [z.ZodObject<{
+    kind: z.ZodLiteral<"openPortal">;
+    portalId: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    kind: "openPortal";
+    portalId: string;
+}, {
+    kind: "openPortal";
+    portalId: string;
+}>, z.ZodObject<{
+    kind: z.ZodLiteral<"spawnMobs">;
+    mob: z.ZodString;
+    count: z.ZodNumber;
+    radius: z.ZodDefault<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    kind: "spawnMobs";
+    mob: string;
+    count: number;
+    radius: number;
+}, {
+    kind: "spawnMobs";
+    mob: string;
+    count: number;
+    radius?: number | undefined;
+}>, z.ZodObject<{
+    kind: z.ZodLiteral<"setRoomTimer">;
+    sec: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    kind: "setRoomTimer";
+    sec: number;
+}, {
+    kind: "setRoomTimer";
+    sec: number;
+}>, z.ZodObject<{
+    kind: z.ZodLiteral<"announce">;
+    text: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    kind: "announce";
+    text: string;
+}, {
+    kind: "announce";
+    text: string;
+}>]>;
+export type RoomEventAction = z.infer<typeof RoomEventActionSchema>;
+export declare const RoomEventSchema: z.ZodObject<{
+    id: z.ZodString;
+    on: z.ZodDiscriminatedUnion<"kind", [z.ZodObject<{
+        kind: z.ZodLiteral<"bossDeath">;
+        mob: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        kind: "bossDeath";
+        mob: string;
+    }, {
+        kind: "bossDeath";
+        mob: string;
+    }>, z.ZodObject<{
+        kind: z.ZodLiteral<"bossHpBelowPct">;
+        mob: z.ZodString;
+        pct: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        kind: "bossHpBelowPct";
+        mob: string;
+        pct: number;
+    }, {
+        kind: "bossHpBelowPct";
+        mob: string;
+        pct: number;
+    }>]>;
+    actions: z.ZodArray<z.ZodDiscriminatedUnion<"kind", [z.ZodObject<{
+        kind: z.ZodLiteral<"openPortal">;
+        portalId: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        kind: "openPortal";
+        portalId: string;
+    }, {
+        kind: "openPortal";
+        portalId: string;
+    }>, z.ZodObject<{
+        kind: z.ZodLiteral<"spawnMobs">;
+        mob: z.ZodString;
+        count: z.ZodNumber;
+        radius: z.ZodDefault<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        kind: "spawnMobs";
+        mob: string;
+        count: number;
+        radius: number;
+    }, {
+        kind: "spawnMobs";
+        mob: string;
+        count: number;
+        radius?: number | undefined;
+    }>, z.ZodObject<{
+        kind: z.ZodLiteral<"setRoomTimer">;
+        sec: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        kind: "setRoomTimer";
+        sec: number;
+    }, {
+        kind: "setRoomTimer";
+        sec: number;
+    }>, z.ZodObject<{
+        kind: z.ZodLiteral<"announce">;
+        text: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        kind: "announce";
+        text: string;
+    }, {
+        kind: "announce";
+        text: string;
+    }>]>, "many">;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    on: {
+        kind: "bossDeath";
+        mob: string;
+    } | {
+        kind: "bossHpBelowPct";
+        mob: string;
+        pct: number;
+    };
+    actions: ({
+        kind: "openPortal";
+        portalId: string;
+    } | {
+        kind: "spawnMobs";
+        mob: string;
+        count: number;
+        radius: number;
+    } | {
+        kind: "setRoomTimer";
+        sec: number;
+    } | {
+        kind: "announce";
+        text: string;
+    })[];
+}, {
+    id: string;
+    on: {
+        kind: "bossDeath";
+        mob: string;
+    } | {
+        kind: "bossHpBelowPct";
+        mob: string;
+        pct: number;
+    };
+    actions: ({
+        kind: "openPortal";
+        portalId: string;
+    } | {
+        kind: "spawnMobs";
+        mob: string;
+        count: number;
+        radius?: number | undefined;
+    } | {
+        kind: "setRoomTimer";
+        sec: number;
+    } | {
+        kind: "announce";
+        text: string;
+    })[];
+}>;
+export type RoomEventDef = z.infer<typeof RoomEventSchema>;
 /** Ephemeral-room lifecycle: live for lifetimeSec, warn, evict, close; the
  *  master reopens it fresh after downtimeSec. */
 export declare const LifecycleSchema: z.ZodObject<{
@@ -558,6 +747,126 @@ export declare const RoomDefSchema: z.ZodObject<{
         } | undefined;
         bindSpawnTable?: string | undefined;
     }>, "many">>;
+    /** entity-linked events (boss-gated portals, mid-fight waves, collapse
+     *  timers) — optional */
+    events: z.ZodDefault<z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        on: z.ZodDiscriminatedUnion<"kind", [z.ZodObject<{
+            kind: z.ZodLiteral<"bossDeath">;
+            mob: z.ZodString;
+        }, "strip", z.ZodTypeAny, {
+            kind: "bossDeath";
+            mob: string;
+        }, {
+            kind: "bossDeath";
+            mob: string;
+        }>, z.ZodObject<{
+            kind: z.ZodLiteral<"bossHpBelowPct">;
+            mob: z.ZodString;
+            pct: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            kind: "bossHpBelowPct";
+            mob: string;
+            pct: number;
+        }, {
+            kind: "bossHpBelowPct";
+            mob: string;
+            pct: number;
+        }>]>;
+        actions: z.ZodArray<z.ZodDiscriminatedUnion<"kind", [z.ZodObject<{
+            kind: z.ZodLiteral<"openPortal">;
+            portalId: z.ZodString;
+        }, "strip", z.ZodTypeAny, {
+            kind: "openPortal";
+            portalId: string;
+        }, {
+            kind: "openPortal";
+            portalId: string;
+        }>, z.ZodObject<{
+            kind: z.ZodLiteral<"spawnMobs">;
+            mob: z.ZodString;
+            count: z.ZodNumber;
+            radius: z.ZodDefault<z.ZodNumber>;
+        }, "strip", z.ZodTypeAny, {
+            kind: "spawnMobs";
+            mob: string;
+            count: number;
+            radius: number;
+        }, {
+            kind: "spawnMobs";
+            mob: string;
+            count: number;
+            radius?: number | undefined;
+        }>, z.ZodObject<{
+            kind: z.ZodLiteral<"setRoomTimer">;
+            sec: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            kind: "setRoomTimer";
+            sec: number;
+        }, {
+            kind: "setRoomTimer";
+            sec: number;
+        }>, z.ZodObject<{
+            kind: z.ZodLiteral<"announce">;
+            text: z.ZodString;
+        }, "strip", z.ZodTypeAny, {
+            kind: "announce";
+            text: string;
+        }, {
+            kind: "announce";
+            text: string;
+        }>]>, "many">;
+    }, "strip", z.ZodTypeAny, {
+        id: string;
+        on: {
+            kind: "bossDeath";
+            mob: string;
+        } | {
+            kind: "bossHpBelowPct";
+            mob: string;
+            pct: number;
+        };
+        actions: ({
+            kind: "openPortal";
+            portalId: string;
+        } | {
+            kind: "spawnMobs";
+            mob: string;
+            count: number;
+            radius: number;
+        } | {
+            kind: "setRoomTimer";
+            sec: number;
+        } | {
+            kind: "announce";
+            text: string;
+        })[];
+    }, {
+        id: string;
+        on: {
+            kind: "bossDeath";
+            mob: string;
+        } | {
+            kind: "bossHpBelowPct";
+            mob: string;
+            pct: number;
+        };
+        actions: ({
+            kind: "openPortal";
+            portalId: string;
+        } | {
+            kind: "spawnMobs";
+            mob: string;
+            count: number;
+            radius?: number | undefined;
+        } | {
+            kind: "setRoomTimer";
+            sec: number;
+        } | {
+            kind: "announce";
+            text: string;
+        })[];
+    }>, "many">>;
     npcs: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
         name: z.ZodString;
@@ -605,8 +914,8 @@ export declare const RoomDefSchema: z.ZodObject<{
         } | undefined;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
-    type: "building" | "hub" | "wilderness" | "dungeon";
     id: string;
+    type: "hub" | "wilderness" | "dungeon" | "building";
     name: string;
     biome: string;
     wind: number;
@@ -688,6 +997,32 @@ export declare const RoomDefSchema: z.ZodObject<{
         } | undefined;
         bindSpawnTable?: string | undefined;
     }[];
+    events: {
+        id: string;
+        on: {
+            kind: "bossDeath";
+            mob: string;
+        } | {
+            kind: "bossHpBelowPct";
+            mob: string;
+            pct: number;
+        };
+        actions: ({
+            kind: "openPortal";
+            portalId: string;
+        } | {
+            kind: "spawnMobs";
+            mob: string;
+            count: number;
+            radius: number;
+        } | {
+            kind: "setRoomTimer";
+            sec: number;
+        } | {
+            kind: "announce";
+            text: string;
+        })[];
+    }[];
     npcs: {
         id: string;
         x: number;
@@ -709,8 +1044,8 @@ export declare const RoomDefSchema: z.ZodObject<{
         warnAtSecLeft: number[];
     } | undefined;
 }, {
-    type: "building" | "hub" | "wilderness" | "dungeon";
     id: string;
+    type: "hub" | "wilderness" | "dungeon" | "building";
     name: string;
     biome: string;
     persistence: "stateful" | "ephemeral";
@@ -811,6 +1146,32 @@ export declare const RoomDefSchema: z.ZodObject<{
             within: number;
         } | undefined;
         bindSpawnTable?: string | undefined;
+    }[] | undefined;
+    events?: {
+        id: string;
+        on: {
+            kind: "bossDeath";
+            mob: string;
+        } | {
+            kind: "bossHpBelowPct";
+            mob: string;
+            pct: number;
+        };
+        actions: ({
+            kind: "openPortal";
+            portalId: string;
+        } | {
+            kind: "spawnMobs";
+            mob: string;
+            count: number;
+            radius?: number | undefined;
+        } | {
+            kind: "setRoomTimer";
+            sec: number;
+        } | {
+            kind: "announce";
+            text: string;
+        })[];
     }[] | undefined;
 }>;
 export type RoomDef = z.infer<typeof RoomDefSchema>;

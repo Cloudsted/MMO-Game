@@ -28,6 +28,7 @@ import {
   type PortalWire,
   type RoomAdminInfo,
   type RoomDef,
+  type RoomEventDef,
   type RoomState,
   type ServerToClient,
   type ShopWire,
@@ -157,6 +158,12 @@ export class RoomSim {
   /** destination-room availability (sealed dungeon portals) */
   private roomStatus = new Map<string, boolean>();
 
+  /** portal ids sealed by an event gate (boss still alive); combined with
+   *  roomStatus — a portal is open only when BOTH say open */
+  private eventSealed = new Set<string>();
+  /** one-shot event triggers (bossHpBelowPct) already fired this boss life */
+  private firedEvents = new Set<string>();
+
   /** def spawn tables + prefab bindings/payload tables — mobs use THESE */
   private liveTables: SpawnTable[];
   /** prefab loot caches the room tick keeps stocked */
@@ -205,6 +212,43 @@ export class RoomSim {
     this.initSpawners(snapshot);
     this.initNpcs();
     this.restoreDrops(snapshot);
+    this.initEvents();
+  }
+
+  /** Validate event refs (room defs aren't cross-checked against the mob
+   *  registry at load) and seal event-gated portals while their trigger
+   *  boss lives. A boot with the boss on a persisted respawn timer leaves
+   *  the gate open — it reseals the moment the boss respawns. */
+  private initEvents(): void {
+    for (const ev of this.def.events) {
+      if (!this.reg.mobs[ev.on.mob]) this.log.warn(`event ${ev.id}: unknown mob '${ev.on.mob}'`);
+      for (const act of ev.actions) {
+        if (act.kind === "openPortal") {
+          if (!this.def.portals.some((p) => p.id === act.portalId)) {
+            this.log.warn(`event ${ev.id}: unknown portal '${act.portalId}'`);
+          } else if (this.mobAlive(ev.on.mob)) {
+            this.eventSealed.add(act.portalId);
+          }
+        }
+        if (act.kind === "spawnMobs" && !this.reg.mobs[act.mob]) {
+          this.log.warn(`event ${ev.id}: unknown wave mob '${act.mob}'`);
+        }
+        if (act.kind === "setRoomTimer" && !this.def.lifecycle) {
+          this.log.warn(`event ${ev.id}: setRoomTimer on a room without a lifecycle`);
+        }
+      }
+    }
+    if (this.eventSealed.size > 0) {
+      this.log.info(`${this.eventSealed.size} portal(s) sealed behind boss events`);
+    }
+  }
+
+  /** Any live mob of this registry id in the room? */
+  private mobAlive(mobId: string): boolean {
+    for (const e of this.entities.values()) {
+      if (e.kind === "mob" && e.brain?.mobId === mobId && e.combat?.act !== "dead") return true;
+    }
+    return false;
   }
 
   // ---------- world population ----------
@@ -285,7 +329,108 @@ export class RoomSim {
       },
     };
     this.entities.set(e.id, e);
+    this.onBossSpawned(mobId);
     return e;
+  }
+
+  /** A named event boss (re)appearing re-arms its one-shot triggers and
+   *  reseals its gates — the way deeper closes when the guardian returns. */
+  private onBossSpawned(mobId: string): void {
+    for (const ev of this.def.events) {
+      if (ev.on.mob !== mobId) continue;
+      this.firedEvents.delete(ev.id);
+      for (const act of ev.actions) {
+        if (act.kind === "openPortal" && !this.eventSealed.has(act.portalId)) {
+          this.eventSealed.add(act.portalId);
+          this.broadcastPortalState(act.portalId);
+        }
+      }
+    }
+  }
+
+  /** Run one event's actions; `boss` anchors wave spawns and flavors logs. */
+  private runEventActions(ev: RoomEventDef, boss: Entity): void {
+    for (const act of ev.actions) {
+      switch (act.kind) {
+        case "openPortal":
+          if (this.eventSealed.delete(act.portalId)) {
+            this.broadcastPortalState(act.portalId);
+            this.log.info(`event ${ev.id}: portal ${act.portalId} opened`);
+          }
+          break;
+        case "spawnMobs":
+          this.summonWave(boss, act.mob, act.count, act.radius);
+          this.log.info(`event ${ev.id}: wave of ${act.count}x ${act.mob}`);
+          break;
+        case "setRoomTimer":
+          if (this.onExpireRequest) {
+            this.onExpireRequest(act.sec);
+            this.log.info(`event ${ev.id}: room collapse re-armed to ${act.sec}s`);
+          }
+          break;
+        case "announce":
+          this.systemAll(act.text);
+          break;
+      }
+    }
+  }
+
+  /** bossHpBelowPct triggers: fire once per boss life as hp crosses the line. */
+  private checkHpEvents(tgt: Entity): void {
+    if (tgt.kind !== "mob" || !tgt.health || tgt.health.hp <= 0) return;
+    const pct = tgt.health.hp / tgt.health.maxHp;
+    for (const ev of this.def.events) {
+      if (ev.on.kind !== "bossHpBelowPct" || ev.on.mob !== tgt.brain!.mobId) continue;
+      if (this.firedEvents.has(ev.id) || pct >= ev.on.pct) continue;
+      this.firedEvents.add(ev.id);
+      this.runEventActions(ev, tgt);
+    }
+  }
+
+  /** Live minions summoned by this entity (caps summon abilities). */
+  private minionCountOf(summoner: Entity): number {
+    let n = 0;
+    for (const e of this.entities.values()) {
+      if (e.kind === "mob" && e.brain?.summonerId === summoner.id && e.combat?.act !== "dead") n++;
+    }
+    return n;
+  }
+
+  /** Spawn `count` mobs around `around` with validated scatter (same floor
+   *  band, dry, unobstructed — stragglers stack on the anchor and the
+   *  separation pass fans them out). The wave inherits the anchor's threat
+   *  table so mid-fight adds charge straight in; spawner "" = no respawn. */
+  private summonWave(around: Entity, mobId: string, count: number, radius: number, text?: string): void {
+    const b = around.brain;
+    let spawned = 0;
+    for (let i = 0; i < count; i++) {
+      let x = around.pos.x;
+      let z = around.pos.z;
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const ang = Math.random() * Math.PI * 2;
+        const r = 1.5 + Math.random() * Math.max(0.5, radius - 1.5);
+        const cx = around.pos.x + Math.sin(ang) * r;
+        const cz = around.pos.z + Math.cos(ang) * r;
+        const cy = this.world.floorY(cx, cz);
+        if (Math.abs(cy - around.pos.y) > 3) continue;
+        if (this.world.liquidAt(cx, cy + 0.1, cz)) continue;
+        if (this.world.collidesAABB(cx, cy, cz, 0.3, 1.6)) continue;
+        x = cx;
+        z = cz;
+        break;
+      }
+      const minion = this.spawnMob(mobId, x, z, "");
+      if (!minion) continue;
+      minion.brain!.summonerId = around.id;
+      if (b) {
+        minion.brain!.threat = new Map(b.threat);
+        minion.brain!.targetId = b.targetId;
+      }
+      spawned++;
+    }
+    if (spawned > 0 && text) {
+      this.broadcastNear(around.pos.x, around.pos.z, { t: "chat", channel: "system", from: "", text });
+    }
   }
 
   private initNpcs(): void {
@@ -567,17 +712,32 @@ export class RoomSim {
 
   // ---------- portal availability ----------
 
+  /** A portal is open only when its destination room is up AND no boss
+   *  event holds it sealed. */
+  private portalOpen(p: PortalDef): boolean {
+    return (this.roomStatus.get(p.target) ?? true) && !this.eventSealed.has(p.id);
+  }
+
+  private broadcastPortalState(portalId: string): void {
+    const p = this.def.portals.find((x) => x.id === portalId);
+    if (!p) return;
+    const open = this.portalOpen(p);
+    for (const sess of this.sessions.values()) sess.send({ t: "portalState", target: p.target, open });
+  }
+
   setRoomStatus(roomId: string, open: boolean): void {
     const prev = this.roomStatus.get(roomId);
     this.roomStatus.set(roomId, open);
     if (prev === open) return;
-    if (this.def.portals.some((p) => p.target === roomId)) {
-      for (const sess of this.sessions.values()) sess.send({ t: "portalState", target: roomId, open });
+    for (const p of this.def.portals) {
+      if (p.target !== roomId) continue;
+      const combined = this.portalOpen(p);
+      for (const sess of this.sessions.values()) sess.send({ t: "portalState", target: roomId, open: combined });
     }
   }
 
   portalsWire(): PortalWire[] {
-    return this.def.portals.map((p) => ({ ...p, open: this.roomStatus.get(p.target) ?? true }));
+    return this.def.portals.map((p) => ({ ...p, open: this.portalOpen(p) }));
   }
 
   private randInt(lo: number, hi: number): number {
@@ -905,6 +1065,10 @@ export class RoomSim {
     const portal = this.def.portals.find((p) => p.id === portalId);
     if (!portal) return null;
     if (session.entity.combat!.act === "dead") return null;
+    if (this.eventSealed.has(portal.id)) {
+      this.system(session, `The way to ${portal.label} is sealed while its guardian lives.`);
+      return null;
+    }
     if (this.roomStatus.get(portal.target) === false) {
       this.system(session, `The ${portal.label} portal is sealed right now.`);
       return null;
@@ -994,10 +1158,16 @@ export class RoomSim {
   private mobAttack(mob: Entity, target: Entity, now: number): "started" | "wait" | "close" {
     const def = this.reg.mobs[mob.brain!.mobId];
     if (!def) return "wait";
+    let options = this.attackOptionsOf(def);
+    if (options.some((o) => o.ability.summon)) {
+      // summon options drop out of the kit while the summoner sits at cap
+      const minions = this.minionCountOf(mob);
+      options = options.filter((o) => !o.ability.summon || minions < o.ability.summon.cap);
+    }
     const choice = chooseAttack(
       mob,
       target,
-      this.attackOptionsOf(def),
+      options,
       now,
       def.attackRange,
       this.consts.combat.meleeRangeGrace,
@@ -1073,6 +1243,12 @@ export class RoomSim {
           this.markStatsDirty(e);
           this.broadcastEvent({ kind: "heal", tgt: e.id, amount: Math.round(amount) }, e.pos.x, e.pos.z);
         }
+        // boss summons: top the summoner's minions up to the cap
+        if (ability.summon && e.kind === "mob") {
+          const spec = ability.summon;
+          const room = Math.max(0, spec.cap - this.minionCountOf(e));
+          if (room > 0) this.summonWave(e, spec.mob, Math.min(spec.count, room), spec.radius, spec.text);
+        }
         break;
       }
       case "melee":
@@ -1111,6 +1287,7 @@ export class RoomSim {
           other.brain!.threat.set(src.id, (other.brain!.threat.get(src.id) ?? 0) + 1);
         }
       }
+      this.checkHpEvents(tgt);
     }
     this.markStatsDirty(tgt);
     if (tgt.health.hp <= 0) this.kill(tgt, src);
@@ -1155,6 +1332,7 @@ export class RoomSim {
       }
       tgt.brain!.threat.set(src.id, (tgt.brain!.threat.get(src.id) ?? 0) + amount);
     }
+    if (tgt.kind === "mob") this.checkHpEvents(tgt);
     this.markStatsDirty(tgt);
     if (tgt.health.hp <= 0) this.kill(tgt, src);
   }
@@ -1206,6 +1384,10 @@ export class RoomSim {
         spawner.respawnAts.push(now + table.respawnSec * 1000);
       }
       this.pendingRemovals.push({ id: tgt.id, at: now + CORPSE_LINGER_MS });
+      // entity-linked events (boss gates opening, collapse timers, rallies)
+      for (const ev of this.def.events) {
+        if (ev.on.kind === "bossDeath" && ev.on.mob === tgt.brain!.mobId) this.runEventActions(ev, tgt);
+      }
     } else if (tgt.kind === "player") {
       const session = this.sessions.get(tgt.id);
       if (session) this.dropPlayerInventory(session);

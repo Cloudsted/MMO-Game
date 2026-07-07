@@ -180,5 +180,15 @@
       "nearPortals": true
     }
   ],
+  "events": [
+    {
+      "id": "furnace-rally",
+      "on": { "kind": "bossHpBelowPct", "mob": "cinder_golem_boss", "pct": 0.5 },
+      "actions": [
+        { "kind": "announce", "text": "The Furnace Golem roars — ash rises from the cinders!" },
+        { "kind": "spawnMobs", "mob": "ash_husk", "count": 3, "radius": 7 }
+      ]
+    }
+  ],
   "npcs": []
 }

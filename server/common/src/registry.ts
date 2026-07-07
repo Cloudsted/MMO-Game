@@ -68,6 +68,19 @@ export const AbilityDefSchema = z.object({
       durMs: z.number().int(),
     })
     .optional(),
+  /** self-kind abilities may summon minions on release (boss adds). The
+   *  summoner's live-minion count is capped: at cap the option drops out
+   *  of the attack kit, below it the count tops up to the cap. */
+  summon: z
+    .object({
+      mob: z.string(),
+      count: z.number().int().positive(),
+      radius: z.number().positive().default(4),
+      cap: z.number().int().positive().default(4),
+      /** flavor line broadcast to nearby players when the wave rises */
+      text: z.string().optional(),
+    })
+    .optional(),
   canMoveWhile: z.boolean(),
   interruptible: z.boolean(),
   cooldownMs: z.number().int(),
@@ -182,6 +195,11 @@ export class RegistryService {
         if (!abilities[a.ability]) throw new Error(`mob ${id}: unknown ability ${a.ability}`);
       }
       if (!loot[mob.loot]) throw new Error(`mob ${id}: unknown loot table ${mob.loot}`);
+    }
+    for (const [id, ability] of Object.entries(abilities)) {
+      if (ability.summon && !mobs[ability.summon.mob]) {
+        throw new Error(`ability ${id}: unknown summon mob ${ability.summon.mob}`);
+      }
     }
     for (const [id, table] of Object.entries(loot)) {
       for (const e of [...table.entries, ...table.guaranteed]) {

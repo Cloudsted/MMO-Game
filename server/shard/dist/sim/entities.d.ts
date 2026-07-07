@@ -68,6 +68,8 @@ export interface MobBrain {
         x: number;
         z: number;
     } | null;
+    /** entity id of the boss that summoned this mob (caps live minions) */
+    summonerId?: number;
 }
 /** A dropped loot bag in the world. */
 export interface LootBag {

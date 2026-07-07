@@ -140,5 +140,23 @@
       "respawnSec": 99999
     }
   ],
+  "events": [
+    {
+      "id": "gravelord-rally",
+      "on": { "kind": "bossHpBelowPct", "mob": "minotaur_boss", "pct": 0.5 },
+      "actions": [
+        { "kind": "announce", "text": "The Gravelord bellows — the crypt's dead rally to him!" },
+        { "kind": "spawnMobs", "mob": "skeleton", "count": 3, "radius": 6 }
+      ]
+    },
+    {
+      "id": "gravelord-gate",
+      "on": { "kind": "bossDeath", "mob": "minotaur_boss" },
+      "actions": [
+        { "kind": "announce", "text": "The Gravelord falls — the way to the Vaults of Morvane grinds open!" },
+        { "kind": "openPortal", "portalId": "dungeon-depths" }
+      ]
+    }
+  ],
   "npcs": []
 }

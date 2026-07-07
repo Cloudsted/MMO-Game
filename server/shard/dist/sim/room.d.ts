@@ -80,14 +80,40 @@ export declare class RoomSim {
     onExpireRequest: ((sec: number) => void) | null;
     /** destination-room availability (sealed dungeon portals) */
     private roomStatus;
+    /** portal ids sealed by an event gate (boss still alive); combined with
+     *  roomStatus — a portal is open only when BOTH say open */
+    private eventSealed;
+    /** one-shot event triggers (bossHpBelowPct) already fired this boss life */
+    private firedEvents;
     /** def spawn tables + prefab bindings/payload tables — mobs use THESE */
     private liveTables;
     /** prefab loot caches the room tick keeps stocked */
     private caches;
     constructor(def: RoomDef, snapshot?: RoomState | null);
+    /** Validate event refs (room defs aren't cross-checked against the mob
+     *  registry at load) and seal event-gated portals while their trigger
+     *  boss lives. A boot with the boss on a persisted respawn timer leaves
+     *  the gate open — it reseals the moment the boss respawns. */
+    private initEvents;
+    /** Any live mob of this registry id in the room? */
+    private mobAlive;
     private initSpawners;
     private spawnPack;
     spawnMob(mobId: string, x: number, z: number, spawnerId: string): Entity | null;
+    /** A named event boss (re)appearing re-arms its one-shot triggers and
+     *  reseals its gates — the way deeper closes when the guardian returns. */
+    private onBossSpawned;
+    /** Run one event's actions; `boss` anchors wave spawns and flavors logs. */
+    private runEventActions;
+    /** bossHpBelowPct triggers: fire once per boss life as hp crosses the line. */
+    private checkHpEvents;
+    /** Live minions summoned by this entity (caps summon abilities). */
+    private minionCountOf;
+    /** Spawn `count` mobs around `around` with validated scatter (same floor
+     *  band, dry, unobstructed — stragglers stack on the anchor and the
+     *  separation pass fans them out). The wave inherits the anchor's threat
+     *  table so mid-fight adds charge straight in; spawner "" = no respawn. */
+    private summonWave;
     private initNpcs;
     private restoreDrops;
     /** Ground Y for a bag dropped by an entity whose feet are at fromY — the
@@ -122,6 +148,10 @@ export declare class RoomSim {
     /** Admin: revert every player edit to the generated world. */
     private clearBlocks;
     inPvpZone(x: number, z: number): boolean;
+    /** A portal is open only when its destination room is up AND no boss
+     *  event holds it sealed. */
+    private portalOpen;
+    private broadcastPortalState;
     setRoomStatus(roomId: string, open: boolean): void;
     portalsWire(): PortalWire[];
     private randInt;

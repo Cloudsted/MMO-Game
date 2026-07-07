@@ -90,6 +90,8 @@ export interface MobBrain {
   threat: Map<number, number>; // entity id → accumulated damage
   nextWanderAt: number;
   wanderTarget: { x: number; z: number } | null;
+  /** entity id of the boss that summoned this mob (caps live minions) */
+  summonerId?: number;
 }
 
 /** A dropped loot bag in the world. */

@@ -142,7 +142,8 @@
     "hp": 1150, "damage": 36, "moveSpeed": 2.9,
     "attacks": [
       { "ability": "shadow_lance", "minRange": 3 },
-      { "ability": "lich_scythe", "damage": 30 }
+      { "ability": "lich_scythe", "damage": 30 },
+      { "ability": "lich_summon", "weight": 8 }
     ],
     "aggroRadius": 16, "attackRange": 12,
     "leashRadius": 48, "fleeAtHpPct": 0, "xp": 1400, "loot": "lich_boss_drops",

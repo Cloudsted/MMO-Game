@@ -10,13 +10,13 @@ export declare const RaritySchema: z.ZodObject<{
     color: z.ZodString;
     weight: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
+    weight: number;
     mult: number;
     color: string;
-    weight: number;
 }, {
+    weight: number;
     mult: number;
     color: string;
-    weight: number;
 }>;
 export type RarityDef = z.infer<typeof RaritySchema>;
 export declare const ItemDefSchema: z.ZodObject<{
@@ -55,8 +55,8 @@ export declare const ItemDefSchema: z.ZodObject<{
     }>>;
 }, "strip", z.ZodTypeAny, {
     value: number;
+    kind: "building" | "weapon" | "consumable" | "trophy" | "misc";
     name: string;
-    kind: "weapon" | "consumable" | "building" | "trophy" | "misc";
     stack: number;
     icon: [number, number];
     ability?: string | undefined;
@@ -73,8 +73,8 @@ export declare const ItemDefSchema: z.ZodObject<{
     } | undefined;
 }, {
     value: number;
+    kind: "building" | "weapon" | "consumable" | "trophy" | "misc";
     name: string;
-    kind: "weapon" | "consumable" | "building" | "trophy" | "misc";
     stack: number;
     icon: [number, number];
     ability?: string | undefined;
@@ -118,6 +118,29 @@ export declare const AbilityDefSchema: z.ZodObject<{
         slowPct?: number | undefined;
         dotTotal?: number | undefined;
     }>>;
+    /** self-kind abilities may summon minions on release (boss adds). The
+     *  summoner's live-minion count is capped: at cap the option drops out
+     *  of the attack kit, below it the count tops up to the cap. */
+    summon: z.ZodOptional<z.ZodObject<{
+        mob: z.ZodString;
+        count: z.ZodNumber;
+        radius: z.ZodDefault<z.ZodNumber>;
+        cap: z.ZodDefault<z.ZodNumber>;
+        /** flavor line broadcast to nearby players when the wave rises */
+        text: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        mob: string;
+        count: number;
+        radius: number;
+        cap: number;
+        text?: string | undefined;
+    }, {
+        mob: string;
+        count: number;
+        radius?: number | undefined;
+        text?: string | undefined;
+        cap?: number | undefined;
+    }>>;
     canMoveWhile: z.ZodBoolean;
     interruptible: z.ZodBoolean;
     cooldownMs: z.ZodNumber;
@@ -145,6 +168,13 @@ export declare const AbilityDefSchema: z.ZodObject<{
         slowPct?: number | undefined;
         dotTotal?: number | undefined;
     } | undefined;
+    summon?: {
+        mob: string;
+        count: number;
+        radius: number;
+        cap: number;
+        text?: string | undefined;
+    } | undefined;
 }, {
     kind: "melee" | "projectile" | "self";
     recoverMs: number;
@@ -166,6 +196,13 @@ export declare const AbilityDefSchema: z.ZodObject<{
         durMs: number;
         slowPct?: number | undefined;
         dotTotal?: number | undefined;
+    } | undefined;
+    summon?: {
+        mob: string;
+        count: number;
+        radius?: number | undefined;
+        text?: string | undefined;
+        cap?: number | undefined;
     } | undefined;
 }>;
 export type AbilityDef = z.infer<typeof AbilityDefSchema>;
@@ -246,8 +283,8 @@ export declare const MobDefSchema: z.ZodObject<{
     }>>;
 }, "strip", z.ZodTypeAny, {
     name: string;
-    damage: number;
     sprite: string;
+    damage: number;
     level: number;
     hp: number;
     moveSpeed: number;
@@ -272,8 +309,8 @@ export declare const MobDefSchema: z.ZodObject<{
     } | undefined;
 }, {
     name: string;
-    damage: number;
     sprite: string;
+    damage: number;
     level: number;
     hp: number;
     moveSpeed: number;

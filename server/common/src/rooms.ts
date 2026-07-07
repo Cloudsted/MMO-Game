@@ -120,6 +120,41 @@ export const RegionSchema = z.object({
 });
 export type RegionDef = z.infer<typeof RegionSchema>;
 
+/** Entity-linked room events: a named boss mob fires room-level actions.
+ *  bossDeath fires on every death of that mob id; bossHpBelowPct fires once
+ *  per boss life (re-arms when the boss respawns). */
+export const RoomEventTriggerSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("bossDeath"), mob: z.string() }),
+  z.object({ kind: z.literal("bossHpBelowPct"), mob: z.string(), pct: z.number().gt(0).lt(1) }),
+]);
+export type RoomEventTrigger = z.infer<typeof RoomEventTriggerSchema>;
+
+export const RoomEventActionSchema = z.discriminatedUnion("kind", [
+  /** unseal this room's portal; it RESEALS when the trigger mob respawns
+   *  (kill the guardian → the way deeper opens until the guardian returns) */
+  z.object({ kind: z.literal("openPortal"), portalId: z.string() }),
+  /** the room summons a wave around the trigger mob (mid-fight adds) */
+  z.object({
+    kind: z.literal("spawnMobs"),
+    mob: z.string(),
+    count: z.number().int().positive(),
+    radius: z.number().positive().default(6),
+  }),
+  /** lifecycle rooms: re-arm the collapse timer so the room closes in `sec`
+   *  seconds — extends a shorter remainder, cuts a longer one (boss kill →
+   *  grab the loot and get out) */
+  z.object({ kind: z.literal("setRoomTimer"), sec: z.number().positive() }),
+  z.object({ kind: z.literal("announce"), text: z.string() }),
+]);
+export type RoomEventAction = z.infer<typeof RoomEventActionSchema>;
+
+export const RoomEventSchema = z.object({
+  id: z.string(),
+  on: RoomEventTriggerSchema,
+  actions: z.array(RoomEventActionSchema).min(1),
+});
+export type RoomEventDef = z.infer<typeof RoomEventSchema>;
+
 /** Ephemeral-room lifecycle: live for lifetimeSec, warn, evict, close; the
  *  master reopens it fresh after downtimeSec. */
 export const LifecycleSchema = z.object({
@@ -175,6 +210,9 @@ export const RoomDefSchema = z.object({
   spawnTables: z.array(SpawnTableSchema),
   /** deterministic prefab scatter (ruins, camps, shrines...) — optional */
   prefabs: z.array(PrefabScatterSchema).default([]),
+  /** entity-linked events (boss-gated portals, mid-fight waves, collapse
+   *  timers) — optional */
+  events: z.array(RoomEventSchema).default([]),
   npcs: z.array(NpcDefSchema),
 });
 
