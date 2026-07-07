@@ -13,6 +13,14 @@ const THREAT_WEIGHT = 2; // score per point of damage dealt
 const RETURN_HEAL_PCT_PER_SEC = 0.2;
 const WANDER_SPEED_MULT = 0.45;
 
+/** Min center-to-center distance between alive mobs (owner-tuned: 0.9 read
+ *  as too spread out — packs may bunch, just not merge into one sprite). */
+export const MOB_SEPARATION = 0.45;
+/** How fast overlapping mobs push apart (m/s) — gentle, not a teleport. */
+const SEPARATION_PUSH_SPEED = 2.0;
+/** Mobs on ledges more than this far above/below don't crowd each other. */
+const SEPARATION_Y_TOLERANCE = 1.5;
+
 export interface MoveIntent {
   x: number;
   z: number;
@@ -113,9 +121,27 @@ export function tickBrain(mob: Entity, def: MobDef, players: Entity[], now: numb
 }
 
 /**
+ * Would standing at (nx,nz) push e deeper into a neighbour's personal space?
+ * Moves that keep or grow the distance stay legal, so already-overlapping
+ * mobs can always walk their way out.
+ */
+function crowdsNeighbour(e: Entity, nx: number, nz: number, others: Entity[]): boolean {
+  for (const o of others) {
+    if (o === e || Math.abs(o.pos.y - e.pos.y) > SEPARATION_Y_TOLERANCE) continue;
+    const d = Math.hypot(nx - o.pos.x, nz - o.pos.z);
+    if (d >= MOB_SEPARATION) continue;
+    const cur = Math.hypot(e.pos.x - o.pos.x, e.pos.z - o.pos.z);
+    if (d < cur - 1e-6) return true;
+  }
+  return false;
+}
+
+/**
  * Apply a move intent with voxel rules: walk at speed, deflect around
  * blockers, step up/down at most one block, never into water or lava,
- * keep headroom. Sets yaw + walk anim. Returns whether the mob moved.
+ * keep headroom. `others` are packmates whose personal space deflects the
+ * path too (mobs fan out instead of stacking). Sets yaw + walk anim.
+ * Returns whether the mob moved.
  */
 export function applyMove(
   e: Entity,
@@ -124,7 +150,8 @@ export function applyMove(
   dt: number,
   world: VoxelWorld,
   bounds: { w: number; h: number },
-  _waterLevel: number | null
+  _waterLevel: number | null,
+  others: Entity[] = []
 ): boolean {
   const dx = intent.x - e.pos.x;
   const dz = intent.z - e.pos.z;
@@ -137,6 +164,7 @@ export function applyMove(
     const nx = e.pos.x + Math.sin(ang) * step;
     const nz = e.pos.z + Math.cos(ang) * step;
     if (nx < 1 || nx > bounds.w - 1 || nz < 1 || nz > bounds.h - 1) continue;
+    if (crowdsNeighbour(e, nx, nz, others)) continue; // don't walk into a packmate
     // ground under the new spot, allowing a 1-block step up from current feet
     const ny = world.groundBelow(nx, e.pos.y + 1.05, nz, 0.25);
     if (Math.abs(ny - e.pos.y) > 1.05) continue; // cliff or >1 step
@@ -149,6 +177,71 @@ export function applyMove(
     return true;
   }
   return false;
+}
+
+/**
+ * Soft-separate overlapping mobs: every pair closer than MOB_SEPARATION
+ * pushes apart at SEPARATION_PUSH_SPEED (handles spawn stacks and mobs
+ * knocked together — applyMove's crowding check prevents the rest). Pushes
+ * accumulate symmetrically first, then each result is validated with the
+ * same voxel rules as walking so nobody gets shoved into a wall, off a
+ * cliff, or into liquid. Yaw is untouched — mobs keep facing their target.
+ */
+export function separateEntities(
+  list: Entity[],
+  dt: number,
+  world: VoxelWorld,
+  bounds: { w: number; h: number }
+): void {
+  if (list.length < 2) return;
+  const maxPush = SEPARATION_PUSH_SPEED * dt;
+  const push = new Map<Entity, { x: number; z: number }>();
+  for (let i = 0; i < list.length; i++) {
+    for (let j = i + 1; j < list.length; j++) {
+      const a = list[i]!;
+      const b = list[j]!;
+      if (Math.abs(a.pos.y - b.pos.y) > SEPARATION_Y_TOLERANCE) continue;
+      const dx = b.pos.x - a.pos.x;
+      const dz = b.pos.z - a.pos.z;
+      const d = Math.hypot(dx, dz);
+      if (d >= MOB_SEPARATION) continue;
+      // direction a→b; perfectly stacked pairs split along a stable per-pair angle
+      let ux: number;
+      let uz: number;
+      if (d < 1e-4) {
+        const ang = (((a.id * 31 + b.id * 17) % 64) / 64) * Math.PI * 2;
+        ux = Math.sin(ang);
+        uz = Math.cos(ang);
+      } else {
+        ux = dx / d;
+        uz = dz / d;
+      }
+      const strength = (MOB_SEPARATION - d) * 0.5;
+      const pa = push.get(a) ?? { x: 0, z: 0 };
+      pa.x -= ux * strength;
+      pa.z -= uz * strength;
+      push.set(a, pa);
+      const pb = push.get(b) ?? { x: 0, z: 0 };
+      pb.x += ux * strength;
+      pb.z += uz * strength;
+      push.set(b, pb);
+    }
+  }
+  for (const [e, p] of push) {
+    const mag = Math.hypot(p.x, p.z);
+    if (mag < 1e-4) continue;
+    const step = Math.min(mag, maxPush);
+    const nx = e.pos.x + (p.x / mag) * step;
+    const nz = e.pos.z + (p.z / mag) * step;
+    if (nx < 1 || nx > bounds.w - 1 || nz < 1 || nz > bounds.h - 1) continue;
+    const ny = world.groundBelow(nx, e.pos.y + 1.05, nz, 0.25);
+    if (Math.abs(ny - e.pos.y) > 1.05) continue;
+    if (world.collidesAABB(nx, ny, nz, 0.3, 1.6)) continue;
+    if (world.liquidAt(nx, ny + 0.1, nz)) continue;
+    e.pos.x = nx;
+    e.pos.z = nz;
+    e.pos.y = ny;
+  }
 }
 
 /** Find a legal spawn point in a spawn region (dry, unobstructed). */

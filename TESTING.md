@@ -39,8 +39,11 @@ npm test              # vitest: server/*/test/*.test.ts
 ## Layer 2 — Stack + bot scripts (integration, ~1 min each)
 
 Boot the stack first: `npm run dev` (run it as a background task; it stays
-up). Wait until the log shows every room ready (`room hub ready`,
-`room forest ready`). Health check at any time:
+up). **Agents: launch it via the Bash tool's `run_in_background`, not a
+PowerShell background call** — a PowerShell background task is killed at its
+timeout (default 2 min) and takes the whole stack tree down with exit 255 /
+4294967295; Bash background tasks stay detached across turns. Wait until the
+log shows every room ready (`room hub ready`, `room forest ready`). Health check at any time:
 
 ```
 curl -s http://127.0.0.1:4000/api/status
@@ -57,6 +60,9 @@ exits nonzero on failure:
 | `travel-bot.mjs` | full portal transfer round trip hub→forest→hub | after touching portals/tickets/control channel |
 | `kill-test.mjs` | kill -9 a RoomHost with a player inside → player re-enters and lands in the hub, master reopens the room from snapshot (clock resumes, **loot drops restored**) | after touching recovery/persistence |
 | `combat-bot.mjs` | the whole gameplay loop: travel to the forest, find a mob, kill it with the starter sword, receive the XP event, loot the bag, chat round trip | after touching combat/FSM/loot/XP |
+| `separation-check.mjs` | mob-vs-mob separation: stands in the forest slime meadow so the pack converges, samples pairwise mob distances for 25 s, fails on sustained overlap (< MOB_SEPARATION) | after touching mob movement/AI |
+| `stage-occlusion.mjs [--x --z]` | parks Dropbot at a fixed plaza spot and tosses a longbow bag exactly 1.2 m behind him — stage a camera character on the printed sight line to verify sprites occlude 3D item meshes; holds so the scene stays fresh | after touching entity/item draw order |
+| `probe-ents.mjs` | joins the hub with a throwaway character and prints every player/loot entity position in interest — catches DB-staged characters that snapped onto tree canopies, confirms staged bags are live | scene staging/debugging |
 | `lifecycle-bot.mjs` | the ephemeral-dungeon arc: enter → `/expire 15` → collapse warning → eviction → reconnect lands in hub → portal sealed during downtime → fresh reopen (restart the stack with `MMO_DOWNTIME_OVERRIDE_SEC=20` first; needs admin) | after touching lifecycle/room status |
 | `build-bot.mjs` | block building over the wire: /give block items, place a plank platform + pillar + torch (blockPlace), break one back off (blockBreak, refund) — every blockSet replicates and the tracked world bytes match; the build persists for client eyeballing | after touching the block/building system |
 | `shard2.mjs` | boots a second shard host; follow with `kill-test.mjs` and check `/api/status` — the killed room reopens on shard2 (multi-shard proof) | after touching master room assignment |

@@ -54,7 +54,9 @@ In-game keys: WASD+mouse move, SPACE jump (1-block steps need it; SPACE also
 swims up), **LMB uses the held item** (weapon attacks, consumable consumes,
 block item places at the wireframe ghost; bare hands break the aimed block
 in building rooms, otherwise punch), 1-8 or **scroll wheel** select the
-hotbar slot (selection only — nothing consumes on select), E interact
+hotbar slot (selection only — nothing consumes on select), **Q drops 1
+from the selected hotbar stack (Ctrl+Q the whole stack); dragging a stack
+out of the inventory window also drops it**, E interact
 (portal > loot > NPC), I/Tab inventory, Enter chat (`/g ` global; admins:
 `/give /gold /tp /spawnmob /time /level /reload /clearblocks /expire`),
 G god panel (admin), R respawn when dead, Esc close window / release mouse.
@@ -336,6 +338,62 @@ show their block tile).
   cosmetic until LMB, and attack sends AFTER equip on the same ordered
   socket, so prediction is authority-safe. Feel-verified by the owner
   (scroll can't be injected — see LESSONS.md input-injection rule).
+
+- 2026-07-06 **Mob-vs-mob separation** (owner: packs converged into one
+  spot and read as a single confusing blob). Two server-side layers in
+  `sim/mobs.ts`, tuned by `MOB_SEPARATION` (0.45 m center-to-center —
+  first shipped at 0.9, owner wanted packs 50% tighter: bunching is fine,
+  merging into one sprite is not): (1) `applyMove` rejects candidate steps that move
+  a mob DEEPER into a packmate's personal space (moves that keep/grow the
+  distance stay legal, so an overlapped mob can always walk out) — the
+  existing ±0.6/±1.2 rad deflection angles then route around, so packs
+  naturally fan out and ring their target; (2) `separateEntities` (room
+  tick step 2b) soft-pushes any still-overlapping pair apart at 2 m/s
+  (covers spawn stacks); pushes accumulate symmetrically per pair, then
+  each result is validated with the SAME voxel rules as walking (never
+  shoved into walls/cliffs/liquid; yaw untouched so mobs keep facing
+  their target). Pairs >1.5 blocks apart vertically are exempt (ledges).
+  Players are deliberately NOT separated — their movement is
+  client-predicted and server pushes would rubber-band them. Verified:
+  70 vitest (3 new), combat-bot regression, and
+  `scripts/separation-check.mjs` (stands in the slime meadow, pack
+  converges, 124 samples, 0 overlaps; at 0.45 the closest observed pair
+  was 0.451 m — packs sit right at the floor without crossing it).
+- 2026-07-06 **Dropped 3D items actually spin/hover now**: `itemSpinT` —
+  the clock behind `WorldScreen.lootTransform`'s spin + hover — was
+  declared but never incremented, so every 3D drop stood frozen at its
+  per-id pose. Now advanced once per frame BEFORE the shadow pass (both
+  lootTransform callers — shadow cast + draw — must see the same value or
+  shadows lag the mesh). Verified by two MMO_SHOT frames 6 s apart
+  (tools/out/itemspin-*): the staged longbow reads broadside in one and
+  edge-on in the next. See LESSONS.md — a single screenshot "verified"
+  this motion feature when it shipped.
+- 2026-07-07 **Dropped-item meshes no longer render through sprites**
+  (owner report): the item pass ran AFTER `decalBatch.flush()`, and
+  billboards don't write depth — so a bag behind a player painted straight
+  over them. The pass now runs BEFORE the flush: item meshes write depth
+  (begin() = depth on, blend off), so every sprite drawn after depth-tests
+  against them per pixel — items in front cover sprites, items behind hide.
+  Verified with `scripts/stage-occlusion.mjs` (parks Dropbot on the plaza
+  road, tosses a longbow exactly 1.2 m behind him on the camera's sight
+  line; probe-ents.mjs confirms the bag entity is live) — three MMO_SHOT
+  frames show zero bow pixels behind the sprite while the same build
+  renders open-ground bags fine. Staging trap: two camera spots failed
+  because the DB-staged character snapped ON TOP of the landmark tree's
+  canopy (y 19 vs ground 13) — `probe-ents.mjs` is how you catch that.
+- 2026-07-07 **Drop anywhere: Q + inventory drag-out** (owner request).
+  Server `handleDropItem` was already unrestricted (any room, any time,
+  only death blocks); this was pure client UX: (1) **Q** tosses 1 from the
+  selected hotbar stack, **Ctrl+Q** the whole stack (guarded by chatFocus
+  and death; server spawns the bag 1.2 m ahead, owner-locked 3 s);
+  (2) inventory **drag-out**: `GameUi.release()` (new touchUp route)
+  completes a press-drag-release — onto another slot = move, outside the
+  inventory panel = drop; releasing on the pickup slot or the panel
+  background keeps carrying, so the old click-then-click mode still works
+  (previously a true drag left you carrying and the item "snapped back").
+  Q/drag can't be injected into the GLFW window (LESSONS.md input rule) —
+  wire path is server-proven (drop-bot/vitest); the keybind needs a human
+  feel-check.
 
 ## Conventions
 

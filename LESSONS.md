@@ -40,6 +40,18 @@ feature works". Verify server logic with scripts/tests, rendering with
 screenshots you actually look at, and data with offline dumps — never accept
 one layer's green light as proof for another layer.
 
+### A single screenshot cannot verify motion (the frozen item-spin clock)
+Dropped 3D items shipped as "spinning hovering meshes, verified by
+screenshots" — but `itemSpinT`, the clock driving the spin/hover transform,
+was declared and never incremented. Every drop stood frozen at its per-id
+pose; the static screenshots looked exactly like a working feature, and the
+owner reported it as a bug days later. **Rule:** any claim about movement,
+animation, or time-varying behavior needs two captures ~6 s apart, diffed at
+the artifact (the same trick TESTING.md already prescribed for telling
+entities from geometry). Corollary: when an animation "runs" off a time
+accumulator, grep that the accumulator is actually advanced — a `float t = 0`
+that is only ever read renders as a perfectly plausible still frame.
+
 ## Windows / environment
 
 ### MongoDB 8.x dies silently on Windows 10

@@ -4,7 +4,7 @@ import { gameConstants, loadRoomDef, mintItem, RegistryService } from "@fantasy-
 import { RoomSim, type PlayerSession } from "../src/sim/room.js";
 import { advanceFsm, inMeleeCone, interruptIfCasting, startAbility } from "../src/sim/combat.js";
 import { addItem, rollLoot, normalizeInventory, INV_SIZE } from "../src/sim/loot.js";
-import { tickBrain } from "../src/sim/mobs.js";
+import { applyMove, MOB_SEPARATION, separateEntities, tickBrain } from "../src/sim/mobs.js";
 import { freshCombat, type Entity } from "../src/sim/entities.js";
 
 const reg = new RegistryService();
@@ -207,6 +207,71 @@ describe("mob brain", () => {
     expect(d.move).toBeTruthy();
     // fleeing away: target x should be on the far side of the wolf from prey
     expect(d.move!.x).toBeLessThan(wolf.pos.x);
+  });
+});
+
+describe("mob separation", () => {
+  const sim = new RoomSim(loadRoomDef("hub"));
+  const world = sim.world;
+  const bounds = sim.def.size;
+
+  /** A flat, unobstructed, dry 9×9 patch — terrain must not skew the assertions. */
+  function findFlatSpot(): { x: number; z: number; y: number } {
+    for (let z = 8; z < bounds.h - 8; z += 4) {
+      for (let x = 8; x < bounds.w - 8; x += 4) {
+        const y = world.standY(x, z);
+        let ok = true;
+        for (let dx = -4; dx <= 4 && ok; dx++)
+          for (let dz = -4; dz <= 4 && ok; dz++) {
+            const yy = world.standY(x + dx, z + dz);
+            if (yy !== y || world.collidesAABB(x + dx, yy, z + dz, 0.3, 1.6) || world.liquidAt(x + dx, yy + 0.1, z + dz)) ok = false;
+          }
+        if (ok) return { x, z, y };
+      }
+    }
+    throw new Error("no flat spot in hub");
+  }
+  const flat = findFlatSpot();
+
+  function mobAt(id: number, x: number, z: number): Entity {
+    const e = testEntity(x, z);
+    e.id = id;
+    e.kind = "mob";
+    e.pos.y = world.standY(x, z);
+    return e;
+  }
+
+  it("deflects a chasing mob around a packmate instead of walking through it", () => {
+    const a = mobAt(1, flat.x, flat.z - 2);
+    const blocker = mobAt(2, flat.x, flat.z - 1);
+    const target = { x: flat.x, z: flat.z + 2, speedMult: 1 };
+    let minD = Infinity;
+    for (let i = 0; i < 120; i++) {
+      applyMove(a, target, 3, 0.1, world, bounds, null, [a, blocker]);
+      minD = Math.min(minD, Math.hypot(a.pos.x - blocker.pos.x, a.pos.z - blocker.pos.z));
+    }
+    expect(minD).toBeGreaterThanOrEqual(MOB_SEPARATION - 1e-6); // never entered its personal space
+    expect(Math.hypot(a.pos.x - target.x, a.pos.z - target.z)).toBeLessThan(0.5); // still got there
+  });
+
+  it("pushes a stacked pack apart to personal-space distance, staying on the ground", () => {
+    const pack = [mobAt(1, flat.x, flat.z), mobAt(2, flat.x, flat.z), mobAt(3, flat.x, flat.z)];
+    for (let i = 0; i < 40; i++) separateEntities(pack, 0.1, world, bounds);
+    for (let i = 0; i < pack.length; i++)
+      for (let j = i + 1; j < pack.length; j++) {
+        const d = Math.hypot(pack[i]!.pos.x - pack[j]!.pos.x, pack[i]!.pos.z - pack[j]!.pos.z);
+        expect(d).toBeGreaterThanOrEqual(MOB_SEPARATION - 0.05);
+      }
+    for (const m of pack) expect(m.pos.y).toBe(world.standY(m.pos.x, m.pos.z));
+  });
+
+  it("ignores mobs separated vertically (different ledges)", () => {
+    const a = mobAt(1, flat.x, flat.z);
+    const b = mobAt(2, flat.x, flat.z);
+    b.pos.y += 3; // pretend b stands on a ledge overhead
+    separateEntities([a, b], 0.1, world, bounds);
+    expect(a.pos.x).toBe(flat.x);
+    expect(a.pos.z).toBe(flat.z);
   });
 });
 

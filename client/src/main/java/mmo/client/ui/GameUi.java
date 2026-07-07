@@ -112,6 +112,7 @@ public class GameUi {
 
     // per-frame hit rects
     private final Rectangle[] slotRects = new Rectangle[24];
+    private final Rectangle invPanel = new Rectangle();
     private final List<Rectangle> shopRowRects = new ArrayList<>();
     private final List<Runnable> godActions = new ArrayList<>();
     private final List<Rectangle> godRects = new ArrayList<>();
@@ -397,6 +398,29 @@ public class GameUi {
             return true;
         }
         return false;
+    }
+
+    /** Mouse release routed from WorldScreen — completes a DRAG with the
+     *  carried stack: released on another slot = move, released outside the
+     *  inventory panel = drop on the ground. Releasing on the pickup slot (a
+     *  plain click) or on the panel background keeps carrying, so the
+     *  click-then-click placement mode still works. Returns consumed. */
+    public boolean release(int sx, int syTopDown, int button) {
+        if (button != 0 || window != Window.INVENTORY || carrying < 0) return false;
+        float y = vh - syTopDown / (float) uiScale;
+        float x = sx / (float) uiScale;
+        for (int i = 0; i < 24; i++) {
+            if (!slotRects[i].contains(x, y)) continue;
+            if (i == carrying) return false; // plain click: keep carrying
+            net.send(mmo.client.net.Protocol.invMove(carrying, i));
+            carrying = -1;
+            return true;
+        }
+        if (invPanel.contains(x, y)) return false; // sloppy release between slots: keep carrying
+        Stack s = slots[carrying];
+        if (s != null) net.send(mmo.client.net.Protocol.dropItem(carrying, s.qty));
+        carrying = -1;
+        return true;
     }
 
     // ---------- rendering ----------
@@ -778,6 +802,7 @@ public class GameUi {
         // round against the slot squares (see hotbar note)
         float px = MathUtils.floor(w / 2f - gw / 2f - 18), py = MathUtils.floor(h / 2f - gh / 2f - 30);
         float pw = gw + 36, ph = gh + 96;
+        invPanel.set(px, py, pw, ph); // drag-release outside this = drop
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         panel(shapes, px, py, pw, ph);
@@ -806,7 +831,7 @@ public class GameUi {
         font.draw(batch, "Inventory   —   " + gold + "g", px + 18, py + ph - 16);
         font.getData().setScale(0.5f);
         font.setColor(0.7f, 0.7f, 0.75f, 1f);
-        font.draw(batch, "1-8 = hotbar · LMB move · RMB use · click outside = drop", px + 18, py + 24);
+        font.draw(batch, "1-8 = hotbar · LMB move · RMB use · drag out / Q = drop", px + 18, py + 24);
         font.getData().setScale(1f);
         for (int i = 0; i < 24; i++) {
             Stack s = slots[i];

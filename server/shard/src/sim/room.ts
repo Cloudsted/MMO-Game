@@ -48,7 +48,7 @@ import {
   type Projectile,
 } from "./combat.js";
 import { addItem, HOTBAR_SIZE, INV_SIZE, normalizeInventory, removeFromSlot, rollLoot } from "./loot.js";
-import { applyMove, findSpawnPoint, pickMob, tickBrain } from "./mobs.js";
+import { applyMove, findSpawnPoint, pickMob, separateEntities, tickBrain } from "./mobs.js";
 import { VoxelWorld } from "./voxel.js";
 
 /** Chunks per `chunks` message — a whole room ships in a handful of frames. */
@@ -1292,8 +1292,9 @@ export class RoomSim {
 
     // 2. mob brains → intents → body
     const players = [...this.sessions.values()].map((s) => s.entity);
-    for (const e of this.entities.values()) {
-      if (e.kind !== "mob" || !e.brain || e.combat!.act === "dead") continue;
+    const aliveMobs = [...this.entities.values()].filter((e) => e.kind === "mob" && e.combat!.act !== "dead");
+    for (const e of aliveMobs) {
+      if (!e.brain) continue;
       const def = this.reg.mobs[e.brain.mobId];
       if (!def) continue;
       const decision = tickBrain(e, def, players, now);
@@ -1301,12 +1302,14 @@ export class RoomSim {
       if (decision.move) {
         let speed = def.moveSpeed;
         if (e.combat!.slowUntil > now) speed *= 1 - e.combat!.slowPct;
-        moved = applyMove(e, decision.move, speed, dt, this.world, this.def.size, this.waterLevel());
+        moved = applyMove(e, decision.move, speed, dt, this.world, this.def.size, this.waterLevel(), aliveMobs);
       }
       e.renderable.anim = moved ? "move" : "idle";
       if (decision.faceYaw !== null) e.pos.yaw = decision.faceYaw;
       if (decision.attack) this.mobAttack(e, decision.attack, now);
     }
+    // 2b. overlapping mobs push apart so packs never stack inside each other
+    separateEntities(aliveMobs, dt, this.world, this.def.size);
 
     // 3. npc wandering (flavor)
     for (const e of this.entities.values()) {

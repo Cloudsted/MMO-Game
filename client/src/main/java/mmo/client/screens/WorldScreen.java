@@ -277,6 +277,14 @@ public class WorldScreen extends ScreenAdapter {
                 if (button == 0) tryAttack();
                 return true;
             }
+            @Override public boolean touchUp(int x, int y, int pointer, int button) {
+                // completes an inventory drag (move onto a slot / drop outside)
+                if (ui.anyWindowOpen() || !Gdx.input.isCursorCatched()) {
+                    if (ui.release(x, y, button)) game.audio.play("click");
+                    return true;
+                }
+                return false;
+            }
         });
         Gdx.input.setCursorCatched(true);
         tryEnableRawMouseMotion();
@@ -962,6 +970,17 @@ public class WorldScreen extends ScreenAdapter {
             if (Gdx.input.isKeyJustPressed(Input.Keys.R) && ui.dead) socket.sendSafe(Protocol.respawn());
             if (Gdx.input.isKeyJustPressed(Input.Keys.N)) dayNight.addDebugOffset(0.25f);
 
+            // Q tosses from the selected hotbar slot (Ctrl+Q = whole stack),
+            // anywhere, any time — the server spawns a loot bag 1.2 m ahead
+            if (Gdx.input.isKeyJustPressed(Input.Keys.Q) && !ui.dead) {
+                GameUi.Stack heldStack = ui.slots[ui.held];
+                if (heldStack != null) {
+                    boolean all = Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)
+                        || Gdx.input.isKeyPressed(Input.Keys.CONTROL_RIGHT);
+                    socket.sendSafe(Protocol.dropItem(ui.held, all ? heldStack.qty : 1));
+                }
+            }
+
             // hotbar keys SELECT only (consumables included) — LMB uses the item
             for (int i = 0; i < 8; i++) {
                 if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1 + i)) selectHotbar(i);
@@ -1134,6 +1153,10 @@ public class WorldScreen extends ScreenAdapter {
         cam.up.set(0, 1, 0);
         cam.update();
 
+        // dropped-item spin/hover clock — advanced BEFORE the shadow pass so
+        // both lootTransform callers (shadow cast + draw) see the same frame
+        itemSpinT += dt;
+
         // directional shadow pass: the whole room from the sun/moon, before
         // the main framebuffer draws anything that samples it. World map is
         // cached between sun steps; the entity map re-draws every frame —
@@ -1257,14 +1280,12 @@ public class WorldScreen extends ScreenAdapter {
             }
             decalBatch.add(rp.decal);
         }
-        fx.update(dt, cam, decalBatch);
-        // ambient particles: dust motes / fireflies / torch embers / leaves
-        particles.update(dt, cam, voxels, dayNight.sunFactor, roomName, decalBatch);
-        decalBatch.flush();
-
         // dropped items as true 3D meshes: the item's sprite pixels extruded
         // (blocks as mini cubes), spinning + hovering, voxel-lit like every
-        // billboard, casting real shadows via the entity depth map above
+        // billboard, casting real shadows via the entity depth map above.
+        // Drawn BEFORE the decal flush: item meshes write depth and sprites
+        // don't, so billboards drawn after depth-test against them — items
+        // used to paint straight over player sprites standing in front.
         if (!lootMeshBags.isEmpty() && voxels != null) {
             itemMeshes.begin(cam.combined, cam.position, dayNight.skyColor, FOG_START, FOG_END);
             for (RemotePlayer rp : lootMeshBags) {
@@ -1279,6 +1300,11 @@ public class WorldScreen extends ScreenAdapter {
             }
             itemMeshes.end();
         }
+
+        fx.update(dt, cam, decalBatch);
+        // ambient particles: dust motes / fireflies / torch embers / leaves
+        particles.update(dt, cam, voxels, dayNight.sunFactor, roomName, decalBatch);
+        decalBatch.flush();
 
         // block-building ghost: wireframe cube on the aim target
         if (ready && buildingEnabled && !ui.anyWindowOpen() && aimHit
