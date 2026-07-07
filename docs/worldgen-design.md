@@ -357,3 +357,127 @@ Baselines: rusty_sword 6 dmg/250 dur/8 g → iron_sword 11/450/40 → longbow 14
 8. **Crypt Depths**.
 
 **Known traps to respect** (from CLAUDE.md/LESSONS.md): block ids and item ids append-only; autotile opaque cells by alpha-scan only; visually inspect every new sprite sheet cell before mapping (elemental.png bottom half is off-grid, like wizard.png); dense sheets weld neighbors — grabComponent/erase; noise functions frozen — 480² rooms keep the same terrainHeight math (new seeds/params only); all gen randomness via hash2; rendering claims need screenshots, server claims need bots/vitest.
+
+---
+
+# 7. THE SUNDERED CITY — war-ruined preset city + castle finale (2026-07-07)
+
+**Owner directives**: a room branching from Gloomfen (the room after the forest)
+via **two portals at separate world locations**; a city **destroyed by war**,
+mobs everywhere; at the very back a **huge castle** you can enter; a
+**throne-room final boss — the hardest yet — dramatic, cinematic, meaningful**;
+on the boss's death the room **closes in one minute** and **resets after X
+minutes**; otherwise the room is **always open**. The world is a **PRESET —
+no random gen**: every block authored, identical every boot.
+
+Research base (Minecraft medieval build practice, distilled):
+- Districts with the castle as the focal point; blacksmith/market near the
+  castle; ~60% residential. Narrow, slightly-jogged streets read medieval;
+  a broad processional avenue gate→castle carries the drama.
+- Castle rules: curtain walls 1–4 storeys, thickness ~1/3–2/3 height; inner
+  walls taller than outer (defensive layering); towers at corners + wall
+  midpoints, dominating adjacent battlements; gatehouse extends OUT from the
+  wall with a killing-ground corridor + murder holes; portcullis ≥4 tall,
+  edges hidden in a 1-block frame; keep 15–30 m on a side; great hall
+  impressively tall; crenellations only on outer edges, torch every other
+  merlon; stone palette (cobble/stone bricks), never wooden keep roofs.
+  Sources: minecraftforum.net "What Minecraft Castle Builders Aught to Know"
+  (2205478), varunabuilds.com medieval-town guide, exitlag/dexerto castle
+  layout sequences. A real .schematic conversion was investigated and
+  dropped: worthwhile free castles ship behind login walls (PMC/
+  minecraft-schematics), and WORLD_HEIGHT=48 + the 2D-billboard boss arena
+  mean the interior must be gameplay-authored anyway. The research above IS
+  the conversion — same proportions, our blocks.
+
+## 7a. Room — `sundered_city` "Valdrenn, the Sundered City"
+
+- 256×256, `type:"dungeon"`, biome **`ruin`** (NEW additive gen branch:
+  flat stone-under-dirt columns, ZERO trees/decorations/noise surface —
+  amplitude 0, the authored builder owns every visible block).
+- `persistence:"ephemeral"`, `fixedTime` 0.83 (ember dusk), `wind` 0.5
+  (banners stir), nightLight default.
+- **Lifecycle**: `lifetimeSec` ABSENT (schema change: optional → no natural
+  expiry — the city stands until the King falls), `downtimeSec` 300 (the
+  "X minutes" reset knob), `warnAtSecLeft` [30, 10].
+- **Events**: `bossHpBelowPct 0.66` → announce + rally 2 oathbound_sentinel;
+  `bossHpBelowPct 0.33` → announce + rally 3; `bossDeath` → announce ("The
+  crown falls... Valdrenn's grief collapses inward — RUN!") + setRoomTimer 60.
+- **Portals** (first authored use of exitPortalId — two pairs, one target):
+  - gloomfen (176, 30) "The Old North Road" ⇄ city south gate (128, 246)
+  - gloomfen (52, 92) "The Drowned West Road" ⇄ city east breach (247, 128)
+  Both directions author exitPortalId so auto-pairing can't mismatch the
+  doubled gloomfen→city links.
+
+## 7b. Layout (authored, S→N; spawn = south gate arrival)
+
+- **Curtain wall** rectangle ~(20,20)–(236,236), h5 stone_bricks aged with
+  cracked_bricks/rubble, BREACHED in 3 authored spots (war damage; the east
+  breach is the second portal's entrance). South gatehouse: twin towers h8,
+  4-tall portcullis of iron_bars hanging ajar.
+- **Processional avenue** 5-wide cobble/path, rubble-strewn, south gate →
+  castle plinth; lantern posts (half dark — the dead city still half-lit).
+- **West market quarter**: burned stalls, collapsed warehouses (charred_log
+  + ash), marauder war-camp squatting the square (palisade + banners).
+- **East residential quarter**: roofless shells, cratered lanes (ash +
+  ember_crystal siege scars), the breach. Fallen-soldier patrols.
+- **NE chapel + graveyard quarter**: marble chapel husk, graveyard prefab
+  reuse; wraiths + bone bats. Loot cache in the chapel crypt.
+- **Castle** (north ~1/3, on a +4 terraced plinth, monumental stair):
+  outer bailey wall h6/towers h10 (inner ring TALLER than city wall);
+  gatehouse with killing-ground corridor + murder holes; courtyard with
+  well + barracks (sentinel spawns); **keep** ~30×44 marble, walls h11:
+  great hall with red_carpet runner, banner-lined colonnade, braziers;
+  **throne room** at the far north — gold_block throne on a 3-step dais,
+  stained_glass rose window, treasury alcove (gold + cache) — the King
+  stands at the dais. leash anchored so the fight stays in the hall.
+
+## 7c. New blocks (ids 51–55, append-only; tiles painted/derived in-pipeline)
+
+| id | name | notes |
+|----|------|-------|
+| 51 | cracked_bricks | stone_bricks + painted cracks — war-bitten walls |
+| 52 | rubble | gray debris pile — streets, collapsed roofs |
+| 53 | red_carpet | deep crimson cloth — keep runner + dais |
+| 54 | gold_block | throne, treasury glints |
+| 55 | stained_glass | tinted glass cutout — rose window |
+
+## 7d. Mobs (L13–16 + the finale; sprites eyeballed on the sheets 2026-07-07)
+
+| mob | sprite | lvl | role |
+|-----|--------|-----|------|
+| marauder | orc1 armored cell | 13 | scavenger warbands looting the ruins, melee packs |
+| gravehound | monster_wolf2 (horned gray beast) | 13 | fast pack flankers |
+| fallen_soldier | military2 dark-armor cell | 14 | undead garrison, sword+bow kit (skeleton pattern) |
+| oathbound_sentinel | monster_dknight2 (blue horned knight) | 16 | castle elite, heavy melee |
+| + existing wraith (L13) / bone_bat (L12) | — | — | chapel + graveyard quarter |
+| **sundered_king** | **monster_dknight1** (crimson plate) | **18** | throne-room finale |
+
+**Sundered King** — hardest fight yet (lich: L15/1150hp/1400xp):
+~2600 hp, dmg ~52, moveSpeed 2.7, aggro 18, attackRange 13, leash 30
+(anchored to the hall). Kit: `kings_cleave` (big telegraphed melee arc),
+`sundering_wave` projectile (minRange 4 — anti-kiting), `oath_summon`
+(raises 2 oathbound from the floor, cap 4, weight ~6). Phases ride the
+hp events (7a): rally announcements make it read as a staged, cinematic
+duel; xp ~3200; loot `king_drops` = guaranteed epic from `weapons_royal`
+(T4 ≈ 2.8× iron: kings_greatsword / dawnbreaker_maul / veilpiercer_bow /
+scepter_of_ruin) + `sundered_crown` trophy (high value) + gold [400,650].
+City trophies: `war_medal`, `royal_seal` (mob tables narrate the fall).
+
+## 7e. Sounds
+
+New manifest groups per mob (idle/attack/hurt/die) mapped from the owned
+packs: orcs→Troll/Goblin voices, gravehound→wolf/boar blends, fallen
+soldier→zombie+metal, sentinels/king→size-class metal hits + deep monster
+voices. Room ambience: `wind_storm` bed (desolate ruin wind) via
+AudioEngine.setContext; the completeness check gates the build as usual.
+
+## 7f. Implementation order
+
+1. Blocks 51–55 + atlas tiles + MAP_COLORS (+ atelier screenshot).
+2. `ruin` gen branch + room def skeleton + lifecycle schema change
+   (optional lifetimeSec) + two-portal pairing — travel-bot proof.
+3. `buildSunderedCity` authored builder (city → castle → throne room),
+   screenshot passes per district.
+4. Mobs + boss + events + loot/sounds — combat-bot + boss-events-probe arc
+   (enter → rally 66/33 → kill → 60 s collapse → 5 min downtime → fresh).
+5. Docs + LESSONS + checkpoint commits per batch.

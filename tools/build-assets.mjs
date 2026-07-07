@@ -416,6 +416,110 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
   const crystalTile = t16(dungeonSheet, 496, 224);
   const snowTop = t16(winter, 256, 16);
 
+  // ---- Sundered City composites (blocks 51-55; all painted/derived — no new
+  // sheet probes needed, deterministic like the painted glass/web tiles) ----
+  const stoneBricksTile = t16(castle, 272, 32);
+  // war-cracked stone bricks: a zig-zag fissure + branch crack + spalled pits
+  const crackedBricks = (() => {
+    const out = new PNG({ width: 16, height: 16 });
+    stoneBricksTile.data.copy(out.data);
+    const darken = (x, y, f) => {
+      if (x < 0 || y < 0 || x > 15 || y > 15) return;
+      const i = (y * 16 + x) * 4;
+      out.data[i] = Math.round(out.data[i] * f);
+      out.data[i + 1] = Math.round(out.data[i + 1] * f);
+      out.data[i + 2] = Math.round(out.data[i + 2] * f);
+    };
+    let cx = 5;
+    for (let y = 0; y < 16; y++) {
+      darken(cx, y, 0.45);
+      darken(cx + 1, y, 0.7);
+      cx += (y % 3 === 0 ? 1 : 0) - (y % 5 === 0 ? 2 : 0);
+      cx = Math.max(1, Math.min(13, cx));
+    }
+    for (let x = 8; x < 15; x++) darken(x, 6 + ((x * 3) % 2), 0.55);
+    for (const [px, py] of [[13, 13], [14, 13], [13, 14], [2, 2], [3, 2]]) darken(px, py, 0.5);
+    return out;
+  })();
+  // rubble: grayed cobble knocked out of true — pit shadows + pale chips
+  const rubbleTile = (() => {
+    const out = tint(t16(castle, 144, 16), [152, 154, 150], 0.4);
+    const px = (x, y, r, g, bl) => {
+      const i = (y * 16 + x) * 4;
+      out.data[i] = r; out.data[i + 1] = g; out.data[i + 2] = bl; out.data[i + 3] = 255;
+    };
+    for (const [x, y] of [[2, 4], [3, 4], [2, 5], [9, 2], [10, 2], [13, 8], [13, 9], [5, 12], [6, 12], [6, 13], [11, 13]])
+      px(x, y, 58, 58, 56); // pits
+    for (const [x, y] of [[7, 7], [8, 7], [12, 4], [3, 10], [14, 12], [1, 1]])
+      px(x, y, 196, 198, 192); // displaced chips
+    return out;
+  })();
+  // royal carpet: deep crimson weave (subtle row/diagonal thread variation)
+  const redCarpet = (() => {
+    const out = new PNG({ width: 16, height: 16 });
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) {
+        const i = (y * 16 + x) * 4;
+        let r = 146, g = 24, b = 34;
+        if ((x + y) % 4 === 0) { r = 128; g = 20; b = 30; } // weave shadow
+        if (y % 8 === 3 && x % 5 === 2) { r = 168; g = 40; b = 46; } // thread glint
+        out.data[i] = r; out.data[i + 1] = g; out.data[i + 2] = b; out.data[i + 3] = 255;
+      }
+    }
+    return out;
+  })();
+  // gold block: beveled gilded face with darker seams + rivets
+  const goldBlock = (() => {
+    const out = new PNG({ width: 16, height: 16 });
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) {
+        const i = (y * 16 + x) * 4;
+        let r = 222, g = 180, b = 66;
+        if (x === 0 || y === 0) { r = 245; g = 216; b = 118; } // lit bevel
+        if (x === 15 || y === 15) { r = 158; g = 118; b = 38; } // shaded bevel
+        if ((x === 4 || x === 11) && y > 0 && y < 15) { r = 198; g = 156; b = 52; } // panel seams
+        if ((x === 2 || x === 13) && (y === 2 || y === 13)) { r = 250; g = 232; b = 150; } // rivets
+        out.data[i] = r; out.data[i + 1] = g; out.data[i + 2] = b; out.data[i + 3] = 255;
+      }
+    }
+    return out;
+  })();
+  // stained glass: leaded four-pane window (ruby/sapphire/amber/emerald)
+  const stainedGlass = (() => {
+    const out = new PNG({ width: 16, height: 16 });
+    const panes = [
+      [196, 44, 60], // TL ruby
+      [58, 88, 196], // TR sapphire
+      [224, 164, 48], // BL amber
+      [52, 160, 84], // BR emerald
+    ];
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) {
+        const i = (y * 16 + x) * 4;
+        const lead = x === 0 || y === 0 || x === 15 || y === 15 || x === 7 || x === 8 || y === 7 || y === 8;
+        if (lead) {
+          out.data[i] = 40; out.data[i + 1] = 38; out.data[i + 2] = 48; out.data[i + 3] = 255;
+          continue;
+        }
+        const q = (x > 8 ? 1 : 0) + (y > 8 ? 2 : 0);
+        const [r, g, b] = panes[q];
+        const v = ((x * 7 + y * 13) % 5) * 6; // per-pixel pane variation
+        out.data[i] = Math.max(0, r - v);
+        out.data[i + 1] = Math.max(0, g - v);
+        out.data[i + 2] = Math.max(0, b - v);
+        out.data[i + 3] = 255;
+      }
+    }
+    // one bright sparkle per pane
+    for (const [sx, sy] of [[3, 3], [12, 4], [4, 12], [12, 12]]) {
+      const i = (sy * 16 + sx) * 4;
+      out.data[i] = Math.min(255, out.data[i] + 70);
+      out.data[i + 1] = Math.min(255, out.data[i + 1] + 70);
+      out.data[i + 2] = Math.min(255, out.data[i + 2] + 70);
+    }
+    return out;
+  })();
+
   const recipes = {
     grass_top: () => grassTop,
     grass_side: () => topStrip(dirt, grassTop),
@@ -475,6 +579,12 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
     iron_bars: () => t16(ff, 608, 544), // cage grid (cutout: gaps stay transparent)
     lantern: () => t16(icons16, 5 * 16, 12 * 16), // lit lantern icon
     banner: () => t16(castle, 224, 224), // small shield pennant
+    // ---- Sundered City (blocks 51-55) ----
+    cracked_bricks: () => crackedBricks,
+    rubble: () => rubbleTile,
+    red_carpet: () => redCarpet,
+    gold_block: () => goldBlock,
+    stained_glass: () => stainedGlass,
   };
 
   const names = Object.keys(recipes);

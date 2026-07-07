@@ -76,6 +76,11 @@ const MAP_COLORS: Record<string, [number, number, number]> = {
   iron_bars: [99, 118, 118],
   lantern: [93, 92, 79],
   banner: [139, 131, 180],
+  cracked_bricks: [178, 189, 185],
+  rubble: [170, 178, 174],
+  red_carpet: [142, 23, 33],
+  gold_block: [215, 175, 68],
+  stained_glass: [86, 75, 70],
 };
 
 // ---------- deterministic noise (shared style with the old heightmap gen) ----------
