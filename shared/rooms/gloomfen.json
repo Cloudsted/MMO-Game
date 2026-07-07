@@ -39,6 +39,24 @@
       "x": 160,
       "z": 308,
       "r": 2.2
+    },
+    {
+      "id": "gloomfen-city-north",
+      "label": "Valdrenn — Old North Road",
+      "target": "sundered_city",
+      "x": 160,
+      "z": 30,
+      "r": 2.2,
+      "exitPortalId": "city-southgate"
+    },
+    {
+      "id": "gloomfen-city-west",
+      "label": "Valdrenn — Drowned West Road",
+      "target": "sundered_city",
+      "x": 52,
+      "z": 92,
+      "r": 2.2,
+      "exitPortalId": "city-breach"
     }
   ],
   "spawnTables": [

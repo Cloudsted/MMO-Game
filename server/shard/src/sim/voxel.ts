@@ -430,6 +430,10 @@ export class VoxelWorld {
     const ASH = BLOCK.ash!.id;
     const swamp = def.biome === "swamp";
     const volcanic = def.biome === "volcanic";
+    // "ruin" = the preset-city biome: uniform stone-under-dirt columns, no
+    // surface patches, no trees, no decorations — the authored builder owns
+    // every visible block (owner directive: preset world, no random gen)
+    const ruin = def.biome === "ruin";
 
     for (let z = 0; z < this.h; z++) {
       for (let x = 0; x < this.w; x++) {
@@ -450,6 +454,7 @@ export class VoxelWorld {
             else if (def.biome === "dungeon") b = patch > 0.82 ? PATH : patch < 0.14 ? MOSSY : STONE;
             else if (swamp) b = beach ? MUD : patch > 0.62 ? GRASS : MUD;
             else if (volcanic) b = patch > 0.85 ? OBSIDIAN : patch < 0.2 ? ASH : DARK_STONE;
+            else if (ruin) b = DIRT; // uniform — the city builder repaints it
             else if (beach) b = SAND;
             else b = GRASS;
           }

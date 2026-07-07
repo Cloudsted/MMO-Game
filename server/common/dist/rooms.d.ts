@@ -445,19 +445,21 @@ export declare const RoomEventSchema: z.ZodObject<{
 }>;
 export type RoomEventDef = z.infer<typeof RoomEventSchema>;
 /** Ephemeral-room lifecycle: live for lifetimeSec, warn, evict, close; the
- *  master reopens it fresh after downtimeSec. */
+ *  master reopens it fresh after downtimeSec. lifetimeSec OMITTED = no
+ *  natural expiry — the room stays open until an event (or admin /expire)
+ *  arms the collapse timer (the Sundered City stands until its King falls). */
 export declare const LifecycleSchema: z.ZodObject<{
-    lifetimeSec: z.ZodNumber;
+    lifetimeSec: z.ZodOptional<z.ZodNumber>;
     downtimeSec: z.ZodNumber;
     warnAtSecLeft: z.ZodArray<z.ZodNumber, "many">;
 }, "strip", z.ZodTypeAny, {
-    lifetimeSec: number;
     downtimeSec: number;
     warnAtSecLeft: number[];
+    lifetimeSec?: number | undefined;
 }, {
-    lifetimeSec: number;
     downtimeSec: number;
     warnAtSecLeft: number[];
+    lifetimeSec?: number | undefined;
 }>;
 export type LifecycleDef = z.infer<typeof LifecycleSchema>;
 export declare const RoomDefSchema: z.ZodObject<{
@@ -476,17 +478,17 @@ export declare const RoomDefSchema: z.ZodObject<{
     /** pin the visual clock (dungeon mood); omit for the live day/night cycle */
     fixedTime: z.ZodOptional<z.ZodNumber>;
     lifecycle: z.ZodOptional<z.ZodObject<{
-        lifetimeSec: z.ZodNumber;
+        lifetimeSec: z.ZodOptional<z.ZodNumber>;
         downtimeSec: z.ZodNumber;
         warnAtSecLeft: z.ZodArray<z.ZodNumber, "many">;
     }, "strip", z.ZodTypeAny, {
-        lifetimeSec: number;
         downtimeSec: number;
         warnAtSecLeft: number[];
+        lifetimeSec?: number | undefined;
     }, {
-        lifetimeSec: number;
         downtimeSec: number;
         warnAtSecLeft: number[];
+        lifetimeSec?: number | undefined;
     }>>;
     regions: z.ZodDefault<z.ZodArray<z.ZodObject<{
         kind: z.ZodLiteral<"circle">;
@@ -1039,9 +1041,9 @@ export declare const RoomDefSchema: z.ZodObject<{
     }[];
     fixedTime?: number | undefined;
     lifecycle?: {
-        lifetimeSec: number;
         downtimeSec: number;
         warnAtSecLeft: number[];
+        lifetimeSec?: number | undefined;
     } | undefined;
 }, {
     id: string;
@@ -1119,9 +1121,9 @@ export declare const RoomDefSchema: z.ZodObject<{
     nightLight?: number | undefined;
     fixedTime?: number | undefined;
     lifecycle?: {
-        lifetimeSec: number;
         downtimeSec: number;
         warnAtSecLeft: number[];
+        lifetimeSec?: number | undefined;
     } | undefined;
     regions?: {
         x: number;

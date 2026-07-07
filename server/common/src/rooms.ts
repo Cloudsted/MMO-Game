@@ -156,9 +156,11 @@ export const RoomEventSchema = z.object({
 export type RoomEventDef = z.infer<typeof RoomEventSchema>;
 
 /** Ephemeral-room lifecycle: live for lifetimeSec, warn, evict, close; the
- *  master reopens it fresh after downtimeSec. */
+ *  master reopens it fresh after downtimeSec. lifetimeSec OMITTED = no
+ *  natural expiry — the room stays open until an event (or admin /expire)
+ *  arms the collapse timer (the Sundered City stands until its King falls). */
 export const LifecycleSchema = z.object({
-  lifetimeSec: z.number().positive(),
+  lifetimeSec: z.number().positive().optional(),
   downtimeSec: z.number().nonnegative(),
   warnAtSecLeft: z.array(z.number().positive()),
 });

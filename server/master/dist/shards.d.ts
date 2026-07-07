@@ -162,9 +162,9 @@ export declare class ShardManager {
             };
             persistence: "stateful" | "ephemeral";
             lifecycle: {
-                lifetimeSec: number;
                 downtimeSec: number;
                 warnAtSecLeft: number[];
+                lifetimeSec?: number | undefined;
             } | null;
             fixedTime: number | null;
             wind: number;

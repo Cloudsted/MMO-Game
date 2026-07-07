@@ -139,7 +139,10 @@ class RoomHost {
     // reopens the room fresh after its downtime
     if (def.lifecycle) {
       const overrideSec = Number(process.env.MMO_LIFETIME_OVERRIDE_SEC ?? 0);
-      this.scheduleExpiry(overrideSec > 0 ? overrideSec : def.lifecycle.lifetimeSec);
+      const lifeSec = overrideSec > 0 ? overrideSec : def.lifecycle.lifetimeSec;
+      // no lifetimeSec authored = no natural expiry: only an event action
+      // (setRoomTimer) or admin /expire arms the collapse
+      if (lifeSec) this.scheduleExpiry(lifeSec);
       this.sim.onExpireRequest = (sec) => this.scheduleExpiry(sec); // admin /expire
     }
   }

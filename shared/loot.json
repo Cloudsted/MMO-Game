@@ -316,5 +316,16 @@
       { "weight": 20, "item": "greater_mana_potion", "qty": [1, 2] },
       { "weight": 16, "item": "bone_charm", "qty": [1, 1] }
     ]
+  },
+  "cache_royal": {
+    "gold": [60, 110],
+    "rolls": [1, 2],
+    "entries": [
+      { "weight": 26, "table": "weapons_rift" },
+      { "weight": 14, "table": "weapons_rift", "minRarity": "rare" },
+      { "weight": 24, "item": "greater_health_potion", "qty": [1, 2] },
+      { "weight": 20, "item": "greater_mana_potion", "qty": [1, 2] },
+      { "weight": 16, "item": "ancient_coin", "qty": [1, 2] }
+    ]
   }
 }

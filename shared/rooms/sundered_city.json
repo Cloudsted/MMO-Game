@@ -1,0 +1,75 @@
+{
+  "id": "sundered_city",
+  "name": "Valdrenn, the Sundered City",
+  "type": "dungeon",
+  "biome": "ruin",
+  "wind": 0.5,
+  "persistence": "ephemeral",
+  "fixedTime": 0.84,
+  "lifecycle": {
+    "downtimeSec": 300,
+    "warnAtSecLeft": [30, 10]
+  },
+  "size": {
+    "w": 256,
+    "h": 256
+  },
+  "spawn": {
+    "x": 128,
+    "z": 218,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 77441,
+    "base": 12,
+    "amplitude": 0,
+    "frequency": 0.02
+  },
+  "flags": {
+    "safeZone": false,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "city-southgate",
+      "label": "Gloomfen Marsh — Old North Road",
+      "target": "gloomfen",
+      "x": 128,
+      "z": 226,
+      "r": 2.2,
+      "exitPortalId": "gloomfen-city-north"
+    },
+    {
+      "id": "city-breach",
+      "label": "Gloomfen Marsh — Drowned West Road",
+      "target": "gloomfen",
+      "x": 244,
+      "z": 128,
+      "r": 2.2,
+      "exitPortalId": "gloomfen-city-west",
+      "exitX": 240,
+      "exitZ": 128
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "chapel-wraiths",
+      "region": { "kind": "circle", "x": 179, "z": 114, "r": 8 },
+      "mobs": [{ "mob": "wraith", "weight": 1 }],
+      "maxAlive": 2,
+      "packSize": [1, 1],
+      "respawnSec": 110
+    },
+    {
+      "id": "graveyard-shriekers",
+      "region": { "kind": "circle", "x": 206, "z": 136, "r": 10 },
+      "mobs": [{ "mob": "bone_bat", "weight": 1 }],
+      "maxAlive": 4,
+      "packSize": [2, 3],
+      "respawnSec": 60
+    }
+  ],
+  "npcs": []
+}
