@@ -589,6 +589,41 @@ show their block tile).
     --virtual-time-budget=9000 --screenshot=... "http://127.0.0.1:4000/
     admin?key=<KEY>#<tab>"` (new-mode headless wrote no file on this box;
     writes land async — wait for the file, don't trust the exit).
+  - **Round 2** (owner request; same day): live maps, teleport/summon,
+    offline edits, economy. Verified live + 149 vitest (6 new);
+    screenshots tools/out/admin-{map,economy,charedit}.png.
+    - **Live room map**: `VoxelWorld.renderTopDown()` — top-visible block
+      color per column, palette BAKED into voxel.ts (client atlas
+      avgColors as literals; unmapped block = magenta), height-shaded,
+      raw-deflate RGB base64. RoomHost pushes `mapData` on open + when
+      `world.edits.size` changes (checked in the 5 s stats tick); master
+      caches; `/api/admin/map` serves (202 + requestMap on cache miss
+      after a master restart — the page retries). RoomAdminInfo grew
+      `ents` (k/x/z/n for mobs/npcs/loot). Dashboard canvas modal
+      (DecompressionStream('deflate-raw')), live dots, hover names,
+      pick-a-player + click-to-teleport. Deep links `#map-<roomId>` and
+      `#char-<id>`.
+    - **Teleport/summon**: `adminMove` master→shard→room. Same room =
+      the /tp recipe (pos + standY + correct); cross-room = the normal
+      transfer machinery with a new `arrival {x,z}` override on
+      requestTransfer (master clamps into the room, y=0 ground-snap).
+      Players-tab teleport dialog incl. summon-to-player. **Race fixed
+      en route** (pre-existing, portals too): batch `buildReport()` now
+      EXCLUDES `transferring` sessions — the 30 s report could clobber a
+      just-granted transfer patch with stale source-room data (found when
+      a wander bot ignored its `transfer` grant; bots.mjs wander bots
+      never swap sockets — use travel-bot for the full client arc).
+    - **Offline-character editing**: `character-edit` (gold/level/xp),
+      `character-item-add` (registry-validated; weapons minted with real
+      rolls/durability via shared mintItem, qty forced to 1),
+      `character-item-remove` — ALL refuse online characters with 409
+      (live reports would clobber). The drawer becomes an editor when
+      offline; item picker datalist from `/api/admin/items`. Master now
+      runs its own RegistryService (admin.ts); INV_SIZE mirrored (24).
+    - **Economy tab**: `/api/admin/economy` — character gold aggregates,
+      top-10 wealth, item/rarity circulation (est. value = qty × registry
+      value), level distribution, floor wealth (gold/bags/items from
+      persisted roomStates drops). Aggregation throttled page-side (10 s).
 
 - 2026-07-07 **MOB SPAWN/REACH/LEASH + ATTACK WHIFF + NIGHT LIGHT batch**
   (owner bug list). Verified: 139 vitest (11 new), combat/cheat/separation
