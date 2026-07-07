@@ -206,6 +206,119 @@ show their block tile).
     on canopy tops), and water now draws BEFORE billboards so pond surfaces
     never paint over entities standing in front of them.
 
+- 2026-07-06 **3D ITEM LAYER** (owner request: Minecraft-style items) —
+  per-instance stat rolls + durability (server) and 3D item meshes
+  (client). Verified: 67 vitest, combat-bot, wire check, screenshots.
+  - **Minting** (`server/common/src/items.ts`): every weapon entering the
+    world (loot roll, shop buy, /give, legacy-DB backfill at join via
+    `ensureItemInstance`) is stamped by `mintItem`: `stats` = per-stat
+    multiplier `1 ± spread(rarity, stat)` (knobs in `shared/constants.json
+    items.statSpread` — dmg ±4%..±12%, spd ±2%..±6% by rarity; wider at
+    higher rarity so lucky epics feel special) and `dur`/`maxDur` =
+    items.json `durability` × `items.durability.rarityMult` × (1 ± 10%).
+    Two Iron Swords are never identical. Stackables NEVER roll (they must
+    merge); all merge paths gate on `dur`/`stats` absence, and
+    addItem/removeFromSlot spread-copy instances (the old code rebuilt
+    `{item,qty,rarity}` literals and would have silently dropped the rolls).
+  - **Damage/speed**: `handleAttack` multiplies by `stats.dmg`; `stats.spd`
+    scales EVERY FSM timing via `Combat.speedMult` (windup/cast/active/
+    recover/cooldown — combat.ts divides by it), client mirrors in
+    tryAttack/viewmodel. **Durability**: −1 per successful weapon ability
+    start (never barehanded, never on FSM-rejected attempts); at 0 the
+    weapon breaks — slot cleared + "Your X broke!" system chat.
+  - **Wire**: `ItemStack` += `stats?/dur?/maxDur?`; `EntityFull`/`Delta` +=
+    `loot` (bag contents, rarest-first, ≤3; `[]` = gold-only) kept in sync
+    via `Entity.lootView` + a `lootSig` in ReplicatedState so partial
+    pickups delta out.
+  - **Client 3D meshes** (`world/ItemMeshes.java` + `shaders/item.*`):
+    icon pixels extruded Minecraft-style — front/back cutout quads + one
+    edge strip per opaque↔transparent pixel boundary (UV at the pixel
+    center so the sprite colors its own sides), per-vertex face shading;
+    block items = mini cubes with their real atlas tiles (cross blocks like
+    torch extrude their icon instead). Lit by the voxel-light CPU mirror ×
+    face brightness + scene fog; `u_glow` full-brights emissive items so
+    bloom catches them (held torch glows).
+  - **Viewmodel** rewritten 3D: drawn at the END of the scene pass over a
+    cleared depth buffer (never clips walls, still gets bloom/post), grip
+    poses per kind (sword/staff/bow/consumable/block cube), animations
+    mirror server timings scaled by the spd roll: melee cock-back → arc
+    sweep, bow draw → loose, cast raise + charge glow → release push,
+    consume/place dip. `held_*.png` overlay sprites are no longer used.
+    Grip poses are Minecraft-style (owner request, tuned three times —
+    final): handle at the lower-right, blade tipped up-left in plane
+    (rotZ ~68°) and turned hard on the VERTICAL axis (rotY ~-75°) so the
+    blade points forward INTO the scene with foreshortening — MC's own
+    first-person transform is likewise dominated by a Y rotation. (A flat
+    in-plane +45° roll was tried and rejected; "rotate on the other axis"
+    meant Y.) Blocks are an iso mini-cube (rotY 45 + rotX 20 → top face
+    visible); food sits upright in the palm. Tuning lives at the top of
+    `Viewmodel.render3d`.
+  - **Dropped items**: loot bags with replicated contents render as
+    spinning hovering 3D meshes (multi-item bags = small orbiting ring of
+    up to 3), voxel-lit like billboards, casting REAL shadows via
+    `ShadowMap.entityMesh` into the per-frame entity depth map (the shadow
+    shader ignores the extra a_br attribute — location -1 is skipped).
+    Gold-only bags keep the sack sprite. [E] prompt names the item.
+  - **Tooltips** (GameUi): hovering inventory/sell-grid slots, hotbar (when
+    the cursor is free), or shop rows shows rarity-colored name, damage
+    (+roll %), speed roll, color-coded durability, consumable effects,
+    worth, usage hint; slots grow a green→red wear bar once dur < maxDur.
+    Trap paid for: GlyphLayout captures font color at setText — see
+    LESSONS.md. Test hook `MMO_HOVER_SLOT`; `scripts/drop-bot.mjs` stages
+    3D drops (TESTING.md).
+
+- 2026-07-06 **Pixel UI font** (owner: "font is super blurry — true pixel art
+  font", then "closer to Minecraft's font"): the built-in Arial-15
+  BitmapFont (linear-filtered, drawn at fractional scales) is gone. `UiKit`
+  rasterizes **Monocraft** (the open-source Minecraft-typeface recreation,
+  OFL, bundled at `client/src/main/resources/fonts/` with its license) via
+  **gdx-freetype** with `mono = true` (1-bit, zero anti-aliasing), Nearest
+  filtering, hinting off, integer positions. Monocraft's design grid is
+  **9 px** (unitsPerEm 1080); we rasterize at **18 px = exactly 2x**, so the
+  legal draw scales are **integers AND 0.5** — half of the 2x bitmap
+  recovers the native 9 px grid losslessly and is the small-text tier
+  (qty numbers, slot numbers, hp/mana bar text, inventory hint, god-panel
+  labels). **Convention: no other scales, ever** — fractional scaling is
+  what made the old font blur. Big text = 2x (death screen, PvP banner).
+  Floating combat text keeps its continuous pop-scale animation by design
+  (motion hides the uneven pixels). `·` and `—` are appended to the
+  freetype charset explicitly (not in DEFAULT_CHARS). An earlier
+  DotGothic16 pass looked too thin/terminal — owner rejected; files
+  removed. (First tried Google-Fonts pixel faces; Monocraft won on both
+  fidelity and license.)
+
+- 2026-07-06 **HUD virtual canvas + integer UI scale** (owner: UI must not
+  stretch at other window sizes). The 2D UI draws on a fixed ~1280x720
+  design canvas and is integer-upscaled to the window: `UiKit.uiScale(w,h)`
+  = `max(1, min(w/1280, h/720))` (1x up to 1080p, 2x at 1440p, 3x at 4K;
+  `MMO_UI_SCALE=<n>` overrides, `MMO_WIN=WxH` sets the window for tests).
+  Implementation: WorldScreen.applyHudViewport points hudBatch/shapes at
+  the vw×vh virtual ortho; GameUi gets the canvas via `setViewport` and
+  converts mouse input (`/uiScale`); every `cam.project` result for
+  HUD-space drawing (hp bars, name tags, portal labels, floaters) divides
+  by uiScale; LoginScreen's ScreenViewport uses `unitsPerPixel = 1/scale`.
+  Elements are anchored (corners/center), never proportionally stretched,
+  and integer steps keep the pixel font on exact screen pixels. Window is
+  clamped to ≥960x540 (`setWindowSizeLimits`) so fixed panels can't
+  overlap. **Convention: HUD code must use the virtual w/h it's handed —
+  never `Gdx.graphics.getWidth/Height`, never raw `Gdx.input.getX/getY`
+  without dividing by uiScale.** Verified by screenshots at 1280x720,
+  1920x1080 (scale 1, anchored) and forced scale 2.
+
+- 2026-07-06 **Hotbar selection is client-predicted** (owner: scroll wheel
+  felt laggy and ate fast clicks). The old handler sent `equip` and waited
+  for the server's `inv` echo to move the highlight — a round trip of lag,
+  and every wheel click in a burst computed `held + 1` from the SAME stale
+  index, so N fast clicks moved one slot. Now `WorldScreen.selectHotbar`
+  updates `ui.held` + the viewmodel instantly (wheel, 1-8 keys, RMB-equip)
+  and sends `equip`; `GameUi.selectHeld` opens an 800 ms prediction window
+  during which stale intermediate echoes can't roll the highlight back
+  (equip messages are ordered — the final echo always matches). Multi-notch
+  scroll events (`amountY` ±2/3) now move that many slots. Selection is
+  cosmetic until LMB, and attack sends AFTER equip on the same ordered
+  socket, so prediction is authority-safe. Feel-verified by the owner
+  (scroll can't be injected — see LESSONS.md input-injection rule).
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -285,6 +398,11 @@ Quick reference only — the stories behind these (and more) live in
   Disconnect the client FIRST, then edit.
 - `npm run dev` boot order: rooms open alphabetically (forest before hub), so
   forest usually gets port 4210 and hub 4211 — don't assume hub is first.
+- **"MongoDB already running on 27017" may not be OUR mongod.** A Docker
+  container (e.g. a leftover atlas-local deployment) can squat the port —
+  dev.mjs happily connects and the world comes up EMPTY while the real data
+  sits untouched in `data/mongo`. If accounts "vanish", check what owns
+  27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
 
@@ -478,6 +596,21 @@ Quick reference only — the stories behind these (and more) live in
 - **MVP done** per prompt.md's checklist; remaining "explicitly later"
   items (classes, crafting, parties, mounts, binary protocol, ...) stay
   out of scope until decided otherwise.
+- 2026-07-06 **3D item layer complete and verified** (see the decisions-log
+  entry): per-instance stat variance + durability server-side (67 vitest
+  green incl. 6 new; combat-bot + wire-check pass), Minecraft-style
+  extruded item meshes for the held viewmodel and dropped loot (spinning,
+  hovering, real cast shadows), per-instance tooltips + slot wear bars.
+  Screenshots: tools/out/items3d-*.png (held sword + 4 scattered 3D drops
+  with shadows on the hub plaza), tooltip-*.png (rolled stats panel).
+  **TRAP hit: something Docker-owned is listening on 27017** (probably a
+  leftover mongo/atlas-local container) — dev.mjs saw the port occupied,
+  skipped the portable mongod, and the stack silently ran against that
+  EMPTY Docker database (all accounts "gone"). The real data in
+  `data/mongo` is untouched; stop the Docker container (or the mongo
+  container inside Docker Desktop) and restart the stack to get it back.
+  claude_test/dropbot were re-registered on the Docker DB this session
+  (dropbot re-granted admin).
 - 2026-07-03 owner-feedback fixes (post-MVP polish): terrain diffuse is now
   ambient-wrapped and `DayNight.entityLight` evaluates the terrain formula
   at the flat-ground normal (floor and props match at all hours — they

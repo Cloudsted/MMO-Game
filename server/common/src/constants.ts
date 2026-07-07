@@ -43,6 +43,15 @@ const ConstantsSchema = z.object({
     placeRangeM: z.number(),
     maxPlayerBlocksPerRoom: z.number().int(),
   }),
+  /** per-instance item rolls: stat → rarity → ± spread around 1, and the
+   *  durability scaling formula (see mintItem in items.ts) */
+  items: z.object({
+    statSpread: z.record(z.string(), z.record(z.string(), z.number())),
+    durability: z.object({
+      rarityMult: z.record(z.string(), z.number()),
+      spread: z.number(),
+    }),
+  }),
   progression: z.object({
     baseHp: z.number(),
     hpPerLevel: z.number(),

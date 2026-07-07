@@ -181,6 +181,16 @@ really empty — cheap forensics beat re-launching five times.
   the shot hook reads it. Gate the whole thing behind `MMO_NO_POST=1` so a
   driver/FBO issue has an instant escape hatch.
 
+- **GlyphLayout.setText captures the font color AT setText TIME.** The item
+  tooltip set the layout text first and the color after — every line rendered
+  with the PREVIOUS line's color (the gold "worth" tint landed on the hint
+  line below it; a green roll tint landed on "worth"). `font.draw(batch,
+  layout, ...)` uses the colors *baked into the layout runs*, not the font's
+  current color. **Rule:** `font.setColor(...)` BEFORE `layout.setText(font,
+  ...)` whenever the layout will be drawn. (Grep shows older name-tag code
+  with the same latent order — invisible only because consecutive tags are
+  usually the same color.)
+
 ## Art pipeline (Time Fantasy sheets)
 
 - **Alpha-trim welds in anything the window touches.** tree1's window

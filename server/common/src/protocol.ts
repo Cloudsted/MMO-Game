@@ -7,14 +7,26 @@ import { z } from "zod";
 
 // ---------- shared value types ----------
 
-/** One inventory slot: per-instance item data from day one (rarity now;
- *  affixes/durability later slot into the same shape). */
+/** One inventory slot: per-instance item data. Weapons carry stat rolls
+ *  (multipliers around 1, e.g. {dmg:1.04, spd:0.98}) and durability minted
+ *  at creation (see mintItem in items.ts). */
 export const ItemStackSchema = z.object({
   item: z.string(),
   qty: z.number().int().positive(),
   rarity: z.string(),
+  /** per-instance stat rolls: stat id → multiplier (absent on non-weapons) */
+  stats: z.record(z.string(), z.number()).optional(),
+  /** durability remaining (uses); item breaks at 0 */
+  dur: z.number().int().optional(),
+  /** rolled durability ceiling for this instance */
+  maxDur: z.number().int().optional(),
 });
 export type ItemStack = z.infer<typeof ItemStackSchema>;
+
+/** What a dropped loot bag shows the world: its representative contents
+ *  (rarest first, capped at 3) so clients can render the actual items. */
+export const LootViewSchema = z.array(z.object({ item: z.string(), rarity: z.string() }));
+export type LootView = z.infer<typeof LootViewSchema>;
 
 export const CharacterSnapshotSchema = z.object({
   id: z.string(),
@@ -49,6 +61,8 @@ export const EntityFullSchema = z.object({
   act: z.string().optional(),
   /** ms remaining in act at send time — clients run the telegraph timer */
   actMs: z.number().optional(),
+  /** loot bags only: visible contents ([] = gold-only bag → sack sprite) */
+  loot: LootViewSchema.optional(),
 });
 export type EntityFull = z.infer<typeof EntityFullSchema>;
 
@@ -63,6 +77,8 @@ export const EntityDeltaSchema = z.object({
   hp: z.number().optional(),
   act: z.string().optional(),
   actMs: z.number().optional(),
+  /** loot bags: contents changed (partial pickup) */
+  loot: LootViewSchema.optional(),
 });
 export type EntityDelta = z.infer<typeof EntityDeltaSchema>;
 

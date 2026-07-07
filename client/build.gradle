@@ -21,6 +21,9 @@ dependencies {
     implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
     implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
     implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    // pixel-art UI font: rasterize the bundled TTF at its native grid size
+    implementation "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
     implementation 'org.java-websocket:Java-WebSocket:1.5.7'
     implementation 'com.google.code.gson:gson:2.11.0'
 }

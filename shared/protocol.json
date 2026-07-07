@@ -376,7 +376,10 @@
       "item": "s",
       "qty": "n",
       "rarity": "s",
-      "$comment": "per-instance item data; affixes/durability later"
+      "stats": "o<stat:s -> mult:n>?",
+      "dur": "n?",
+      "maxDur": "n?",
+      "$comment": "per-instance item data. Weapons carry stat rolls (multipliers around 1: dmg, spd) and rolled durability (dur counts down; breaks at 0). Minted server-side (mintItem); stackables stay uniform so they merge."
     },
     "EntityFull": {
       "id": "n",
@@ -392,11 +395,13 @@
       "maxHp": "n?",
       "level": "n?",
       "act": "s?",
-      "actMs": "n?"
+      "actMs": "n?",
+      "loot": "a<{item:s,rarity:s}>?",
+      "$comment2": "loot = bag contents for kind=loot (rarest first, max 3; [] = gold only) so clients render the actual dropped items"
     },
     "EntityDelta": {
       "id": "n",
-      "$comment": "id plus only changed fields of EntityFull (x/y/z/yaw/anim/hp/act/actMs)"
+      "$comment": "id plus only changed fields of EntityFull (x/y/z/yaw/anim/hp/act/actMs/loot)"
     },
     "CombatEvent": {
       "kind": "dmg|heal|death|stagger|xp|levelup",

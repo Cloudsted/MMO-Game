@@ -33,7 +33,8 @@ export function startAbility(
   damage: number,
   aimYaw: number,
   aimPitch: number,
-  now: number
+  now: number,
+  speedMult = 1
 ): boolean {
   const c = e.combat!;
   if (!canAct(c)) return false;
@@ -46,14 +47,15 @@ export function startAbility(
   c.pendingDamage = damage;
   c.aimYaw = aimYaw;
   c.aimPitch = aimPitch;
+  c.speedMult = speedMult;
   if (ability.castTimeMs !== undefined) {
     c.act = "cast";
-    c.actEndsAt = now + ability.castTimeMs;
+    c.actEndsAt = now + Math.round(ability.castTimeMs / speedMult);
   } else {
     c.act = "windup";
-    c.actEndsAt = now + (ability.windupMs ?? 0);
+    c.actEndsAt = now + Math.round((ability.windupMs ?? 0) / speedMult);
   }
-  if (ability.cooldownMs > 0) c.cooldowns.set(abilityId, now + ability.cooldownMs);
+  if (ability.cooldownMs > 0) c.cooldowns.set(abilityId, now + Math.round(ability.cooldownMs / speedMult));
   return true;
 }
 
@@ -71,17 +73,17 @@ export function advanceFsm(e: Entity, ability: AbilityDef | null, now: number): 
   switch (c.act) {
     case "windup": {
       c.act = "active";
-      c.actEndsAt = now + (ability?.activeMs ?? 100);
+      c.actEndsAt = now + Math.round((ability?.activeMs ?? 100) / c.speedMult);
       return ability?.kind === "melee" ? "melee-hit" : "release";
     }
     case "cast": {
       c.act = "recover";
-      c.actEndsAt = now + (ability?.recoverMs ?? 200);
+      c.actEndsAt = now + Math.round((ability?.recoverMs ?? 200) / c.speedMult);
       return "release";
     }
     case "active": {
       c.act = "recover";
-      c.actEndsAt = now + (ability?.recoverMs ?? 200);
+      c.actEndsAt = now + Math.round((ability?.recoverMs ?? 200) / c.speedMult);
       return null;
     }
     case "recover":

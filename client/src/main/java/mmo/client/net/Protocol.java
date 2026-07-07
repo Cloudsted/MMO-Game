@@ -32,6 +32,10 @@ public final class Protocol {
         public int level = 0;
         public String act = "idle";
         public float actMs = 0;
+        /** loot bags: visible contents, rarest first (null = not a bag /
+         *  empty = gold only). Parallel arrays of item id + rarity. */
+        public String[] lootItems = null;
+        public String[] lootRarities = null;
 
         public static Entity fromFull(JsonObject o) {
             Entity e = new Entity();
@@ -49,6 +53,16 @@ public final class Protocol {
             if (o.has("level") && !o.get("level").isJsonNull()) e.level = o.get("level").getAsInt();
             if (o.has("act") && !o.get("act").isJsonNull()) e.act = o.get("act").getAsString();
             if (o.has("actMs") && !o.get("actMs").isJsonNull()) e.actMs = o.get("actMs").getAsFloat();
+            if (o.has("loot") && !o.get("loot").isJsonNull()) {
+                JsonArray arr = o.getAsJsonArray("loot");
+                e.lootItems = new String[arr.size()];
+                e.lootRarities = new String[arr.size()];
+                for (int i = 0; i < arr.size(); i++) {
+                    JsonObject l = arr.get(i).getAsJsonObject();
+                    e.lootItems[i] = l.get("item").getAsString();
+                    e.lootRarities[i] = l.get("rarity").getAsString();
+                }
+            }
             return e;
         }
     }

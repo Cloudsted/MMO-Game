@@ -3,7 +3,7 @@
  * slot math. Both are pure functions over registry data — RoomSim owns the
  * resulting entities and syncing.
  */
-import type { ItemStack, RegistryService } from "@fantasy-mmo/common";
+import { type GameConstants, type ItemStack, type RegistryService } from "@fantasy-mmo/common";
 export declare const INV_SIZE = 24;
 export declare const HOTBAR_SIZE = 8;
 /** Roll a rarity from the global weights, clamped up to minRarity if given. */
@@ -13,7 +13,7 @@ export declare function rollRarity(reg: RegistryService, minRarity?: string): st
  * entries with no item/table are "nothing". Weapons roll a rarity tier;
  * everything else drops common.
  */
-export declare function rollLoot(reg: RegistryService, tableId: string, depth?: number): {
+export declare function rollLoot(reg: RegistryService, consts: GameConstants, tableId: string, depth?: number): {
     gold: number;
     items: ItemStack[];
 };

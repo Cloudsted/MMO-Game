@@ -17,7 +17,7 @@ export declare function isMovementLocked(c: Combat, ability: AbilityDef | null):
  * when the FSM state, cooldown, or mana forbids it. Mana/cooldown are charged
  * up front (interrupts refund mana — see interrupt()).
  */
-export declare function startAbility(e: Entity, abilityId: string, ability: AbilityDef, damage: number, aimYaw: number, aimPitch: number, now: number): boolean;
+export declare function startAbility(e: Entity, abilityId: string, ability: AbilityDef, damage: number, aimYaw: number, aimPitch: number, now: number, speedMult?: number): boolean;
 /** What advancing the FSM produced this step. */
 export type FsmFire = "melee-hit" | "release" | null;
 /**

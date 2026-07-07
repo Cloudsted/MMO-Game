@@ -109,6 +109,33 @@ declare const ConstantsSchema: z.ZodObject<{
         placeRangeM: number;
         maxPlayerBlocksPerRoom: number;
     }>;
+    /** per-instance item rolls: stat → rarity → ± spread around 1, and the
+     *  durability scaling formula (see mintItem in items.ts) */
+    items: z.ZodObject<{
+        statSpread: z.ZodRecord<z.ZodString, z.ZodRecord<z.ZodString, z.ZodNumber>>;
+        durability: z.ZodObject<{
+            rarityMult: z.ZodRecord<z.ZodString, z.ZodNumber>;
+            spread: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            rarityMult: Record<string, number>;
+            spread: number;
+        }, {
+            rarityMult: Record<string, number>;
+            spread: number;
+        }>;
+    }, "strip", z.ZodTypeAny, {
+        statSpread: Record<string, Record<string, number>>;
+        durability: {
+            rarityMult: Record<string, number>;
+            spread: number;
+        };
+    }, {
+        statSpread: Record<string, Record<string, number>>;
+        durability: {
+            rarityMult: Record<string, number>;
+            spread: number;
+        };
+    }>;
     progression: z.ZodObject<{
         baseHp: z.ZodNumber;
         hpPerLevel: z.ZodNumber;
@@ -154,10 +181,6 @@ declare const ConstantsSchema: z.ZodObject<{
         terrainYToleranceM: number;
     }>;
 }, "strip", z.ZodTypeAny, {
-    building: {
-        placeRangeM: number;
-        maxPlayerBlocksPerRoom: number;
-    };
     movement: {
         walkSpeed: number;
         gravity: number;
@@ -192,6 +215,17 @@ declare const ConstantsSchema: z.ZodObject<{
         pickupRange: number;
         talkRange: number;
         sellFraction: number;
+    };
+    building: {
+        placeRangeM: number;
+        maxPlayerBlocksPerRoom: number;
+    };
+    items: {
+        statSpread: Record<string, Record<string, number>>;
+        durability: {
+            rarityMult: Record<string, number>;
+            spread: number;
+        };
     };
     progression: {
         baseHp: number;
@@ -210,10 +244,6 @@ declare const ConstantsSchema: z.ZodObject<{
         terrainYToleranceM: number;
     };
 }, {
-    building: {
-        placeRangeM: number;
-        maxPlayerBlocksPerRoom: number;
-    };
     movement: {
         walkSpeed: number;
         gravity: number;
@@ -248,6 +278,17 @@ declare const ConstantsSchema: z.ZodObject<{
         pickupRange: number;
         talkRange: number;
         sellFraction: number;
+    };
+    building: {
+        placeRangeM: number;
+        maxPlayerBlocksPerRoom: number;
+    };
+    items: {
+        statSpread: Record<string, Record<string, number>>;
+        durability: {
+            rarityMult: Record<string, number>;
+            spread: number;
+        };
     };
     progression: {
         baseHp: number;

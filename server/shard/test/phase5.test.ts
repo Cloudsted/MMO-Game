@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import type { CharacterSnapshot, ItemStack, ServerToClient } from "@fantasy-mmo/common";
-import { BLOCK, loadRoomDef, RegistryService } from "@fantasy-mmo/common";
+import { BLOCK, gameConstants, loadRoomDef, RegistryService } from "@fantasy-mmo/common";
 import { RoomSim, type PlayerSession } from "../src/sim/room.js";
 import { rollLoot } from "../src/sim/loot.js";
 
 const reg = new RegistryService();
+const consts = gameConstants();
 
 function makeCharacter(id: string, name: string, x: number, z: number, inventory: Array<ItemStack | null> = []): CharacterSnapshot {
   return { id, name, level: 1, xp: 0, gold: 0, inventory, x, y: 0, z, yaw: 0, roles: ["player"] };
@@ -79,7 +80,7 @@ describe("dungeon", () => {
 
   it("rolls a guaranteed epic from the boss table", () => {
     for (let i = 0; i < 30; i++) {
-      const r = rollLoot(reg, "boss_drops");
+      const r = rollLoot(reg, consts, "boss_drops");
       expect(r.gold).toBeGreaterThanOrEqual(80);
       const hasEpic = r.items.some((s) => s.rarity === "epic" && reg.item(s.item).kind === "weapon");
       expect(hasEpic).toBe(true);

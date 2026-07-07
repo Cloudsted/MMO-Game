@@ -3,7 +3,7 @@
  * components — no inheritance. Players, mobs, NPCs, and loot bags are all
  * the same shape with different bags.
  */
-import type { EntityFull, EntityDelta, ItemStack } from "@fantasy-mmo/common";
+import type { EntityFull, EntityDelta, ItemStack, LootView } from "@fantasy-mmo/common";
 export interface Position {
     x: number;
     y: number;
@@ -26,6 +26,8 @@ export interface Combat {
     pendingDamage: number;
     aimYaw: number;
     aimPitch: number;
+    /** held item's speed roll scaling the current ability's timings (1 = base) */
+    speedMult: number;
     cooldowns: Map<string, number>;
     lastDamagedAt: number;
     slowPct: number;
@@ -79,6 +81,9 @@ export interface Entity {
     combat?: Combat;
     brain?: MobBrain;
     loot?: LootBag;
+    /** replicated bag contents (rarest first, ≤3) — RoomSim keeps it in sync
+     *  with loot.items so clients can render the actual dropped items */
+    lootView?: LootView;
     /** npc registry id (dialog/shop lookup) */
     npcId?: string;
 }
@@ -93,6 +98,8 @@ export interface ReplicatedState {
     anim: string;
     hp: number | undefined;
     act: string | undefined;
+    /** compact loot-contents signature so partial pickups delta out */
+    lootSig: string | undefined;
 }
 export declare function replicatedState(e: Entity): ReplicatedState;
 /** Delta of changed fields vs. what a viewer last saw; null when unchanged.

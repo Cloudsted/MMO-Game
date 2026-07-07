@@ -61,6 +61,8 @@ export declare class RoomSim {
     private initNpcs;
     private restoreDrops;
     private spawnLootBag;
+    /** Representative bag contents for replication: rarest first, capped at 3. */
+    private lootViewOf;
     private waterLevel;
     /** Feet Y standing on the column's top solid block. */
     groundAt(x: number, z: number): number;
@@ -102,6 +104,8 @@ export declare class RoomSim {
     validatePortalUse(session: PlayerSession, portalId: string): PortalDef | null;
     /** Player pressed attack: use the held item's ability, aimed by camera. */
     handleAttack(session: PlayerSession, aimYaw: number, aimPitch: number): void;
+    /** Durability tick: at zero the weapon breaks and the slot empties. */
+    private wearHeldItem;
     /** Mob brain wants to attack: same FSM, different intent producer. */
     private mobAttack;
     private resolveMeleeHit;

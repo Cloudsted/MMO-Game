@@ -3,7 +3,7 @@
  * components — no inheritance. Players, mobs, NPCs, and loot bags are all
  * the same shape with different bags.
  */
-import type { EntityFull, EntityDelta, ItemStack } from "@fantasy-mmo/common";
+import type { EntityFull, EntityDelta, ItemStack, LootView } from "@fantasy-mmo/common";
 
 export interface Position {
   x: number;
@@ -30,6 +30,8 @@ export interface Combat {
   pendingDamage: number;
   aimYaw: number;
   aimPitch: number;
+  /** held item's speed roll scaling the current ability's timings (1 = base) */
+  speedMult: number;
   cooldowns: Map<string, number>; // abilityId → ready-at ms epoch
   lastDamagedAt: number;
   slowPct: number; // 0 = no slow
@@ -47,6 +49,7 @@ export function freshCombat(): Combat {
     pendingDamage: 0,
     aimYaw: 0,
     aimPitch: 0,
+    speedMult: 1,
     cooldowns: new Map(),
     lastDamagedAt: 0,
     slowPct: 0,
@@ -98,6 +101,9 @@ export interface Entity {
   combat?: Combat;
   brain?: MobBrain;
   loot?: LootBag;
+  /** replicated bag contents (rarest first, ≤3) — RoomSim keeps it in sync
+   *  with loot.items so clients can render the actual dropped items */
+  lootView?: LootView;
   /** npc registry id (dialog/shop lookup) */
   npcId?: string;
 }
@@ -129,6 +135,7 @@ export function toFull(e: Entity, now: number): EntityFull {
     level: e.level,
     act: e.combat?.act,
     actMs: actMs(e, now),
+    loot: e.kind === "loot" ? (e.lootView ?? []) : undefined,
   };
 }
 
@@ -141,6 +148,8 @@ export interface ReplicatedState {
   anim: string;
   hp: number | undefined;
   act: string | undefined;
+  /** compact loot-contents signature so partial pickups delta out */
+  lootSig: string | undefined;
 }
 
 export function replicatedState(e: Entity): ReplicatedState {
@@ -152,6 +161,7 @@ export function replicatedState(e: Entity): ReplicatedState {
     anim: e.renderable.anim,
     hp: e.health ? Math.ceil(e.health.hp) : undefined,
     act: e.combat?.act,
+    lootSig: e.lootView?.map((l) => `${l.item}:${l.rarity}`).join(","),
   };
 }
 
@@ -169,6 +179,10 @@ export function diffState(e: Entity, prev: ReplicatedState, curr: ReplicatedStat
   if (curr.act !== prev.act && curr.act !== undefined) {
     d.act = curr.act;
     d.actMs = actMs(e, now);
+    changed = true;
+  }
+  if (curr.lootSig !== prev.lootSig && curr.lootSig !== undefined) {
+    d.loot = e.lootView ?? [];
     changed = true;
   }
   return changed ? d : null;

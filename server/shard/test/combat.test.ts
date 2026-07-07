@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import type { CharacterSnapshot, ItemStack, ServerToClient } from "@fantasy-mmo/common";
-import { loadRoomDef, RegistryService } from "@fantasy-mmo/common";
+import { gameConstants, loadRoomDef, mintItem, RegistryService } from "@fantasy-mmo/common";
 import { RoomSim, type PlayerSession } from "../src/sim/room.js";
 import { advanceFsm, inMeleeCone, interruptIfCasting, startAbility } from "../src/sim/combat.js";
 import { addItem, rollLoot, normalizeInventory, INV_SIZE } from "../src/sim/loot.js";
@@ -8,6 +8,7 @@ import { tickBrain } from "../src/sim/mobs.js";
 import { freshCombat, type Entity } from "../src/sim/entities.js";
 
 const reg = new RegistryService();
+const consts = gameConstants();
 
 function makeCharacter(id: string, name: string, x = 64, z = 64, inventory: Array<ItemStack | null> = []): CharacterSnapshot {
   return { id, name, level: 1, xp: 0, gold: 0, inventory, x, y: 0, z, yaw: 0, roles: ["player"] };
@@ -99,7 +100,7 @@ describe("action FSM", () => {
 describe("loot", () => {
   it("rolls nested tables with gold ranges and rarity floors", () => {
     for (let i = 0; i < 200; i++) {
-      const r = rollLoot(reg, "bandit_drops");
+      const r = rollLoot(reg, consts, "bandit_drops");
       expect(r.gold).toBeGreaterThanOrEqual(5 - 5); // nested tables may add 0
       for (const s of r.items) {
         expect(reg.items[s.item]).toBeDefined();
@@ -111,7 +112,7 @@ describe("loot", () => {
 
   it("clamps weapon rarity up to minRarity", () => {
     for (let i = 0; i < 100; i++) {
-      const r = rollLoot(reg, "weapons_fine");
+      const r = rollLoot(reg, consts, "weapons_fine");
       for (const s of r.items) {
         expect(["uncommon", "rare", "epic"]).toContain(s.rarity);
       }
@@ -407,5 +408,103 @@ describe("RoomSim gameplay", () => {
     sim.handleEquip(a.session, 1); // empty slot → barehanded
     sim.handleAttack(a.session, 0, 0);
     expect(a.session.entity.combat!.act).toBe("windup"); // punch
+  });
+});
+
+describe("item instances (stat variance + durability)", () => {
+  let sim: RoomSim;
+
+  function join(id: string, name: string, inv: Array<ItemStack | null> = []) {
+    const messages: ServerToClient[] = [];
+    const session = sim.addPlayer(makeCharacter(id, name, 64, 64, inv), (m) => messages.push(m));
+    return {
+      session,
+      messages,
+      last: <T extends ServerToClient["t"]>(t: T) =>
+        [...messages].reverse().find((m) => m.t === t) as Extract<ServerToClient, { t: T }> | undefined,
+    };
+  }
+
+  beforeEach(() => {
+    sim = new RoomSim(loadRoomDef("hub"));
+  });
+
+  it("mints weapons with rarity-bounded stat rolls and rolled durability", () => {
+    for (const rarity of ["common", "epic"]) {
+      const dmgSpread = consts.items.statSpread.dmg![rarity]!;
+      const durMult = consts.items.durability.rarityMult[rarity]!;
+      const base = reg.item("iron_sword").durability!;
+      for (let i = 0; i < 100; i++) {
+        const s = mintItem(reg, consts, "iron_sword", 1, rarity);
+        expect(s.stats!.dmg!).toBeGreaterThanOrEqual(1 - dmgSpread - 1e-9);
+        expect(s.stats!.dmg!).toBeLessThanOrEqual(1 + dmgSpread + 1e-9);
+        expect(s.maxDur!).toBeGreaterThanOrEqual(Math.floor(base * durMult * (1 - consts.items.durability.spread)));
+        expect(s.maxDur!).toBeLessThanOrEqual(Math.ceil(base * durMult * (1 + consts.items.durability.spread)));
+        expect(s.dur).toBe(s.maxDur);
+      }
+    }
+    // stackables stay uniform so they can merge
+    const bread = mintItem(reg, consts, "bread", 3, "common");
+    expect(bread.stats).toBeUndefined();
+    expect(bread.dur).toBeUndefined();
+  });
+
+  it("backfills rolls onto legacy inventory items at join", () => {
+    const a = join("c1", "Alice", [{ item: "rusty_sword", qty: 1, rarity: "common" }, { item: "bread", qty: 2, rarity: "common" }]);
+    const sword = a.session.slots[0]!;
+    expect(sword.stats?.dmg).toBeDefined();
+    expect(sword.dur).toBeGreaterThan(0);
+    expect(sword.maxDur).toBeGreaterThan(0);
+    expect(a.session.slots[1]!.dur).toBeUndefined(); // bread untouched
+  });
+
+  it("wears one durability per weapon use and breaks the weapon at zero", () => {
+    const a = join("c1", "Alice", [{ item: "rusty_sword", qty: 1, rarity: "common" }]);
+    const sword = a.session.slots[0]!;
+    const before = sword.dur!;
+    sim.handleAttack(a.session, 0, 0);
+    expect(sword.dur).toBe(before - 1);
+    expect(a.session.slots[0]).not.toBeNull();
+    // force the last use → the sword breaks and the slot empties
+    a.session.entity.combat!.act = "idle";
+    a.session.entity.combat!.cooldowns.clear();
+    sword.dur = 1;
+    sim.handleAttack(a.session, 0, 0);
+    expect(a.session.slots[0]).toBeNull();
+    expect(a.last("chat")?.text).toContain("broke");
+  });
+
+  it("never wears durability barehanded, and rejected attacks don't wear", () => {
+    const a = join("c1", "Alice", [{ item: "rusty_sword", qty: 1, rarity: "common" }]);
+    const sword = a.session.slots[0]!;
+    sim.handleAttack(a.session, 0, 0);
+    const afterFirst = sword.dur!;
+    sim.handleAttack(a.session, 0, 0); // mid-windup: FSM rejects → no wear
+    expect(sword.dur).toBe(afterFirst);
+  });
+
+  it("scales ability timings by the instance speed roll", () => {
+    const e = testEntity();
+    const swing = reg.ability("swing");
+    startAbility(e, "swing", swing, 10, 0, 0, 1000, 2);
+    expect(e.combat!.actEndsAt).toBe(1000 + Math.round(swing.windupMs! / 2));
+    expect(advanceFsm(e, swing, e.combat!.actEndsAt)).toBe("melee-hit");
+    expect(e.combat!.actEndsAt).toBeLessThanOrEqual(1000 + Math.round(swing.windupMs! / 2) + Math.round(swing.activeMs! / 2));
+  });
+
+  it("replicates loot bag contents rarest-first for 3D drop rendering", () => {
+    const inv: Array<ItemStack | null> = [
+      { item: "bread", qty: 3, rarity: "common" },
+      { item: "iron_sword", qty: 1, rarity: "rare" },
+    ];
+    const a = join("c1", "Alice", inv);
+    const mob = sim.spawnMob("wolf", 66, 64, "")!;
+    sim.applyDamage(mob, a.session.entity, 9999); // death drop
+    const bag = [...sim.allEntities()].find((e) => e.kind === "loot")!;
+    expect(bag.lootView).toBeDefined();
+    expect(bag.lootView!.length).toBe(2);
+    expect(bag.lootView![0]).toMatchObject({ item: "iron_sword", rarity: "rare" });
+    // rolled instance fields survive the drop → pickup round trip
+    expect(bag.loot!.items.find((s) => s.item === "iron_sword")!.dur).toBeGreaterThan(0);
   });
 });

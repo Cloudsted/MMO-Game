@@ -38,6 +38,16 @@
     "placeRangeM": 6.0,
     "maxPlayerBlocksPerRoom": 6000
   },
+  "items": {
+    "statSpread": {
+      "dmg": { "common": 0.04, "uncommon": 0.06, "rare": 0.09, "epic": 0.12 },
+      "spd": { "common": 0.02, "uncommon": 0.03, "rare": 0.045, "epic": 0.06 }
+    },
+    "durability": {
+      "rarityMult": { "common": 1.0, "uncommon": 1.35, "rare": 1.8, "epic": 2.5 },
+      "spread": 0.1
+    }
+  },
   "progression": {
     "baseHp": 80,
     "hpPerLevel": 20,

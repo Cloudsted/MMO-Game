@@ -16,6 +16,12 @@ public final class ItemRegistry {
     public static final class Item {
         public final String id, name, kind, ability, block;
         public final int value, stack, iconCol, iconRow;
+        /** weapons: base damage before rarity/rolls (0 = none) */
+        public final float damage;
+        /** weapons: base durability uses (0 = unbreakable) */
+        public final int durability;
+        /** consumables: effect payload (0 = absent) */
+        public final float effectHeal, effectMana, effectHotTotal, effectHotDurMs;
 
         Item(String id, JsonObject o) {
             this.id = id;
@@ -25,6 +31,13 @@ public final class ItemRegistry {
             block = o.has("block") ? o.get("block").getAsString() : null;
             value = o.get("value").getAsInt();
             stack = o.get("stack").getAsInt();
+            damage = o.has("damage") ? o.get("damage").getAsFloat() : 0;
+            durability = o.has("durability") ? o.get("durability").getAsInt() : 0;
+            JsonObject fx = o.has("effect") ? o.getAsJsonObject("effect") : null;
+            effectHeal = fx != null && fx.has("heal") ? fx.get("heal").getAsFloat() : 0;
+            effectMana = fx != null && fx.has("mana") ? fx.get("mana").getAsFloat() : 0;
+            effectHotTotal = fx != null && fx.has("hotTotal") ? fx.get("hotTotal").getAsFloat() : 0;
+            effectHotDurMs = fx != null && fx.has("hotDurMs") ? fx.get("hotDurMs").getAsFloat() : 0;
             JsonArray icon = o.getAsJsonArray("icon");
             iconCol = icon.get(0).getAsInt();
             iconRow = icon.get(1).getAsInt();

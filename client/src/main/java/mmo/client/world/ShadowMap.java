@@ -175,6 +175,19 @@ public class ShadowMap {
         quad.render(shader, GL20.GL_TRIANGLES);
     }
 
+    /** An arbitrary small mesh (3D loot items) into the entity depth map.
+     *  The shadow shader only binds a_position + a_uv — extra attributes
+     *  (a_br) resolve to location -1 and are skipped. */
+    public void entityMesh(Texture tex, Mesh mesh, Matrix4 world) {
+        tmpMat.set(lightCam.combined).mul(world);
+        shader.setUniformMatrix("u_lightVP", tmpMat);
+        tex.bind(0);
+        mesh.render(shader, GL20.GL_TRIANGLES);
+        shader.setUniformMatrix("u_lightVP", lightCam.combined); // restore for entityQuad
+    }
+
+    private final Matrix4 tmpMat = new Matrix4();
+
     public void endEntities() {
         // debug: dump the entity map once (~2 s in) to eyeball the quads
         if ("1".equals(System.getenv("MMO_DEBUG_SHADOW")) && ++entFrames == 120) {

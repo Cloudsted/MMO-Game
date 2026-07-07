@@ -31,7 +31,10 @@ public class LoginScreen extends ScreenAdapter {
 
     public LoginScreen(MmoGame game) {
         this.game = game;
-        stage = new Stage(new ScreenViewport());
+        // integer-upscaled virtual canvas, same scheme as the in-world HUD
+        ScreenViewport vp = new ScreenViewport();
+        vp.setUnitsPerPixel(1f / mmo.client.ui.UiKit.uiScale(Gdx.graphics.getWidth(), Gdx.graphics.getHeight()));
+        stage = new Stage(vp);
         Gdx.input.setInputProcessor(stage);
         Gdx.input.setCursorCatched(false);
 
@@ -181,6 +184,9 @@ public class LoginScreen extends ScreenAdapter {
 
     @Override
     public void resize(int width, int height) {
+        if (width <= 0 || height <= 0) return; // minimized
+        ((ScreenViewport) stage.getViewport())
+            .setUnitsPerPixel(1f / mmo.client.ui.UiKit.uiScale(width, height));
         stage.getViewport().update(width, height, true);
     }
 

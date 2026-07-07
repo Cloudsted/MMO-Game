@@ -27,6 +27,7 @@
       "kind": "weapon",
       "ability": "swing",
       "damage": 6,
+      "durability": 250,
       "value": 8,
       "stack": 1,
       "icon": [
@@ -39,6 +40,7 @@
       "kind": "weapon",
       "ability": "swing",
       "damage": 11,
+      "durability": 450,
       "value": 40,
       "stack": 1,
       "icon": [
@@ -51,6 +53,7 @@
       "kind": "weapon",
       "ability": "bow_shot",
       "damage": 9,
+      "durability": 300,
       "value": 15,
       "stack": 1,
       "icon": [
@@ -63,6 +66,7 @@
       "kind": "weapon",
       "ability": "bow_shot",
       "damage": 14,
+      "durability": 500,
       "value": 60,
       "stack": 1,
       "icon": [
@@ -75,6 +79,7 @@
       "kind": "weapon",
       "ability": "firebolt",
       "damage": 13,
+      "durability": 400,
       "value": 50,
       "stack": 1,
       "icon": [
@@ -87,6 +92,7 @@
       "kind": "weapon",
       "ability": "frost",
       "damage": 8,
+      "durability": 400,
       "value": 50,
       "stack": 1,
       "icon": [
@@ -99,6 +105,7 @@
       "kind": "weapon",
       "ability": "heal",
       "damage": 0,
+      "durability": 450,
       "value": 45,
       "stack": 1,
       "icon": [

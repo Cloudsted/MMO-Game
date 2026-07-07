@@ -38,6 +38,10 @@ public class GameUi {
         public String item;
         public int qty;
         public String rarity;
+        /** per-instance stat rolls (multipliers around 1); 1 = no roll */
+        public float statDmg = 1f, statSpd = 1f;
+        /** durability remaining / rolled max; -1 = item doesn't wear */
+        public int dur = -1, maxDur = -1;
     }
 
     public static final class ShopEntry {
@@ -113,6 +117,21 @@ public class GameUi {
     private final List<Rectangle> godRects = new ArrayList<>();
     private Rectangle shopToggleRect, closeRect;
 
+    /** test hook: MMO_HOVER_SLOT=<n> pins the tooltip to inventory slot n
+     *  (mouse hover can't be injected into a background GLFW window) */
+    private final int debugHoverSlot;
+
+    // virtual HUD canvas (WorldScreen.applyHudViewport): the UI draws at
+    // fixed design sizes in vw x vh and is integer-upscaled to the window
+    private int vw = 1280, vh = 720, uiScale = 1;
+
+    /** Virtual canvas dims + the integer window upscale (for mouse coords). */
+    public void setViewport(int vw, int vh, int uiScale) {
+        this.vw = vw;
+        this.vh = vh;
+        this.uiScale = uiScale;
+    }
+
     public GameUi(Net net, ItemRegistry reg) {
         this.net = net;
         this.reg = reg;
@@ -120,6 +139,12 @@ public class GameUi {
         icons.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         iconCols = icons.getWidth() / 16;
         for (int i = 0; i < 24; i++) slotRects[i] = new Rectangle();
+        int hover = -1;
+        String env = System.getenv("MMO_HOVER_SLOT");
+        if (env != null) {
+            try { hover = Integer.parseInt(env.trim()); } catch (NumberFormatException ignored) {}
+        }
+        debugHoverSlot = hover;
     }
 
     // ---------- server state ingestion ----------
@@ -138,9 +163,22 @@ public class GameUi {
         if (wasDead && !dead) window = Window.NONE;
     }
 
+    /** while set, a locally-predicted hotbar selection outranks server echoes
+     *  (a scroll burst produces one echo per step; applying the stale early
+     *  ones would visibly roll the highlight back before the last lands) */
+    private long heldPredictedUntil = 0;
+
+    /** Local hotbar-selection prediction: instant highlight, server confirms. */
+    public void selectHeld(int slot) {
+        held = slot;
+        heldPredictedUntil = System.currentTimeMillis() + 800;
+    }
+
     public void setInventory(List<Stack> list, int held) {
         for (int i = 0; i < 24; i++) slots[i] = i < list.size() ? list.get(i) : null;
-        this.held = held;
+        // take the server's held unless a fresher local prediction is in
+        // flight — equip messages are ordered, so the final echo matches it
+        if (held == this.held || System.currentTimeMillis() >= heldPredictedUntil) this.held = held;
         if (carrying >= 0 && slots[carrying] == null) carrying = -1;
     }
 
@@ -198,8 +236,8 @@ public class GameUi {
     public void addScreenFloater(String text, Color color, float scale) {
         Floater f = new Floater();
         f.screenSpace = true;
-        f.sx = Gdx.graphics.getWidth() / 2f;
-        f.sy = Gdx.graphics.getHeight() * 0.42f;
+        f.sx = vw / 2f;
+        f.sy = vh * 0.42f;
         f.text = text;
         f.color = new Color(color);
         f.scale = scale;
@@ -281,8 +319,9 @@ public class GameUi {
 
     /** Mouse click routed from WorldScreen when a window is open. Returns consumed. */
     public boolean click(int sx, int syTopDown, int button) {
-        float y = Gdx.graphics.getHeight() - syTopDown; // to y-up
-        float x = sx;
+        // window pixels → virtual canvas (hit rects live in virtual space)
+        float y = vh - syTopDown / (float) uiScale;
+        float x = sx / (float) uiScale;
         boolean right = button == 1;
 
         if (window == Window.GOD) {
@@ -330,7 +369,10 @@ public class GameUi {
                     if (s != null) {
                         ItemRegistry.Item def = reg.item(s.item);
                         if (def != null && "consumable".equals(def.kind)) net.send(mmo.client.net.Protocol.consume(i));
-                        else if (def != null && "weapon".equals(def.kind) && i < 8) net.send(mmo.client.net.Protocol.equip(i));
+                        else if (def != null && "weapon".equals(def.kind) && i < 8) {
+                            selectHeld(i); // instant highlight, echo confirms
+                            net.send(mmo.client.net.Protocol.equip(i));
+                        }
                     }
                     return true;
                 }
@@ -365,7 +407,7 @@ public class GameUi {
     public void render(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, Camera cam,
                        float selfX, float selfZ, float selfYaw, List<float[]> mapDots, List<float[]> portalDots,
                        boolean safeZone, String roomName) {
-        int w = Gdx.graphics.getWidth(), h = Gdx.graphics.getHeight();
+        int w = vw, h = vh; // virtual canvas — batches are projected to it
 
         // ---- shapes pass: bars, hotbar frames, minimap dots, window panels ----
         Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
@@ -377,7 +419,7 @@ public class GameUi {
         float hbX = w / 2f - hbW / 2f, hbY = 14;
 
         // hp/mana bars above the hotbar
-        float barW = hbW / 2f - 6, barH = 13;
+        float barW = hbW / 2f - 6, barH = 16;
         float barY = hbY + cell + 22;
         shapes.setColor(0.08f, 0.08f, 0.1f, 0.8f);
         shapes.rect(hbX - 2, barY - 2, barW + 4, barH + 4);
@@ -407,6 +449,7 @@ public class GameUi {
                 Color rc = reg.rarityColor(s.rarity);
                 shapes.setColor(rc.r, rc.g, rc.b, 0.5f);
                 shapes.rect(x, hbY, cell, 3);
+                drawDurabilityBar(shapes, s, x + 4, hbY + 5, cell - 8);
             }
             // cooldown sweep
             if (slotBusyUntil[i] > now) {
@@ -434,14 +477,14 @@ public class GameUi {
             if (s == null) continue;
             drawIcon(batch, s.item, slotRects[i].x + 7, slotRects[i].y + 7, 32);
             if (s.qty > 1) {
-                font.getData().setScale(0.9f);
+                font.getData().setScale(0.5f); // native 9px grid — lossless
                 font.setColor(Color.WHITE);
-                font.draw(batch, String.valueOf(s.qty), slotRects[i].x + cell - 14, slotRects[i].y + 14);
+                font.draw(batch, String.valueOf(s.qty), slotRects[i].x + cell - 12, slotRects[i].y + 13);
                 font.getData().setScale(1f);
             }
         }
         // hotbar numbers
-        font.getData().setScale(0.8f);
+        font.getData().setScale(0.5f);
         font.setColor(1f, 1f, 1f, 0.5f);
         for (int i = 0; i < 8; i++) font.draw(batch, String.valueOf(i + 1), slotRects[i].x + 3, slotRects[i].y + cell - 3);
         font.getData().setScale(1f);
@@ -451,10 +494,10 @@ public class GameUi {
         font.draw(batch, "Lv " + level, hbX - 52, barY + barH);
         font.setColor(1f, 0.85f, 0.3f, 1f);
         font.draw(batch, gold + "g", hbX + hbW + 12, barY + barH);
-        font.getData().setScale(0.85f);
+        font.getData().setScale(0.5f);
         font.setColor(1f, 1f, 1f, 0.9f);
-        font.draw(batch, hp + "/" + maxHp, hbX + 6, barY + barH - 1);
-        font.draw(batch, mana + "/" + maxMana, hbX + hbW / 2f + 12, barY + barH - 1);
+        font.draw(batch, hp + "/" + maxHp, hbX + 6, barY + barH - 3);
+        font.draw(batch, mana + "/" + maxMana, hbX + hbW / 2f + 12, barY + barH - 3);
         font.getData().setScale(1f);
 
         // room name over minimap
@@ -472,7 +515,7 @@ public class GameUi {
             float alpha = chatFocus ? 1f : MathUtils.clamp(9f - l.age, 0f, 1f);
             if (alpha <= 0) { cy += 0; continue; }
             font.setColor(l.color.r, l.color.g, l.color.b, alpha);
-            font.draw(batch, l.text, 12, cy + (lines.length - i) * 18);
+            font.draw(batch, l.text, 12, cy + (lines.length - i) * 20);
         }
         if (chatFocus) {
             font.setColor(1f, 1f, 1f, 1f);
@@ -490,9 +533,9 @@ public class GameUi {
             } else {
                 tmp.set(f.world);
                 if (!cam.frustum.pointInFrustum(tmp)) continue;
-                cam.project(tmp);
-                fx = tmp.x + f.vx * f.age;
-                fy = tmp.y + rise;
+                cam.project(tmp); // window pixels → virtual canvas
+                fx = tmp.x / uiScale + f.vx * f.age;
+                fy = tmp.y / uiScale + rise;
             }
             // pop-scale overshoot on spawn, then settle to the base scale
             float pop = 1f + 0.5f * (float) Math.exp(-f.age * 9f);
@@ -543,7 +586,162 @@ public class GameUi {
         else if (window == Window.DIALOG) renderDialog(batch, shapes, font, w, h);
         else if (window == Window.GOD) renderGod(batch, shapes, font, w, h);
         if (dead) renderDeath(batch, shapes, font, w, h);
+        renderTooltip(batch, shapes, font, w, h);
         Gdx.gl.glDisable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
+    }
+
+    /** Thin colored wear bar over a slot when an item has lost durability. */
+    private void drawDurabilityBar(ShapeRenderer shapes, Stack s, float x, float y, float w) {
+        if (s.maxDur <= 0 || s.dur < 0 || s.dur >= s.maxDur) return;
+        float frac = MathUtils.clamp(s.dur / (float) s.maxDur, 0f, 1f);
+        shapes.setColor(0f, 0f, 0f, 0.7f);
+        shapes.rect(x, y, w, 3);
+        shapes.setColor(1f - frac * 0.85f, 0.2f + frac * 0.75f, 0.15f, 0.95f);
+        shapes.rect(x, y, w * frac, 3);
+    }
+
+    // ---------- item tooltip ----------
+
+    private static final class TipLine {
+        final String text;
+        final Color color;
+        final float scale;
+
+        TipLine(String text, Color color, float scale) {
+            this.text = text;
+            this.color = color;
+            this.scale = scale;
+        }
+    }
+
+    /** Hover tooltip: rarity-colored name + per-instance stats (rolled damage
+     *  vs base, speed roll, durability), consumable effects, value, usage
+     *  hint. Active over inventory/sell-grid slots, the hotbar when the
+     *  cursor is free, and shop buy rows (base stats). */
+    private void renderTooltip(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, int w, int h) {
+        if (dead) return;
+        float mx = Gdx.input.getX() / (float) uiScale, my = vh - Gdx.input.getY() / (float) uiScale;
+        Stack hovered = null;
+        String shopItem = null;
+        boolean cursorFree = !Gdx.input.isCursorCatched();
+
+        boolean slotsVisible = window == Window.INVENTORY || (window == Window.DIALOG && shopOpen);
+        boolean hotbarVisible = window == Window.NONE && cursorFree;
+        if (slotsVisible || hotbarVisible) {
+            int limit = hotbarVisible ? 8 : 24;
+            for (int i = 0; i < limit; i++) {
+                if (slots[i] != null && slotRects[i].contains(mx, my)) {
+                    hovered = slots[i];
+                    break;
+                }
+            }
+        }
+        if (hovered == null && window == Window.DIALOG && shopOpen) {
+            for (int i = 0; i < shopRowRects.size() && i < shopEntries.size(); i++) {
+                if (shopRowRects.get(i).contains(mx, my)) {
+                    shopItem = shopEntries.get(i).item;
+                    break;
+                }
+            }
+        }
+        // test hook: pin the tooltip to a slot for unattended screenshots
+        if (hovered == null && shopItem == null && debugHoverSlot >= 0 && debugHoverSlot < 24
+            && window == Window.INVENTORY && slots[debugHoverSlot] != null) {
+            hovered = slots[debugHoverSlot];
+            mx = slotRects[debugHoverSlot].x + slotRects[debugHoverSlot].width;
+            my = slotRects[debugHoverSlot].y + slotRects[debugHoverSlot].height;
+        }
+        if (hovered == null && shopItem == null) return;
+
+        Stack s = hovered;
+        if (s == null) { // shop row: base-stat preview at common rarity
+            s = new Stack();
+            s.item = shopItem;
+            s.qty = 1;
+            s.rarity = "common";
+        }
+        ItemRegistry.Item def = reg.item(s.item);
+        if (def == null) return;
+
+        List<TipLine> tip = new ArrayList<>();
+        tip.add(new TipLine(capitalized(s.rarity) + " " + def.name, reg.rarityColor(s.rarity), 1f));
+        float rarityMult = reg.rarityMults.getOrDefault(s.rarity, 1f);
+        if ("weapon".equals(def.kind)) {
+            if (def.damage > 0) {
+                float dmg = def.damage * rarityMult * s.statDmg;
+                int pct = Math.round((s.statDmg - 1f) * 100f);
+                String tag = pct == 0 ? "" : String.format("  (%+d%% roll)", pct);
+                tip.add(new TipLine(String.format("Damage  %.1f%s", dmg, tag), pctColor(pct), 1f));
+            }
+            int spdPct = Math.round((s.statSpd - 1f) * 100f);
+            if (spdPct != 0) {
+                tip.add(new TipLine(String.format("Speed  %+d%%", spdPct), pctColor(spdPct), 1f));
+            }
+            if (s.maxDur > 0) {
+                float frac = s.dur / (float) s.maxDur;
+                Color c = frac > 0.5f ? new Color(0.6f, 0.9f, 0.6f, 1f)
+                    : frac > 0.2f ? new Color(0.95f, 0.85f, 0.4f, 1f) : new Color(1f, 0.4f, 0.3f, 1f);
+                tip.add(new TipLine("Durability  " + s.dur + " / " + s.maxDur, c, 1f));
+            } else if (hovered == null && def.durability > 0) {
+                tip.add(new TipLine("Durability  " + def.durability + " (base)", new Color(0.75f, 0.75f, 0.8f, 1f), 1f));
+            }
+        }
+        if (def.effectHeal > 0) tip.add(new TipLine("Restores " + (int) def.effectHeal + " health", new Color(0.5f, 1f, 0.55f, 1f), 1f));
+        if (def.effectMana > 0) tip.add(new TipLine("Restores " + (int) def.effectMana + " mana", new Color(0.5f, 0.7f, 1f, 1f), 1f));
+        if (def.effectHotTotal > 0) tip.add(new TipLine(
+            "Regenerates " + (int) def.effectHotTotal + " health over " + (int) (def.effectHotDurMs / 1000) + "s",
+            new Color(0.6f, 1f, 0.6f, 1f), 1f));
+        if (def.block != null) tip.add(new TipLine("Places: " + capitalized(def.block.replace('_', ' ')), new Color(0.8f, 0.85f, 0.7f, 1f), 1f));
+        int worth = Math.max(1, Math.round(def.value * rarityMult));
+        tip.add(new TipLine("Worth " + worth + "g", new Color(1f, 0.85f, 0.4f, 1f), 1f));
+        String hint = switch (def.kind) {
+            case "weapon" -> "RMB equip";
+            case "consumable" -> "RMB use";
+            case "building" -> "LMB places (Building Grounds)";
+            default -> null;
+        };
+        if (hovered != null && hint != null && window == Window.INVENTORY) {
+            tip.add(new TipLine(hint, new Color(0.6f, 0.6f, 0.65f, 1f), 1f));
+        }
+
+        // measure
+        float pad = 10, lineGap = 5, tw = 0, th = pad;
+        for (TipLine l : tip) {
+            font.getData().setScale(l.scale);
+            layout.setText(font, l.text);
+            tw = Math.max(tw, layout.width);
+            th += layout.height + lineGap;
+        }
+        font.getData().setScale(1f);
+        th += pad - lineGap;
+        tw += pad * 2;
+        float tx = Math.min(mx + 18, w - tw - 6);
+        float ty = Math.min(my + 12, h - th - 6);
+
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        panel(shapes, tx, ty, tw, th);
+        shapes.end();
+
+        batch.begin();
+        float cy2 = ty + th - pad;
+        for (TipLine l : tip) {
+            font.getData().setScale(l.scale);
+            // color BEFORE setText: GlyphLayout captures the font color at
+            // setText time — the other order shifts every color one line down
+            font.setColor(l.color);
+            layout.setText(font, l.text);
+            font.draw(batch, layout, tx + pad, cy2);
+            cy2 -= layout.height + lineGap;
+        }
+        font.getData().setScale(1f);
+        batch.end();
+    }
+
+    /** Roll quality color, keyed on the same rounded % the text shows. */
+    private static Color pctColor(int pct) {
+        if (pct > 0) return new Color(0.55f, 1f, 0.55f, 1f);
+        if (pct < 0) return new Color(1f, 0.65f, 0.5f, 1f);
+        return new Color(0.9f, 0.9f, 0.9f, 1f);
     }
 
     private void drawIcon(SpriteBatch batch, String itemId, float x, float y, float size) {
@@ -588,6 +786,7 @@ public class GameUi {
                 Color rc = reg.rarityColor(s.rarity);
                 shapes.setColor(rc.r, rc.g, rc.b, 0.85f);
                 shapes.rect(x, y, cell, 3);
+                drawDurabilityBar(shapes, s, x + 5, y + 5, cell - 10);
             }
         }
         shapes.end();
@@ -595,36 +794,20 @@ public class GameUi {
         batch.begin();
         font.setColor(1f, 0.95f, 0.8f, 1f);
         font.draw(batch, "Inventory   —   " + gold + "g", px + 18, py + ph - 16);
-        font.getData().setScale(0.85f);
+        font.getData().setScale(0.5f);
         font.setColor(0.7f, 0.7f, 0.75f, 1f);
-        font.draw(batch, "slots 1-8 = hotbar · LMB move · RMB equip/use · click outside = drop", px + 18, py + 26);
+        font.draw(batch, "1-8 = hotbar · LMB move · RMB use · click outside = drop", px + 18, py + 24);
         font.getData().setScale(1f);
         for (int i = 0; i < 24; i++) {
             Stack s = slots[i];
             if (s == null) continue;
             drawIcon(batch, s.item, slotRects[i].x + 10, slotRects[i].y + 10, 32);
             if (s.qty > 1) {
-                font.getData().setScale(0.9f);
+                font.getData().setScale(0.5f);
                 font.setColor(Color.WHITE);
-                font.draw(batch, String.valueOf(s.qty), slotRects[i].x + cell - 16, slotRects[i].y + 16);
+                font.draw(batch, String.valueOf(s.qty), slotRects[i].x + cell - 14, slotRects[i].y + 15);
                 font.getData().setScale(1f);
             }
-        }
-        // hover tooltip
-        int mx = Gdx.input.getX(), my = Gdx.graphics.getHeight() - Gdx.input.getY();
-        for (int i = 0; i < 24; i++) {
-            Stack s = slots[i];
-            if (s == null || !slotRects[i].contains(mx, my)) continue;
-            ItemRegistry.Item def = reg.item(s.item);
-            if (def == null) continue;
-            String title = capitalized(s.rarity) + " " + def.name;
-            String info = "worth " + def.value + "g" + ("weapon".equals(def.kind) ? "  ·  RMB equip" : "  ·  RMB use");
-            font.setColor(reg.rarityColor(s.rarity));
-            font.draw(batch, title, mx + 16, my + 34);
-            font.getData().setScale(0.85f);
-            font.setColor(0.85f, 0.85f, 0.85f, 1f);
-            font.draw(batch, info, mx + 16, my + 16);
-            font.getData().setScale(1f);
         }
         batch.end();
     }
@@ -704,9 +887,9 @@ public class GameUi {
                 if (s == null) continue;
                 drawIcon(batch, s.item, slotRects[i].x + 8, slotRects[i].y + 8, 24);
                 if (s.qty > 1) {
-                    font.getData().setScale(0.8f);
+                    font.getData().setScale(0.5f);
                     font.setColor(Color.WHITE);
-                    font.draw(batch, String.valueOf(s.qty), slotRects[i].x + 26, slotRects[i].y + 14);
+                    font.draw(batch, String.valueOf(s.qty), slotRects[i].x + 26, slotRects[i].y + 13);
                     font.getData().setScale(1f);
                 }
             }
@@ -749,7 +932,7 @@ public class GameUi {
         labels.add("reload reg");
         godActions.add(() -> net.send(mmo.client.net.Protocol.chat("/reload")));
 
-        float bw = 128, bh = 22, gap = 5;
+        float bw = 150, bh = 22, gap = 5;
         int perCol = (int) ((h - 140) / (bh + gap));
         float px = 12, py = h - 60;
 
@@ -768,11 +951,11 @@ public class GameUi {
         batch.begin();
         font.setColor(1f, 0.85f, 0.4f, 1f);
         font.draw(batch, "GOD PANEL", px, py + 18);
-        font.getData().setScale(0.82f);
+        font.getData().setScale(0.5f);
         for (int i = 0; i < labels.size(); i++) {
             Rectangle r = godRects.get(i);
             font.setColor(0.95f, 0.95f, 1f, 1f);
-            font.draw(batch, labels.get(i), r.x + 6, r.y + 16);
+            font.draw(batch, labels.get(i), r.x + 6, r.y + 17);
         }
         font.getData().setScale(1f);
         batch.end();
@@ -784,7 +967,7 @@ public class GameUi {
         shapes.rect(0, 0, w, h);
         shapes.end();
         batch.begin();
-        font.getData().setScale(2.2f);
+        font.getData().setScale(2f); // pixel font: integer scales only
         layout.setText(font, "You died");
         font.setColor(1f, 0.25f, 0.2f, 1f);
         font.draw(batch, layout, w / 2f - layout.width / 2f, h * 0.62f);

@@ -24,6 +24,8 @@ export const ItemDefSchema = z.object({
   kind: z.enum(["weapon", "consumable", "building", "misc"]),
   ability: z.string().optional(), // weapons: the ability this item grants
   damage: z.number().optional(), // weapons: base damage before rarity/level
+  /** weapons: base uses before breaking (scaled per instance by rarity + roll) */
+  durability: z.number().int().positive().optional(),
   /** building items: block name (shared/blocks.json) this item places */
   block: z.string().optional(),
   value: z.number().int(), // shop base price (gold); shops buy at a fraction

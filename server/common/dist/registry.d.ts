@@ -24,6 +24,8 @@ export declare const ItemDefSchema: z.ZodObject<{
     kind: z.ZodEnum<["weapon", "consumable", "building", "misc"]>;
     ability: z.ZodOptional<z.ZodString>;
     damage: z.ZodOptional<z.ZodNumber>;
+    /** weapons: base uses before breaking (scaled per instance by rarity + roll) */
+    durability: z.ZodOptional<z.ZodNumber>;
     /** building items: block name (shared/blocks.json) this item places */
     block: z.ZodOptional<z.ZodString>;
     value: z.ZodNumber;
@@ -47,11 +49,12 @@ export declare const ItemDefSchema: z.ZodObject<{
         hotDurMs?: number | undefined;
     }>>;
 }, "strip", z.ZodTypeAny, {
-    name: string;
-    kind: "weapon" | "consumable" | "building" | "misc";
     value: number;
+    name: string;
+    kind: "building" | "weapon" | "consumable" | "misc";
     stack: number;
     icon: [number, number];
+    durability?: number | undefined;
     ability?: string | undefined;
     damage?: number | undefined;
     block?: string | undefined;
@@ -63,11 +66,12 @@ export declare const ItemDefSchema: z.ZodObject<{
         hotDurMs?: number | undefined;
     } | undefined;
 }, {
-    name: string;
-    kind: "weapon" | "consumable" | "building" | "misc";
     value: number;
+    name: string;
+    kind: "building" | "weapon" | "consumable" | "misc";
     stack: number;
     icon: [number, number];
+    durability?: number | undefined;
     ability?: string | undefined;
     damage?: number | undefined;
     block?: string | undefined;
@@ -205,14 +209,14 @@ export declare const LootEntrySchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     weight: number;
     item?: string | undefined;
-    table?: string | undefined;
     qty?: [number, number] | undefined;
+    table?: string | undefined;
     minRarity?: string | undefined;
 }, {
     weight: number;
     item?: string | undefined;
-    table?: string | undefined;
     qty?: [number, number] | undefined;
+    table?: string | undefined;
     minRarity?: string | undefined;
 }>;
 export declare const LootTableSchema: z.ZodObject<{
@@ -227,14 +231,14 @@ export declare const LootTableSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }, {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }>, "many">;
     /** boss-style guaranteed-drop slots: every entry always rolls once */
@@ -247,22 +251,22 @@ export declare const LootTableSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }, {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }>, "many">>;
 }, "strip", z.ZodTypeAny, {
     entries: {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }[];
     gold: [number, number];
@@ -270,16 +274,16 @@ export declare const LootTableSchema: z.ZodObject<{
     guaranteed: {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }[];
 }, {
     entries: {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }[];
     gold: [number, number];
@@ -287,8 +291,8 @@ export declare const LootTableSchema: z.ZodObject<{
     guaranteed?: {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }[] | undefined;
 }>;

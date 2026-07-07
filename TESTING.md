@@ -60,6 +60,7 @@ exits nonzero on failure:
 | `lifecycle-bot.mjs` | the ephemeral-dungeon arc: enter → `/expire 15` → collapse warning → eviction → reconnect lands in hub → portal sealed during downtime → fresh reopen (restart the stack with `MMO_DOWNTIME_OVERRIDE_SEC=20` first; needs admin) | after touching lifecycle/room status |
 | `build-bot.mjs` | block building over the wire: /give block items, place a plank platform + pillar + torch (blockPlace), break one back off (blockBreak, refund) — every blockSet replicates and the tracked world bytes match; the build persists for client eyeballing | after touching the block/building system |
 | `shard2.mjs` | boots a second shard host; follow with `kill-test.mjs` and check `/api/status` — the killed room reopens on shard2 (multi-shard proof) | after touching master room assignment |
+| `drop-bot.mjs --seconds 300` | admin bot gives itself items and scatters them near the hub spawn, then holds — stages 3D dropped-item meshes for client eyeballing (needs `make-admin.mjs dropbot` once) | after touching item drops / loot replication |
 | `make-admin.mjs <user>` | — | grants the admin role (god panel, /give /tp /spawnmob /time /level /reload /clearblocks /expire); `claude_test` is already admin |
 
 **Bot navigation** (block world): bots receive the whole voxel grid
@@ -124,6 +125,9 @@ Run it as a **background task**. First-ever build downloads Gradle + JDK 21
 | `MMO_MUTE=1` | **set on every unattended launch** — the client has full audio now, and a forgotten mute plays combat sounds and music on the user's speakers while they work |
 | `MMO_SHOT=<pathPrefix>` | **the reliable capture path**: writes `<prefix>-1.png` … `<prefix>-8.png` from inside the render loop (glReadPixels), one every ~6 s after entering the world. Immune to the white-frame problem below |
 | `MMO_UI=inventory\|god\|talk\|shop` | opens that UI window on entry (talk/shop auto-talk to the nearest NPC — stage the character within ~4 m of one) |
+| `MMO_HOVER_SLOT=<n>` | pins the item tooltip to inventory slot n while the inventory is open (mouse hover can't be injected into a background GLFW window) — combine with `MMO_UI=inventory` |
+| `MMO_WIN=WxH` | window size at launch (default 1280x720) — for UI-scaling checks at other resolutions |
+| `MMO_UI_SCALE=<n>` | force the integer HUD scale (default auto: 1x ≤1080p, 2x at 1440p, 3x at 4K) |
 | `MMO_DEBUG_NO_SHADOWS=1` | skip the entity CAST-shadow pass (render-pass isolation; blob decals no longer exist) |
 | `MMO_SHADOW_RES=4096` | world shadow map resolution (256..8192, entity map runs at half); lower = chunkier shadow edges |
 | `MMO_DEBUG_SHADOW=1` | shadow debugging: the world renders the light-space compare as color (red = shadowed, green = stored depth, blue = lit, magenta = outside the map; cyan = surface absent from the map — leaf-cutout holes and water are EXPECTED cyan, they don't cast) AND the packed shadow map dumps once to tools/out/shadowmap-dump.png after the world finishes meshing. **When shadows "don't work", first check the sun azimuth vs the camera** — shadows fall AWAY from the light and hide behind their casters (see LESSONS.md) |

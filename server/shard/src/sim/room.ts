@@ -6,8 +6,10 @@
 import {
   BLOCK,
   BLOCKS,
+  ensureItemInstance,
   gameConstants,
   makeLogger,
+  mintItem,
   RegistryService,
   WORLD_HEIGHT,
   type AbilityDef,
@@ -15,7 +17,9 @@ import {
   type CombatEvent,
   type DropState,
   type EntityFull,
+  type ItemDef,
   type ItemStack,
+  type LootView,
   type NpcDef,
   type PortalDef,
   type PortalWire,
@@ -245,9 +249,19 @@ export class RoomSim {
       pos: { x, y: this.world.standY(x, z), z, yaw: 0 },
       renderable: { sprite: "loot_bag", anim: "idle" },
       loot: { items, gold, owner, unlockAt, expireAt },
+      lootView: this.lootViewOf(items),
     };
     this.entities.set(e.id, e);
     return e;
+  }
+
+  /** Representative bag contents for replication: rarest first, capped at 3. */
+  private lootViewOf(items: ItemStack[]): LootView {
+    const order = this.reg.rarityOrder();
+    return [...items]
+      .sort((a, b) => order.indexOf(b.rarity) - order.indexOf(a.rarity))
+      .slice(0, 3)
+      .map((s) => ({ item: s.item, rarity: s.rarity }));
   }
 
   private waterLevel(): number | null {
@@ -461,11 +475,13 @@ export class RoomSim {
       mana: { mana: maxMana, maxMana },
       combat: freshCombat(),
     };
-    // drop stacks whose item id no longer exists (e.g. retired registry items)
+    // drop stacks whose item id no longer exists (e.g. retired registry items);
+    // backfill stat/durability rolls onto instances minted before they existed
     const slots = normalizeInventory(character.inventory);
     for (let i = 0; i < slots.length; i++) {
       const s = slots[i];
       if (s && !this.reg.items[s.item]) slots[i] = null;
+      else if (s) slots[i] = ensureItemInstance(this.reg, this.consts, s);
     }
     const session: PlayerSession = {
       entity,
@@ -628,18 +644,34 @@ export class RoomSim {
     const held = session.slots[session.held];
     let abilityId = "punch";
     let base = 0;
+    let speedMult = 1;
+    let heldDef: ItemDef | null = null;
     if (held) {
       const def = this.reg.items[held.item];
       if (!def || def.kind !== "weapon" || !def.ability) return; // held a non-weapon: no-op
+      heldDef = def;
       abilityId = def.ability;
       const rarity = this.reg.rarities[held.rarity]?.mult ?? 1;
-      base = (def.damage ?? 0) * rarity;
+      base = (def.damage ?? 0) * rarity * (held.stats?.dmg ?? 1);
+      speedMult = held.stats?.spd ?? 1;
     }
     const ability = this.reg.abilities[abilityId];
     if (!ability) return;
     if (base === 0) base = ability.damage ?? 2;
     const levelMult = 1 + this.consts.progression.damagePerLevelPct * ((e.level ?? 1) - 1);
-    startAbility(e, abilityId, ability, base * levelMult, aimYaw, aimPitch, Date.now());
+    const started = startAbility(e, abilityId, ability, base * levelMult, aimYaw, aimPitch, Date.now(), speedMult);
+    // weapons wear one durability point per use (bare hands never do)
+    if (started && held && heldDef && held.maxDur !== undefined) this.wearHeldItem(session, held, heldDef);
+  }
+
+  /** Durability tick: at zero the weapon breaks and the slot empties. */
+  private wearHeldItem(session: PlayerSession, stack: ItemStack, def: ItemDef): void {
+    stack.dur = (stack.dur ?? stack.maxDur ?? 1) - 1;
+    if (stack.dur <= 0) {
+      session.slots[session.held] = null;
+      this.system(session, `Your ${def.name} broke!`);
+    }
+    session.dirtyInv = true;
   }
 
   /** Mob brain wants to attack: same FSM, different intent producer. */
@@ -782,7 +814,7 @@ export class RoomSim {
         const winner = topChar ? this.byCharacterId.get(topChar) : undefined;
         if (winner) this.awardXp(winner, mobDef.xp);
         // loot: owner-locked to the top damage dealer for a grace window
-        const rolled = rollLoot(this.reg, mobDef.loot);
+        const rolled = rollLoot(this.reg, this.consts, mobDef.loot);
         if (rolled.items.length > 0 || rolled.gold > 0) {
           this.spawnLootBag(
             tgt.pos.x,
@@ -925,8 +957,8 @@ export class RoomSim {
     if (from < 0 || from >= INV_SIZE || to < 0 || to >= INV_SIZE || from === to) return;
     const a = session.slots[from] ?? null;
     const b = session.slots[to] ?? null;
-    // merge same item+rarity stacks, else swap
-    if (a && b && a.item === b.item && a.rarity === b.rarity) {
+    // merge same item+rarity stacks (rolled instances never merge), else swap
+    if (a && b && a.item === b.item && a.rarity === b.rarity && a.dur === undefined && b.dur === undefined && a.stats === undefined && b.stats === undefined) {
       const max = this.reg.items[a.item]?.stack ?? 1;
       const take = Math.min(a.qty, max - b.qty);
       if (take > 0) {
@@ -1000,6 +1032,7 @@ export class RoomSim {
       if (leftover > 0) kept.push({ ...stack, qty: leftover });
     }
     bag.loot.items = kept;
+    bag.lootView = this.lootViewOf(kept);
     session.dirtyInv = true;
     if (kept.length > 0) this.system(session, "Your bags are full — some items remain.");
     if (bag.loot.items.length === 0 && bag.loot.gold === 0) this.removeEntity(bag.id);
@@ -1045,7 +1078,7 @@ export class RoomSim {
       this.system(session, "Not enough gold.");
       return;
     }
-    const leftover = addItem(this.reg, session.slots, { item: itemId, qty, rarity: "common" });
+    const leftover = addItem(this.reg, session.slots, mintItem(this.reg, this.consts, itemId, qty, "common"));
     if (leftover === qty) {
       this.system(session, "Your bags are full.");
       return;
@@ -1113,7 +1146,7 @@ export class RoomSim {
         }
         const qty = Math.max(1, parseInt(args[1] ?? "1", 10) || 1);
         const rarity = args[2] && this.reg.rarities[args[2]] ? args[2]! : "common";
-        addItem(this.reg, session.slots, { item: itemId, qty, rarity });
+        addItem(this.reg, session.slots, mintItem(this.reg, this.consts, itemId, qty, rarity));
         session.dirtyInv = true;
         this.system(session, `Gave ${qty}x ${rarity} ${itemId}.`);
         break;

@@ -42,6 +42,11 @@ public class RemotePlayer {
     private long actEndsAt = 0;
     private long actStartedAt = 0;
 
+    /** loot bags: replicated contents (rarest first, <=3). Non-empty makes
+     *  WorldScreen render spinning 3D item meshes instead of the sack. */
+    public String[] lootItems = null;
+    public String[] lootRarities = null;
+
     public final Decal decal;
     public final float height;
     private final float baseW;
@@ -72,6 +77,8 @@ public class RemotePlayer {
         this.hp = e.hp;
         this.maxHp = e.maxHp;
         this.level = e.level;
+        this.lootItems = e.lootItems;
+        this.lootRarities = e.lootRarities;
         setAct(e.act, e.actMs);
         latest.x = e.x;
         latest.y = e.y;
@@ -115,6 +122,16 @@ public class RemotePlayer {
         if (d.has("anim")) anim = d.get("anim").getAsString();
         if (d.has("hp")) hp = d.get("hp").getAsInt();
         if (d.has("act")) setAct(d.get("act").getAsString(), d.has("actMs") ? d.get("actMs").getAsFloat() : 0);
+        if (d.has("loot") && !d.get("loot").isJsonNull()) {
+            com.google.gson.JsonArray arr = d.getAsJsonArray("loot");
+            lootItems = new String[arr.size()];
+            lootRarities = new String[arr.size()];
+            for (int i = 0; i < arr.size(); i++) {
+                com.google.gson.JsonObject l = arr.get(i).getAsJsonObject();
+                lootItems[i] = l.get("item").getAsString();
+                lootRarities[i] = l.get("rarity").getAsString();
+            }
+        }
         pushSample(latest.x, latest.y, latest.z, latest.yaw);
     }
 

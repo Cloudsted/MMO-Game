@@ -2,24 +2,33 @@ package mmo.client.world;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector3;
 import mmo.client.util.ItemRegistry;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * First-person held-item sprite drawn in an overlay pass (never clips walls):
- * walk bob, windup/swing arc, cast raise + pulse, and a switch dip on equip
- * change. Tinted by the CPU mirror of the lighting curve so it sits in the
- * scene rather than floating over it.
+ * First-person held item as a REAL 3D mesh (ItemMeshes: the icon's pixels
+ * extruded Minecraft-style; block items as mini cubes), drawn with its own
+ * projection over a cleared depth buffer at the end of the scene pass — so
+ * it never clips world geometry but still receives bloom/post like the rest
+ * of the scene, and an emissive block in hand (torch) genuinely glows.
+ *
+ * Grip poses per use-kind, animations mirror the server ability timings:
+ *   melee      windup cock-back -> active arc sweep -> settle
+ *   projectile draw toward the eye -> loose forward
+ *   cast/self  raise + charge glow pulse -> release push
+ *   consume    quick tip toward the face (playUse)
+ *   block      held low as a cube; place = playUse dip
+ * Switch dip on equip change; walk bob; all tinted by the voxel-light CPU
+ * mirror at the player's position.
  */
 public class Viewmodel {
-    private final Map<String, Texture> textures = new HashMap<>();
-    private String currentKey = null; // viewmodel key ("sword"/"bow"/"staff") or null
+    private final ItemRegistry reg;
+    private final ItemMeshes meshes;
+
+    private String currentKey = null; // held item id, or null (bare hands)
     private String pendingKey = null;
     private float switchT = 1f; // 0..1 dip progress when swapping
 
@@ -30,39 +39,40 @@ public class Viewmodel {
 
     private float bobTime = 0;
 
-    public void setHeld(String viewmodelKey) {
-        String key = viewmodelKey;
-        if ((key == null && currentKey == null) || (key != null && key.equals(currentKey))) return;
-        pendingKey = key;
+    private final Matrix4 proj = new Matrix4();
+    private final Matrix4 world = new Matrix4();
+    private final Vector3 origin = new Vector3();
+
+    public Viewmodel(ItemRegistry reg, ItemMeshes meshes) {
+        this.reg = reg;
+        this.meshes = meshes;
+    }
+
+    public void setHeld(String itemId) {
+        if ((itemId == null && currentKey == null) || (itemId != null && itemId.equals(currentKey))) return;
+        pendingKey = itemId;
         switchT = 0f; // dip out, swap at the bottom, rise back
     }
 
-    /** Mirror the ability the server is running so the arm matches. */
-    public void playAbility(ItemRegistry.Ability ability) {
+    /** Mirror the ability the server runs; speedMult = held item's spd roll. */
+    public void playAbility(ItemRegistry.Ability ability, float speedMult) {
         if (ability == null) return;
+        float spd = Math.max(0.5f, speedMult);
         animKind = ability.kind;
         animT = 0;
-        windupS = ability.windupMs / 1000f;
-        activeS = ability.activeMs / 1000f;
-        castS = ability.castTimeMs / 1000f;
+        windupS = ability.windupMs / 1000f / spd;
+        activeS = ability.activeMs / 1000f / spd;
+        castS = ability.castTimeMs / 1000f / spd;
     }
 
     public void cancelAbility() {
         animKind = null;
     }
 
-    /** Quick dip-and-return: consuming/using the held item (no swap). */
+    /** Quick dip-and-return: consuming/using/placing the held item (no swap). */
     public void playUse() {
         pendingKey = currentKey;
         switchT = 0f;
-    }
-
-    private Texture texture(String key) {
-        return textures.computeIfAbsent(key, k -> {
-            Texture t = new Texture(Gdx.files.internal("assets/ui/held_" + k + ".png"));
-            t.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-            return t;
-        });
     }
 
     public void update(float dt, boolean moving) {
@@ -78,64 +88,113 @@ public class Viewmodel {
         }
     }
 
-    public void render(SpriteBatch batch, Color light, int screenW, int screenH) {
+    /**
+     * Draw the held mesh in view space (camera at origin looking down -Z).
+     * Call inside the scene pass with the depth buffer freshly cleared.
+     */
+    public void render3d(float aspect, Color light) {
         if (currentKey == null) return;
-        Texture tex = texture(currentKey);
+        ItemRegistry.Item def = reg.item(currentKey);
+        ItemMeshes.ItemMesh im = def != null ? meshes.get(currentKey) : null;
+        if (im == null) return;
 
-        float scale = screenH * 0.22f / tex.getHeight();
-        float w = tex.getWidth() * scale;
-        float h = tex.getHeight() * scale;
+        boolean isBlock = def.block != null;
+        boolean isStaff = def.ability != null && ("firebolt".equals(def.ability) || "frost".equals(def.ability) || "heal".equals(def.ability));
+        boolean isBow = "bow_shot".equals(def.ability);
 
-        // resting pose: bottom-right, angled inward
-        float baseX = screenW * 0.72f;
-        float baseY = screenH * 0.06f;
-        float rot = 35f; // blade tilted up-left
-
-        // walk bob (figure-8-ish)
-        baseX += MathUtils.sin(bobTime * 7f) * screenW * 0.006f;
-        baseY += Math.abs(MathUtils.sin(bobTime * 7f)) * screenH * 0.008f;
-
-        // switch dip
-        float dip = MathUtils.sin(Math.min(switchT, 1f) * MathUtils.PI); // 0→1→0
-        baseY -= dip * screenH * 0.28f;
-
-        // ability animation
-        if (animKind != null) {
-            if (castS > 0) {
-                // cast: raise and pulse until release
-                float p = MathUtils.clamp(animT / Math.max(0.01f, castS), 0f, 1f);
-                baseY += p * screenH * 0.05f;
-                rot -= p * 20f;
-                float pulse = 0.5f + 0.5f * MathUtils.sin(animT * 18f);
-                batch.setColor(
-                    Math.min(1f, light.r + 0.3f * pulse),
-                    Math.min(1f, light.g + 0.3f * pulse),
-                    Math.min(1f, light.b + 0.5f * pulse), 1f);
-            } else {
-                // melee/bow: pull back through windup, sweep across during active
-                float t = animT;
-                if (t < windupS) {
-                    float p = t / Math.max(0.01f, windupS);
-                    rot += p * 40f;
-                    baseX += p * screenW * 0.05f;
-                } else {
-                    float p = MathUtils.clamp((t - windupS) / Math.max(0.05f, activeS + 0.15f), 0f, 1f);
-                    rot += 40f - p * 110f;
-                    baseX += screenW * (0.05f - p * 0.22f);
-                    baseY += MathUtils.sin(p * MathUtils.PI) * screenH * 0.05f;
-                }
-                batch.setColor(light.r, light.g, light.b, 1f);
-            }
-        } else {
-            batch.setColor(light.r, light.g, light.b, 1f);
+        // grip pose (view space), Minecraft-style: handle tucked into the
+        // lower-right edge, blade/tool tip angled up-LEFT toward the
+        // crosshair (icon diagonal + ~68° in-plane), plane turned just
+        // enough that the pixel extrusion reads as thickness
+        float tx = 0.44f, ty = -0.35f, tz = -0.86f;
+        float rotY = -75f, rotZ = 68f, rotX = -10f;
+        float scale = 0.44f;
+        if (isBlock) {
+            // mini iso cube: top face + two sides visible, held low-right
+            tx = 0.46f; ty = -0.42f; tz = -0.90f;
+            rotY = 45f; rotZ = 0f; rotX = 20f;
+            scale = 0.30f;
+        } else if (isStaff) {
+            tx = 0.44f; ty = -0.30f; tz = -0.88f;
+            rotY = -73f; rotZ = 58f; rotX = -8f;
+            scale = 0.50f;
+        } else if (isBow) {
+            tx = 0.42f; ty = -0.32f; tz = -0.82f;
+            rotY = -70f; rotZ = 62f; rotX = -8f;
+            scale = 0.46f;
+        } else if ("consumable".equals(def.kind)) {
+            // food sits fairly upright in the palm
+            tx = 0.42f; ty = -0.44f; tz = -0.78f;
+            rotY = -28f; rotZ = 14f; rotX = -6f;
+            scale = 0.30f;
         }
 
-        batch.draw(tex, baseX, baseY, w * 0.2f, h * 0.15f, w, h, 1f, 1f, rot,
-            0, 0, tex.getWidth(), tex.getHeight(), false, false);
-        batch.setColor(Color.WHITE);
+        // walk bob (figure-8-ish)
+        tx += MathUtils.sin(bobTime * 7f) * 0.012f;
+        ty += Math.abs(MathUtils.sin(bobTime * 7f)) * 0.016f;
+
+        // switch dip
+        float dip = MathUtils.sin(Math.min(switchT, 1f) * MathUtils.PI); // 0->1->0
+        ty -= dip * 0.5f;
+
+        float glowBoost = 0f;
+        if (animKind != null) {
+            if (castS > 0 || "self".equals(animKind)) {
+                // cast: raise + tip forward, glow charges until release
+                float p = MathUtils.clamp(animT / Math.max(0.01f, castS), 0f, 1f);
+                ty += p * 0.10f;
+                rotX -= p * 28f;
+                glowBoost = (0.25f + 0.30f * MathUtils.sin(animT * 18f)) * p;
+                if (animT > castS) { // release: push forward, glow dies
+                    float r = MathUtils.clamp((animT - castS) / 0.2f, 0f, 1f);
+                    tz -= MathUtils.sin(r * MathUtils.PI) * 0.16f;
+                    glowBoost *= 1f - r;
+                }
+            } else if ("projectile".equals(animKind)) {
+                // bow: draw toward the eye through windup, loose forward
+                if (animT < windupS) {
+                    float p = animT / Math.max(0.01f, windupS);
+                    tz += p * 0.11f;
+                    tx += p * 0.05f;
+                    rotY -= p * 10f;
+                } else {
+                    float p = MathUtils.clamp((animT - windupS) / Math.max(0.05f, activeS + 0.15f), 0f, 1f);
+                    tz += 0.11f - MathUtils.sin(p * MathUtils.PI) * 0.24f;
+                    rotY -= 10f - p * 10f;
+                }
+            } else {
+                // melee: cock back through windup, arc sweep across during active
+                if (animT < windupS) {
+                    float p = animT / Math.max(0.01f, windupS);
+                    rotZ += p * 46f;
+                    tx += p * 0.07f;
+                    ty += p * 0.03f;
+                } else {
+                    float p = MathUtils.clamp((animT - windupS) / Math.max(0.05f, activeS + 0.15f), 0f, 1f);
+                    rotZ += 46f - p * 128f;
+                    tx += 0.07f - p * 0.26f;
+                    ty += 0.03f + MathUtils.sin(p * MathUtils.PI) * 0.06f;
+                    tz -= MathUtils.sin(p * MathUtils.PI) * 0.10f;
+                }
+            }
+        }
+
+        proj.setToProjection(0.05f, 24f, 58f, aspect);
+        world.idt()
+            .translate(tx, ty, tz)
+            .rotate(Vector3.Y, rotY)
+            .rotate(Vector3.X, rotX)
+            .rotate(Vector3.Z, rotZ)
+            .scale(scale, scale, scale);
+
+        // own depth range: clear so the item never clips world geometry
+        Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
+        meshes.begin(proj, origin, Color.BLACK, 1e6f, 2e6f); // fog off
+        meshes.draw(im, world, light, glowBoost);
+        meshes.end();
     }
 
     public void dispose() {
-        for (Texture t : textures.values()) t.dispose();
+        // meshes are owned by ItemMeshes (shared with loot rendering)
     }
 }

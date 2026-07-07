@@ -18,6 +18,7 @@ import com.badlogic.gdx.graphics.g3d.decals.Decal;
 import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.IntMap;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -32,6 +33,7 @@ import mmo.client.util.ItemRegistry;
 import mmo.client.world.BlockRegistry;
 import mmo.client.world.DayNight;
 import mmo.client.world.FxSystem;
+import mmo.client.world.ItemMeshes;
 import mmo.client.world.PlayerSheet;
 import mmo.client.world.RemotePlayer;
 import mmo.client.world.ShadowMap;
@@ -78,7 +80,13 @@ public class WorldScreen extends ScreenAdapter {
     private final SkyRenderer sky;
     private final ParticleField particles;
     private final PostFx postFx;
+    private final ItemMeshes itemMeshes;
     private final Viewmodel viewmodel;
+    // 3D dropped-item rendering: bags whose contents replicate render as
+    // spinning extruded-sprite meshes instead of the sack billboard
+    private final List<RemotePlayer> lootMeshBags = new ArrayList<>();
+    private final Matrix4 lootMat = new Matrix4();
+    private float itemSpinT = 0;
     private final GameUi ui;
     private final Texture radialTexture;
     private final TextureRegion radialRegion;
@@ -87,6 +95,11 @@ public class WorldScreen extends ScreenAdapter {
     private final GlyphLayout layout = new GlyphLayout();
     private final ShapeRenderer shapes;
     private final DayNight dayNight;
+
+    // HUD virtual canvas: fixed 1280x720-ish design space, integer-upscaled
+    // to the window (UiKit.uiScale) — no fractional stretching at any size
+    private int uiScale = 1;
+    private int vw = 1280, vh = 720;
 
     private final IntMap<RemotePlayer> remotes = new IntMap<>();
 
@@ -187,7 +200,8 @@ public class WorldScreen extends ScreenAdapter {
         sky = new SkyRenderer();
         particles = new ParticleField();
         postFx = new PostFx();
-        viewmodel = new Viewmodel();
+        itemMeshes = new ItemMeshes(game.items, game.blocks);
+        viewmodel = new Viewmodel(game.items, itemMeshes);
         decalBatch = new DecalBatch(new CameraGroupStrategy(cam));
         ui = new GameUi(socket::sendSafe, game.items);
         ui.admin = game.master.roles.contains("admin");
@@ -216,6 +230,7 @@ public class WorldScreen extends ScreenAdapter {
         hudBatch = new SpriteBatch();
         font = game.ui.font;
         shapes = new ShapeRenderer();
+        applyHudViewport(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         float sens = 0.0035f;
         String sensEnv = System.getenv("MMO_MOUSE_SENS");
@@ -234,10 +249,15 @@ public class WorldScreen extends ScreenAdapter {
             @Override public boolean touchDragged(int x, int y, int pointer) { accumulateMouse(x, y); return false; }
             @Override public boolean keyTyped(char c) { return ui.keyTyped(c); }
             @Override public boolean scrolled(float amountX, float amountY) {
-                // wheel cycles the hotbar (selection only — LMB uses the item)
+                // wheel cycles the hotbar (selection only — LMB uses the item).
+                // Selection is PREDICTED locally (selectHotbar) so every wheel
+                // click moves instantly; waiting for the server's inv echo both
+                // lagged a round trip AND ate fast clicks (each event computed
+                // from the still-unmoved held index).
                 if (!welcomed || ui.dead || ui.anyWindowOpen() || !Gdx.input.isCursorCatched()) return false;
-                int dir = amountY > 0 ? 1 : -1;
-                socket.sendSafe(Protocol.equip(((ui.held + dir) % 8 + 8) % 8));
+                int steps = Math.round(amountY); // fast scrolls batch >1 notch
+                if (steps == 0) steps = amountY > 0 ? 1 : -1;
+                selectHotbar(((ui.held + steps) % 8 + 8) % 8);
                 return true;
             }
             @Override public boolean touchDown(int x, int y, int pointer, int button) {
@@ -391,6 +411,13 @@ public class WorldScreen extends ScreenAdapter {
                         s.item = o.get("item").getAsString();
                         s.qty = o.get("qty").getAsInt();
                         s.rarity = o.get("rarity").getAsString();
+                        if (o.has("stats") && !o.get("stats").isJsonNull()) {
+                            JsonObject st = o.getAsJsonObject("stats");
+                            if (st.has("dmg")) s.statDmg = st.get("dmg").getAsFloat();
+                            if (st.has("spd")) s.statSpd = st.get("spd").getAsFloat();
+                        }
+                        if (o.has("dur") && !o.get("dur").isJsonNull()) s.dur = o.get("dur").getAsInt();
+                        if (o.has("maxDur") && !o.get("maxDur").isJsonNull()) s.maxDur = o.get("maxDur").getAsInt();
                         list.add(s);
                     }
                     int itemsBefore = 0, itemsAfter = 0;
@@ -792,6 +819,8 @@ public class WorldScreen extends ScreenAdapter {
         Long cd = localCooldowns.get(abilityId);
         if (cd != null && cd > now) return;
 
+        // the held instance's speed roll scales every timing (server mirrors)
+        float spd = held != null && held.statSpd > 0 ? held.statSpd : 1f;
         socket.sendSafe(Protocol.attack(yaw, pitch));
         game.audio.play(switch (ability.fx) {
             case "arrow" -> "bow";
@@ -800,14 +829,42 @@ public class WorldScreen extends ScreenAdapter {
             case "heal" -> "heal";
             default -> "swing";
         });
-        viewmodel.playAbility(ability);
-        float busy = ability.busyMs();
+        viewmodel.playAbility(ability, spd);
+        float busy = ability.busyMs() / spd;
         bodyBusyUntil = now + (long) busy;
-        if (ability.cooldownMs > 0) localCooldowns.put(abilityId, now + (long) ability.cooldownMs);
-        ui.markBusy(ui.held, Math.max(busy, ability.cooldownMs));
+        if (ability.cooldownMs > 0) localCooldowns.put(abilityId, now + (long) (ability.cooldownMs / spd));
+        ui.markBusy(ui.held, Math.max(busy, ability.cooldownMs / spd));
         if (!ability.canMoveWhile) {
-            movementLockedUntil = now + (long) (ability.castTimeMs > 0 ? ability.castTimeMs : ability.windupMs + ability.activeMs);
+            movementLockedUntil = now + (long) ((ability.castTimeMs > 0 ? ability.castTimeMs : ability.windupMs + ability.activeMs) / spd);
         }
+    }
+
+    /** Select a hotbar slot NOW (highlight + viewmodel), then tell the
+     *  server. The inv echo confirms; GameUi ignores stale echoes so a
+     *  burst of wheel clicks can't roll the selection back. */
+    private void selectHotbar(int slot) {
+        ui.selectHeld(slot);
+        GameUi.Stack s = ui.slots[slot];
+        viewmodel.setHeld(s != null ? s.item : null);
+        socket.sendSafe(Protocol.equip(slot));
+    }
+
+    /** Spin/hover transform for the i-th displayed item of a loot bag —
+     *  shared by the shadow cast pass and the draw pass so shadows match. */
+    private Matrix4 lootTransform(RemotePlayer rp, int i, int count, String itemId) {
+        ItemRegistry.Item def = game.items.item(itemId);
+        boolean isBlock = def != null && def.block != null;
+        float spinDeg = (itemSpinT * 80f + rp.id * 37f) % 360f;
+        float hover = 0.10f * MathUtils.sin(itemSpinT * 1.8f + rp.id * 0.9f);
+        float x = rp.pos.x, z = rp.pos.z;
+        if (count > 1) { // small orbiting ring when the bag shows several items
+            float ang = itemSpinT * 0.7f + i * MathUtils.PI2 / count;
+            x += MathUtils.cos(ang) * 0.3f;
+            z += MathUtils.sin(ang) * 0.3f;
+        }
+        float y = rp.pos.y + 0.55f + hover;
+        float s = isBlock ? 0.34f : 0.5f;
+        return lootMat.idt().translate(x, y, z).rotate(Vector3.Y, spinDeg + i * 40f).scale(s, s, s);
     }
 
     /**
@@ -900,7 +957,7 @@ public class WorldScreen extends ScreenAdapter {
 
             // hotbar keys SELECT only (consumables included) — LMB uses the item
             for (int i = 0; i < 8; i++) {
-                if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1 + i)) socket.sendSafe(Protocol.equip(i));
+                if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1 + i)) selectHotbar(i);
             }
 
             if (!uiOpen && Gdx.input.isKeyJustPressed(Input.Keys.E)) interact();
@@ -1081,6 +1138,17 @@ public class WorldScreen extends ScreenAdapter {
             shadowMap.beginEntities();
             if (!noEntityShadows) {
                 for (RemotePlayer rp : remotes.values()) {
+                    // 3D loot items cast their actual spinning mesh silhouette
+                    if ("loot".equals(rp.kind) && rp.lootItems != null && rp.lootItems.length > 0) {
+                        for (int i = 0; i < rp.lootItems.length; i++) {
+                            ItemMeshes.ItemMesh im = itemMeshes.get(rp.lootItems[i]);
+                            if (im != null) {
+                                shadowMap.entityMesh(im.texture, im.mesh,
+                                    lootTransform(rp, i, rp.lootItems.length, rp.lootItems[i]));
+                            }
+                        }
+                        continue;
+                    }
                     shadowMap.entityQuad(rp.decal.getTextureRegion(),
                         rp.pos.x, rp.pos.y, rp.pos.z, rp.decal.getWidth(), rp.height);
                 }
@@ -1164,6 +1232,7 @@ public class WorldScreen extends ScreenAdapter {
             decalBatch.add(glow);
         }
 
+        lootMeshBags.clear();
         for (RemotePlayer rp : remotes.values()) {
             // per-entity voxel light (torch pools, cave dark) via the CPU
             // mirror. NO directional sun-shadow dimming: sprites used to hard-
@@ -1174,12 +1243,35 @@ public class WorldScreen extends ScreenAdapter {
                 ? voxels.lightColorAt(rp.pos.x, rp.pos.y + 0.8f, rp.pos.z, dayNight.sunFactor)
                 : dayNight.entityLight;
             rp.update(dt, cam, world, tint);
+            // bags with replicated contents render as spinning 3D items below
+            if ("loot".equals(rp.kind) && rp.lootItems != null && rp.lootItems.length > 0) {
+                lootMeshBags.add(rp);
+                continue;
+            }
             decalBatch.add(rp.decal);
         }
         fx.update(dt, cam, decalBatch);
         // ambient particles: dust motes / fireflies / torch embers / leaves
         particles.update(dt, cam, voxels, dayNight.sunFactor, roomName, decalBatch);
         decalBatch.flush();
+
+        // dropped items as true 3D meshes: the item's sprite pixels extruded
+        // (blocks as mini cubes), spinning + hovering, voxel-lit like every
+        // billboard, casting real shadows via the entity depth map above
+        if (!lootMeshBags.isEmpty() && voxels != null) {
+            itemMeshes.begin(cam.combined, cam.position, dayNight.skyColor, FOG_START, FOG_END);
+            for (RemotePlayer rp : lootMeshBags) {
+                Color tint = ready
+                    ? voxels.lightColorAt(rp.pos.x, rp.pos.y + 0.8f, rp.pos.z, dayNight.sunFactor)
+                    : dayNight.entityLight;
+                int n = rp.lootItems.length;
+                for (int i = 0; i < n; i++) {
+                    ItemMeshes.ItemMesh im = itemMeshes.get(rp.lootItems[i]);
+                    if (im != null) itemMeshes.draw(im, lootTransform(rp, i, n, rp.lootItems[i]), tint, 0f);
+                }
+            }
+            itemMeshes.end();
+        }
 
         // block-building ghost: wireframe cube on the aim target
         if (ready && buildingEnabled && !ui.anyWindowOpen() && aimHit
@@ -1195,6 +1287,17 @@ public class WorldScreen extends ScreenAdapter {
             shapes3d.setColor(valid ? 0.3f : 0.9f, valid ? 0.95f : 0.3f, 0.35f, 1f);
             wireCube(shapes3d, gx, gy, gz);
             shapes3d.end();
+        }
+
+        // first-person held item: a real 3D mesh drawn over a cleared depth
+        // buffer at the END of the scene pass — never clips the world, but
+        // still gets bloom/post (a held torch genuinely glows), voxel-lit at
+        // the player like everything else
+        if (ready && !ui.dead && !leaving) {
+            Color vmTint = voxels != null
+                ? voxels.lightColorAt(pos.x, pos.y + 1.2f, pos.z, dayNight.sunFactor)
+                : dayNight.entityLight;
+            viewmodel.render3d(cam.viewportWidth / cam.viewportHeight, vmTint);
         }
 
         // resolve the scene FBO to the backbuffer through the post stack, THEN
@@ -1247,7 +1350,7 @@ public class WorldScreen extends ScreenAdapter {
     }
 
     private void drawHud(boolean ready) {
-        int w = Gdx.graphics.getWidth(), h = Gdx.graphics.getHeight();
+        int w = vw, h = vh; // virtual canvas — batches are projected to it
 
         // the 3D passes leave GL_DEPTH_TEST on; 2D must not depth-fight itself
         // (ShapeRenderer writes depth at z=0 and would occlude everything drawn
@@ -1271,7 +1374,9 @@ public class WorldScreen extends ScreenAdapter {
             tmp.set(rp.pos.x, rp.pos.y + rp.height + 0.22f, rp.pos.z);
             if (cam.position.dst2(tmp) > 40 * 40) continue;
             if (!cam.frustum.pointInFrustum(tmp)) continue;
-            cam.project(tmp);
+            cam.project(tmp); // window pixels → virtual canvas
+            tmp.x /= uiScale;
+            tmp.y /= uiScale;
             float bw = 44, bh = 5;
             float frac = MathUtils.clamp(rp.hp / (float) rp.maxHp, 0f, 1f);
             shapes.setColor(0f, 0f, 0f, 0.6f);
@@ -1289,6 +1394,8 @@ public class WorldScreen extends ScreenAdapter {
             if (cam.position.dst2(tmp) > 40 * 40) continue;
             if (!cam.frustum.pointInFrustum(tmp)) continue;
             cam.project(tmp);
+            tmp.x /= uiScale;
+            tmp.y /= uiScale;
             String tag = rp.name != null ? rp.name : "";
             if ("mob".equals(rp.kind) && rp.level > 0) tag += "  (" + rp.level + ")";
             layout.setText(font, tag);
@@ -1304,6 +1411,8 @@ public class WorldScreen extends ScreenAdapter {
                 if (cam.position.dst2(tmp) > 70 * 70) continue;
                 if (!cam.frustum.pointInFrustum(tmp)) continue;
                 cam.project(tmp);
+                tmp.x /= uiScale;
+                tmp.y /= uiScale;
                 boolean open = portalOpen.getOrDefault(p.target(), true);
                 layout.setText(font, open ? p.label() : p.label() + "  (sealed)");
                 if (open) font.setColor(0.55f, 0.9f, 1f, 1f);
@@ -1314,7 +1423,7 @@ public class WorldScreen extends ScreenAdapter {
 
         // pvp zone warning
         if (ready && inPvpZone(pos.x, pos.z)) {
-            font.getData().setScale(1.3f);
+            font.getData().setScale(2f); // pixel font: integer scales only
             layout.setText(font, "!! PvP ZONE - deaths drop everything, free for all !!");
             font.setColor(1f, 0.3f, 0.25f, 0.75f + 0.25f * MathUtils.sin(glowTime * 5f));
             font.draw(hudBatch, layout, w / 2f - layout.width / 2f, h - 34);
@@ -1343,8 +1452,14 @@ public class WorldScreen extends ScreenAdapter {
             if (near != null) prompt = "[E]  Enter " + near.label();
             else {
                 RemotePlayer bag = nearestOfKind("loot", game.constants.pickupRange);
-                if (bag != null) prompt = "[E]  Pick up loot";
-                else {
+                if (bag != null) {
+                    String what = "loot";
+                    if (bag.lootItems != null && bag.lootItems.length > 0) {
+                        ItemRegistry.Item d = game.items.item(bag.lootItems[0]);
+                        if (d != null) what = d.name + (bag.lootItems.length > 1 ? " + more" : "");
+                    }
+                    prompt = "[E]  Pick up " + what;
+                } else {
                     RemotePlayer npc = nearestOfKind("npc", game.constants.talkRange);
                     if (npc != null) prompt = "[E]  Talk to " + npc.name;
                 }
@@ -1376,15 +1491,6 @@ public class WorldScreen extends ScreenAdapter {
             : (leaving ? "traveling..." : "entering world...");
         font.draw(hudBatch, status, 10, h - 10);
 
-        // first-person viewmodel (overlay pass — never clips world geometry),
-        // lit by the voxel light at the player like everything else — and
-        // dimmed when the player stands in a cast shadow
-        if (ready && !ui.dead) {
-            Color vmTint = voxels != null
-                ? voxels.lightColorAt(pos.x, pos.y + 1.2f, pos.z, dayNight.sunFactor)
-                : dayNight.entityLight;
-            viewmodel.render(hudBatch, vmTint, w, h);
-        }
         hudBatch.end();
 
         // crosshair
@@ -1420,11 +1526,21 @@ public class WorldScreen extends ScreenAdapter {
 
     @Override
     public void resize(int width, int height) {
+        if (width <= 0 || height <= 0) return; // minimized
         cam.viewportWidth = width;
         cam.viewportHeight = height;
-        hudBatch.getProjectionMatrix().setToOrtho2D(0, 0, width, height);
-        shapes.getProjectionMatrix().setToOrtho2D(0, 0, width, height);
+        applyHudViewport(width, height);
         postFx.resize(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
+    }
+
+    /** Point the 2D batches at the virtual HUD canvas for this window size. */
+    private void applyHudViewport(int width, int height) {
+        uiScale = mmo.client.ui.UiKit.uiScale(width, height);
+        vw = (width + uiScale - 1) / uiScale;
+        vh = (height + uiScale - 1) / uiScale;
+        hudBatch.getProjectionMatrix().setToOrtho2D(0, 0, vw, vh);
+        shapes.getProjectionMatrix().setToOrtho2D(0, 0, vw, vh);
+        ui.setViewport(vw, vh, uiScale);
     }
 
     @Override
@@ -1440,6 +1556,7 @@ public class WorldScreen extends ScreenAdapter {
         particles.dispose();
         postFx.dispose();
         viewmodel.dispose();
+        itemMeshes.dispose();
         ui.dispose();
         radialTexture.dispose();
         hudBatch.dispose();

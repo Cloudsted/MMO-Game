@@ -130,6 +130,8 @@ const main = async () => {
 
   // travel to the forest if we aren't already there
   if (state.roomId !== "forest") {
+    // the portals frame trails the chunk burst — don't lose the race to it
+    for (let i = 0; i < 30 && state.portals.length === 0; i++) await sleep(100);
     const portal = state.portals.find((p) => p.target === "forest");
     if (!portal) fail(`no forest portal in ${state.roomId}`);
     if (!(await goTo(ws, state, portal.x, portal.z, 1.5))) fail("never reached the portal");

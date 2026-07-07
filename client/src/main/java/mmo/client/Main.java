@@ -15,7 +15,20 @@ public class Main {
 
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
         config.setTitle("fantasy-mmo");
-        config.setWindowedMode(1280, 720);
+        // MMO_WIN=WxH for testing other window sizes unattended
+        int ww = 1280, wh = 720;
+        String win = System.getenv("MMO_WIN");
+        if (win != null && win.contains("x")) {
+            try {
+                String[] parts = win.toLowerCase().split("x");
+                ww = Integer.parseInt(parts[0].trim());
+                wh = Integer.parseInt(parts[1].trim());
+            } catch (NumberFormatException ignored) {}
+        }
+        config.setWindowedMode(ww, wh);
+        // the HUD's virtual canvas is 1280x720 — don't let the window shrink
+        // below the design size or fixed panels would overlap
+        config.setWindowSizeLimits(960, 540, -1, -1);
         config.useVsync(true);
         // vsync paces the frame. A cap below the monitor's refresh rate would
         // add a second, sleep-based throttle that fights vsync and jitters
