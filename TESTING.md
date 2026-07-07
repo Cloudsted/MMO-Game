@@ -58,6 +58,8 @@ exits nonzero on failure:
 | `cheat-bot.mjs` | server authority: a 50 m teleport gets `correct`ed back | regression after touching movement validation |
 | `greeter-bot.mjs --target <Name>` | — | summons a bot that walks up to a player and stands there; for eyeballing billboards/name tags without a second human |
 | `travel-bot.mjs` | full portal transfer round trip hub→forest→hub | after touching portals/tickets/control channel |
+| `return-probe.mjs` | portal EXIT NODES (arrivals land at the twin gate both directions, not room spawn) + `returnToHub` (H key wire path: chat-only in hub, transfer + default-spawn arrival from elsewhere) | after touching portal pairing / transfer arrival / respawn-to-hub |
+| `roomgraph-probe.mjs` | admin `/room` hops through atelier→gloomfen→cinderrift→crypt_depths verifying each new room opens + chunks decode (expected block ids present) + `/prefab` stamps >50 edits in the atelier + returnToHub home | after touching room defs / new rooms / prefab stamping (needs `make-admin.mjs dropbot`) |
 | `kill-test.mjs` | kill -9 a RoomHost with a player inside → player re-enters and lands in the hub, master reopens the room from snapshot (clock resumes, **loot drops restored**) | after touching recovery/persistence |
 | `combat-bot.mjs` | the whole gameplay loop: travel to the forest, find a mob, kill it with the starter sword, receive the XP event, loot the bag, chat round trip | after touching combat/FSM/loot/XP |
 | `separation-check.mjs` | mob-vs-mob separation: stands in the forest slime meadow so the pack converges, samples pairwise mob distances for 25 s, fails on sustained overlap (< MOB_SEPARATION) | after touching mob movement/AI |
@@ -83,6 +85,15 @@ attack packet.
 Interpreting bot output: `done: saw N others, M snaps, K corrections` — a
 handful of corrections per bot is normal (wander bots blindly bump into tree
 columns); a flood of corrections means validation and prediction disagree.
+
+**Prefab/world iteration**: the **Atelier** room (`atelier`, flat 128² slab,
+no portals) is the visual test bench — admins reach it with `/room atelier`
+and stamp any prefab with `/prefab <id> [rot] [ruin]` (goes through the edit
+overlay, so `/clearblocks` wipes the canvas between variants). `/room <id>`
+also fast-travels to any open room for scene staging without DB edits —
+but note chat commands can't be typed into an unattended client (input
+injection is blocked); staging an unattended CLIENT still means DB edits,
+while BOTS can send /room `/prefab` freely over the wire.
 
 **Voxel world debug renderer**: `npx tsx tools/render-voxel.mts` writes
 top-down height-shaded maps of every room to `tools/out/voxel-<room>.png` +
@@ -129,6 +140,7 @@ Run it as a **background task**. First-ever build downloads Gradle + JDK 21
 | `MMO_LOOK_AT=x,z` | deterministic camera aim at spawn — **the only way to point the camera**; synthetic mouse/keyboard injection does NOT reach the GLFW window from a background process (Windows blocks focus-stealing; don't waste time retrying it) |
 | `MMO_MOUSE_SENS=0.0035` | mouse-look sensitivity, radians per mouse count (default 0.0035). Feel-tuning only — because mouse motion can't be injected from a background process (row above), sensitivity/smoothness **cannot be auto-verified**; a human at the mouse is the only check |
 | `MMO_MUTE=1` | **set on every unattended launch** — the client has full audio now, and a forgotten mute plays combat sounds and music on the user's speakers while they work |
+| `MMO_AUDIO_LOG=1` | logs every play decision (`[audio] play <group> var= vol= pan= occl=`) EVEN under MMO_MUTE — audio cannot be screenshot-verified; grep these lines instead (footsteps/vocals/occlusion). Mix balance still needs a human ear |
 | `MMO_SHOT=<pathPrefix>` | **the reliable capture path**: writes `<prefix>-1.png` … `<prefix>-8.png` from inside the render loop (glReadPixels), one every ~6 s after entering the world. Immune to the white-frame problem below |
 | `MMO_UI=inventory\|god\|talk\|shop` | opens that UI window on entry (talk/shop auto-talk to the nearest NPC — stage the character within ~4 m of one) |
 | `MMO_HOVER_SLOT=<n>` | pins the item tooltip to inventory slot n while the inventory is open (mouse hover can't be injected into a background GLFW window) — combine with `MMO_UI=inventory` |

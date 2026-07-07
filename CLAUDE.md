@@ -480,6 +480,78 @@ show their block tile).
     overwrites in place and keeps locked-but-existing files (LOCKED warn).
     Footsteps cap at 1 s; mob vocals keep the 3 s cap.
 
+- 2026-07-07 **WORLDGEN OVERHAUL + ROOM GRAPH** (owner directive; design doc
+  archived in the session scratchpad, agent-built in 4 batches, each
+  committed once green — 128 vitest at the end).
+  - **25 new blocks (ids 26–50, append-only)**: mud, murk_water, pale_log,
+    dead_leaves, reeds, vines, glow_shroom(9), web, dark_stone, dark_bricks,
+    obsidian, ash, charred_log, ember_crystal(12), bone_block, snow, ice,
+    blue_crystal(11), marble, bookshelf, hay, palisade, iron_bars,
+    lantern(13), banner. Tiles probed + visually verified per Layer-4
+    discipline (several design-doc coords were wrong — probe, never trust);
+    web/ash/charred_log/glow_shroom are painted/tinted in-pipeline. 7 new
+    block items (icons = appended atlas row 21 cols 7–13) in Jib's shop.
+  - **Terrain**: room defs' `terrain.liquid` ("water"|"murk_water"|"lava",
+    default water) — every liquid check both runtimes was already
+    kind-driven (cull=="liquid"), zero id==5 assumptions. New ADDITIVE
+    biome branches `swamp` + `volcanic` in voxel.ts (existing grass/desert/
+    dungeon branches test-locked byte-identical; new salts on hash2 only).
+  - **Prefab system** (`sim/prefabs.ts`): PrefabDef registry (14 story
+    structures: ruined_watchtower, wayshrine, abandoned_camp, graveyard,
+    fallen_giant, stone_circle, mine_adit, hermit_hut, causeway_bridge,
+    ruined_aqueduct, bandit_fort, sunken_temple, forge_ruin, spider_hollow)
+    + deterministic scatter via room-def `prefabs` array (hash2 candidates,
+    spawn/portal/authored-rect exclusion, spacing/slope/water filters,
+    ruinLevel decay gradient with distance). Prefab hooks: **loot caches**
+    (room tick respawns a never-expiring unowned loot bag when looted +
+    respawnSec elapsed + no player within 20 m; lastLootedAt persists in
+    RoomState) and **spawn-table binding** (bandit camp anchors to the
+    palisade fort, spiders to their web hollows). `/prefab <id> [rot]
+    [ruin]` (admin) stamps through the EDIT overlay in-room — /clearblocks
+    wipes it; the Atelier room (flat 128² slab, no portals) + `/room <id>`
+    (admin self-transfer) are the iteration loop.
+  - **Wild rooms ×3**: forest + desert are 480² (same seeds/params, spawn +
+    portals + tables + authored builds rescaled; maxAlive ×2 not ×9 — the
+    space belongs to prefab scatter). Forest gained boar meadows, a 3rd
+    wolf den, and fen-approach spiders as a tier-2 warning at the new gate.
+    TRAP fixed en route: scripts/lib.mjs findPath had a 60k-node BFS cap
+    (160²-era) that silently truncated 480² walks. Wire ~119–269 KB/room.
+  - **12 new mobs** (all sprite cells visually verified; elemental.png top
+    half only — bottom is off-grid like wizard.png): boar L2, giant_spider
+    L8 (poison), bog_serpent L9, mantrap L9, marsh_wisp L10 (ranged slow
+    bolt), lizardman L11, ash_husk L11, fire_elemental L12 (ranged),
+    bone_bat L12, wraith L13, cinder_golem_boss L13 (950 hp), lich_boss L15
+    (1150 hp, ranged shadow_lance). Ranged mobs needed ZERO brain changes —
+    attackRange + a projectile ability (manaCost 0; mobs have no mana).
+    Caveats: mob bolts fly flat (aimPitch 0); MobDef has ONE ability slot so
+    the lich casts point-blank instead of swapping to melee.
+  - **DoT/HoT**: `debuff:{dotTotal,durMs}` mirrors the frost path; ticks as
+    whole-point bites through applyDotDamage (floaters/threat/XP attributed
+    to the applier, NO crits, NO cast interrupts — a 4 s poison must not
+    stunlock). `cureDot` consumable effect (antidote, provisioner shop).
+    DoT sends nothing on the wire; its floaters are the feedback.
+  - **16 items + 9 trophies**: T2 "steel" pool (Gloomfen, ≈1.5× iron) + T3
+    "rift" pool (Cinderrift/Depths, ≈2.2×) + greater potions + antidote +
+    roast_boar_leg; trophies are `kind:"trophy"` sell-fodder that makes
+    loot narrate (venom_sac, ember_core, spirit_essence, ancient_coin...),
+    retrofitted into old mob tables. New weapon abilities: cleave,
+    quick_stab, bolt_shot, greater_heal, thrust, reap, greater_firebolt,
+    greater_frost.
+  - **Room graph** (hub gates now lead somewhere deeper): forest→
+    **Gloomfen Marsh** (320² swamp, murk_water, perpetual dusk 0.86,
+    rotting plank causeway north to a half-flooded marble sunken temple,
+    spiders→serpents/wisps→lizardmen along it, L8–12); desert→**The
+    Cinderrift** (288² volcanic, amplitude-9 canyons with lava runs, bone
+    road to the dark-brick Forge Ruin, ash husk shambles + cinder
+    elementals, Furnace Golem open-world boss @900 s respawn, L11–14);
+    dungeon→**Vaults of Morvane / crypt_depths** (96² ephemeral like its
+    parent — independent lifecycle — dark-brick vaults, iron-bar cells
+    holding wraith-guarded caches, ossuary, frozen back third with the
+    lich on an ice dais, L12–15; portal sits BEHIND the minotaur's boss
+    hall at (46,6)). Gate guard warns about all three. Arrivals land at
+    twin gates both ways via auto-pairing. Shard capacity default 8→12 —
+    at 8, the 9th room would SILENTLY never open on a single-shard boot.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -891,3 +963,25 @@ Quick reference only — the stories behind these (and more) live in
     bright-pass knee (0.12) instead of the original 0.72: without the (removed)
     tonemap that used to roll them off, a 0.72 threshold bloomed sunlit SPRITES
     into white halos — 0.9 lands the strong glow on emissive blocks/sun only.
+- 2026-07-07 **Worldgen overhaul + room graph + sound engine SHIPPED** (see
+  the three decisions-log entries above for the full architecture). The
+  world is now 9 rooms: hub, forest 480², desert 480², dungeon, grounds,
+  atelier (admin prefab lab), gloomfen (L8–12), cinderrift (L11–14),
+  crypt_depths (L12–15 ephemeral). 128 vitest green. Wire-verified on the
+  live stack: travel-bot (480² twin-gate arrival), return-probe (exit
+  nodes + returnToHub — new permanent script), kill-test (snapshot
+  recovery), build-bot (NOTE: on this Docker-mongo DB, bot admin grants
+  had to be re-run — scripts/make-admin.mjs build_bot), combat-bot (480²
+  BFS + slime kill + loot), roomgraph-probe 13/13 (new script: /room hops
+  all three new rooms, expected block ids decode, /prefab stamps 171
+  edits in the atelier, returnToHub home). Audio proven by a muted
+  3-min slime-meadow soak: 326 logged plays — per-material remote
+  footsteps (171 grass / 5 sand at the meadow sand patches), 110
+  slime_idle + 19 slime_attack vocals, 12 occluded plays at reduced
+  volume. Six screenshot scenes verified at 75 fps (crypt vaults w/ lich
+  + blue crystals, palisade bandit fort w/ banners, sandstone aqueduct
+  with collapsed span, gloomfen causeway at dusk, cinderrift forge +
+  bone road, atelier-stamped watchtower) — tools/out/verify-*.png.
+  Gloomfen note: the causeway deliberately lays gravel old-road on dry
+  hummocks and rotting planks only over flooded runs (a screenshot of a
+  dry stretch is not a material bug). Mix balance = owner ear, pending.
