@@ -39,6 +39,7 @@ import mmo.client.world.RemotePlayer;
 import mmo.client.world.ShadowMap;
 import mmo.client.world.SpriteLibrary;
 import mmo.client.world.Viewmodel;
+import mmo.client.world.VoxelLighting;
 import mmo.client.world.VoxelRenderer;
 import mmo.client.world.VoxelWorld;
 import mmo.client.world.SkyRenderer;
@@ -165,6 +166,8 @@ public class WorldScreen extends ScreenAdapter {
     private long slowUntil = 0;
     private final java.util.Map<String, Long> localCooldowns = new java.util.HashMap<>();
     private long bodyBusyUntil = 0;
+    /** ability of the last attack sent — an interrupt refunds its cooldown */
+    private String lastAttackAbilityId = null;
 
     private int seq = 0;
     private float sendTimer = 0;
@@ -359,6 +362,9 @@ public class WorldScreen extends ScreenAdapter {
                     if (voxels != null) voxels.dispose();
                     voxels = new VoxelRenderer(world);
                     voxels.wind = msg.has("wind") ? msg.get("wind").getAsFloat() : 0f;
+                    // per-room night floor: uniform + the CPU mirror must agree
+                    voxels.nightLight = msg.has("nightLight") ? msg.get("nightLight").getAsFloat() : 1.35f;
+                    VoxelLighting.nightLight = voxels.nightLight;
                     if (shadowMap != null) shadowMap.dispose();
                     shadowMap = new ShadowMap(world.w, world.h, world.height);
                 }
@@ -598,8 +604,14 @@ public class WorldScreen extends ScreenAdapter {
                 if (e.get("id").getAsInt() == selfId) {
                     ui.addScreenFloater("Interrupted!", new Color(1f, 0.9f, 0.3f, 1f), 1.2f);
                     viewmodel.cancelAbility();
-                    bodyBusyUntil = 0;
-                    movementLockedUntil = 0;
+                    // the server holds us in stagger (busy + movement-locked)
+                    // for staggerMs — mirroring it stops clicks in that window
+                    // from animating attacks the server will reject
+                    long now = System.currentTimeMillis();
+                    bodyBusyUntil = now + game.constants.staggerMs;
+                    movementLockedUntil = now + game.constants.staggerMs;
+                    // the interrupt refunded the ability's cooldown server-side
+                    if (lastAttackAbilityId != null) localCooldowns.remove(lastAttackAbilityId);
                 }
             }
             case "death" -> {
@@ -862,9 +874,16 @@ public class WorldScreen extends ScreenAdapter {
         if (ability == null) return;
         Long cd = localCooldowns.get(abilityId);
         if (cd != null && cd > now) return;
+        // the server would silently reject an unaffordable cast — say so
+        // instead of playing a cast animation that produces nothing
+        if (ability.manaCost > 0 && ui.mana < ability.manaCost) {
+            flash("not enough mana");
+            return;
+        }
 
         // the held instance's speed roll scales every timing (server mirrors)
         float spd = held != null && held.statSpd > 0 ? held.statSpd : 1f;
+        lastAttackAbilityId = abilityId;
         socket.sendSafe(Protocol.attack(yaw, pitch));
         game.audio.play(switch (ability.fx) {
             case "arrow" -> "bow";

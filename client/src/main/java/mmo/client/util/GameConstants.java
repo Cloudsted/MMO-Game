@@ -21,6 +21,7 @@ public final class GameConstants {
 
     public final float pickupRange;
     public final float talkRange;
+    public final long staggerMs;
 
     public final float bPlaceRange;
 
@@ -43,6 +44,7 @@ public final class GameConstants {
         JsonObject c = root.getAsJsonObject("combat");
         pickupRange = c.get("pickupRange").getAsFloat();
         talkRange = c.get("talkRange").getAsFloat();
+        staggerMs = c.get("staggerMs").getAsLong();
 
         JsonObject b = root.getAsJsonObject("building");
         bPlaceRange = b.get("placeRangeM").getAsFloat();

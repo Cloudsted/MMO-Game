@@ -24,6 +24,11 @@ export type FsmFire = "melee-hit" | "release" | null;
  * Advance the FSM when the current state's timer elapses.
  * windup → active (melee hit window opens / bow releases), active → recover,
  * cast → release → recover, recover/stagger → idle.
+ *
+ * Each next stage is timed from the PREVIOUS stage's end (not from `now`):
+ * ticks run at 10 Hz, and restarting every stage's timer at the tick that
+ * noticed it stretched a 3-stage ability by up to ~300 ms over what clients
+ * predict — the drift behind "the swing animated but nothing happened".
  */
 export declare function advanceFsm(e: Entity, ability: AbilityDef | null, now: number): FsmFire;
 /**
@@ -32,8 +37,10 @@ export declare function advanceFsm(e: Entity, ability: AbilityDef | null, now: n
  * an interrupt happened.
  */
 export declare function interruptIfCasting(e: Entity, ability: AbilityDef | null, staggerMs: number, now: number): boolean;
-/** Is target inside attacker's melee cone (range + half-arc around aimYaw)? */
-export declare function inMeleeCone(attacker: Entity, target: Entity, range: number, arcDeg: number, rangeGrace: number): boolean;
+/** Is target inside attacker's melee cone (range + half-arc around aimYaw)?
+ *  maxDy gates the VERTICAL reach — feet more than that apart can't trade
+ *  melee blows (no more canopy boars goring players 5 blocks below). */
+export declare function inMeleeCone(attacker: Entity, target: Entity, range: number, arcDeg: number, rangeGrace: number, maxDy: number): boolean;
 export interface Projectile {
     id: number;
     fx: string;

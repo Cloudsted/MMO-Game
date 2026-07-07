@@ -32,6 +32,7 @@ uniform vec3 u_lightDir;     // FROM light TOWARD ground (quantized shadow dir)
 uniform float u_shadowTexel; // one shadow-map texel in world meters
 uniform float u_shadowRange; // light-camera far-near in meters
 uniform float u_sun;        // 0 night .. 1 day
+uniform float u_nightLight; // per-room multiplier on the night skylight floor
 uniform float u_fullbright; // glow pass: skip lighting entirely
 uniform float u_alpha;      // 1 solid, <1 water
 uniform vec3 u_fogColor;
@@ -92,7 +93,9 @@ void main() {
 
     float sl = v_light.x * v_light.x;
     float bl = v_light.y * v_light.y;
-    vec3 skyC = mix(vec3(0.12, 0.14, 0.25), vec3(1.02, 0.99, 0.95), u_sun);
+    // night endpoint scaled by the room's nightLight (world message; the
+    // schema default raises it ~35% over the old tuned floor)
+    vec3 skyC = mix(vec3(0.12, 0.14, 0.25) * u_nightLight, vec3(1.02, 0.99, 0.95), u_sun);
     vec3 lit = max(max(sl * skyC * shadowMul, bl * vec3(1.35, 1.02, 0.61)), vec3(0.045));
     lit = mix(lit, vec3(1.0), u_fullbright);
     vec3 col = tex.rgb * brv * lit;

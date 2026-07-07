@@ -29,6 +29,12 @@ const ConstantsSchema = z.object({
     staggerMs: z.number().int(),
     projectileHitRadius: z.number(),
     meleeRangeGrace: z.number(),
+    /** melee hits (players AND mobs) need |feetY delta| within this — no
+     *  more boars pounding you from a tree canopy 5 blocks overhead */
+    meleeVerticalReach: z.number(),
+    /** an attack click rejected only by a timing sliver (recover tail /
+     *  cooldown drift) is buffered this long and retried from tick() */
+    attackBufferMs: z.number().int(),
     hpRegenPerSec: z.number(),
     manaRegenPerSec: z.number(),
     regenDelayAfterDamageMs: z.number().int(),

@@ -59,6 +59,12 @@ declare const ConstantsSchema: z.ZodObject<{
         staggerMs: z.ZodNumber;
         projectileHitRadius: z.ZodNumber;
         meleeRangeGrace: z.ZodNumber;
+        /** melee hits (players AND mobs) need |feetY delta| within this — no
+         *  more boars pounding you from a tree canopy 5 blocks overhead */
+        meleeVerticalReach: z.ZodNumber;
+        /** an attack click rejected only by a timing sliver (recover tail /
+         *  cooldown drift) is buffered this long and retried from tick() */
+        attackBufferMs: z.ZodNumber;
         hpRegenPerSec: z.ZodNumber;
         manaRegenPerSec: z.ZodNumber;
         regenDelayAfterDamageMs: z.ZodNumber;
@@ -74,6 +80,8 @@ declare const ConstantsSchema: z.ZodObject<{
         staggerMs: number;
         projectileHitRadius: number;
         meleeRangeGrace: number;
+        meleeVerticalReach: number;
+        attackBufferMs: number;
         hpRegenPerSec: number;
         manaRegenPerSec: number;
         regenDelayAfterDamageMs: number;
@@ -89,6 +97,8 @@ declare const ConstantsSchema: z.ZodObject<{
         staggerMs: number;
         projectileHitRadius: number;
         meleeRangeGrace: number;
+        meleeVerticalReach: number;
+        attackBufferMs: number;
         hpRegenPerSec: number;
         manaRegenPerSec: number;
         regenDelayAfterDamageMs: number;
@@ -206,6 +216,8 @@ declare const ConstantsSchema: z.ZodObject<{
         staggerMs: number;
         projectileHitRadius: number;
         meleeRangeGrace: number;
+        meleeVerticalReach: number;
+        attackBufferMs: number;
         hpRegenPerSec: number;
         manaRegenPerSec: number;
         regenDelayAfterDamageMs: number;
@@ -269,6 +281,8 @@ declare const ConstantsSchema: z.ZodObject<{
         staggerMs: number;
         projectileHitRadius: number;
         meleeRangeGrace: number;
+        meleeVerticalReach: number;
+        attackBufferMs: number;
         hpRegenPerSec: number;
         manaRegenPerSec: number;
         regenDelayAfterDamageMs: number;

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { CharacterSnapshot, ItemStack, ServerToClient } from "@fantasy-mmo/common";
-import { gameConstants, loadRoomDef, mintItem, RegistryService } from "@fantasy-mmo/common";
+import { BLOCK, gameConstants, loadRoomDef, mintItem, RegistryService } from "@fantasy-mmo/common";
 import { RoomSim, type PlayerSession } from "../src/sim/room.js";
 import { advanceFsm, inMeleeCone, interruptIfCasting, startAbility } from "../src/sim/combat.js";
 import { addItem, rollLoot, normalizeInventory, INV_SIZE } from "../src/sim/loot.js";
@@ -89,11 +89,22 @@ describe("action FSM", () => {
     const ahead = testEntity(0, 2);
     const behind = testEntity(0, -2);
     const farAhead = testEntity(0, 9);
-    expect(inMeleeCone(attacker, ahead, 2.3, 95, 0.6)).toBe(true);
-    expect(inMeleeCone(attacker, behind, 2.3, 95, 0.6)).toBe(false);
-    expect(inMeleeCone(attacker, farAhead, 2.3, 95, 0.6)).toBe(false);
+    expect(inMeleeCone(attacker, ahead, 2.3, 95, 0.6, 2)).toBe(true);
+    expect(inMeleeCone(attacker, behind, 2.3, 95, 0.6, 2)).toBe(false);
+    expect(inMeleeCone(attacker, farAhead, 2.3, 95, 0.6, 2)).toBe(false);
     attacker.combat!.aimYaw = Math.PI; // now facing -Z
-    expect(inMeleeCone(attacker, behind, 2.3, 95, 0.6)).toBe(true);
+    expect(inMeleeCone(attacker, behind, 2.3, 95, 0.6, 2)).toBe(true);
+  });
+
+  it("gates melee hits on vertical reach (no goring through canopies)", () => {
+    const attacker = testEntity(0, 0);
+    attacker.combat!.aimYaw = 0;
+    const overhead = testEntity(0, 1); // 2D dead ahead...
+    overhead.pos.y = 5; // ...but 5 blocks up a tree
+    expect(inMeleeCone(attacker, overhead, 2.3, 95, 0.6, 2)).toBe(false);
+    const onStep = testEntity(0, 1);
+    onStep.pos.y = 1; // one block up stays hittable
+    expect(inMeleeCone(attacker, onStep, 2.3, 95, 0.6, 2)).toBe(true);
   });
 });
 
@@ -187,12 +198,51 @@ describe("mob brain", () => {
     wolf.brain!.threat.set(prey.id, 5);
     const d = tickBrain(wolf, reg.mob("wolf"), [prey], 1000);
     expect(d.attack).toBe(prey);
-    // drag beyond leashRadius 26
-    wolf.pos.x = 40;
+    // kited: BOTH wolf and prey beyond leashRadius 36 → reset
+    wolf.pos.x = 45;
+    prey.pos.x = 42;
     const d2 = tickBrain(wolf, reg.mob("wolf"), [prey], 2000);
     expect(wolf.brain!.state).toBe("return");
     expect(d2.move).toBeTruthy();
     expect(wolf.brain!.threat.size).toBe(0);
+  });
+
+  it("stays engaged past the leash while its target fights inside the circle", () => {
+    const wolf = makeMob(0, 0);
+    const archer = testEntity(10, 0); // shooting from inside the leash circle
+    wolf.brain!.threat.set(archer.id, 20);
+    wolf.brain!.targetId = archer.id;
+    wolf.pos.x = 45; // wolf itself crossed leashRadius 36 while charging
+    const d = tickBrain(wolf, reg.mob("wolf"), [archer], 1000);
+    expect(wolf.brain!.state).toBe("chase");
+    expect(d.move).toBeTruthy();
+    expect(d.move!.x).toBe(10); // heading for the archer, not home
+  });
+
+  it("re-engages during return when shot from inside the leash circle", () => {
+    const wolf = makeMob(0, 0);
+    wolf.brain!.state = "return";
+    wolf.pos.x = 20;
+    const archer = testEntity(10, 0);
+    wolf.brain!.threat.set(archer.id, 12); // arrow landed mid-runback
+    const d = tickBrain(wolf, reg.mob("wolf"), [archer], 1000);
+    expect(wolf.brain!.state).toBe("chase");
+    expect(wolf.brain!.targetId).toBe(archer.id);
+    expect(d.move!.x).toBe(10); // no more invincible runback
+  });
+
+  it("chases (with drop allowance) instead of attacking beyond vertical reach", () => {
+    const wolf = makeMob(0, 0);
+    wolf.pos.y = 6; // stranded on a canopy
+    const prey = testEntity(0.5, 0); // 2D inside attackRange 1.7, 6 below
+    wolf.brain!.threat.set(prey.id, 5);
+    const d = tickBrain(wolf, reg.mob("wolf"), [prey], 1000, 2.0);
+    expect(d.attack).toBeNull();
+    expect(d.move).toBeTruthy();
+    expect(d.move!.maxDrop ?? 0).toBeGreaterThanOrEqual(6); // may hop down
+    // a projectile-style reach (Infinity) attacks as before
+    const d2 = tickBrain(wolf, reg.mob("wolf"), [prey], 1000);
+    expect(d2.attack).toBe(prey);
   });
 
   it("flees below its fleeAtHpPct threshold", () => {
@@ -272,6 +322,133 @@ describe("mob separation", () => {
     separateEntities([a, b], 0.1, world, bounds);
     expect(a.pos.x).toBe(flat.x);
     expect(a.pos.z).toBe(flat.z);
+  });
+});
+
+describe("floor spawns + canopy drop-down", () => {
+  const sim = new RoomSim(loadRoomDef("hub"));
+  const world = sim.world;
+  const bounds = sim.def.size;
+
+  /** A flat, unobstructed, dry 7×7 patch away from structures. */
+  function findFlatSpot(): { x: number; z: number; y: number } {
+    for (let z = 8; z < bounds.h - 8; z += 4) {
+      for (let x = 8; x < bounds.w - 8; x += 4) {
+        const y = world.standY(x, z);
+        let ok = true;
+        for (let dx = -3; dx <= 3 && ok; dx++)
+          for (let dz = -3; dz <= 3 && ok; dz++) {
+            const yy = world.standY(x + dx, z + dz);
+            if (yy !== y || world.collidesAABB(x + dx, yy, z + dz, 0.3, 1.6) || world.liquidAt(x + dx, yy + 0.1, z + dz)) ok = false;
+          }
+        if (ok) return { x, z, y };
+      }
+    }
+    throw new Error("no flat spot in hub");
+  }
+  const flat = findFlatSpot();
+  // fake tree canopy: a 3×3 leaf slab 4 blocks over the ground
+  const LEAVES = BLOCK.leaves!.id;
+  for (let dx = -1; dx <= 1; dx++)
+    for (let dz = -1; dz <= 1; dz++) world.set(Math.floor(flat.x) + dx, flat.y + 4, Math.floor(flat.z) + dz, LEAVES);
+
+  it("floorY lands under the canopy where standY lands on top of it", () => {
+    expect(world.standY(flat.x, flat.z)).toBe(flat.y + 5);
+    expect(world.floorY(flat.x, flat.z)).toBe(flat.y);
+  });
+
+  it("spawnMob places mobs on the floor, never the canopy", () => {
+    const mob = sim.spawnMob("slime", flat.x, flat.z, "")!;
+    expect(mob.pos.y).toBe(flat.y);
+  });
+
+  it("a canopy-stranded mob can drop down only with a purposeful move", () => {
+    const e = testEntity(Math.floor(flat.x) + 0.5, Math.floor(flat.z) + 0.5);
+    e.kind = "mob";
+    e.pos.y = flat.y + 5; // stranded on the canopy top
+    const tx = Math.floor(flat.x) + 3.5;
+    // wander-style intent (default 1-block drop): stuck pacing the edge
+    for (let i = 0; i < 60; i++) applyMove(e, { x: tx, z: e.pos.z, speedMult: 1 }, 3, 0.1, world, bounds, null);
+    expect(e.pos.y).toBe(flat.y + 5);
+    // chase-style intent may drop off the edge and reach the target
+    for (let i = 0; i < 60; i++) applyMove(e, { x: tx, z: e.pos.z, speedMult: 1, maxDrop: 8 }, 3, 0.1, world, bounds, null);
+    expect(e.pos.y).toBe(flat.y);
+    expect(Math.abs(e.pos.x - tx)).toBeLessThan(0.5);
+  });
+});
+
+describe("attack timing (whiff-proofing)", () => {
+  let sim: RoomSim;
+
+  function join(id: string, name: string, inv: Array<ItemStack | null> = []) {
+    const messages: ServerToClient[] = [];
+    const session = sim.addPlayer(makeCharacter(id, name, 64, 64, inv), (m) => messages.push(m));
+    return { session, messages };
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    sim = new RoomSim(loadRoomDef("hub"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** swing with a neutral speed roll: windup 260 + active 140 + recover 320. */
+  function joinWithSword() {
+    const a = join("c1", "Alice", [{ item: "rusty_sword", qty: 1, rarity: "common" }]);
+    a.session.slots[0]!.stats = { dmg: 1, spd: 1 };
+    return a;
+  }
+
+  it("keeps stage timings exact across late ticks (no per-tick stretch)", () => {
+    const a = joinWithSword();
+    const t0 = Date.now();
+    sim.handleAttack(a.session, 0, 0);
+    vi.setSystemTime(t0 + 350); // tick arrives 90ms after windup(260) ended
+    sim.tick();
+    // active must end at 260+140=400, not 350+140
+    expect(a.session.entity.combat!.actEndsAt).toBe(t0 + 400);
+  });
+
+  it("accepts a click landing between ticks after the body finished", () => {
+    const a = joinWithSword();
+    sim.handleAttack(a.session, 0, 0);
+    expect(a.session.entity.combat!.act).toBe("windup");
+    // the whole swing (720ms) elapsed but NO tick has run — the click must
+    // catch the FSM up instead of being judged against the stale state
+    vi.setSystemTime(Date.now() + 730);
+    sim.handleAttack(a.session, 0, 0);
+    expect(a.session.entity.combat!.act).toBe("windup");
+    expect(a.session.pendingAttack).toBeNull();
+  });
+
+  it("buffers a click that lands a hair early and fires it on the next tick", () => {
+    const a = joinWithSword();
+    const t0 = Date.now();
+    sim.handleAttack(a.session, 0, 0);
+    vi.setSystemTime(t0 + 650); // still recovering (busy until 720)
+    sim.handleAttack(a.session, 0, 0);
+    expect(a.session.entity.combat!.act).toBe("recover"); // not started...
+    expect(a.session.pendingAttack).not.toBeNull(); // ...but not dropped
+    vi.setSystemTime(t0 + 800); // recover over; buffer (until 850) still live
+    sim.tick();
+    expect(a.session.entity.combat!.act).toBe("windup"); // fired from buffer
+    expect(a.session.pendingAttack).toBeNull();
+  });
+
+  it("expires a buffered click that stays blocked past the window", () => {
+    const a = joinWithSword();
+    const t0 = Date.now();
+    sim.handleAttack(a.session, 0, 0);
+    vi.setSystemTime(t0 + 300); // mid-active — way too early
+    sim.handleAttack(a.session, 0, 0);
+    expect(a.session.pendingAttack).not.toBeNull();
+    vi.setSystemTime(t0 + 550); // buffer (until 500) expired, still in recover
+    sim.tick();
+    expect(a.session.entity.combat!.act).toBe("recover");
+    expect(a.session.pendingAttack).toBeNull(); // dropped, not fired late
   });
 });
 

@@ -20,11 +20,21 @@ export const MOB_SEPARATION = 0.45;
 const SEPARATION_PUSH_SPEED = 2.0;
 /** Mobs on ledges more than this far above/below don't crowd each other. */
 const SEPARATION_Y_TOLERANCE = 1.5;
+/** Purposeful movement (chase/flee/return) may drop this many blocks in a
+ *  step — a mob that somehow ends up on a tree canopy or ledge can always
+ *  get DOWN to its target. Wandering keeps the 1-block limit so idle mobs
+ *  don't dive off cliffs. Tallest oak canopy top is ~7 above the floor. */
+const PURPOSEFUL_MAX_DROP = 8;
+/** Default per-step drop for wander/separation (mirror of the 1-step-up). */
+const DEFAULT_MAX_DROP = 1.05;
 
 export interface MoveIntent {
   x: number;
   z: number;
   speedMult: number;
+  /** max blocks this move may step DOWN (default ~1; chase/flee/return
+   *  pass PURPOSEFUL_MAX_DROP so treed/ledged mobs can drop to targets) */
+  maxDrop?: number;
 }
 
 export interface BrainDecision {
@@ -35,39 +45,73 @@ export interface BrainDecision {
 
 /**
  * One brain tick. Pure decision — the caller applies movement (with terrain)
- * and routes attack intents into the shared action FSM.
+ * and routes attack intents into the shared action FSM. `attackReachY` is
+ * the max |feet-Y delta| at which this mob's attack can land (melee vertical
+ * reach; Infinity for projectile mobs, which aim with real pitch) — targets
+ * 2D-close but vertically out of reach are CHASED (with drop-down moves),
+ * never punched through canopies and floors.
  */
-export function tickBrain(mob: Entity, def: MobDef, players: Entity[], now: number): BrainDecision {
+export function tickBrain(
+  mob: Entity,
+  def: MobDef,
+  players: Entity[],
+  now: number,
+  attackReachY: number = Number.POSITIVE_INFINITY
+): BrainDecision {
   const b = mob.brain!;
   const none: BrainDecision = { move: null, attack: null, faceYaw: null };
   const distTo = (x: number, z: number) => Math.hypot(mob.pos.x - x, mob.pos.z - z);
+  const homeDistOf = (p: Entity) => Math.hypot(p.pos.x - b.home.x, p.pos.z - b.home.z);
 
   // body busy (mid-swing/stagger/dead): no new decisions
   const act = mob.combat!.act;
   if (act === "dead" || act === "windup" || act === "active" || act === "cast" || act === "stagger") return none;
 
-  // returning home: heal-reset, ignore everything until arrival
+  const alive = new Map(players.filter((p) => p.combat!.act !== "dead").map((p) => [p.id, p]));
+
+  // returning home: heal, ignore attackers — UNLESS one keeps fighting from
+  // inside the leash circle (they're reachable; no invincible-runback while
+  // you stand at the camp shooting)
   if (b.state === "return") {
-    if (distTo(b.home.x, b.home.z) < 1.5) {
-      mob.health!.hp = mob.health!.maxHp;
-      b.state = "patrol";
-      b.wanderTarget = null;
-      return none;
+    let reengage: Entity | null = null;
+    for (const [id, threat] of b.threat) {
+      const p = alive.get(id);
+      if (threat > 0 && p && homeDistOf(p) <= def.leashRadius) {
+        reengage = p;
+        break;
+      }
     }
-    mob.health!.hp = Math.min(mob.health!.maxHp, mob.health!.hp + def.hp * RETURN_HEAL_PCT_PER_SEC * 0.1);
-    return { move: { x: b.home.x, z: b.home.z, speedMult: 1 }, attack: null, faceYaw: null };
+    if (!reengage) {
+      if (distTo(b.home.x, b.home.z) < 1.5) {
+        mob.health!.hp = mob.health!.maxHp;
+        b.state = "patrol";
+        b.wanderTarget = null;
+        return none;
+      }
+      mob.health!.hp = Math.min(mob.health!.maxHp, mob.health!.hp + def.hp * RETURN_HEAL_PCT_PER_SEC * 0.1);
+      return { move: { x: b.home.x, z: b.home.z, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP }, attack: null, faceYaw: null };
+    }
+    // target them BEFORE the leash check below — the mob may still stand
+    // outside the circle, and a null targetId would re-leash it instantly
+    b.state = "chase";
+    b.targetId = reengage.id;
   }
 
-  // leash: dragged too far from home → reset
+  // leash: dragged too far from home → reset. A live target still inside
+  // the leash circle keeps the mob engaged — ranged players fighting near
+  // the camp no longer bounce mobs off an invisible wall; kiting away
+  // still resets the moment BOTH stand outside.
   if (distTo(b.home.x, b.home.z) > def.leashRadius) {
-    b.state = "return";
-    b.targetId = null;
-    b.threat.clear();
-    return { move: { x: b.home.x, z: b.home.z, speedMult: 1 }, attack: null, faceYaw: null };
+    const tgt = b.targetId !== null ? alive.get(b.targetId) : undefined;
+    if (!tgt || homeDistOf(tgt) > def.leashRadius) {
+      b.state = "return";
+      b.targetId = null;
+      b.threat.clear();
+      return { move: { x: b.home.x, z: b.home.z, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP }, attack: null, faceYaw: null };
+    }
   }
 
   // target selection: threat-weighted with stickiness, plus proximity aggro
-  const alive = new Map(players.filter((p) => p.combat!.act !== "dead").map((p) => [p.id, p]));
   for (const id of [...b.threat.keys()]) if (!alive.has(id)) b.threat.delete(id);
 
   let best: Entity | null = null;
@@ -90,15 +134,16 @@ export function tickBrain(mob: Entity, def: MobDef, players: Entity[], now: numb
       b.state = "flee";
       const away = Math.atan2(mob.pos.x - best.pos.x, mob.pos.z - best.pos.z);
       return {
-        move: { x: mob.pos.x + Math.sin(away) * 6, z: mob.pos.z + Math.cos(away) * 6, speedMult: 1 },
+        move: { x: mob.pos.x + Math.sin(away) * 6, z: mob.pos.z + Math.cos(away) * 6, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP },
         attack: null,
         faceYaw: null,
       };
     }
     const d = distTo(best.pos.x, best.pos.z);
-    if (d > def.attackRange) {
+    const dy = Math.abs(best.pos.y - mob.pos.y);
+    if (d > def.attackRange || dy > attackReachY) {
       b.state = "chase";
-      return { move: { x: best.pos.x, z: best.pos.z, speedMult: 1 }, attack: null, faceYaw: null };
+      return { move: { x: best.pos.x, z: best.pos.z, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP }, attack: null, faceYaw: null };
     }
     b.state = "chase";
     const face = Math.atan2(best.pos.x - mob.pos.x, best.pos.z - mob.pos.z);
@@ -158,6 +203,7 @@ export function applyMove(
   const dist = Math.hypot(dx, dz);
   if (dist < 0.05) return false;
   const step = Math.min(baseSpeed * intent.speedMult * dt, dist);
+  const maxDrop = intent.maxDrop ?? DEFAULT_MAX_DROP;
   const baseAng = Math.atan2(dx, dz);
   for (const off of [0, 0.6, -0.6, 1.2, -1.2]) {
     const ang = baseAng + off;
@@ -165,9 +211,10 @@ export function applyMove(
     const nz = e.pos.z + Math.cos(ang) * step;
     if (nx < 1 || nx > bounds.w - 1 || nz < 1 || nz > bounds.h - 1) continue;
     if (crowdsNeighbour(e, nx, nz, others)) continue; // don't walk into a packmate
-    // ground under the new spot, allowing a 1-block step up from current feet
+    // ground under the new spot: at most a 1-block step UP, and down by the
+    // intent's drop allowance (purposeful moves may hop off canopies/ledges)
     const ny = world.groundBelow(nx, e.pos.y + 1.05, nz, 0.25);
-    if (Math.abs(ny - e.pos.y) > 1.05) continue; // cliff or >1 step
+    if (ny - e.pos.y > 1.05 || e.pos.y - ny > maxDrop) continue;
     if (world.collidesAABB(nx, ny, nz, 0.3, 1.6)) continue; // headroom/blockers
     if (world.liquidAt(nx, ny + 0.1, nz)) continue; // don't wade in
     e.pos.x = nx;
@@ -244,7 +291,8 @@ export function separateEntities(
   }
 }
 
-/** Find a legal spawn point in a spawn region (dry, unobstructed). */
+/** Find a legal spawn point in a spawn region (dry, unobstructed, ON THE
+ *  FLOOR — floorY lands under tree canopies/roofs, never on top of them). */
 export function findSpawnPoint(
   table: SpawnTable,
   world: VoxelWorld,
@@ -255,7 +303,7 @@ export function findSpawnPoint(
     const r = Math.sqrt(Math.random()) * table.region.r;
     const x = table.region.x + Math.sin(ang) * r;
     const z = table.region.z + Math.cos(ang) * r;
-    const y = world.standY(x, z);
+    const y = world.floorY(x, z);
     if (world.liquidAt(x, y + 0.1, z)) continue;
     if (world.collidesAABB(x, y, z, 0.3, 1.6)) continue;
     return { x, z };

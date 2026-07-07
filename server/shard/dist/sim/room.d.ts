@@ -3,7 +3,7 @@
  * FSM, mob AI, loot, XP, economy, chat, and interest-managed delta snapshots.
  * Networking and IPC stay in roomhost.ts — this module never touches ws.
  */
-import { RegistryService, type CharacterSnapshot, type CombatEvent, type ItemStack, type PortalDef, type PortalWire, type RoomDef, type RoomState, type ServerToClient, type SpawnTable } from "@fantasy-mmo/common";
+import { RegistryService, type CharacterSnapshot, type CombatEvent, type ItemStack, type PortalDef, type PortalWire, type RoomAdminInfo, type RoomDef, type RoomState, type ServerToClient, type SpawnTable } from "@fantasy-mmo/common";
 import { type Entity, type ReplicatedState } from "./entities.js";
 import { VoxelWorld } from "./voxel.js";
 export interface PlayerSession {
@@ -16,6 +16,14 @@ export interface PlayerSession {
     snapCount: number;
     /** granted a transfer: the coming disconnect must not clobber the DB */
     transferring: boolean;
+    /** attack click that arrived a timing-sliver early (recover tail /
+     *  cooldown drift) — retried from tick() until it fires or expires,
+     *  instead of silently whiffing after the client already animated */
+    pendingAttack: {
+        aimYaw: number;
+        aimPitch: number;
+        until: number;
+    } | null;
     slots: Array<ItemStack | null>;
     held: number;
     /** latest camera pitch from move packets — live aim for releases */
@@ -78,6 +86,10 @@ export declare class RoomSim {
     spawnMob(mobId: string, x: number, z: number, spawnerId: string): Entity | null;
     private initNpcs;
     private restoreDrops;
+    /** Ground Y for a bag dropped by an entity whose feet are at fromY — the
+     *  walkable top under THEM, not the column's standY (which is the canopy/
+     *  roof top when the death happens under a tree). */
+    private dropY;
     private spawnLootBag;
     /** Cache table "auto" resolves per room: cache_<roomId> when it exists. */
     private resolveCacheTable;
@@ -116,6 +128,12 @@ export declare class RoomSim {
     /** Persisted dynamic room state: clock, loot drops, respawn timers. */
     buildRoomState(): RoomState;
     playerCount(): number;
+    /** Sim-side live telemetry for the admin dashboard; the RoomHost stamps the
+     *  process-side fields (uptime/tick timings/memory/expiry) on top. */
+    adminInfo(): Pick<RoomAdminInfo, "mobs" | "npcs" | "drops" | "projectiles" | "blockEdits" | "timeOfDay" | "players">;
+    /** Admin dashboard kick: evict a player by character id (same evict +
+     *  immediate-remove sequence as duplicate-login handling). */
+    adminKick(characterId: string, reason: string): boolean;
     /** Admit a ticketed character. Returns the session (already welcomed). */
     addPlayer(character: CharacterSnapshot, send: (msg: ServerToClient) => void): PlayerSession;
     removePlayer(session: PlayerSession): void;
@@ -131,8 +149,18 @@ export declare class RoomSim {
      * null; the RoomHost turns a valid use into a transfer request.
      */
     validatePortalUse(session: PlayerSession, portalId: string): PortalDef | null;
-    /** Player pressed attack: use the held item's ability, aimed by camera. */
+    /**
+     * Player pressed attack: use the held item's ability, aimed by camera.
+     * Two layers defend against silent whiffs (client animates, server drops):
+     * the body FSM is caught up to the packet's arrival (it otherwise only
+     * steps at tick rate, so a click just after recover's end was judged
+     * against a stale state), and a still-blocked click is buffered briefly
+     * and retried from tick() instead of vanishing.
+     */
     handleAttack(session: PlayerSession, aimYaw: number, aimPitch: number): void;
+    /** Start the held item's ability. Returns false only for blocks worth
+     *  buffering (body busy / cooldown / mana); no-op inputs return true. */
+    private tryHeldAbility;
     /** Durability tick: at zero the weapon breaks and the slot empties. */
     private wearHeldItem;
     /** Mob brain wants to attack: same FSM, different intent producer. */
@@ -190,6 +218,14 @@ export declare class RoomSim {
     /** Send to every session within interest radius of (x,z). */
     broadcastNear(x: number, z: number, msg: ServerToClient): void;
     broadcastEvent(e: CombatEvent, x: number, z: number): void;
+    /**
+     * Advance one entity's action FSM to `now`, firing due melee hits and
+     * releases. tick() runs it at 10 Hz; handleAttack runs it again at packet
+     * arrival so a click landing between ticks isn't judged against a stale
+     * recover/active state (the silent-whiff bug). Loops because catching up
+     * may cross more than one state boundary.
+     */
+    private advanceCombat;
     /** Simulation tick (10 Hz): FSMs, brains, projectiles, regen, respawns. */
     tick(): void;
     private tickProjectiles;

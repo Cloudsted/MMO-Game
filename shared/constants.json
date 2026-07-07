@@ -24,6 +24,8 @@
     "staggerMs": 400,
     "projectileHitRadius": 0.55,
     "meleeRangeGrace": 0.6,
+    "meleeVerticalReach": 2.0,
+    "attackBufferMs": 200,
     "hpRegenPerSec": 2.0,
     "manaRegenPerSec": 3.0,
     "regenDelayAfterDamageMs": 5000,

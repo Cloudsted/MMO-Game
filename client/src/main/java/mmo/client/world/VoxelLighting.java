@@ -17,6 +17,12 @@ import com.badlogic.gdx.utils.IntMap;
 public final class VoxelLighting {
     private static final int CHUNK = VoxelWorld.CHUNK;
 
+    /** Per-room night minimum-light multiplier (world message; room-def
+     *  default 1.35). Static because lightColor() is the shared CPU mirror
+     *  for every billboard/viewmodel/item tint — set alongside
+     *  VoxelRenderer.nightLight on room entry, same value as u_nightLight. */
+    public static float nightLight = 1.35f;
+
     private final VoxelWorld world;
     private final int H;
     private final int R = CHUNK * 3;
@@ -160,11 +166,12 @@ public final class VoxelLighting {
     public static Color lightColor(int packed, float sun, float shadowMul, Color out) {
         float s = (packed >> 4) / 15f, b = (packed & 15) / 15f;
         float sl = s * s * shadowMul, bl = b * b;
-        // night skylight endpoints darkened ~25% (owner: night was too bright);
+        // night skylight endpoint × the room's nightLight multiplier;
         // MUST match voxel.frag's skyC mix — this is the CPU mirror
-        float skyR = 0.12f + (1.02f - 0.12f) * sun;
-        float skyG = 0.14f + (0.99f - 0.14f) * sun;
-        float skyB = 0.25f + (0.95f - 0.25f) * sun;
+        float nr = 0.12f * nightLight, ng = 0.14f * nightLight, nb = 0.25f * nightLight;
+        float skyR = nr + (1.02f - nr) * sun;
+        float skyG = ng + (0.99f - ng) * sun;
+        float skyB = nb + (0.95f - nb) * sun;
         out.set(
             Math.min(1f, Math.max(Math.max(sl * skyR, bl * 1.35f), 0.045f)),
             Math.min(1f, Math.max(Math.max(sl * skyG, bl * 1.02f), 0.045f)),

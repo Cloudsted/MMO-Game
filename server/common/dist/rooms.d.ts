@@ -59,25 +59,25 @@ export declare const SpawnTableSchema: z.ZodObject<{
         z: z.ZodNumber;
         r: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
     }, {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
     }>;
     mobs: z.ZodArray<z.ZodObject<{
         mob: z.ZodString;
         weight: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        weight: number;
         mob: string;
+        weight: number;
     }, {
-        weight: number;
         mob: string;
+        weight: number;
     }>, "many">;
     maxAlive: z.ZodNumber;
     packSize: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -85,14 +85,14 @@ export declare const SpawnTableSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     id: string;
     region: {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
     };
     mobs: {
-        weight: number;
         mob: string;
+        weight: number;
     }[];
     maxAlive: number;
     packSize: [number, number];
@@ -100,14 +100,14 @@ export declare const SpawnTableSchema: z.ZodObject<{
 }, {
     id: string;
     region: {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
     };
     mobs: {
-        weight: number;
         mob: string;
+        weight: number;
     }[];
     maxAlive: number;
     packSize: [number, number];
@@ -208,10 +208,10 @@ export declare const NpcDefSchema: z.ZodObject<{
     }>>;
 }, "strip", z.ZodTypeAny, {
     id: string;
-    name: string;
-    sprite: string;
     x: number;
     z: number;
+    name: string;
+    sprite: string;
     yaw: number;
     wanderRadius: number;
     dialog: string[];
@@ -221,10 +221,10 @@ export declare const NpcDefSchema: z.ZodObject<{
     } | undefined;
 }, {
     id: string;
-    name: string;
-    sprite: string;
     x: number;
     z: number;
+    name: string;
+    sprite: string;
     dialog: string[];
     yaw?: number | undefined;
     wanderRadius?: number | undefined;
@@ -242,16 +242,16 @@ export declare const RegionSchema: z.ZodObject<{
     r: z.ZodNumber;
     pvp: z.ZodDefault<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
-    kind: "circle";
     x: number;
     z: number;
     r: number;
+    kind: "circle";
     pvp: boolean;
 }, {
-    kind: "circle";
     x: number;
     z: number;
     r: number;
+    kind: "circle";
     pvp?: boolean | undefined;
 }>;
 export type RegionDef = z.infer<typeof RegionSchema>;
@@ -279,6 +279,10 @@ export declare const RoomDefSchema: z.ZodObject<{
     /** Ambient wind strength for client foliage sway (0 = still, e.g. dungeons).
      *  Purely visual; sent to the client in the `world` message. ~1 = gentle. */
     wind: z.ZodDefault<z.ZodNumber>;
+    /** Night minimum-light multiplier on the client's tuned night skylight
+     *  floor (1 = the original endpoint; default raised — owner: nights read
+     *  too dark). Purely visual; ships in the `world` message. */
+    nightLight: z.ZodDefault<z.ZodNumber>;
     persistence: z.ZodEnum<["stateful", "ephemeral"]>;
     /** pin the visual clock (dungeon mood); omit for the live day/night cycle */
     fixedTime: z.ZodOptional<z.ZodNumber>;
@@ -302,16 +306,16 @@ export declare const RoomDefSchema: z.ZodObject<{
         r: z.ZodNumber;
         pvp: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
         pvp: boolean;
     }, {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
         pvp?: boolean | undefined;
     }>, "many">>;
     size: z.ZodObject<{
@@ -356,11 +360,11 @@ export declare const RoomDefSchema: z.ZodObject<{
         treeDensity: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         kind: "blocks";
-        liquid: "water" | "murk_water" | "lava";
         seed: number;
         base: number;
         amplitude: number;
         frequency: number;
+        liquid: "water" | "murk_water" | "lava";
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
         treeDensity?: number | undefined;
@@ -370,9 +374,9 @@ export declare const RoomDefSchema: z.ZodObject<{
         base: number;
         amplitude: number;
         frequency: number;
-        liquid?: "water" | "murk_water" | "lava" | undefined;
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
+        liquid?: "water" | "murk_water" | "lava" | undefined;
         treeDensity?: number | undefined;
     }>;
     flags: z.ZodObject<{
@@ -431,25 +435,25 @@ export declare const RoomDefSchema: z.ZodObject<{
             z: z.ZodNumber;
             r: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
-            kind: "circle";
             x: number;
             z: number;
             r: number;
+            kind: "circle";
         }, {
-            kind: "circle";
             x: number;
             z: number;
             r: number;
+            kind: "circle";
         }>;
         mobs: z.ZodArray<z.ZodObject<{
             mob: z.ZodString;
             weight: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
-            weight: number;
             mob: string;
+            weight: number;
         }, {
-            weight: number;
             mob: string;
+            weight: number;
         }>, "many">;
         maxAlive: z.ZodNumber;
         packSize: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
@@ -457,14 +461,14 @@ export declare const RoomDefSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         id: string;
         region: {
-            kind: "circle";
             x: number;
             z: number;
             r: number;
+            kind: "circle";
         };
         mobs: {
-            weight: number;
             mob: string;
+            weight: number;
         }[];
         maxAlive: number;
         packSize: [number, number];
@@ -472,14 +476,14 @@ export declare const RoomDefSchema: z.ZodObject<{
     }, {
         id: string;
         region: {
-            kind: "circle";
             x: number;
             z: number;
             r: number;
+            kind: "circle";
         };
         mobs: {
-            weight: number;
             mob: string;
+            weight: number;
         }[];
         maxAlive: number;
         packSize: [number, number];
@@ -575,10 +579,10 @@ export declare const RoomDefSchema: z.ZodObject<{
         }>>;
     }, "strip", z.ZodTypeAny, {
         id: string;
-        name: string;
-        sprite: string;
         x: number;
         z: number;
+        name: string;
+        sprite: string;
         yaw: number;
         wanderRadius: number;
         dialog: string[];
@@ -588,10 +592,10 @@ export declare const RoomDefSchema: z.ZodObject<{
         } | undefined;
     }, {
         id: string;
-        name: string;
-        sprite: string;
         x: number;
         z: number;
+        name: string;
+        sprite: string;
         dialog: string[];
         yaw?: number | undefined;
         wanderRadius?: number | undefined;
@@ -601,17 +605,18 @@ export declare const RoomDefSchema: z.ZodObject<{
         } | undefined;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
+    type: "building" | "hub" | "wilderness" | "dungeon";
     id: string;
     name: string;
-    type: "building" | "hub" | "wilderness" | "dungeon";
     biome: string;
     wind: number;
+    nightLight: number;
     persistence: "stateful" | "ephemeral";
     regions: {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
         pvp: boolean;
     }[];
     size: {
@@ -625,11 +630,11 @@ export declare const RoomDefSchema: z.ZodObject<{
     };
     terrain: {
         kind: "blocks";
-        liquid: "water" | "murk_water" | "lava";
         seed: number;
         base: number;
         amplitude: number;
         frequency: number;
+        liquid: "water" | "murk_water" | "lava";
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
         treeDensity?: number | undefined;
@@ -653,14 +658,14 @@ export declare const RoomDefSchema: z.ZodObject<{
     spawnTables: {
         id: string;
         region: {
-            kind: "circle";
             x: number;
             z: number;
             r: number;
+            kind: "circle";
         };
         mobs: {
-            weight: number;
             mob: string;
+            weight: number;
         }[];
         maxAlive: number;
         packSize: [number, number];
@@ -685,10 +690,10 @@ export declare const RoomDefSchema: z.ZodObject<{
     }[];
     npcs: {
         id: string;
-        name: string;
-        sprite: string;
         x: number;
         z: number;
+        name: string;
+        sprite: string;
         yaw: number;
         wanderRadius: number;
         dialog: string[];
@@ -704,9 +709,9 @@ export declare const RoomDefSchema: z.ZodObject<{
         warnAtSecLeft: number[];
     } | undefined;
 }, {
+    type: "building" | "hub" | "wilderness" | "dungeon";
     id: string;
     name: string;
-    type: "building" | "hub" | "wilderness" | "dungeon";
     biome: string;
     persistence: "stateful" | "ephemeral";
     size: {
@@ -724,9 +729,9 @@ export declare const RoomDefSchema: z.ZodObject<{
         base: number;
         amplitude: number;
         frequency: number;
-        liquid?: "water" | "murk_water" | "lava" | undefined;
         plateauRadius?: number | undefined;
         waterLevel?: number | undefined;
+        liquid?: "water" | "murk_water" | "lava" | undefined;
         treeDensity?: number | undefined;
     };
     flags: {
@@ -748,14 +753,14 @@ export declare const RoomDefSchema: z.ZodObject<{
     spawnTables: {
         id: string;
         region: {
-            kind: "circle";
             x: number;
             z: number;
             r: number;
+            kind: "circle";
         };
         mobs: {
-            weight: number;
             mob: string;
+            weight: number;
         }[];
         maxAlive: number;
         packSize: [number, number];
@@ -763,10 +768,10 @@ export declare const RoomDefSchema: z.ZodObject<{
     }[];
     npcs: {
         id: string;
-        name: string;
-        sprite: string;
         x: number;
         z: number;
+        name: string;
+        sprite: string;
         dialog: string[];
         yaw?: number | undefined;
         wanderRadius?: number | undefined;
@@ -776,6 +781,7 @@ export declare const RoomDefSchema: z.ZodObject<{
         } | undefined;
     }[];
     wind?: number | undefined;
+    nightLight?: number | undefined;
     fixedTime?: number | undefined;
     lifecycle?: {
         lifetimeSec: number;
@@ -783,10 +789,10 @@ export declare const RoomDefSchema: z.ZodObject<{
         warnAtSecLeft: number[];
     } | undefined;
     regions?: {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
         pvp?: boolean | undefined;
     }[] | undefined;
     prefabs?: {

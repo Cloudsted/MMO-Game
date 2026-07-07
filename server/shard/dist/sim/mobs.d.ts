@@ -14,6 +14,9 @@ export interface MoveIntent {
     x: number;
     z: number;
     speedMult: number;
+    /** max blocks this move may step DOWN (default ~1; chase/flee/return
+     *  pass PURPOSEFUL_MAX_DROP so treed/ledged mobs can drop to targets) */
+    maxDrop?: number;
 }
 export interface BrainDecision {
     move: MoveIntent | null;
@@ -22,9 +25,13 @@ export interface BrainDecision {
 }
 /**
  * One brain tick. Pure decision — the caller applies movement (with terrain)
- * and routes attack intents into the shared action FSM.
+ * and routes attack intents into the shared action FSM. `attackReachY` is
+ * the max |feet-Y delta| at which this mob's attack can land (melee vertical
+ * reach; Infinity for projectile mobs, which aim with real pitch) — targets
+ * 2D-close but vertically out of reach are CHASED (with drop-down moves),
+ * never punched through canopies and floors.
  */
-export declare function tickBrain(mob: Entity, def: MobDef, players: Entity[], now: number): BrainDecision;
+export declare function tickBrain(mob: Entity, def: MobDef, players: Entity[], now: number, attackReachY?: number): BrainDecision;
 /**
  * Apply a move intent with voxel rules: walk at speed, deflect around
  * blockers, step up/down at most one block, never into water or lava,
@@ -48,7 +55,8 @@ export declare function separateEntities(list: Entity[], dt: number, world: Voxe
     w: number;
     h: number;
 }): void;
-/** Find a legal spawn point in a spawn region (dry, unobstructed). */
+/** Find a legal spawn point in a spawn region (dry, unobstructed, ON THE
+ *  FLOOR — floorY lands under tree canopies/roofs, never on top of them). */
 export declare function findSpawnPoint(table: SpawnTable, world: VoxelWorld, _waterLevel: number | null): {
     x: number;
     z: number;

@@ -137,6 +137,10 @@ export const RoomDefSchema = z.object({
   /** Ambient wind strength for client foliage sway (0 = still, e.g. dungeons).
    *  Purely visual; sent to the client in the `world` message. ~1 = gentle. */
   wind: z.number().min(0).default(0),
+  /** Night minimum-light multiplier on the client's tuned night skylight
+   *  floor (1 = the original endpoint; default raised — owner: nights read
+   *  too dark). Purely visual; ships in the `world` message. */
+  nightLight: z.number().min(0).max(4).default(1.35),
   persistence: z.enum(["stateful", "ephemeral"]),
   /** pin the visual clock (dungeon mood); omit for the live day/night cycle */
   fixedTime: z.number().min(0).max(1).optional(),

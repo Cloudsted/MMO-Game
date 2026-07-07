@@ -43,6 +43,9 @@ public final class VoxelRenderer {
     public int meshVersion = 0;
     /** per-room wind strength (0 = still); drives cross-plant sway in voxel.vert */
     public float wind = 0f;
+    /** per-room night minimum-light multiplier on the tuned night skylight
+     *  endpoint (world message; room-def default). Mirror in VoxelLighting. */
+    public float nightLight = 1.35f;
     private float time = 0f;
 
     private static final class ChunkMeshes {
@@ -235,6 +238,7 @@ public final class VoxelRenderer {
         shader.setUniformMatrix("u_projView", cam.combined);
         shader.setUniformf("u_camPos", cam.position);
         shader.setUniformf("u_sun", dayNight.sunFactor);
+        shader.setUniformf("u_nightLight", nightLight);
         shader.setUniformf("u_time", time);
         shader.setUniformf("u_wind", wind);
         shader.setUniformf("u_fogColor", dayNight.skyColor.r, dayNight.skyColor.g, dayNight.skyColor.b);

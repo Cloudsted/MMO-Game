@@ -36,6 +36,13 @@ export declare class VoxelWorld {
     /** Feet Y for standing on top of the column's highest SOLID block. */
     standY(x: number, z: number): number;
     /**
+     * Feet Y for the LOWEST walkable gap in a column: solid below, two
+     * non-solid cells of headroom above. This is the FLOOR — the ground under
+     * a tree canopy or a structure roof, where standY would return the top of
+     * the canopy/roof itself. Falls back to standY when no gap exists.
+     */
+    floorY(x: number, z: number): number;
+    /**
      * The ground level under an entity at (x, feetY, z): top of the highest
      * solid block at or below feetY across the entity's footprint. Overhang-
      * safe (a roof above doesn't count). Feet exactly on a block top belong
