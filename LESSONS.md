@@ -364,6 +364,21 @@ wiring it in, and make batch pipelines report missing inputs and keep going
   RESPAWNS its children (shard host → RoomHosts) has the same shape: kill the
   parent, or the corpses reanimate.
 
+### Killing "the game" by toolchain identity sweeps up the OWNER's client too
+Cleaning up an unattended screenshot client with `Stop-Process` on every
+`java.exe` under the adoptium/JDK-21 toolchain killed TWO game JVMs — the
+second was the owner playing on `claude_test2` in the forest; the server
+log shows them logging straight back in 30 s later. Toolchain identity
+distinguishes the game from Gradle daemons, but not MY client from THEIRS
+(this machine is shared, and the owner often has a client up — that's the
+point of leaving the stack running). **Rules:** before killing, count the
+game JVMs and account for every online character (server log join lines /
+admin players tab) — an unaccounted-for JVM is the owner's, leave it;
+better, snapshot the game-JVM pid set BEFORE launching your client and
+kill only the difference. Killing the wrapper task alone still doesn't
+kill the game (see the earlier entry) — but "kill everything that looks
+like the game" is the opposite failure.
+
 ### Capacity constants embedded when the world was small fail SILENTLY when it grows
 Two in one session, both symptomless: (1) `findPath` in scripts/lib.mjs had
 a 60,000-node BFS cap from the 160-block-room era — on 480-block rooms long
