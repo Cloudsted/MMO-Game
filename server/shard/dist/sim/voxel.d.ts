@@ -43,6 +43,14 @@ export declare class VoxelWorld {
      */
     floorY(x: number, z: number): number;
     /**
+     * Feet Y of the walkable gap NEAREST refY in this column (solid below,
+     * two non-solid cells above). Roofed interiors stack several gaps —
+     * logging out in the great hall must not respawn you on its roof, and
+     * logging out on a rampart must not drop you into the room below.
+     * Falls back to standY when the column has no gap at all.
+     */
+    walkYNear(x: number, z: number, refY: number): number;
+    /**
      * The ground level under an entity at (x, feetY, z): top of the highest
      * solid block at or below feetY across the entity's footprint. Overhang-
      * safe (a roof above doesn't count). Feet exactly on a block top belong

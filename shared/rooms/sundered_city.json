@@ -5,7 +5,8 @@
   "biome": "ruin",
   "wind": 0.5,
   "persistence": "ephemeral",
-  "fixedTime": 0.84,
+  "fixedTime": 0.74,
+  "nightLight": 1.6,
   "lifecycle": {
     "downtimeSec": 300,
     "warnAtSecLeft": [30, 10]

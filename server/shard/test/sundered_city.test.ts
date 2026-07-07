@@ -114,6 +114,15 @@ describe("sundered_city preset gen", () => {
     }
   });
 
+  it("walkYNear picks the interior gap, not the keep roof (login-inside fix)", () => {
+    // hall column: gaps at feet 17 (interior) and 30 (roof top)
+    expect(world.walkYNear(128.5, 62.5, 17)).toBe(17);
+    expect(world.walkYNear(128.5, 62.5, 30)).toBe(30);
+    // outdoors: single gap = the ground, whatever the ref
+    expect(world.walkYNear(128.5, 150.5, 13)).toBe(13);
+    expect(world.walkYNear(128.5, 150.5, 40)).toBe(13);
+  });
+
   it("raised the plinth and kept the city ground flat (preset heights)", () => {
     expect(world.floorY(128.5, 218.5)).toBe(13); // city ground feet
     expect(world.floorY(128.5, 80.5)).toBe(17); // courtyard feet (plinth +4)

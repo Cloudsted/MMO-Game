@@ -884,8 +884,13 @@ export class RoomSim {
       this.removePlayer(existing);
     }
     // snap to the voxel ground: persisted y may predate this room's world,
-    // and paired-portal arrivals carry y=0 as a ground-snap sentinel
-    const groundY = this.world.standY(character.x, character.z);
+    // and paired-portal arrivals carry y=0 as a ground-snap sentinel.
+    // walkYNear (not standY): roofed interiors stack walkable gaps — a
+    // logout inside the keep must re-admit INSIDE, not on the ceiling.
+    const groundY =
+      character.y <= 0
+        ? this.world.standY(character.x, character.z)
+        : this.world.walkYNear(character.x, character.z, character.y);
     let spawnY =
       character.y <= 0 || Math.abs(character.y - groundY) > 2.5
         ? groundY
