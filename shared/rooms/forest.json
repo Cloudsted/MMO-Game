@@ -46,6 +46,14 @@
       "x": 240,
       "z": 472,
       "r": 2.2
+    },
+    {
+      "id": "forest-gloomfen",
+      "label": "Gloomfen Marsh",
+      "target": "gloomfen",
+      "x": 240,
+      "z": 30,
+      "r": 2.2
     }
   ],
   "spawnTables": [

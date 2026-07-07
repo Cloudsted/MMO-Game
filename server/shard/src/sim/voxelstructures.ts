@@ -11,7 +11,7 @@
  */
 import { BLOCK, WORLD_HEIGHT, type RoomDef } from "@fantasy-mmo/common";
 import { hash2, type VoxelWorld } from "./voxel.js";
-import { scatterPrefabs, type Rect, type ScatterResult } from "./prefabs.js";
+import { scatterPrefabs, stampPrefab, type Rect, type ScatterResult } from "./prefabs.js";
 
 const id = (name: string): number => {
   const def = BLOCK[name];
@@ -44,6 +44,26 @@ function authoredExclusions(def: RoomDef): Rect[] {
     out.push({ x0: DESERT_RUIN_E.cx - 8, z0: DESERT_RUIN_E.cz - 7, x1: DESERT_RUIN_E.cx + 8, z1: DESERT_RUIN_E.cz + 7 });
     out.push({ x0: DESERT_OASIS.x - 10, z0: DESERT_OASIS.z - 10, x1: DESERT_OASIS.x + 10, z1: DESERT_OASIS.z + 10 });
   }
+  if (def.id === "gloomfen") {
+    // sunken temple + the causeway line (same constants as buildGloomfen)
+    out.push({
+      x0: GLOOMFEN_TEMPLE.ox - 2,
+      z0: GLOOMFEN_TEMPLE.oz - 2,
+      x1: GLOOMFEN_TEMPLE.ox + GLOOMFEN_TEMPLE.w + 1,
+      z1: GLOOMFEN_TEMPLE.oz + GLOOMFEN_TEMPLE.d + 1,
+    });
+    out.push({ x0: GLOOMFEN_CAUSEWAY.x - 3, z0: GLOOMFEN_CAUSEWAY.z0 - 2, x1: GLOOMFEN_CAUSEWAY.x + 3, z1: GLOOMFEN_CAUSEWAY.z1 + 2 });
+  }
+  if (def.id === "cinderrift") {
+    // forge ruin arena + the bone road (same constants as buildCinderrift)
+    out.push({
+      x0: CINDER_FORGE.ox - 2,
+      z0: CINDER_FORGE.oz - 2,
+      x1: CINDER_FORGE.ox + CINDER_FORGE.w + 1,
+      z1: CINDER_FORGE.oz + CINDER_FORGE.d + 1,
+    });
+    out.push({ x0: CINDER_ROAD.x - 3, z0: CINDER_ROAD.z0 - 2, x1: CINDER_ROAD.x + 3, z1: CINDER_ROAD.z1 + 2 });
+  }
   return out;
 }
 
@@ -67,6 +87,15 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult 
       break;
     case "grounds":
       buildGroundsPavilion(b, def);
+      break;
+    case "gloomfen":
+      buildGloomfen(b, def, features);
+      break;
+    case "cinderrift":
+      buildCinderrift(b, def, features);
+      break;
+    case "crypt_depths":
+      buildCryptDepths(b, def, features);
       break;
   }
   // every portal gets a stone archway + a path apron facing the room spawn —
@@ -612,4 +641,251 @@ function buildGroundsPavilion(b: Builder, def: RoomDef): void {
     b.torch(px, FL + 3, pz);
   }
   b.fill(x0, FL + 3, z0, x0 + 7, FL + 3, z0 + 5, "thatch");
+}
+
+// ---------------------------------------------------------------------------
+// Gloomfen Marsh — the drowned kingdom's causeway runs from the Fen Gate
+// north through the shallows to the Sunken Temple. Intact near the gate,
+// collapsing deeper in (decay gradient); every ~7th plank is gone.
+// Constants shared with authoredExclusions so scatter stays off the line.
+// ---------------------------------------------------------------------------
+const GLOOMFEN_TEMPLE = { ox: 150, oz: 40, w: 20, d: 16 }; // center (160,48) = temple-guard table
+const GLOOMFEN_CAUSEWAY = { x: 160, z0: 58, z1: 304 }; // portal apron → temple approach
+
+function buildGloomfen(b: Builder, def: RoomDef, features: ScatterResult): void {
+  const seed = def.terrain.seed;
+  const wl = def.terrain.waterLevel ?? 11;
+  const deckY = wl + 1;
+  for (let z = GLOOMFEN_CAUSEWAY.z0; z <= GLOOMFEN_CAUSEWAY.z1; z++) {
+    // decay gradient: intact near the gate (south), rotting toward the temple
+    const missChance = z > 230 ? 0.05 : z > 140 ? 0.12 : 0.2;
+    const missing = hash2(seed ^ 0xca53, 1, z) < missChance;
+    for (const x of [GLOOMFEN_CAUSEWAY.x - 1, GLOOMFEN_CAUSEWAY.x, GLOOMFEN_CAUSEWAY.x + 1]) {
+      const g = b.g(x, z);
+      if (g >= deckY) {
+        // dry hummock: the old road runs on the ground
+        b.clearAbove(x, z, x, z, g, 8);
+        b.set(x, g, z, "path");
+      } else {
+        // shallows: plank deck one block over the murk — mind the gaps
+        b.clearAbove(x, z, x, z, deckY - 1, 8);
+        if (!missing) b.set(x, deckY, z, "planks");
+      }
+    }
+    // pale log posts carry the deck over the flooded runs
+    if (z % 4 === 0) {
+      for (const x of [GLOOMFEN_CAUSEWAY.x - 1, GLOOMFEN_CAUSEWAY.x + 1]) {
+        const g = b.g(x, z);
+        if (g + 1 <= deckY - 1) b.fill(x, g + 1, z, x, deckY - 1, z, "pale_log");
+      }
+    }
+  }
+  // Sunken Temple at (160,48): the temple-guard table's ground; its cache
+  // resolves "auto" → cache_gloomfen, and the spawnRegion hook re-centers
+  // the def table onto the stamped site (a no-op today — kept locked).
+  const hooks = stampPrefab(b, "sunken_temple", GLOOMFEN_TEMPLE.ox, GLOOMFEN_TEMPLE.oz, 0, 1);
+  if (hooks.lootCache) features.caches.push(hooks.lootCache);
+  if (hooks.spawnRegion) {
+    features.bindings.push({ tableId: "temple-guard", x: hooks.spawnRegion.x, z: hooks.spawnRegion.z });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The Cinderrift — a bone road climbs from the Rift Gate to the Forge Ruin
+// where the Furnace Golem waits. The road bridges lava runs on bleached
+// blocks; the forge prefab brings its own banner gate and lava trenches.
+// ---------------------------------------------------------------------------
+const CINDER_FORGE = { ox: 133, oz: 25, w: 22, d: 18 }; // center (144,34) = furnace-arena table
+const CINDER_ROAD = { x: 144, z0: 44, z1: 274 }; // forge gate apron → portal apron
+
+function buildCinderrift(b: Builder, def: RoomDef, features: ScatterResult): void {
+  const seed = def.terrain.seed;
+  const wl = def.terrain.waterLevel ?? 9;
+  for (let z = CINDER_ROAD.z0; z <= CINDER_ROAD.z1; z++) {
+    for (const x of [CINDER_ROAD.x - 1, CINDER_ROAD.x, CINDER_ROAD.x + 1]) {
+      const g = b.g(x, z);
+      if (g <= wl) {
+        // the road bridges the lava runs on bleached vertebrae
+        b.set(x, wl + 1, z, "bone_block");
+      } else {
+        b.clearAbove(x, z, x, z, g, 8);
+        b.set(x, g, z, hash2(seed ^ 0xb0e5, x, z) < 0.35 ? "bone_block" : "ash");
+      }
+    }
+  }
+  // Forge Ruin at (144,34): the golem arena. The prefab already raises the
+  // banner pair over its gate; the spawnRegion hook locks the boss table on.
+  const hooks = stampPrefab(b, "forge_ruin", CINDER_FORGE.ox, CINDER_FORGE.oz, 0, 1);
+  if (hooks.spawnRegion) {
+    features.bindings.push({ tableId: "furnace-arena", x: hooks.spawnRegion.x, z: hooks.spawnRegion.z });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Vaults of Morvane (crypt_depths) — the sealed floor UNDER the Sunken
+// Crypt. A dark-brick spine runs from the entrance south to the Frozen
+// Vault in the back third: bat cloisters flank it, a prison block holds
+// wraith-guarded caches behind iron bars, an ossuary lines the east, and
+// Morvane waits on an ice dais. Light = language: torches near the
+// entrance only; deeper it's crystal; the vault glows blue.
+// Everything walkable: 2-wide minimum corridors, 1-block steps.
+// ---------------------------------------------------------------------------
+function buildCryptDepths(b: Builder, def: RoomDef, features: ScatterResult): void {
+  const seed = def.terrain.seed;
+  const G = b.g(def.spawn.x, def.spawn.z);
+  const FL = G + 1;
+  const M = 2;
+  const X1 = def.size.w - 1 - M;
+  const Z1 = def.size.h - 1 - M;
+
+  // perimeter: dark-brick vault walls, bitten with age
+  b.wallRun(M, M, X1, M, FL, 5, "dark_bricks");
+  b.wallRun(M, Z1, X1, Z1, FL, 5, "dark_bricks");
+  b.wallRun(M, M, M, Z1, FL, 5, "dark_bricks");
+  b.wallRun(X1, M, X1, Z1, FL, 5, "dark_bricks");
+  for (let i = 0; i < 44; i++) {
+    const t = hash2(seed ^ 0xdd1, i, 0);
+    const side = i % 4;
+    const along = Math.floor(hash2(seed ^ 0xdd2, i, 1) * (def.size.w - 2 * M - 2)) + M + 1;
+    const [x, z] = side === 0 ? [along, M] : side === 1 ? [along, Z1] : side === 2 ? [M, along] : [X1, along];
+    b.fill(x, FL + 3 + Math.floor(t * 2), z, x, FL + 5, z, 0);
+  }
+
+  // entrance court + the central spine (portal → vault gate), dead level
+  b.flatten(42, 80, 54, 88, G, "path");
+  b.flatten(46, 31, 50, 84, G, "path");
+  // light = language: torches only near the entrance...
+  for (const [tx, tz] of [
+    [44, 79],
+    [52, 79],
+    [45, 68],
+    [51, 68],
+  ] as const) {
+    b.set(tx, FL, tz, "dark_bricks");
+    b.torch(tx, FL + 1, tz);
+  }
+  // ...crystal pedestals from mid-spine down
+  for (const [cx, cz] of [
+    [45, 52],
+    [51, 46],
+    [45, 41],
+  ] as const) {
+    b.set(cx, FL, cz, "dark_bricks");
+    b.set(cx, FL + 1, cz, "crystal");
+  }
+
+  // bat cloisters: ruined halls west and east of the spine
+  const hall = (x0: number, z0: number, x1: number, z1: number, salt: number) => {
+    b.clearAbove(x0 - 1, z0 - 1, x1 + 1, z1 + 1, G, 10);
+    b.flatten(x0, z0, x1, z1, G, "mossy_cobblestone");
+    for (let x = x0; x <= x1; x++) {
+      for (const z of [z0, z1]) {
+        const h = Math.max(2, 4 - Math.floor(hash2(seed ^ salt, x, z) * 3));
+        b.fill(x, FL, z, x, FL + h - 1, z, "dark_bricks");
+      }
+    }
+    for (let z = z0 + 1; z <= z1 - 1; z++) {
+      for (const x of [x0, x1]) {
+        const h = Math.max(2, 4 - Math.floor(hash2(seed ^ salt ^ 0x55, x, z) * 3));
+        b.fill(x, FL, z, x, FL + h - 1, z, "dark_bricks");
+      }
+    }
+    b.set(x0 + 1, FL, z0 + 1, "crystal");
+    b.set(x1 - 1, FL, z1 - 1, "crystal");
+  };
+  // doorways carve the FULL wall height (a lintel would read as a wall to
+  // the standing-height grid — the same rule bots path by)
+  hall(17, 57, 34, 70, 0xa1); // bat-cloister-w, center ~(26,64)
+  b.fill(34, FL, 63, 34, FL + 3, 64, 0); // east doorway onto the spine
+  b.flatten(35, 63, 45, 64, G, "path");
+  hall(61, 52, 78, 63, 0xa2); // bat-cloister-e, center ~(70,58)
+  b.fill(61, FL, 57, 61, FL + 3, 58, 0); // west doorway
+  b.flatten(51, 57, 60, 58, G, "path");
+
+  // prison block: solid shell, three iron-barred cells, wraith-guarded
+  // caches inside. Each cell's bar-front hangs AJAR: a 1-block doorway gap
+  // (bottom two blocks open) so every cache is reachable.
+  b.clearAbove(13, 31, 31, 45, G, 10);
+  b.flatten(14, 32, 30, 44, G, "stone");
+  for (let x = 14; x <= 30; x++) {
+    for (const z of [32, 44]) b.fill(x, FL, z, x, FL + 3, z, "dark_bricks");
+  }
+  for (let z = 33; z <= 43; z++) {
+    for (const x of [14, 30]) b.fill(x, FL, z, x, FL + 3, z, "dark_bricks");
+  }
+  b.fill(30, FL, 37, 30, FL + 3, 38, 0); // entrance breach onto the spine corridor
+  b.flatten(31, 37, 45, 38, G, "path");
+  for (const dz of [36, 40]) b.fill(15, FL, dz, 20, FL + 2, dz, "dark_bricks"); // cell dividers
+  for (const [cz0, cz1, gapZ] of [
+    [33, 35, 34],
+    [37, 39, 38],
+    [41, 43, 42],
+  ] as const) {
+    for (let z: number = cz0; z <= cz1; z++) {
+      // the gate hangs ajar: a full-height 1-block slot at gapZ (iron_bars
+      // are solid — anything overhead would read as a 3-block step)
+      if (z !== gapZ) b.fill(20, FL, z, 20, FL + 2, z, "iron_bars");
+    }
+    features.caches.push({ x: 17.5, y: FL, z: gapZ + 0.5, table: "cache_crypt", respawnSec: 600 });
+  }
+
+  // ossuary: bone-ribbed gallery east of the spine
+  b.clearAbove(65, 30, 83, 44, G, 10);
+  b.flatten(66, 31, 82, 43, G, "stone");
+  for (let x = 66; x <= 82; x++) {
+    for (const z of [31, 43]) b.fill(x, FL, z, x, FL + 3, z, "dark_bricks");
+  }
+  for (let z = 32; z <= 42; z++) {
+    for (const x of [66, 82]) b.fill(x, FL, z, x, FL + 3, z, "dark_bricks");
+  }
+  b.fill(66, FL, 36, 66, FL + 3, 37, 0); // west doorway onto the spine
+  b.flatten(51, 36, 65, 37, G, "path");
+  for (let x = 68; x <= 80; x += 2) {
+    b.fill(x, FL, 32, x, FL + 1, 32, "bone_block"); // niche ribs, north wall
+    b.fill(x, FL, 42, x, FL + 1, 42, "bone_block"); // niche ribs, south wall
+  }
+  b.set(74, FL, 37, "crystal");
+
+  // graveyard court by the entrance — the sanitized face of what's below
+  stampPrefab(b, "graveyard", 56, 73, 0, 1);
+
+  // --- the Frozen Vault: the sealed back third ---
+  b.clearAbove(3, 3, X1 - 1, 29, G, 12);
+  b.flatten(3, 3, X1 - 1, 29, G, "snow");
+  b.flatten(3, 30, X1 - 1, 30, G, "stone"); // level the gate-wall line
+  b.wallRun(3, 30, 45, 30, FL, 5, "dark_bricks");
+  b.wallRun(51, 30, X1 - 1, 30, FL, 5, "dark_bricks");
+  b.flatten(46, 30, 50, 30, G, "path"); // the 3-wide vault mouth
+  b.fill(46, FL, 30, 46, FL + 3, 30, "dark_bricks");
+  b.fill(50, FL, 30, 50, FL + 3, 30, "dark_bricks");
+  b.set(46, FL + 4, 30, "blue_crystal");
+  b.set(50, FL + 4, 30, "blue_crystal");
+  // frozen colonnade (kept off the approach and the dais court)
+  for (let i = 0; i < 14; i++) {
+    const px = 6 + Math.floor(hash2(seed ^ 0xf1ce, i, 0) * (X1 - 12));
+    const pz = 5 + Math.floor(hash2(seed ^ 0xf1ce, i, 1) * 22);
+    if (px >= 42 && px <= 54) continue;
+    if (Math.hypot(px - 48, pz - 16) < 7) continue;
+    const h = 3 + Math.floor(hash2(seed ^ 0xf1ce, i, 2) * 3);
+    b.fill(px, FL, pz, px, FL + h - 1, pz, "ice");
+  }
+  // blue crystal clusters carry the vault's light
+  for (let i = 0; i < 20; i++) {
+    const cx = 5 + Math.floor(hash2(seed ^ 0xb1ff, i, 0) * (X1 - 10));
+    const cz = 4 + Math.floor(hash2(seed ^ 0xb1ff, i, 1) * 24);
+    b.world.setIfAir(cx, FL, cz, id("blue_crystal"));
+  }
+  // Morvane's dais: three one-block ice steps to the throne (48,16)
+  b.fill(45, FL, 13, 51, FL, 19, "ice");
+  b.fill(46, FL + 1, 14, 50, FL + 1, 18, "ice");
+  b.fill(47, FL + 2, 15, 49, FL + 2, 17, "ice");
+  for (const [cx, cz] of [
+    [45, 13],
+    [51, 13],
+    [45, 19],
+    [51, 19],
+  ] as const) {
+    b.set(cx, FL + 1, cz, "blue_crystal");
+  }
+  b.set(48, FL + 3, 15, "blue_crystal"); // the throne-back shard
 }

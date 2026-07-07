@@ -65,7 +65,10 @@
       "x": 61, "z": 94, "yaw": 0, "wanderRadius": 0,
       "dialog": [
         "That portal leads to the Whispering Forest. Slimes near the road, wolves in the deep wood, bandits camped up north.",
-        "Die out there and your gear stays where you fell. Run back quick before someone else finds it."
+        "Die out there and your gear stays where you fell. Run back quick before someone else finds it.",
+        "There's a gate at the far end of the forest now — the Fen Gate. That one's for veterans, friend. Level eight or don't bother; the Gloomfen doesn't give bodies back.",
+        "Past the deep desert they've opened the Cinderrift. Ash, lava, and the forge-dead still working their shifts. Bring rift-forged steel or bring a will.",
+        "And if you've beaten the Gravelord — the crypt has a lower door. The Vaults of Morvane. Whatever's down there, the Gravelord was standing guard OVER it. Think on that."
       ]
     },
     {

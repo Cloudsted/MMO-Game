@@ -38,7 +38,9 @@ function parseArgs(): Args {
   return {
     shardId: get("--id") ?? process.env.SHARD_ID ?? "shard1",
     portBase: Number(get("--portBase") ?? process.env.SHARD_ROOM_PORT_BASE ?? 4210),
-    capacity: Number(get("--capacity") ?? process.env.SHARD_CAPACITY ?? 8),
+    // default must cover every defined room on a single-shard dev stack
+    // (9 rooms since the difficulty-graph batch; headroom for the next few)
+    capacity: Number(get("--capacity") ?? process.env.SHARD_CAPACITY ?? 12),
   };
 }
 

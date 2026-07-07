@@ -1,10 +1,11 @@
 {
-  "id": "dungeon",
-  "name": "Sunken Crypt",
+  "id": "crypt_depths",
+  "name": "Vaults of Morvane",
   "type": "dungeon",
   "biome": "dungeon",
+  "wind": 0,
   "persistence": "ephemeral",
-  "fixedTime": 0.92,
+  "fixedTime": 0.95,
   "lifecycle": {
     "lifetimeSec": 3000,
     "downtimeSec": 240,
@@ -15,17 +16,17 @@
     ]
   },
   "size": {
-    "w": 64,
-    "h": 64
+    "w": 96,
+    "h": 96
   },
   "spawn": {
-    "x": 32,
-    "z": 56,
+    "x": 48,
+    "z": 86,
     "yaw": 3.14159
   },
   "terrain": {
     "kind": "blocks",
-    "seed": 40412,
+    "seed": 50533,
     "base": 12,
     "amplitude": 1,
     "frequency": 0.05,
@@ -38,97 +39,110 @@
   },
   "portals": [
     {
-      "id": "dungeon-hub",
-      "label": "Hub City",
-      "target": "hub",
-      "x": 32,
-      "z": 60,
-      "r": 2.2
-    },
-    {
-      "id": "dungeon-depths",
-      "label": "Vaults of Morvane",
-      "target": "crypt_depths",
-      "x": 46,
-      "z": 6,
+      "id": "depths-dungeon",
+      "label": "Sunken Crypt",
+      "target": "dungeon",
+      "x": 48,
+      "z": 90,
       "r": 2.2
     }
   ],
   "spawnTables": [
     {
-      "id": "crypt-slimes",
+      "id": "bat-cloister-w",
       "region": {
         "kind": "circle",
-        "x": 22,
-        "z": 40,
-        "r": 8
+        "x": 26,
+        "z": 64,
+        "r": 7
       },
       "mobs": [
         {
-          "mob": "slime",
-          "weight": 1
-        }
-      ],
-      "maxAlive": 5,
-      "packSize": [
-        2,
-        3
-      ],
-      "respawnSec": 60
-    },
-    {
-      "id": "crypt-skeletons-e",
-      "region": {
-        "kind": "circle",
-        "x": 44,
-        "z": 36,
-        "r": 9
-      },
-      "mobs": [
-        {
-          "mob": "skeleton",
+          "mob": "bone_bat",
           "weight": 1
         }
       ],
       "maxAlive": 6,
       "packSize": [
-        2,
-        3
+        3,
+        4
       ],
-      "respawnSec": 70
+      "respawnSec": 50
     },
     {
-      "id": "crypt-skeletons-n",
+      "id": "bat-cloister-e",
       "region": {
         "kind": "circle",
-        "x": 26,
-        "z": 20,
-        "r": 8
+        "x": 70,
+        "z": 58,
+        "r": 7
       },
       "mobs": [
         {
-          "mob": "skeleton",
+          "mob": "bone_bat",
           "weight": 1
         }
       ],
       "maxAlive": 5,
       "packSize": [
-        2,
-        2
+        3,
+        3
       ],
-      "respawnSec": 70
+      "respawnSec": 50
     },
     {
-      "id": "boss-hall",
+      "id": "wraith-cells",
       "region": {
         "kind": "circle",
-        "x": 46,
-        "z": 12,
+        "x": 25,
+        "z": 38,
         "r": 5
       },
       "mobs": [
         {
-          "mob": "minotaur_boss",
+          "mob": "wraith",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 120
+    },
+    {
+      "id": "wraith-ossuary",
+      "region": {
+        "kind": "circle",
+        "x": 74,
+        "z": 37,
+        "r": 5
+      },
+      "mobs": [
+        {
+          "mob": "wraith",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 120
+    },
+    {
+      "id": "lich-vault",
+      "region": {
+        "kind": "circle",
+        "x": 48,
+        "z": 16,
+        "r": 5
+      },
+      "mobs": [
+        {
+          "mob": "lich_boss",
           "weight": 1
         }
       ],

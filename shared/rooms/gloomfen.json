@@ -1,0 +1,247 @@
+{
+  "id": "gloomfen",
+  "name": "Gloomfen Marsh",
+  "type": "wilderness",
+  "biome": "swamp",
+  "wind": 0.45,
+  "persistence": "stateful",
+  "fixedTime": 0.86,
+  "size": {
+    "w": 320,
+    "h": 320
+  },
+  "spawn": {
+    "x": 160,
+    "z": 300,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 91177,
+    "base": 12,
+    "amplitude": 2.5,
+    "frequency": 0.025,
+    "plateauRadius": 8,
+    "waterLevel": 11,
+    "liquid": "murk_water",
+    "treeDensity": 0.9
+  },
+  "flags": {
+    "safeZone": true,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "gloomfen-forest",
+      "label": "Whispering Forest",
+      "target": "forest",
+      "x": 160,
+      "z": 308,
+      "r": 2.2
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "weaver-hollow-w",
+      "region": {
+        "kind": "circle",
+        "x": 95,
+        "z": 210,
+        "r": 18
+      },
+      "mobs": [
+        {
+          "mob": "giant_spider",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [
+        2,
+        3
+      ],
+      "respawnSec": 45
+    },
+    {
+      "id": "weaver-hollow-e",
+      "region": {
+        "kind": "circle",
+        "x": 225,
+        "z": 190,
+        "r": 16
+      },
+      "mobs": [
+        {
+          "mob": "giant_spider",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [
+        2,
+        2
+      ],
+      "respawnSec": 45
+    },
+    {
+      "id": "serpent-shallows",
+      "region": {
+        "kind": "circle",
+        "x": 150,
+        "z": 160,
+        "r": 24
+      },
+      "mobs": [
+        {
+          "mob": "bog_serpent",
+          "weight": 3
+        },
+        {
+          "mob": "marsh_wisp",
+          "weight": 2
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 50
+    },
+    {
+      "id": "strangler-thicket",
+      "region": {
+        "kind": "circle",
+        "x": 250,
+        "z": 120,
+        "r": 16
+      },
+      "mobs": [
+        {
+          "mob": "mantrap",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 60
+    },
+    {
+      "id": "lizard-ruin",
+      "region": {
+        "kind": "circle",
+        "x": 90,
+        "z": 80,
+        "r": 18
+      },
+      "mobs": [
+        {
+          "mob": "lizardman",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [
+        2,
+        3
+      ],
+      "respawnSec": 70
+    },
+    {
+      "id": "temple-guard",
+      "region": {
+        "kind": "circle",
+        "x": 160,
+        "z": 48,
+        "r": 12
+      },
+      "mobs": [
+        {
+          "mob": "lizardman",
+          "weight": 2
+        },
+        {
+          "mob": "marsh_wisp",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [
+        2,
+        2
+      ],
+      "respawnSec": 80
+    }
+  ],
+  "prefabs": [
+    {
+      "prefab": "spider_hollow",
+      "count": 1,
+      "minSpacing": 0,
+      "near": {
+        "x": 95,
+        "z": 210,
+        "within": 25
+      },
+      "bindSpawnTable": "weaver-hollow-w"
+    },
+    {
+      "prefab": "spider_hollow",
+      "count": 1,
+      "minSpacing": 0,
+      "near": {
+        "x": 225,
+        "z": 190,
+        "within": 25
+      },
+      "bindSpawnTable": "weaver-hollow-e"
+    },
+    {
+      "prefab": "stone_circle",
+      "count": 3,
+      "minSpacing": 16,
+      "near": {
+        "x": 150,
+        "z": 160,
+        "within": 40
+      }
+    },
+    {
+      "prefab": "ruined_watchtower",
+      "count": 1,
+      "minSpacing": 0,
+      "near": {
+        "x": 90,
+        "z": 80,
+        "within": 22
+      }
+    },
+    {
+      "prefab": "ruined_watchtower",
+      "count": 1,
+      "minSpacing": 60,
+      "ruinBias": 1
+    },
+    {
+      "prefab": "fallen_giant",
+      "count": 3,
+      "minSpacing": 55
+    },
+    {
+      "prefab": "graveyard",
+      "count": 1,
+      "minSpacing": 0
+    },
+    {
+      "prefab": "wayshrine",
+      "count": 2,
+      "minSpacing": 25,
+      "nearPortals": true
+    }
+  ],
+  "npcs": []
+}

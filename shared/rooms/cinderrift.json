@@ -1,0 +1,184 @@
+{
+  "id": "cinderrift",
+  "name": "The Cinderrift",
+  "type": "wilderness",
+  "biome": "volcanic",
+  "wind": 0.3,
+  "persistence": "stateful",
+  "size": {
+    "w": 288,
+    "h": 288
+  },
+  "spawn": {
+    "x": 144,
+    "z": 270,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 66091,
+    "base": 14,
+    "amplitude": 9,
+    "frequency": 0.028,
+    "plateauRadius": 8,
+    "waterLevel": 9,
+    "liquid": "lava",
+    "treeDensity": 0.3
+  },
+  "flags": {
+    "safeZone": true,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "cinderrift-desert",
+      "label": "Sunscour Desert",
+      "target": "desert",
+      "x": 144,
+      "z": 278,
+      "r": 2.2
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "husk-fields-w",
+      "region": {
+        "kind": "circle",
+        "x": 90,
+        "z": 190,
+        "r": 20
+      },
+      "mobs": [
+        {
+          "mob": "ash_husk",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 7,
+      "packSize": [
+        3,
+        4
+      ],
+      "respawnSec": 55
+    },
+    {
+      "id": "husk-fields-e",
+      "region": {
+        "kind": "circle",
+        "x": 205,
+        "z": 175,
+        "r": 18
+      },
+      "mobs": [
+        {
+          "mob": "ash_husk",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [
+        3,
+        3
+      ],
+      "respawnSec": 55
+    },
+    {
+      "id": "ember-terrace",
+      "region": {
+        "kind": "circle",
+        "x": 150,
+        "z": 120,
+        "r": 22
+      },
+      "mobs": [
+        {
+          "mob": "fire_elemental",
+          "weight": 2
+        },
+        {
+          "mob": "ash_husk",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [
+        1,
+        2
+      ],
+      "respawnSec": 65
+    },
+    {
+      "id": "forge-approach",
+      "region": {
+        "kind": "circle",
+        "x": 144,
+        "z": 60,
+        "r": 14
+      },
+      "mobs": [
+        {
+          "mob": "fire_elemental",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 3,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 70
+    },
+    {
+      "id": "furnace-arena",
+      "region": {
+        "kind": "circle",
+        "x": 144,
+        "z": 34,
+        "r": 6
+      },
+      "mobs": [
+        {
+          "mob": "cinder_golem_boss",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 900
+    }
+  ],
+  "prefabs": [
+    {
+      "prefab": "mine_adit",
+      "count": 2,
+      "minSpacing": 80
+    },
+    {
+      "prefab": "abandoned_camp",
+      "count": 3,
+      "minSpacing": 50
+    },
+    {
+      "prefab": "ruined_watchtower",
+      "count": 2,
+      "minSpacing": 70,
+      "ruinBias": 1
+    },
+    {
+      "prefab": "graveyard",
+      "count": 1,
+      "minSpacing": 0
+    },
+    {
+      "prefab": "wayshrine",
+      "count": 2,
+      "minSpacing": 25,
+      "nearPortals": true
+    }
+  ],
+  "npcs": []
+}
