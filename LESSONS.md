@@ -670,3 +670,56 @@ Three test cycles died staging the equipment paper-doll screenshot
   an ability release. Same shape of trap for xp (level-up full-heals) and for
   regen (the player creeps up 2 hp/s off the post-damage gate — an assertion of
   `hp === 10` after a two-second wait fails, and the code was fine).
+
+## Content review has to be adversarial, and it has to check the economy
+
+Three verifier agents read a 24-mob roster that had already passed typecheck, 347
+tests, a registry cross-check and a clean 10-room boot. They found **seven blockers**,
+and every one of them was the same shape: *a mob handed something from a tier it does
+not belong to.*
+
+- `slagback_troll` — three alive, 120-second respawn — carried `golem_boss_drops`,
+  the Furnace Golem's own table. `forge_ward` and `frostplate_revenant` (L13) carried
+  the L16 Sentinel's. `kaharat` (L9) and `sekhat` (L10) carried `boss_drops`, which
+  *guarantees an epic weapon*, in the persistent L5-8 desert.
+- `grave_harrower` at L15 resolved to **1409 xp**. The crypt's boss is worth 1400,
+  for twice the hp, and the harrower shared a 90-second respawn with another elite.
+- `pallid_mourner`'s rank multiplies hp x2.5 and damage x12 and flips it from a
+  fleeing ghost to a hunter — and it was worth **9 xp**, because level alone scales xp
+  far too gently for that. Ranks needed an `xpMult`.
+
+None of this fails a type check or a unit test. It fails an *economy*, silently, and
+you find out weeks later when nobody buys anything. **Rules:**
+
+1. **A boss loot table (one with a `guaranteed` slot) may only sit on a solitary mob
+   with a slow respawn.** Now a test.
+2. **Nothing may out-earn the boss of its own room.** Now a test.
+3. **A rank that changes what a mob IS must change what it's WORTH.** `MobRankSchema.xpMult`.
+4. When you copy a loot table id from another mob, you have copied its tier. Look at
+   the table, not the name.
+
+Two more, from the same pass:
+
+- **`allyHeal` had no faction filter.** It mended every mob in radius, so a Forge-Tender
+  would silently heal the ash husks that wandered past her, welding two spawn tables
+  into one fight. Gate pack effects on shared spawner / summon link (`samePack()`).
+- **`chooseAttack` treats every `self` ability as always-in-range.** Only `allyHeal` and
+  `summon` carry their own gate (a hurt ally / a minion cap). A raw `heal` self ability
+  on a mob is therefore cast at full health, forever. Use
+  `allyHeal {radius: 2.5, includeSelf: true}` as a gated self-heal instead. Now a test.
+
+### "No mob may outrun the player" is the wrong rule
+The obvious invariant fails on `bone_bat`, which has run at 4.6 m/s (player: 4.5) since
+phase 4 and has never been a problem. The reason is the **leash**: a mob that exceeds
+`leashRadius` from its home gives up. So a faster-than-player mob is fine; a
+faster-than-player mob with a *huge* leash is a death sentence you cannot decline.
+The rule is **"anything that outruns you must eventually give up"** — cap the leash, not
+the speed. (Applying it caught `aelthir`: 4.6 m/s, 900 hp, never flees, leash 60 — worse
+than the mob the reviewers actually flagged.)
+
+### Ranks silently rot when no spawn table reaches them
+A rank only fires when something spawns the mob at or above its `atLevel`, and
+`summonWave` / room events spawn at the def's base level. 13 of 28 ranked mobs currently
+have ranks nothing in the world reaches. Some are deliberate hooks for future rooms
+(thrace_redcap's L12 waits for the Gloomfen); some are just missed. Nothing warns you.
+`npx tsx tools/rank-coverage.mts` prints the number. Run it after adding ranks.
