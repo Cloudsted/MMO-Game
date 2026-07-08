@@ -523,13 +523,20 @@ export function findSpawnPoint(
   return null;
 }
 
-/** Weighted mob pick from a spawn table. */
-export function pickMob(table: SpawnTable): string {
+/** Weighted pick from a spawn table: the mob id AND its (optional) level
+ *  override — a table reusing a low-level mob deeper in the world spawns it
+ *  scaled up, with its level-gated abilities unlocked (registry.resolveMob). */
+export function pickMobEntry(table: SpawnTable): { mob: string; level?: number } {
   const total = table.mobs.reduce((s, m) => s + m.weight, 0);
   let roll = Math.random() * total;
   for (const m of table.mobs) {
     roll -= m.weight;
-    if (roll <= 0) return m.mob;
+    if (roll <= 0) return m;
   }
-  return table.mobs[0]!.mob;
+  return table.mobs[0]!;
+}
+
+/** Weighted mob pick from a spawn table (id only). */
+export function pickMob(table: SpawnTable): string {
+  return pickMobEntry(table).mob;
 }

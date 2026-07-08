@@ -1,7 +1,7 @@
 {
   "movement": {
     "walkSpeed": 4.5,
-    "gravity": -22.0,
+    "gravity": -22,
     "jumpVelocity": 7.5,
     "playerRadius": 0.3,
     "playerHeight": 1.7,
@@ -24,10 +24,10 @@
     "staggerMs": 400,
     "projectileHitRadius": 0.55,
     "meleeRangeGrace": 0.6,
-    "meleeVerticalReach": 2.0,
+    "meleeVerticalReach": 2,
     "attackBufferMs": 200,
-    "hpRegenPerSec": 2.0,
-    "manaRegenPerSec": 3.0,
+    "hpRegenPerSec": 2,
+    "manaRegenPerSec": 3,
     "regenDelayAfterDamageMs": 5000,
     "lootLockMobMs": 30000,
     "lootLockDeathMs": 180000,
@@ -39,22 +39,52 @@
     "deathDropsEquipment": true
   },
   "building": {
-    "placeRangeM": 6.0,
+    "placeRangeM": 6,
     "maxPlayerBlocksPerRoom": 6000
   },
   "items": {
     "statSpread": {
-      "dmg": { "common": 0.04, "uncommon": 0.06, "rare": 0.09, "epic": 0.12 },
-      "spd": { "common": 0.02, "uncommon": 0.03, "rare": 0.045, "epic": 0.06 },
-      "armor": { "common": 0.05, "uncommon": 0.07, "rare": 0.1, "epic": 0.14 }
+      "dmg": {
+        "common": 0.04,
+        "uncommon": 0.06,
+        "rare": 0.09,
+        "epic": 0.12
+      },
+      "spd": {
+        "common": 0.02,
+        "uncommon": 0.03,
+        "rare": 0.045,
+        "epic": 0.06
+      },
+      "armor": {
+        "common": 0.05,
+        "uncommon": 0.07,
+        "rare": 0.1,
+        "epic": 0.14
+      }
     },
     "durability": {
-      "rarityMult": { "common": 1.0, "uncommon": 1.35, "rare": 1.8, "epic": 2.5 },
+      "rarityMult": {
+        "common": 1,
+        "uncommon": 1.35,
+        "rare": 1.8,
+        "epic": 2.5
+      },
       "spread": 0.1
     },
     "mods": {
-      "chanceByRarity": { "common": 0.04, "uncommon": 0.12, "rare": 0.25, "epic": 0.45 },
-      "secondModChanceByRarity": { "common": 0.0, "uncommon": 0.02, "rare": 0.06, "epic": 0.15 },
+      "chanceByRarity": {
+        "common": 0.04,
+        "uncommon": 0.12,
+        "rare": 0.25,
+        "epic": 0.45
+      },
+      "secondModChanceByRarity": {
+        "common": 0,
+        "uncommon": 0.02,
+        "rare": 0.06,
+        "epic": 0.15
+      },
       "curseChance": 0.15,
       "caps": {
         "moveSpeedPct": 0.3,
@@ -70,7 +100,7 @@
         "maxMana": 60,
         "thorns": 15,
         "lifesteal": 0.35,
-        "goldFind": 1.0
+        "goldFind": 1
       },
       "sellBonusPerPerk": 0.25,
       "sellPenaltyPerCurse": 0.15
@@ -90,10 +120,18 @@
     "xpExponent": 1.6,
     "maxLevel": 30
   },
+  "mobs": {
+    "scaling": {
+      "hpPerLevel": 0.14,
+      "damagePerLevel": 0.11,
+      "xpPerLevel": 0.17,
+      "maxLevelBonus": 12
+    }
+  },
   "world": {
     "worldHeight": 48,
     "chunkBlocks": 16,
     "dayLengthSec": 4800,
-    "terrainYToleranceM": 3.0
+    "terrainYToleranceM": 3
   }
 }

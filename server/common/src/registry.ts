@@ -124,6 +124,21 @@ export const AbilityDefSchema = z.object({
       text: z.string().optional(),
     })
     .optional(),
+  /** self-kind support: on release, heal every living mob within `radius`
+   *  (the caster too, unless includeSelf is false). The option only enters
+   *  the attack kit while some eligible ally sits below `castIfAllyBelowPct`
+   *  of max hp — otherwise a healer would spam it at full health. This is
+   *  what turns a caster mob into a pack HEALER. */
+  allyHeal: z
+    .object({
+      amount: z.number().positive(),
+      radius: z.number().positive().default(8),
+      castIfAllyBelowPct: z.number().min(0).max(1).default(0.75),
+      includeSelf: z.boolean().default(true),
+      /** flavor line broadcast to nearby players when it lands */
+      text: z.string().optional(),
+    })
+    .optional(),
   canMoveWhile: z.boolean(),
   interruptible: z.boolean(),
   cooldownMs: z.number().int(),
@@ -179,6 +194,29 @@ export const MobAttackSchema = z.object({
 });
 export type MobAttackDef = z.infer<typeof MobAttackSchema>;
 
+/**
+ * A level gate on a mob's kit. World-gen mobs are REUSED across rooms at
+ * different levels (a forest bandit at L5 just swings; the same bandit at L13
+ * in the Gloomfen has learned to throw a knife and hex you). Every rank whose
+ * `atLevel` <= the spawned level applies, in order: `remove` strips ability ids
+ * from the kit, `add` appends new options, and the mult knobs re-tune the mob
+ * on top of the global per-level scaling. Levels come from the spawn table.
+ */
+export const MobRankSchema = z.object({
+  atLevel: z.number().int(),
+  /** attack options unlocked at this level */
+  add: z.array(MobAttackSchema).default([]),
+  /** ability ids to drop from the kit (a veteran stops using the weak swing) */
+  remove: z.array(z.string()).default([]),
+  /** extra multipliers ON TOP of constants.mobs.scaling (1 = no change) */
+  hpMult: z.number().positive().default(1),
+  damageMult: z.number().positive().default(1),
+  moveSpeedMult: z.number().positive().default(1),
+  /** display suffix: "Bandit" -> "Bandit Veteran" */
+  titleSuffix: z.string().optional(),
+});
+export type MobRankDef = z.infer<typeof MobRankSchema>;
+
 export const MobDefSchema = z.object({
   name: z.string(),
   sprite: z.string(),
@@ -190,6 +228,8 @@ export const MobDefSchema = z.object({
   ability: z.string().optional(),
   /** attack kit — bosses/bigger mobs carry 2+ options (melee + ranged...) */
   attacks: z.array(MobAttackSchema).min(1).optional(),
+  /** level-gated kit growth; see MobRankSchema. Sorted by atLevel at resolve. */
+  ranks: z.array(MobRankSchema).default([]),
   aggroRadius: z.number(),
   attackRange: z.number(),
   leashRadius: z.number(),
@@ -213,6 +253,82 @@ export type MobDef = z.infer<typeof MobDefSchema>;
 export function mobAttacks(def: MobDef): MobAttackDef[] {
   if (def.attacks && def.attacks.length > 0) return def.attacks;
   return def.ability ? [{ ability: def.ability, weight: 1 }] : [];
+}
+
+/** Per-level growth curve for reused world-gen mobs (constants.mobs.scaling). */
+export interface MobScaling {
+  hpPerLevel: number;
+  damagePerLevel: number;
+  xpPerLevel: number;
+  maxLevelBonus: number;
+}
+
+/** A mob def evaluated at a concrete spawn level. */
+export interface ResolvedMob {
+  level: number;
+  name: string;
+  hp: number;
+  damage: number;
+  moveSpeed: number;
+  xp: number;
+  attacks: MobAttackDef[];
+}
+
+/**
+ * Evaluate `def` at `level`. Stats compound per level above the def's base
+ * level — `base * (1 + perLevel) ** delta` — so each extra level is the same
+ * RELATIVE step whether the mob is being reused at L6 or L16 (a linear ramp
+ * would make high-level reuse feel flat). Levels BELOW the def's base level
+ * never scale anything down: `delta` floors at 0, so a def is always at least
+ * as strong as it was authored. `maxLevelBonus` caps the delta so a typo in a
+ * spawn table cannot mint a 10,000 hp slime.
+ *
+ * Ranks then apply in ascending atLevel order: `remove` before `add`, so a rank
+ * can swap an ability out for a better one at the same level.
+ */
+export function resolveMob(def: MobDef, level: number | undefined, scaling: MobScaling): ResolvedMob {
+  const lvl = level ?? def.level;
+  const delta = Math.min(Math.max(0, lvl - def.level), scaling.maxLevelBonus);
+
+  let hpMult = Math.pow(1 + scaling.hpPerLevel, delta);
+  let dmgMult = Math.pow(1 + scaling.damagePerLevel, delta);
+  let speedMult = 1;
+  const xpMult = Math.pow(1 + scaling.xpPerLevel, delta);
+
+  let attacks = mobAttacks(def).slice();
+  let name = def.name;
+
+  for (const rank of [...def.ranks].sort((a, b) => a.atLevel - b.atLevel)) {
+    if (lvl < rank.atLevel) continue;
+    if (rank.remove.length) {
+      const drop = new Set(rank.remove);
+      attacks = attacks.filter((a) => !drop.has(a.ability));
+    }
+    if (rank.add.length) attacks = attacks.concat(rank.add);
+    hpMult *= rank.hpMult;
+    dmgMult *= rank.damageMult;
+    speedMult *= rank.moveSpeedMult;
+    if (rank.titleSuffix) name = `${def.name} ${rank.titleSuffix}`;
+  }
+
+  return {
+    level: lvl,
+    name,
+    hp: Math.max(1, Math.round(def.hp * hpMult)),
+    damage: Math.max(1, Math.round(def.damage * dmgMult)),
+    moveSpeed: def.moveSpeed * speedMult,
+    xp: Math.max(1, Math.round(def.xp * xpMult)),
+    attacks,
+  };
+}
+
+/** Every ability id a def can ever use (base kit + every rank's additions) —
+ *  what the registry cross-check must validate, since a rank's ability only
+ *  surfaces once something spawns at that level. */
+export function mobAllAbilityIds(def: MobDef): string[] {
+  const ids = mobAttacks(def).map((a) => a.ability);
+  for (const rank of def.ranks) for (const a of rank.add) ids.push(a.ability);
+  return [...new Set(ids)];
 }
 
 /** Weighted entry: exactly one of item / table / nothing (weight only). */
@@ -296,8 +412,16 @@ export class RegistryService {
     for (const [id, mob] of Object.entries(mobs)) {
       const attacks = mobAttacks(mob);
       if (attacks.length === 0) throw new Error(`mob ${id}: needs an ability or an attacks kit`);
-      for (const a of attacks) {
-        if (!abilities[a.ability]) throw new Error(`mob ${id}: unknown ability ${a.ability}`);
+      // ranks only surface at their spawn level — validate the WHOLE reachable
+      // kit at load, or a typo lies dormant until a deep room spawns the mob
+      for (const abilityId of mobAllAbilityIds(mob)) {
+        if (!abilities[abilityId]) throw new Error(`mob ${id}: unknown ability ${abilityId}`);
+      }
+      for (const rank of mob.ranks) {
+        const kit = new Set(mobAllAbilityIds(mob));
+        for (const gone of rank.remove) {
+          if (!kit.has(gone)) throw new Error(`mob ${id}: rank atLevel ${rank.atLevel} removes ${gone}, which it never has`);
+        }
       }
       if (!loot[mob.loot]) throw new Error(`mob ${id}: unknown loot table ${mob.loot}`);
     }

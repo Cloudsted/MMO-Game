@@ -64,7 +64,12 @@ export function computePortalArrival(
 export const SpawnTableSchema = z.object({
   id: z.string(),
   region: z.object({ kind: z.literal("circle"), x: z.number(), z: z.number(), r: z.number() }),
-  mobs: z.array(z.object({ mob: z.string(), weight: z.number().positive() })).min(1),
+  /** `level` reuses a mob def at a higher level: stats scale by
+   *  constants.mobs.scaling and level-gated ranks unlock extra abilities
+   *  (see registry.resolveMob). Omit to spawn at the def's own level. */
+  mobs: z
+    .array(z.object({ mob: z.string(), weight: z.number().positive(), level: z.number().int().optional() }))
+    .min(1),
   maxAlive: z.number().int().positive(),
   packSize: z.tuple([z.number().int(), z.number().int()]),
   respawnSec: z.number(),

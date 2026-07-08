@@ -14,7 +14,7 @@ import {
   loadRoomDefs,
   makeLogger,
   mintItem,
-  mobAttacks,
+  resolveMob,
   RegistryService,
   WORLD_HEIGHT,
   type AbilityDef,
@@ -22,6 +22,7 @@ import {
   type EnchantWire,
   type EquipSlot,
   type MobDef,
+  type ResolvedMob,
   type CharacterSnapshot,
   type CombatEvent,
   type DropState,
@@ -67,7 +68,7 @@ import {
   chooseAttack,
   findSpawnPoint,
   pathfindWaypoints,
-  pickMob,
+  pickMobEntry,
   PURPOSEFUL_MAX_DROP,
   separateEntities,
   STUCK_TICKS_FOR_PATH,
@@ -354,14 +355,23 @@ export class RoomSim {
         z = cz;
         break;
       }
-      const mob = this.spawnMob(pickMob(table), x, z, spawnerId);
+      const pick = pickMobEntry(table);
+      const mob = this.spawnMob(pick.mob, x, z, spawnerId, pick.level);
       if (mob) spawner.alive.add(mob.id);
     }
   }
 
-  spawnMob(mobId: string, x: number, z: number, spawnerId: string): Entity | null {
+  /** Resolve a live mob's def at the level it spawned with (stats + kit). */
+  private resolvedMobOf(e: Entity): ResolvedMob | null {
+    const def = this.reg.mobs[e.brain!.mobId];
+    if (!def) return null;
+    return resolveMob(def, e.brain!.spawnLevel, this.consts.mobs.scaling);
+  }
+
+  spawnMob(mobId: string, x: number, z: number, spawnerId: string, level?: number): Entity | null {
     const def = this.reg.mobs[mobId];
     if (!def) return null;
+    const r = resolveMob(def, level, this.consts.mobs.scaling);
     const gx = Math.min(Math.max(x, 1), this.def.size.w - 1);
     const gz = Math.min(Math.max(z, 1), this.def.size.h - 1);
     const e: Entity = {
@@ -369,12 +379,13 @@ export class RoomSim {
       kind: "mob",
       // floorY, not standY: mobs spawn on the ground UNDER canopies/roofs
       pos: { x: gx, y: this.world.floorY(gx, gz), z: gz, yaw: Math.random() * Math.PI * 2 },
-      renderable: { sprite: def.sprite, anim: "idle", name: def.name },
-      level: def.level,
-      health: { hp: def.hp, maxHp: def.hp },
+      renderable: { sprite: def.sprite, anim: "idle", name: r.name },
+      level: r.level,
+      health: { hp: r.hp, maxHp: r.hp },
       combat: freshCombat(),
       brain: {
         mobId,
+        spawnLevel: r.level,
         state: "patrol",
         home: { x: gx, z: gz },
         spawnerId,
@@ -504,7 +515,8 @@ export class RoomSim {
         renderable: { sprite: npc.sprite, anim: "idle", name: npc.name },
         npcId: npc.id,
         brain: {
-          mobId: "",
+          mobId: "", // NPCs borrow the brain for wandering only — never resolved
+          spawnLevel: 0,
           state: "patrol",
           home: { x, z },
           spawnerId: "",
@@ -1277,13 +1289,26 @@ export class RoomSim {
     this.touchInv(session);
   }
 
-  /** A mob's attack kit resolved against the ability registry. */
-  private attackOptionsOf(def: MobDef): AttackOption[] {
+  /** A mob's attack kit resolved against the ability registry, at the level it
+   *  spawned with (level-gated ranks may have added or swapped options). */
+  private attackOptionsOf(r: ResolvedMob): AttackOption[] {
     const out: AttackOption[] = [];
-    for (const a of mobAttacks(def)) {
+    for (const a of r.attacks) {
       const ability = this.reg.abilities[a.ability];
       if (!ability) continue;
-      out.push({ id: a.ability, ability, damage: a.damage ?? def.damage, minRange: a.minRange ?? 0, weight: a.weight });
+      out.push({ id: a.ability, ability, damage: a.damage ?? r.damage, minRange: a.minRange ?? 0, weight: a.weight });
+    }
+    return out;
+  }
+
+  /** Living mobs an allyHeal from `caster` would touch (caster included per spec). */
+  private healableAllies(caster: Entity, spec: NonNullable<AbilityDef["allyHeal"]>): Entity[] {
+    const out: Entity[] = [];
+    for (const e of this.entities.values()) {
+      if (e.kind !== "mob" || !e.health || e.combat?.act === "dead") continue;
+      if (e.id === caster.id && !spec.includeSelf) continue;
+      if (Math.hypot(e.pos.x - caster.pos.x, e.pos.z - caster.pos.z) > spec.radius) continue;
+      out.push(e);
     }
     return out;
   }
@@ -1297,11 +1322,22 @@ export class RoomSim {
   private mobAttack(mob: Entity, target: Entity, now: number): "started" | "wait" | "close" {
     const def = this.reg.mobs[mob.brain!.mobId];
     if (!def) return "wait";
-    let options = this.attackOptionsOf(def);
+    const resolved = resolveMob(def, mob.brain!.spawnLevel, this.consts.mobs.scaling);
+    let options = this.attackOptionsOf(resolved);
     if (options.some((o) => o.ability.summon)) {
       // summon options drop out of the kit while the summoner sits at cap
       const minions = this.minionCountOf(mob);
       options = options.filter((o) => !o.ability.summon || minions < o.ability.summon.cap);
+    }
+    if (options.some((o) => o.ability.allyHeal)) {
+      // a healer only offers its mend while something nearby is actually hurt —
+      // chooseAttack treats every "self" ability as always in range, so without
+      // this gate a healer would stand at full health casting into the void
+      options = options.filter((o) => {
+        const spec = o.ability.allyHeal;
+        if (!spec) return true;
+        return this.healableAllies(mob, spec).some((a) => a.health!.hp < a.health!.maxHp * spec.castIfAllyBelowPct);
+      });
     }
     const choice = chooseAttack(
       mob,
@@ -1472,6 +1508,19 @@ export class RoomSim {
           this.markStatsDirty(e);
           this.broadcastEvent({ kind: "heal", tgt: e.id, amount: Math.round(amount) }, e.pos.x, e.pos.z);
         }
+        // pack healer: mend every living mob in the radius. Rides the existing
+        // "heal" event, so the client already draws a green floater per target.
+        if (ability.allyHeal && e.kind === "mob") {
+          const spec = ability.allyHeal;
+          for (const ally of this.healableAllies(e, spec)) {
+            const amount = Math.min(spec.amount, ally.health!.maxHp - ally.health!.hp);
+            if (amount <= 0) continue;
+            ally.health!.hp += amount;
+            this.markStatsDirty(ally);
+            this.broadcastEvent({ kind: "heal", tgt: ally.id, amount: Math.round(amount) }, ally.pos.x, ally.pos.z);
+          }
+          if (spec.text) this.broadcastNear(e.pos.x, e.pos.z, { t: "chat", channel: "system", from: "", text: spec.text });
+        }
         // boss summons: top the summoner's minions up to the cap
         if (ability.summon && e.kind === "mob") {
           const spec = ability.summon;
@@ -1638,7 +1687,8 @@ export class RoomSim {
           }
         }
         const winner = topChar ? this.byCharacterId.get(topChar) : undefined;
-        if (winner) this.awardXp(winner, mobDef.xp);
+        // a mob reused above its base level is worth proportionally more xp
+        if (winner) this.awardXp(winner, this.resolvedMobOf(tgt)?.xp ?? mobDef.xp);
         // loot: owner-locked to the top damage dealer for a grace window
         const rolled = rollLoot(this.reg, this.consts, mobDef.loot);
         if (rolled.items.length > 0 || rolled.gold > 0) {
@@ -2516,6 +2566,7 @@ export class RoomSim {
       if (!e.brain) continue;
       const def = this.reg.mobs[e.brain.mobId];
       if (!def) continue;
+      const resolved = resolveMob(def, e.brain.spawnLevel, this.consts.mobs.scaling);
       // gravity first: an airborne mob (walked off a ledge/canopy) falls with
       // no air control and resumes deciding/walking the tick it lands
       if (applyGravity(e, dt, this.world, this.consts.movement.gravity)) {
@@ -2524,11 +2575,11 @@ export class RoomSim {
       }
       // melee attacks only land within the vertical reach; a kit with any
       // projectile aims with real pitch, so height barely matters to it
-      const reachY = this.attackOptionsOf(def).some((o) => o.ability.kind === "projectile")
+      const reachY = this.attackOptionsOf(resolved).some((o) => o.ability.kind === "projectile")
         ? Number.POSITIVE_INFINITY
         : this.consts.combat.meleeVerticalReach;
       const decision = tickBrain(e, def, players, now, reachY);
-      const speed = def.moveSpeed * slowMult(e.combat!, now);
+      const speed = resolved.moveSpeed * slowMult(e.combat!, now);
       let moved = false;
       if (decision.move) {
         const b = e.brain;

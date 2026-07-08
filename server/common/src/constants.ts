@@ -88,6 +88,18 @@ const ConstantsSchema = z.object({
     xpExponent: z.number(),
     maxLevel: z.number().int(),
   }),
+  /** How a world-gen mob grows when a spawn table reuses it above its base
+   *  level (see registry.resolveMob). Compounding per level. These are THE
+   *  difficulty knobs for reused mobs — tune here, not in mobs.json. */
+  mobs: z.object({
+    scaling: z.object({
+      hpPerLevel: z.number(),
+      damagePerLevel: z.number(),
+      xpPerLevel: z.number(),
+      /** hard cap on (spawnLevel - defLevel); a typo can't mint a boss slime */
+      maxLevelBonus: z.number().int(),
+    }),
+  }),
   world: z.object({
     worldHeight: z.number().int(),
     chunkBlocks: z.number().int(),
