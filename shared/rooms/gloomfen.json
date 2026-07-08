@@ -193,6 +193,53 @@
         2
       ],
       "respawnSec": 80
+    },
+    {
+      "id": "drowned-company",
+      "region": {
+        "kind": "circle",
+        "x": 110,
+        "z": 130,
+        "r": 16
+      },
+      "mobs": [
+        {
+          "mob": "bandit",
+          "weight": 4,
+          "level": 12
+        },
+        {
+          "mob": "greenhood_poacher",
+          "weight": 3,
+          "level": 11
+        },
+        {
+          "mob": "powder_brigand",
+          "weight": 2,
+          "level": 11
+        },
+        {
+          "mob": "bandit_enforcer",
+          "weight": 2,
+          "level": 12
+        },
+        {
+          "mob": "hollow_cowl",
+          "weight": 2,
+          "level": 11
+        },
+        {
+          "mob": "camp_cur",
+          "weight": 2,
+          "level": 12
+        }
+      ],
+      "maxAlive": 10,
+      "packSize": [
+        2,
+        3
+      ],
+      "respawnSec": 75
     }
   ],
   "prefabs": [

@@ -1597,5 +1597,48 @@
         "minRarity": "uncommon"
       }
     ]
+  },
+  "bandit_boss_drops": {
+    "gold": [
+      60,
+      110
+    ],
+    "rolls": [
+      2,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 40,
+        "table": "weapons_fine"
+      },
+      {
+        "weight": 25,
+        "item": "health_potion",
+        "qty": [
+          2,
+          3
+        ]
+      },
+      {
+        "weight": 20,
+        "table": "armor_fine"
+      },
+      {
+        "weight": 15,
+        "item": "mana_potion",
+        "qty": [
+          1,
+          2
+        ]
+      }
+    ],
+    "guaranteed": [
+      {
+        "weight": 1,
+        "table": "weapons_fine",
+        "minRarity": "uncommon"
+      }
+    ]
   }
 }

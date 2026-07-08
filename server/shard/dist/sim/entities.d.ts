@@ -60,6 +60,10 @@ export interface ManaPool {
 /** Mob-only decision layer (the brain). Talks to the body via intents only. */
 export interface MobBrain {
     mobId: string;
+    /** the level this mob was SPAWNED at (spawn tables may reuse a def above its
+     *  base level). Everything derived from it — hp, damage, xp, the attack kit —
+     *  comes from registry.resolveMob(def, spawnLevel, scaling). */
+    spawnLevel: number;
     state: "patrol" | "chase" | "flee" | "return";
     home: {
         x: number;

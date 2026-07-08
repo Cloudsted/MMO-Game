@@ -137,6 +137,11 @@ function grabComponent(png, seedX, seedY) {
     bandit_bombardier: { file: resolve(UNSORTED, "bandits_1.png"), char: [2, 0] }, // lit fuse at the hat brim, bandolier of orange flasks, blue flask at the hip
     bandit_mystic: { file: resolve(UNSORTED, "bandits_1.png"), char: [3, 0] }, // fully cloaked, hood drawn, NO face, bone-white clasps
     bandit_chief: { file: resolve(UNSORTED, "bandits_1.png"), char: [1, 1] }, // the green-palette enforcer — the camp's boss
+    bandit_poacher: { file: resolve(UNSORTED, "bandits_1.png"), char: [0, 1] }, // green bandana, the only bandit who shows a face
+    // camp livestock + dogs. animals1 row 0 is DOGS, row 1 is CATS (verified on the
+    // contact sheet — the catalog's warning is right). animals2 [3,0] is the goat.
+    camp_cur: { file: resolve(UNSORTED, "animals1.png"), char: [3, 0] }, // tan-and-rust lean dog
+    stolen_goat: { file: resolve(UNSORTED, "animals2.png"), char: [3, 0] }, // white goat, black backswept horns
     npc_smith: { file: resolve(CHARS, "npc3.png"), char: [1, 1] }, // red-haired smith
     npc_provisioner: { file: resolve(CHARS, "npc2.png"), char: [0, 0] }, // red-dress woman
     // wizard.png trap: walk grids ONLY in the top half; [0,0] is safe

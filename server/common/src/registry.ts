@@ -311,6 +311,15 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
     if (rank.titleSuffix) name = `${def.name} ${rank.titleSuffix}`;
   }
 
+  // A per-attack `damage` override is authored RELATIVE to the def's base level
+  // (skeleton: base 11, bone_bow 9 — the bow is deliberately the weaker option).
+  // Scale it by the same multiplier, or a rank-added ability would hit for its
+  // literal authored number while the base attack scaled past it, making every
+  // mob's *new* trick its *weakest* one. At delta 0 this is a no-op.
+  const scaled = attacks.map((a) =>
+    a.damage === undefined ? a : { ...a, damage: Math.max(1, Math.round(a.damage * dmgMult)) }
+  );
+
   return {
     level: lvl,
     name,
@@ -318,7 +327,7 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
     damage: Math.max(1, Math.round(def.damage * dmgMult)),
     moveSpeed: def.moveSpeed * speedMult,
     xp: Math.max(1, Math.round(def.xp * xpMult)),
-    attacks,
+    attacks: scaled,
   };
 }
 

@@ -1,198 +1,964 @@
 {
   "slime": {
-    "name": "Slime", "sprite": "slime", "level": 1,
-    "hp": 30, "damage": 4, "moveSpeed": 1.7,
-    "ability": "slime_bounce", "aggroRadius": 7, "attackRange": 1.5,
-    "leashRadius": 30, "fleeAtHpPct": 0, "xp": 14, "loot": "slime_drops",
-    "sounds": { "idle": "slime_idle", "attack": "slime_attack", "hurt": "slime_hurt", "die": "slime_die" }
+    "name": "Slime",
+    "sprite": "slime",
+    "level": 1,
+    "hp": 30,
+    "damage": 4,
+    "moveSpeed": 1.7,
+    "ability": "slime_bounce",
+    "aggroRadius": 7,
+    "attackRange": 1.5,
+    "leashRadius": 30,
+    "fleeAtHpPct": 0,
+    "xp": 14,
+    "loot": "slime_drops",
+    "sounds": {
+      "idle": "slime_idle",
+      "attack": "slime_attack",
+      "hurt": "slime_hurt",
+      "die": "slime_die"
+    }
   },
   "wolf": {
-    "name": "Wolf", "sprite": "wolf", "level": 3,
-    "hp": 62, "damage": 8, "moveSpeed": 3.4,
-    "ability": "wolf_bite", "aggroRadius": 11, "attackRange": 1.7,
-    "leashRadius": 36, "fleeAtHpPct": 0.15, "xp": 34, "loot": "wolf_drops",
-    "sounds": { "idle": "wolf_idle", "attack": "wolf_attack", "hurt": "wolf_hurt", "die": "wolf_die" }
+    "name": "Wolf",
+    "sprite": "wolf",
+    "level": 3,
+    "hp": 62,
+    "damage": 8,
+    "moveSpeed": 3.4,
+    "ability": "wolf_bite",
+    "aggroRadius": 11,
+    "attackRange": 1.7,
+    "leashRadius": 36,
+    "fleeAtHpPct": 0.15,
+    "xp": 34,
+    "loot": "wolf_drops",
+    "sounds": {
+      "idle": "wolf_idle",
+      "attack": "wolf_attack",
+      "hurt": "wolf_hurt",
+      "die": "wolf_die"
+    }
   },
   "bandit": {
-    "name": "Bandit", "sprite": "bandit", "level": 5,
-    "hp": 115, "damage": 12, "moveSpeed": 3.0,
-    "ability": "bandit_slash", "aggroRadius": 10, "attackRange": 2.1,
-    "leashRadius": 34, "fleeAtHpPct": 0.1, "xp": 72, "loot": "bandit_drops",
-    "sounds": { "idle": "bandit_idle", "attack": "bandit_attack", "hurt": "bandit_hurt", "die": "bandit_die" }
+    "name": "Thornhollow Cutthroat",
+    "sprite": "bandit",
+    "level": 4,
+    "hp": 78,
+    "damage": 11,
+    "moveSpeed": 3.5,
+    "attacks": [
+      {
+        "ability": "bandit_slash",
+        "weight": 1
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 9,
+        "add": [
+          {
+            "ability": "quick_stab",
+            "damage": 8,
+            "weight": 3
+          }
+        ],
+        "titleSuffix": "Cutter"
+      },
+      {
+        "atLevel": 12,
+        "remove": [
+          "bandit_slash"
+        ],
+        "add": [
+          {
+            "ability": "thrust",
+            "weight": 3
+          }
+        ],
+        "moveSpeedMult": 1.14,
+        "titleSuffix": "Bloodletter"
+      }
+    ],
+    "aggroRadius": 10,
+    "attackRange": 2.1,
+    "leashRadius": 34,
+    "fleeAtHpPct": 0.1,
+    "xp": 46,
+    "loot": "bandit_drops",
+    "sounds": {
+      "idle": "bandit_idle",
+      "attack": "bandit_attack",
+      "hurt": "bandit_hurt",
+      "die": "bandit_die"
+    }
   },
   "skeleton": {
-    "name": "Skeleton", "sprite": "skeleton", "level": 6,
-    "hp": 95, "damage": 11, "moveSpeed": 2.8,
+    "name": "Skeleton",
+    "sprite": "skeleton",
+    "level": 6,
+    "hp": 95,
+    "damage": 11,
+    "moveSpeed": 2.8,
     "attacks": [
-      { "ability": "skeleton_slash" },
-      { "ability": "bone_bow", "damage": 9, "minRange": 3.5 }
+      {
+        "ability": "skeleton_slash"
+      },
+      {
+        "ability": "bone_bow",
+        "damage": 9,
+        "minRange": 3.5
+      }
     ],
-    "aggroRadius": 10, "attackRange": 11,
-    "leashRadius": 34, "fleeAtHpPct": 0, "xp": 58, "loot": "skeleton_drops",
-    "sounds": { "idle": "skeleton_idle", "attack": "skeleton_attack", "hurt": "skeleton_hurt", "die": "skeleton_die" }
+    "aggroRadius": 10,
+    "attackRange": 11,
+    "leashRadius": 34,
+    "fleeAtHpPct": 0,
+    "xp": 58,
+    "loot": "skeleton_drops",
+    "sounds": {
+      "idle": "skeleton_idle",
+      "attack": "skeleton_attack",
+      "hurt": "skeleton_hurt",
+      "die": "skeleton_die"
+    }
   },
   "cacto": {
-    "name": "Cacto", "sprite": "cacto", "level": 5,
-    "hp": 140, "damage": 15, "moveSpeed": 1.4,
-    "ability": "cacto_spike", "aggroRadius": 6, "attackRange": 1.7,
-    "leashRadius": 22, "fleeAtHpPct": 0, "xp": 62, "loot": "cacto_drops",
-    "sounds": { "idle": "cacto_idle", "attack": "cacto_attack", "hurt": "cacto_hurt", "die": "cacto_die" }
+    "name": "Cacto",
+    "sprite": "cacto",
+    "level": 5,
+    "hp": 140,
+    "damage": 15,
+    "moveSpeed": 1.4,
+    "ability": "cacto_spike",
+    "aggroRadius": 6,
+    "attackRange": 1.7,
+    "leashRadius": 22,
+    "fleeAtHpPct": 0,
+    "xp": 62,
+    "loot": "cacto_drops",
+    "sounds": {
+      "idle": "cacto_idle",
+      "attack": "cacto_attack",
+      "hurt": "cacto_hurt",
+      "die": "cacto_die"
+    }
   },
   "raptor": {
-    "name": "Raptor", "sprite": "raptor", "level": 7,
-    "hp": 78, "damage": 13, "moveSpeed": 4.3,
-    "ability": "raptor_bite", "aggroRadius": 13, "attackRange": 1.7,
-    "leashRadius": 40, "fleeAtHpPct": 0.12, "xp": 74, "loot": "raptor_drops",
-    "sounds": { "idle": "raptor_idle", "attack": "raptor_attack", "hurt": "raptor_hurt", "die": "raptor_die" }
+    "name": "Raptor",
+    "sprite": "raptor",
+    "level": 7,
+    "hp": 78,
+    "damage": 13,
+    "moveSpeed": 4.3,
+    "ability": "raptor_bite",
+    "aggroRadius": 13,
+    "attackRange": 1.7,
+    "leashRadius": 40,
+    "fleeAtHpPct": 0.12,
+    "xp": 74,
+    "loot": "raptor_drops",
+    "sounds": {
+      "idle": "raptor_idle",
+      "attack": "raptor_attack",
+      "hurt": "raptor_hurt",
+      "die": "raptor_die"
+    }
   },
   "minotaur_boss": {
-    "name": "Gravelord Minotaur", "sprite": "minotaur", "level": 10,
-    "hp": 680, "damage": 27, "moveSpeed": 3.1,
+    "name": "Gravelord Minotaur",
+    "sprite": "minotaur",
+    "level": 10,
+    "hp": 680,
+    "damage": 27,
+    "moveSpeed": 3.1,
     "attacks": [
-      { "ability": "boss_slam" },
-      { "ability": "minotaur_gore", "damage": 18, "weight": 2 }
+      {
+        "ability": "boss_slam"
+      },
+      {
+        "ability": "minotaur_gore",
+        "damage": 18,
+        "weight": 2
+      }
     ],
-    "aggroRadius": 15, "attackRange": 3.0,
-    "leashRadius": 44, "fleeAtHpPct": 0, "xp": 520, "loot": "boss_drops",
-    "sounds": { "idle": "minotaur_boss_idle", "attack": "minotaur_boss_attack", "hurt": "minotaur_boss_hurt", "die": "minotaur_boss_die" }
+    "aggroRadius": 15,
+    "attackRange": 3,
+    "leashRadius": 44,
+    "fleeAtHpPct": 0,
+    "xp": 520,
+    "loot": "boss_drops",
+    "sounds": {
+      "idle": "minotaur_boss_idle",
+      "attack": "minotaur_boss_attack",
+      "hurt": "minotaur_boss_hurt",
+      "die": "minotaur_boss_die"
+    }
   },
   "boar": {
-    "name": "Bristleback Boar", "sprite": "boar", "level": 2,
-    "hp": 45, "damage": 6, "moveSpeed": 3.0,
-    "ability": "boar_gore", "aggroRadius": 9, "attackRange": 1.8,
-    "leashRadius": 34, "fleeAtHpPct": 0.2, "xp": 24, "loot": "boar_drops",
-    "sounds": { "idle": "boar_idle", "attack": "boar_attack", "hurt": "boar_hurt", "die": "boar_die" }
+    "name": "Bristleback Boar",
+    "sprite": "boar",
+    "level": 2,
+    "hp": 45,
+    "damage": 6,
+    "moveSpeed": 3,
+    "ability": "boar_gore",
+    "aggroRadius": 9,
+    "attackRange": 1.8,
+    "leashRadius": 34,
+    "fleeAtHpPct": 0.2,
+    "xp": 24,
+    "loot": "boar_drops",
+    "sounds": {
+      "idle": "boar_idle",
+      "attack": "boar_attack",
+      "hurt": "boar_hurt",
+      "die": "boar_die"
+    }
   },
   "giant_spider": {
-    "name": "Fen Weaver", "sprite": "giant_spider", "level": 8,
-    "hp": 150, "damage": 17, "moveSpeed": 3.4,
-    "ability": "spider_bite", "aggroRadius": 10, "attackRange": 1.9,
-    "leashRadius": 36, "fleeAtHpPct": 0, "xp": 170, "loot": "spider_drops",
-    "sounds": { "idle": "giant_spider_idle", "attack": "giant_spider_attack", "hurt": "giant_spider_hurt", "die": "giant_spider_die" }
+    "name": "Fen Weaver",
+    "sprite": "giant_spider",
+    "level": 8,
+    "hp": 150,
+    "damage": 17,
+    "moveSpeed": 3.4,
+    "ability": "spider_bite",
+    "aggroRadius": 10,
+    "attackRange": 1.9,
+    "leashRadius": 36,
+    "fleeAtHpPct": 0,
+    "xp": 170,
+    "loot": "spider_drops",
+    "sounds": {
+      "idle": "giant_spider_idle",
+      "attack": "giant_spider_attack",
+      "hurt": "giant_spider_hurt",
+      "die": "giant_spider_die"
+    }
   },
   "bog_serpent": {
-    "name": "Bog Serpent", "sprite": "bog_serpent", "level": 9,
-    "hp": 170, "damage": 19, "moveSpeed": 3.8,
-    "ability": "raptor_bite", "aggroRadius": 9, "attackRange": 1.8,
-    "leashRadius": 34, "fleeAtHpPct": 0, "xp": 220, "loot": "serpent_drops",
-    "sounds": { "idle": "bog_serpent_idle", "attack": "bog_serpent_attack", "hurt": "bog_serpent_hurt", "die": "bog_serpent_die" }
+    "name": "Bog Serpent",
+    "sprite": "bog_serpent",
+    "level": 9,
+    "hp": 170,
+    "damage": 19,
+    "moveSpeed": 3.8,
+    "ability": "raptor_bite",
+    "aggroRadius": 9,
+    "attackRange": 1.8,
+    "leashRadius": 34,
+    "fleeAtHpPct": 0,
+    "xp": 220,
+    "loot": "serpent_drops",
+    "sounds": {
+      "idle": "bog_serpent_idle",
+      "attack": "bog_serpent_attack",
+      "hurt": "bog_serpent_hurt",
+      "die": "bog_serpent_die"
+    }
   },
   "mantrap": {
-    "name": "Strangler Bloom", "sprite": "mantrap", "level": 9,
-    "hp": 230, "damage": 24, "moveSpeed": 0.8,
-    "ability": "mantrap_snap", "aggroRadius": 5, "attackRange": 2.0,
-    "leashRadius": 12, "fleeAtHpPct": 0, "xp": 240, "loot": "mantrap_drops",
-    "sounds": { "idle": "mantrap_idle", "attack": "mantrap_attack", "hurt": "mantrap_hurt", "die": "mantrap_die" }
+    "name": "Strangler Bloom",
+    "sprite": "mantrap",
+    "level": 9,
+    "hp": 230,
+    "damage": 24,
+    "moveSpeed": 0.8,
+    "ability": "mantrap_snap",
+    "aggroRadius": 5,
+    "attackRange": 2,
+    "leashRadius": 12,
+    "fleeAtHpPct": 0,
+    "xp": 240,
+    "loot": "mantrap_drops",
+    "sounds": {
+      "idle": "mantrap_idle",
+      "attack": "mantrap_attack",
+      "hurt": "mantrap_hurt",
+      "die": "mantrap_die"
+    }
   },
   "lizardman": {
-    "name": "Fenblade Lizardman", "sprite": "lizardman", "level": 11,
-    "hp": 240, "damage": 26, "moveSpeed": 3.2,
-    "ability": "bandit_slash", "aggroRadius": 10, "attackRange": 2.1,
-    "leashRadius": 36, "fleeAtHpPct": 0.1, "xp": 330, "loot": "lizardman_drops",
-    "sounds": { "idle": "lizardman_idle", "attack": "lizardman_attack", "hurt": "lizardman_hurt", "die": "lizardman_die" }
+    "name": "Fenblade Lizardman",
+    "sprite": "lizardman",
+    "level": 11,
+    "hp": 240,
+    "damage": 26,
+    "moveSpeed": 3.2,
+    "ability": "bandit_slash",
+    "aggroRadius": 10,
+    "attackRange": 2.1,
+    "leashRadius": 36,
+    "fleeAtHpPct": 0.1,
+    "xp": 330,
+    "loot": "lizardman_drops",
+    "sounds": {
+      "idle": "lizardman_idle",
+      "attack": "lizardman_attack",
+      "hurt": "lizardman_hurt",
+      "die": "lizardman_die"
+    }
   },
   "marsh_wisp": {
-    "name": "Marsh Wisp", "sprite": "marsh_wisp", "level": 10,
-    "hp": 130, "damage": 20, "moveSpeed": 2.4,
-    "ability": "wisp_bolt", "aggroRadius": 12, "attackRange": 11,
-    "leashRadius": 36, "fleeAtHpPct": 0, "xp": 270, "loot": "wisp_drops",
-    "sounds": { "idle": "marsh_wisp_idle", "attack": "marsh_wisp_attack", "hurt": "marsh_wisp_hurt", "die": "marsh_wisp_die" }
+    "name": "Marsh Wisp",
+    "sprite": "marsh_wisp",
+    "level": 10,
+    "hp": 130,
+    "damage": 20,
+    "moveSpeed": 2.4,
+    "ability": "wisp_bolt",
+    "aggroRadius": 12,
+    "attackRange": 11,
+    "leashRadius": 36,
+    "fleeAtHpPct": 0,
+    "xp": 270,
+    "loot": "wisp_drops",
+    "sounds": {
+      "idle": "marsh_wisp_idle",
+      "attack": "marsh_wisp_attack",
+      "hurt": "marsh_wisp_hurt",
+      "die": "marsh_wisp_die"
+    }
   },
   "ash_husk": {
-    "name": "Ash-Choked Husk", "sprite": "ash_husk", "level": 11,
-    "hp": 260, "damage": 25, "moveSpeed": 1.9,
-    "ability": "skeleton_slash", "aggroRadius": 11, "attackRange": 2.0,
-    "leashRadius": 38, "fleeAtHpPct": 0, "xp": 320, "loot": "husk_drops",
-    "sounds": { "idle": "ash_husk_idle", "attack": "ash_husk_attack", "hurt": "ash_husk_hurt", "die": "ash_husk_die" }
+    "name": "Ash-Choked Husk",
+    "sprite": "ash_husk",
+    "level": 11,
+    "hp": 260,
+    "damage": 25,
+    "moveSpeed": 1.9,
+    "ability": "skeleton_slash",
+    "aggroRadius": 11,
+    "attackRange": 2,
+    "leashRadius": 38,
+    "fleeAtHpPct": 0,
+    "xp": 320,
+    "loot": "husk_drops",
+    "sounds": {
+      "idle": "ash_husk_idle",
+      "attack": "ash_husk_attack",
+      "hurt": "ash_husk_hurt",
+      "die": "ash_husk_die"
+    }
   },
   "fire_elemental": {
-    "name": "Cinder Elemental", "sprite": "fire_elemental", "level": 12,
-    "hp": 180, "damage": 28, "moveSpeed": 2.6,
-    "ability": "elemental_bolt", "aggroRadius": 12, "attackRange": 12,
-    "leashRadius": 36, "fleeAtHpPct": 0, "xp": 380, "loot": "fire_elemental_drops",
-    "sounds": { "idle": "fire_elemental_idle", "attack": "fire_elemental_attack", "hurt": "fire_elemental_hurt", "die": "fire_elemental_die" }
+    "name": "Cinder Elemental",
+    "sprite": "fire_elemental",
+    "level": 12,
+    "hp": 180,
+    "damage": 28,
+    "moveSpeed": 2.6,
+    "ability": "elemental_bolt",
+    "aggroRadius": 12,
+    "attackRange": 12,
+    "leashRadius": 36,
+    "fleeAtHpPct": 0,
+    "xp": 380,
+    "loot": "fire_elemental_drops",
+    "sounds": {
+      "idle": "fire_elemental_idle",
+      "attack": "fire_elemental_attack",
+      "hurt": "fire_elemental_hurt",
+      "die": "fire_elemental_die"
+    }
   },
   "bone_bat": {
-    "name": "Crypt Shrieker", "sprite": "bone_bat", "level": 12,
-    "hp": 110, "damage": 18, "moveSpeed": 4.6,
-    "ability": "raptor_bite", "aggroRadius": 13, "attackRange": 1.7,
-    "leashRadius": 40, "fleeAtHpPct": 0, "xp": 300, "loot": "bone_bat_drops",
-    "sounds": { "idle": "bone_bat_idle", "attack": "bone_bat_attack", "hurt": "bone_bat_hurt", "die": "bone_bat_die" }
+    "name": "Crypt Shrieker",
+    "sprite": "bone_bat",
+    "level": 12,
+    "hp": 110,
+    "damage": 18,
+    "moveSpeed": 4.6,
+    "ability": "raptor_bite",
+    "aggroRadius": 13,
+    "attackRange": 1.7,
+    "leashRadius": 40,
+    "fleeAtHpPct": 0,
+    "xp": 300,
+    "loot": "bone_bat_drops",
+    "sounds": {
+      "idle": "bone_bat_idle",
+      "attack": "bone_bat_attack",
+      "hurt": "bone_bat_hurt",
+      "die": "bone_bat_die"
+    }
   },
   "wraith": {
-    "name": "Vault Wraith", "sprite": "wraith", "level": 13,
-    "hp": 300, "damage": 30, "moveSpeed": 2.8,
-    "ability": "wraith_touch", "aggroRadius": 11, "attackRange": 2.2,
-    "leashRadius": 36, "fleeAtHpPct": 0, "xp": 480, "loot": "wraith_drops",
-    "sounds": { "idle": "wraith_idle", "attack": "wraith_attack", "hurt": "wraith_hurt", "die": "wraith_die" }
+    "name": "Vault Wraith",
+    "sprite": "wraith",
+    "level": 13,
+    "hp": 300,
+    "damage": 30,
+    "moveSpeed": 2.8,
+    "ability": "wraith_touch",
+    "aggroRadius": 11,
+    "attackRange": 2.2,
+    "leashRadius": 36,
+    "fleeAtHpPct": 0,
+    "xp": 480,
+    "loot": "wraith_drops",
+    "sounds": {
+      "idle": "wraith_idle",
+      "attack": "wraith_attack",
+      "hurt": "wraith_hurt",
+      "die": "wraith_die"
+    }
   },
   "cinder_golem_boss": {
-    "name": "Furnace Golem", "sprite": "cinder_golem", "level": 13,
-    "hp": 950, "damage": 40, "moveSpeed": 2.6,
+    "name": "Furnace Golem",
+    "sprite": "cinder_golem",
+    "level": 13,
+    "hp": 950,
+    "damage": 40,
+    "moveSpeed": 2.6,
     "attacks": [
-      { "ability": "golem_slam" },
-      { "ability": "ember_burst", "damage": 24, "minRange": 4 }
+      {
+        "ability": "golem_slam"
+      },
+      {
+        "ability": "ember_burst",
+        "damage": 24,
+        "minRange": 4
+      }
     ],
-    "aggroRadius": 15, "attackRange": 14,
-    "leashRadius": 46, "fleeAtHpPct": 0, "xp": 900, "loot": "golem_boss_drops",
-    "sounds": { "idle": "cinder_golem_boss_idle", "attack": "cinder_golem_boss_attack", "hurt": "cinder_golem_boss_hurt", "die": "cinder_golem_boss_die" }
+    "aggroRadius": 15,
+    "attackRange": 14,
+    "leashRadius": 46,
+    "fleeAtHpPct": 0,
+    "xp": 900,
+    "loot": "golem_boss_drops",
+    "sounds": {
+      "idle": "cinder_golem_boss_idle",
+      "attack": "cinder_golem_boss_attack",
+      "hurt": "cinder_golem_boss_hurt",
+      "die": "cinder_golem_boss_die"
+    }
   },
   "lich_boss": {
-    "name": "Morvane the Hollow", "sprite": "lich", "level": 15,
-    "hp": 1150, "damage": 36, "moveSpeed": 2.9,
+    "name": "Morvane the Hollow",
+    "sprite": "lich",
+    "level": 15,
+    "hp": 1150,
+    "damage": 36,
+    "moveSpeed": 2.9,
     "attacks": [
-      { "ability": "shadow_lance", "minRange": 3 },
-      { "ability": "lich_scythe", "damage": 30 },
-      { "ability": "lich_summon", "weight": 8 }
+      {
+        "ability": "shadow_lance",
+        "minRange": 3
+      },
+      {
+        "ability": "lich_scythe",
+        "damage": 30
+      },
+      {
+        "ability": "lich_summon",
+        "weight": 8
+      }
     ],
-    "aggroRadius": 16, "attackRange": 12,
-    "leashRadius": 48, "fleeAtHpPct": 0, "xp": 1400, "loot": "lich_boss_drops",
-    "sounds": { "idle": "lich_boss_idle", "attack": "lich_boss_attack", "hurt": "lich_boss_hurt", "die": "lich_boss_die" }
+    "aggroRadius": 16,
+    "attackRange": 12,
+    "leashRadius": 48,
+    "fleeAtHpPct": 0,
+    "xp": 1400,
+    "loot": "lich_boss_drops",
+    "sounds": {
+      "idle": "lich_boss_idle",
+      "attack": "lich_boss_attack",
+      "hurt": "lich_boss_hurt",
+      "die": "lich_boss_die"
+    }
   },
   "marauder": {
-    "name": "Warband Marauder", "sprite": "marauder", "level": 13,
-    "hp": 290, "damage": 30, "moveSpeed": 3.1,
-    "ability": "bandit_slash", "aggroRadius": 11, "attackRange": 2.1,
-    "leashRadius": 38, "fleeAtHpPct": 0.08, "xp": 430, "loot": "marauder_drops",
-    "sounds": { "idle": "marauder_idle", "attack": "marauder_attack", "hurt": "marauder_hurt", "die": "marauder_die" }
+    "name": "Warband Marauder",
+    "sprite": "marauder",
+    "level": 13,
+    "hp": 290,
+    "damage": 30,
+    "moveSpeed": 3.1,
+    "ability": "bandit_slash",
+    "aggroRadius": 11,
+    "attackRange": 2.1,
+    "leashRadius": 38,
+    "fleeAtHpPct": 0.08,
+    "xp": 430,
+    "loot": "marauder_drops",
+    "sounds": {
+      "idle": "marauder_idle",
+      "attack": "marauder_attack",
+      "hurt": "marauder_hurt",
+      "die": "marauder_die"
+    }
   },
   "gravehound": {
-    "name": "Gravehound", "sprite": "gravehound", "level": 13,
-    "hp": 240, "damage": 27, "moveSpeed": 4.2,
-    "ability": "wolf_bite", "aggroRadius": 13, "attackRange": 1.8,
-    "leashRadius": 42, "fleeAtHpPct": 0, "xp": 400, "loot": "gravehound_drops",
-    "sounds": { "idle": "gravehound_idle", "attack": "gravehound_attack", "hurt": "gravehound_hurt", "die": "gravehound_die" }
+    "name": "Gravehound",
+    "sprite": "gravehound",
+    "level": 13,
+    "hp": 240,
+    "damage": 27,
+    "moveSpeed": 4.2,
+    "ability": "wolf_bite",
+    "aggroRadius": 13,
+    "attackRange": 1.8,
+    "leashRadius": 42,
+    "fleeAtHpPct": 0,
+    "xp": 400,
+    "loot": "gravehound_drops",
+    "sounds": {
+      "idle": "gravehound_idle",
+      "attack": "gravehound_attack",
+      "hurt": "gravehound_hurt",
+      "die": "gravehound_die"
+    }
   },
   "fallen_soldier": {
-    "name": "Fallen Garrison Soldier", "sprite": "fallen_soldier", "level": 14,
-    "hp": 320, "damage": 32, "moveSpeed": 2.9,
+    "name": "Fallen Garrison Soldier",
+    "sprite": "fallen_soldier",
+    "level": 14,
+    "hp": 320,
+    "damage": 32,
+    "moveSpeed": 2.9,
     "attacks": [
-      { "ability": "skeleton_slash" },
-      { "ability": "bone_bow", "damage": 26, "minRange": 3.5 }
+      {
+        "ability": "skeleton_slash"
+      },
+      {
+        "ability": "bone_bow",
+        "damage": 26,
+        "minRange": 3.5
+      }
     ],
-    "aggroRadius": 11, "attackRange": 11,
-    "leashRadius": 40, "fleeAtHpPct": 0, "xp": 520, "loot": "soldier_drops",
-    "sounds": { "idle": "fallen_soldier_idle", "attack": "fallen_soldier_attack", "hurt": "fallen_soldier_hurt", "die": "fallen_soldier_die" }
+    "aggroRadius": 11,
+    "attackRange": 11,
+    "leashRadius": 40,
+    "fleeAtHpPct": 0,
+    "xp": 520,
+    "loot": "soldier_drops",
+    "sounds": {
+      "idle": "fallen_soldier_idle",
+      "attack": "fallen_soldier_attack",
+      "hurt": "fallen_soldier_hurt",
+      "die": "fallen_soldier_die"
+    }
   },
   "oathbound_sentinel": {
-    "name": "Oathbound Sentinel", "sprite": "oathbound_sentinel", "level": 16,
-    "hp": 400, "damage": 34, "moveSpeed": 3.0,
-    "ability": "sentinel_blade", "aggroRadius": 12, "attackRange": 2.4,
-    "leashRadius": 44, "fleeAtHpPct": 0, "xp": 750, "loot": "sentinel_drops",
-    "sounds": { "idle": "oathbound_sentinel_idle", "attack": "oathbound_sentinel_attack", "hurt": "oathbound_sentinel_hurt", "die": "oathbound_sentinel_die" }
+    "name": "Oathbound Sentinel",
+    "sprite": "oathbound_sentinel",
+    "level": 16,
+    "hp": 400,
+    "damage": 34,
+    "moveSpeed": 3,
+    "ability": "sentinel_blade",
+    "aggroRadius": 12,
+    "attackRange": 2.4,
+    "leashRadius": 44,
+    "fleeAtHpPct": 0,
+    "xp": 750,
+    "loot": "sentinel_drops",
+    "sounds": {
+      "idle": "oathbound_sentinel_idle",
+      "attack": "oathbound_sentinel_attack",
+      "hurt": "oathbound_sentinel_hurt",
+      "die": "oathbound_sentinel_die"
+    }
   },
   "sundered_king": {
-    "name": "Vaelric, the Sundered King", "sprite": "sundered_king", "level": 18,
-    "hp": 2200, "damage": 46, "moveSpeed": 3.2,
+    "name": "Vaelric, the Sundered King",
+    "sprite": "sundered_king",
+    "level": 18,
+    "hp": 2200,
+    "damage": 46,
+    "moveSpeed": 3.2,
     "attacks": [
-      { "ability": "kings_cleave", "weight": 3 },
-      { "ability": "crown_strike", "damage": 32, "weight": 2 },
-      { "ability": "sundering_wave", "damage": 36, "minRange": 4, "weight": 3 },
-      { "ability": "throne_flames", "damage": 30, "minRange": 3, "weight": 3 },
-      { "ability": "oath_summon", "weight": 5 }
+      {
+        "ability": "kings_cleave",
+        "weight": 3
+      },
+      {
+        "ability": "crown_strike",
+        "damage": 32,
+        "weight": 2
+      },
+      {
+        "ability": "sundering_wave",
+        "damage": 36,
+        "minRange": 4,
+        "weight": 3
+      },
+      {
+        "ability": "throne_flames",
+        "damage": 30,
+        "minRange": 3,
+        "weight": 3
+      },
+      {
+        "ability": "oath_summon",
+        "weight": 5
+      }
     ],
-    "aggroRadius": 16, "attackRange": 13,
-    "leashRadius": 30, "fleeAtHpPct": 0, "xp": 3400, "loot": "king_drops",
-    "sounds": { "idle": "sundered_king_idle", "attack": "sundered_king_attack", "hurt": "sundered_king_hurt", "die": "sundered_king_die" }
+    "aggroRadius": 16,
+    "attackRange": 13,
+    "leashRadius": 30,
+    "fleeAtHpPct": 0,
+    "xp": 3400,
+    "loot": "king_drops",
+    "sounds": {
+      "idle": "sundered_king_idle",
+      "attack": "sundered_king_attack",
+      "hurt": "sundered_king_hurt",
+      "die": "sundered_king_die"
+    }
+  },
+  "greenhood_poacher": {
+    "name": "Greenhood Poacher",
+    "sprite": "bandit_poacher",
+    "level": 3,
+    "hp": 58,
+    "damage": 8,
+    "moveSpeed": 3.1,
+    "attacks": [
+      {
+        "ability": "bone_bow",
+        "damage": 8,
+        "minRange": 4,
+        "weight": 3
+      },
+      {
+        "ability": "quick_stab",
+        "damage": 6,
+        "weight": 2
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 8,
+        "add": [
+          {
+            "ability": "bolt_shot",
+            "damage": 12,
+            "minRange": 5,
+            "weight": 2
+          }
+        ],
+        "titleSuffix": "Deadeye"
+      },
+      {
+        "atLevel": 11,
+        "remove": [
+          "bone_bow"
+        ],
+        "add": [
+          {
+            "ability": "thrust",
+            "damage": 16,
+            "weight": 2
+          }
+        ],
+        "damageMult": 1.1,
+        "titleSuffix": "Roadwarden"
+      }
+    ],
+    "aggroRadius": 14,
+    "attackRange": 24,
+    "leashRadius": 30,
+    "fleeAtHpPct": 0.15,
+    "xp": 34,
+    "loot": "bandit_drops",
+    "sounds": {
+      "idle": "bandit_idle",
+      "attack": "bandit_attack",
+      "hurt": "bandit_hurt",
+      "die": "bandit_die"
+    }
+  },
+  "powder_brigand": {
+    "name": "Powder Brigand",
+    "sprite": "bandit_bombardier",
+    "level": 5,
+    "hp": 82,
+    "damage": 14,
+    "moveSpeed": 2.7,
+    "attacks": [
+      {
+        "ability": "powder_flask",
+        "damage": 14,
+        "weight": 1
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 8,
+        "add": [
+          {
+            "ability": "fuse_line",
+            "damage": 10,
+            "minRange": 3,
+            "weight": 2
+          }
+        ],
+        "titleSuffix": "Sapper"
+      },
+      {
+        "atLevel": 11,
+        "remove": [
+          "powder_flask"
+        ],
+        "add": [
+          {
+            "ability": "oil_flask",
+            "damage": 20,
+            "weight": 3
+          }
+        ],
+        "titleSuffix": "Powdermaster"
+      }
+    ],
+    "aggroRadius": 16,
+    "attackRange": 18,
+    "leashRadius": 28,
+    "fleeAtHpPct": 0.35,
+    "xp": 66,
+    "loot": "bandit_drops",
+    "sounds": {
+      "idle": "bandit_idle",
+      "attack": "bandit_attack",
+      "hurt": "bandit_hurt",
+      "die": "bandit_die"
+    }
+  },
+  "bandit_enforcer": {
+    "name": "Bandit Enforcer",
+    "sprite": "bandit_enforcer",
+    "level": 6,
+    "hp": 165,
+    "damage": 15,
+    "moveSpeed": 2.5,
+    "attacks": [
+      {
+        "ability": "cleave",
+        "weight": 1
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 9,
+        "add": [
+          {
+            "ability": "iron_bash",
+            "damage": 10,
+            "weight": 2
+          }
+        ],
+        "titleSuffix": "Ironjaw"
+      },
+      {
+        "atLevel": 12,
+        "add": [
+          {
+            "ability": "crown_strike",
+            "damage": 24,
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.08,
+        "titleSuffix": "Warden of the Road"
+      }
+    ],
+    "aggroRadius": 11,
+    "attackRange": 2.4,
+    "leashRadius": 30,
+    "fleeAtHpPct": 0,
+    "xp": 108,
+    "loot": "bandit_drops",
+    "sounds": {
+      "idle": "marauder_idle",
+      "attack": "marauder_attack",
+      "hurt": "marauder_hurt",
+      "die": "marauder_die"
+    }
+  },
+  "hollow_cowl": {
+    "name": "Hollow Cowl",
+    "sprite": "bandit_mystic",
+    "level": 7,
+    "hp": 110,
+    "damage": 16,
+    "moveSpeed": 2.6,
+    "attacks": [
+      {
+        "ability": "wisp_bolt",
+        "damage": 16,
+        "weight": 1
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 10,
+        "add": [
+          {
+            "ability": "mend_kin",
+            "weight": 6
+          }
+        ],
+        "titleSuffix": "Priest"
+      },
+      {
+        "atLevel": 13,
+        "remove": [
+          "mend_kin"
+        ],
+        "add": [
+          {
+            "ability": "mend_kin_greater",
+            "weight": 6
+          }
+        ],
+        "hpMult": 1.15,
+        "titleSuffix": "Oracle"
+      }
+    ],
+    "aggroRadius": 15,
+    "attackRange": 20,
+    "leashRadius": 26,
+    "fleeAtHpPct": 0,
+    "xp": 150,
+    "loot": "bandit_drops",
+    "sounds": {
+      "idle": "wraith_idle",
+      "attack": "wraith_attack",
+      "hurt": "wraith_hurt",
+      "die": "wraith_die"
+    }
+  },
+  "thrace_redcap": {
+    "name": "Thrace the Redcap",
+    "sprite": "bandit_chief",
+    "level": 7,
+    "hp": 520,
+    "damage": 20,
+    "moveSpeed": 3,
+    "attacks": [
+      {
+        "ability": "cleave",
+        "weight": 3
+      },
+      {
+        "ability": "thrust",
+        "damage": 24,
+        "weight": 2
+      },
+      {
+        "ability": "iron_bash",
+        "damage": 16,
+        "weight": 2
+      },
+      {
+        "ability": "bandit_rally",
+        "weight": 5
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 12,
+        "add": [
+          {
+            "ability": "fuse_line",
+            "damage": 14,
+            "minRange": 3,
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.2,
+        "titleSuffix": "the Drowned"
+      }
+    ],
+    "aggroRadius": 16,
+    "attackRange": 2.6,
+    "leashRadius": 34,
+    "fleeAtHpPct": 0,
+    "xp": 420,
+    "loot": "bandit_boss_drops",
+    "sounds": {
+      "idle": "marauder_idle",
+      "attack": "marauder_attack",
+      "hurt": "marauder_hurt",
+      "die": "marauder_die"
+    }
+  },
+  "camp_cur": {
+    "name": "Camp Cur",
+    "sprite": "camp_cur",
+    "level": 2,
+    "hp": 40,
+    "damage": 6,
+    "moveSpeed": 3.7,
+    "attacks": [
+      {
+        "ability": "wolf_bite",
+        "weight": 1
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 9,
+        "add": [
+          {
+            "ability": "raptor_bite",
+            "weight": 2
+          }
+        ],
+        "moveSpeedMult": 1.08,
+        "titleSuffix": "Mauler"
+      },
+      {
+        "atLevel": 12,
+        "remove": [
+          "wolf_bite"
+        ],
+        "add": [
+          {
+            "ability": "spider_bite",
+            "damage": 10,
+            "weight": 3
+          }
+        ],
+        "titleSuffix": "Fenhound"
+      }
+    ],
+    "aggroRadius": 20,
+    "attackRange": 1.9,
+    "leashRadius": 26,
+    "fleeAtHpPct": 0,
+    "xp": 26,
+    "loot": "wolf_drops",
+    "sounds": {
+      "idle": "gravehound_idle",
+      "attack": "gravehound_attack",
+      "hurt": "gravehound_hurt",
+      "die": "gravehound_die"
+    }
+  },
+  "stolen_goat": {
+    "name": "Stolen Goat",
+    "sprite": "stolen_goat",
+    "level": 1,
+    "hp": 20,
+    "damage": 1,
+    "moveSpeed": 2.6,
+    "attacks": [
+      {
+        "ability": "punch",
+        "damage": 1,
+        "weight": 1
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 0,
+    "attackRange": 1.5,
+    "leashRadius": 8,
+    "fleeAtHpPct": 1,
+    "xp": 3,
+    "loot": "slime_drops"
   }
 }

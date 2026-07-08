@@ -59,56 +59,64 @@ export declare const SpawnTableSchema: z.ZodObject<{
         z: z.ZodNumber;
         r: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
     }, {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
     }>;
+    /** `level` reuses a mob def at a higher level: stats scale by
+     *  constants.mobs.scaling and level-gated ranks unlock extra abilities
+     *  (see registry.resolveMob). Omit to spawn at the def's own level. */
     mobs: z.ZodArray<z.ZodObject<{
         mob: z.ZodString;
         weight: z.ZodNumber;
+        level: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         mob: string;
         weight: number;
+        level?: number | undefined;
     }, {
         mob: string;
         weight: number;
+        level?: number | undefined;
     }>, "many">;
     maxAlive: z.ZodNumber;
     packSize: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
     respawnSec: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    id: string;
-    region: {
-        x: number;
-        z: number;
-        r: number;
-        kind: "circle";
-    };
     mobs: {
         mob: string;
         weight: number;
+        level?: number | undefined;
     }[];
+    id: string;
+    region: {
+        kind: "circle";
+        x: number;
+        z: number;
+        r: number;
+    };
     maxAlive: number;
     packSize: [number, number];
     respawnSec: number;
 }, {
-    id: string;
-    region: {
-        x: number;
-        z: number;
-        r: number;
-        kind: "circle";
-    };
     mobs: {
         mob: string;
         weight: number;
+        level?: number | undefined;
     }[];
+    id: string;
+    region: {
+        kind: "circle";
+        x: number;
+        z: number;
+        r: number;
+    };
     maxAlive: number;
     packSize: [number, number];
     respawnSec: number;
@@ -220,10 +228,10 @@ export declare const NpcDefSchema: z.ZodObject<{
         offers: string[];
     }>>;
 }, "strip", z.ZodTypeAny, {
+    name: string;
     id: string;
     x: number;
     z: number;
-    name: string;
     sprite: string;
     yaw: number;
     wanderRadius: number;
@@ -237,10 +245,10 @@ export declare const NpcDefSchema: z.ZodObject<{
         offers: string[];
     } | undefined;
 }, {
+    name: string;
     id: string;
     x: number;
     z: number;
-    name: string;
     sprite: string;
     dialog: string[];
     yaw?: number | undefined;
@@ -263,16 +271,16 @@ export declare const RegionSchema: z.ZodObject<{
     r: z.ZodNumber;
     pvp: z.ZodDefault<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
+    kind: "circle";
     x: number;
     z: number;
     r: number;
-    kind: "circle";
     pvp: boolean;
 }, {
+    kind: "circle";
     x: number;
     z: number;
     r: number;
-    kind: "circle";
     pvp?: boolean | undefined;
 }>;
 export type RegionDef = z.infer<typeof RegionSchema>;
@@ -518,16 +526,16 @@ export declare const RoomDefSchema: z.ZodObject<{
         r: z.ZodNumber;
         pvp: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
         pvp: boolean;
     }, {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
         pvp?: boolean | undefined;
     }>, "many">>;
     size: z.ZodObject<{
@@ -647,56 +655,64 @@ export declare const RoomDefSchema: z.ZodObject<{
             z: z.ZodNumber;
             r: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
+            kind: "circle";
             x: number;
             z: number;
             r: number;
-            kind: "circle";
         }, {
+            kind: "circle";
             x: number;
             z: number;
             r: number;
-            kind: "circle";
         }>;
+        /** `level` reuses a mob def at a higher level: stats scale by
+         *  constants.mobs.scaling and level-gated ranks unlock extra abilities
+         *  (see registry.resolveMob). Omit to spawn at the def's own level. */
         mobs: z.ZodArray<z.ZodObject<{
             mob: z.ZodString;
             weight: z.ZodNumber;
+            level: z.ZodOptional<z.ZodNumber>;
         }, "strip", z.ZodTypeAny, {
             mob: string;
             weight: number;
+            level?: number | undefined;
         }, {
             mob: string;
             weight: number;
+            level?: number | undefined;
         }>, "many">;
         maxAlive: z.ZodNumber;
         packSize: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
         respawnSec: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        id: string;
-        region: {
-            x: number;
-            z: number;
-            r: number;
-            kind: "circle";
-        };
         mobs: {
             mob: string;
             weight: number;
+            level?: number | undefined;
         }[];
+        id: string;
+        region: {
+            kind: "circle";
+            x: number;
+            z: number;
+            r: number;
+        };
         maxAlive: number;
         packSize: [number, number];
         respawnSec: number;
     }, {
-        id: string;
-        region: {
-            x: number;
-            z: number;
-            r: number;
-            kind: "circle";
-        };
         mobs: {
             mob: string;
             weight: number;
+            level?: number | undefined;
         }[];
+        id: string;
+        region: {
+            kind: "circle";
+            x: number;
+            z: number;
+            r: number;
+        };
         maxAlive: number;
         packSize: [number, number];
         respawnSec: number;
@@ -923,10 +939,10 @@ export declare const RoomDefSchema: z.ZodObject<{
             offers: string[];
         }>>;
     }, "strip", z.ZodTypeAny, {
+        name: string;
         id: string;
         x: number;
         z: number;
-        name: string;
         sprite: string;
         yaw: number;
         wanderRadius: number;
@@ -940,10 +956,10 @@ export declare const RoomDefSchema: z.ZodObject<{
             offers: string[];
         } | undefined;
     }, {
+        name: string;
         id: string;
         x: number;
         z: number;
-        name: string;
         sprite: string;
         dialog: string[];
         yaw?: number | undefined;
@@ -958,18 +974,18 @@ export declare const RoomDefSchema: z.ZodObject<{
         } | undefined;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
-    id: string;
-    type: "hub" | "wilderness" | "dungeon" | "building";
+    type: "building" | "hub" | "wilderness" | "dungeon";
     name: string;
+    id: string;
     biome: string;
     wind: number;
     nightLight: number;
     persistence: "stateful" | "ephemeral";
     regions: {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
         pvp: boolean;
     }[];
     size: {
@@ -1009,17 +1025,18 @@ export declare const RoomDefSchema: z.ZodObject<{
         exitPortalId?: string | undefined;
     }[];
     spawnTables: {
-        id: string;
-        region: {
-            x: number;
-            z: number;
-            r: number;
-            kind: "circle";
-        };
         mobs: {
             mob: string;
             weight: number;
+            level?: number | undefined;
         }[];
+        id: string;
+        region: {
+            kind: "circle";
+            x: number;
+            z: number;
+            r: number;
+        };
         maxAlive: number;
         packSize: [number, number];
         respawnSec: number;
@@ -1068,10 +1085,10 @@ export declare const RoomDefSchema: z.ZodObject<{
         })[];
     }[];
     npcs: {
+        name: string;
         id: string;
         x: number;
         z: number;
-        name: string;
         sprite: string;
         yaw: number;
         wanderRadius: number;
@@ -1092,9 +1109,9 @@ export declare const RoomDefSchema: z.ZodObject<{
         lifetimeSec?: number | undefined;
     } | undefined;
 }, {
-    id: string;
-    type: "hub" | "wilderness" | "dungeon" | "building";
+    type: "building" | "hub" | "wilderness" | "dungeon";
     name: string;
+    id: string;
     biome: string;
     persistence: "stateful" | "ephemeral";
     size: {
@@ -1134,26 +1151,27 @@ export declare const RoomDefSchema: z.ZodObject<{
         exitPortalId?: string | undefined;
     }[];
     spawnTables: {
-        id: string;
-        region: {
-            x: number;
-            z: number;
-            r: number;
-            kind: "circle";
-        };
         mobs: {
             mob: string;
             weight: number;
+            level?: number | undefined;
         }[];
+        id: string;
+        region: {
+            kind: "circle";
+            x: number;
+            z: number;
+            r: number;
+        };
         maxAlive: number;
         packSize: [number, number];
         respawnSec: number;
     }[];
     npcs: {
+        name: string;
         id: string;
         x: number;
         z: number;
-        name: string;
         sprite: string;
         dialog: string[];
         yaw?: number | undefined;
@@ -1176,10 +1194,10 @@ export declare const RoomDefSchema: z.ZodObject<{
         lifetimeSec?: number | undefined;
     } | undefined;
     regions?: {
+        kind: "circle";
         x: number;
         z: number;
         r: number;
-        kind: "circle";
         pvp?: boolean | undefined;
     }[] | undefined;
     prefabs?: {

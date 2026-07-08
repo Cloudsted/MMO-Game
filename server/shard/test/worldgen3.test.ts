@@ -64,14 +64,14 @@ function tablesInBounds(def: RoomDef): void {
 describe("gloomfen (L8-12, behind forest)", () => {
   const def = loadRoomDef("gloomfen");
 
-  it("loads per design: swamp, murk_water, perpetual dusk, 6 tables in bounds", () => {
+  it("loads per design: swamp, murk_water, perpetual dusk, 7 tables in bounds", () => {
     expect(def.biome).toBe("swamp");
     expect(def.wind).toBeCloseTo(0.45);
     expect(def.fixedTime).toBeCloseTo(0.86);
     expect(def.size).toEqual({ w: 320, h: 320 });
     expect(def.terrain.liquid).toBe("murk_water");
     expect(def.terrain.seed).toBe(91177);
-    expect(def.spawnTables).toHaveLength(6);
+    expect(def.spawnTables).toHaveLength(7); // +drowned-company (the Thornhollow Company, reused at L11-12)
     tablesInBounds(def);
   });
 

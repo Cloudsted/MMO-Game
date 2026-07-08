@@ -3,7 +3,7 @@
   "name": "Whispering Forest",
   "type": "wilderness",
   "biome": "grass",
-  "wind": 1.0,
+  "wind": 1,
   "persistence": "stateful",
   "size": {
     "w": 480,
@@ -173,13 +173,29 @@
       "mobs": [
         {
           "mob": "bandit",
-          "weight": 1
+          "weight": 5
+        },
+        {
+          "mob": "greenhood_poacher",
+          "weight": 3
+        },
+        {
+          "mob": "powder_brigand",
+          "weight": 2
+        },
+        {
+          "mob": "bandit_enforcer",
+          "weight": 2
+        },
+        {
+          "mob": "camp_cur",
+          "weight": 2
         }
       ],
-      "maxAlive": 8,
+      "maxAlive": 12,
       "packSize": [
         2,
-        2
+        3
       ],
       "respawnSec": 60
     },
@@ -245,6 +261,48 @@
         1
       ],
       "respawnSec": 60
+    },
+    {
+      "id": "redcap-hall",
+      "region": {
+        "kind": "circle",
+        "x": 255,
+        "z": 90,
+        "r": 6
+      },
+      "mobs": [
+        {
+          "mob": "thrace_redcap",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 900
+    },
+    {
+      "id": "camp-livestock",
+      "region": {
+        "kind": "circle",
+        "x": 255,
+        "z": 90,
+        "r": 11
+      },
+      "mobs": [
+        {
+          "mob": "stolen_goat",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 2,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 240
     }
   ],
   "prefabs": [

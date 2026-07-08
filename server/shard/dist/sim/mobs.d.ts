@@ -131,6 +131,13 @@ export declare function findSpawnPoint(table: SpawnTable, world: VoxelWorld, _wa
     x: number;
     z: number;
 } | null;
-/** Weighted mob pick from a spawn table. */
+/** Weighted pick from a spawn table: the mob id AND its (optional) level
+ *  override — a table reusing a low-level mob deeper in the world spawns it
+ *  scaled up, with its level-gated abilities unlocked (registry.resolveMob). */
+export declare function pickMobEntry(table: SpawnTable): {
+    mob: string;
+    level?: number;
+};
+/** Weighted mob pick from a spawn table (id only). */
 export declare function pickMob(table: SpawnTable): string;
 //# sourceMappingURL=mobs.d.ts.map

@@ -124,7 +124,9 @@ export declare class RoomSim {
     private mobAlive;
     private initSpawners;
     private spawnPack;
-    spawnMob(mobId: string, x: number, z: number, spawnerId: string): Entity | null;
+    /** Resolve a live mob's def at the level it spawned with (stats + kit). */
+    private resolvedMobOf;
+    spawnMob(mobId: string, x: number, z: number, spawnerId: string, level?: number): Entity | null;
     /** A named event boss (re)appearing re-arms its one-shot triggers and
      *  reseals its gates — the way deeper closes when the guardian returns. */
     private onBossSpawned;
@@ -234,8 +236,11 @@ export declare class RoomSim {
     private wearEquippedArmor;
     /** Durability tick: at zero the weapon breaks and the slot empties. */
     private wearHeldItem;
-    /** A mob's attack kit resolved against the ability registry. */
+    /** A mob's attack kit resolved against the ability registry, at the level it
+     *  spawned with (level-gated ranks may have added or swapped options). */
     private attackOptionsOf;
+    /** Living mobs an allyHeal from `caster` would touch (caster included per spec). */
+    private healableAllies;
     /** Mob brain wants to attack: pick a usable option from the mob's kit
      *  (range windows, cooldowns, melee vertical gate — weighted when several
      *  qualify) and start it on the shared FSM. "close" tells the caller

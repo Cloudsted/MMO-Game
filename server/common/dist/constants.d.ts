@@ -234,6 +234,42 @@ declare const ConstantsSchema: z.ZodObject<{
         xpExponent: number;
         maxLevel: number;
     }>;
+    /** How a world-gen mob grows when a spawn table reuses it above its base
+     *  level (see registry.resolveMob). Compounding per level. These are THE
+     *  difficulty knobs for reused mobs — tune here, not in mobs.json. */
+    mobs: z.ZodObject<{
+        scaling: z.ZodObject<{
+            hpPerLevel: z.ZodNumber;
+            damagePerLevel: z.ZodNumber;
+            xpPerLevel: z.ZodNumber;
+            /** hard cap on (spawnLevel - defLevel); a typo can't mint a boss slime */
+            maxLevelBonus: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            hpPerLevel: number;
+            damagePerLevel: number;
+            xpPerLevel: number;
+            maxLevelBonus: number;
+        }, {
+            hpPerLevel: number;
+            damagePerLevel: number;
+            xpPerLevel: number;
+            maxLevelBonus: number;
+        }>;
+    }, "strip", z.ZodTypeAny, {
+        scaling: {
+            hpPerLevel: number;
+            damagePerLevel: number;
+            xpPerLevel: number;
+            maxLevelBonus: number;
+        };
+    }, {
+        scaling: {
+            hpPerLevel: number;
+            damagePerLevel: number;
+            xpPerLevel: number;
+            maxLevelBonus: number;
+        };
+    }>;
     world: z.ZodObject<{
         worldHeight: z.ZodNumber;
         chunkBlocks: z.ZodNumber;
@@ -323,6 +359,14 @@ declare const ConstantsSchema: z.ZodObject<{
         xpExponent: number;
         maxLevel: number;
     };
+    mobs: {
+        scaling: {
+            hpPerLevel: number;
+            damagePerLevel: number;
+            xpPerLevel: number;
+            maxLevelBonus: number;
+        };
+    };
     world: {
         worldHeight: number;
         chunkBlocks: number;
@@ -401,6 +445,14 @@ declare const ConstantsSchema: z.ZodObject<{
         xpBase: number;
         xpExponent: number;
         maxLevel: number;
+    };
+    mobs: {
+        scaling: {
+            hpPerLevel: number;
+            damagePerLevel: number;
+            xpPerLevel: number;
+            maxLevelBonus: number;
+        };
     };
     world: {
         worldHeight: number;

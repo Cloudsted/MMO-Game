@@ -269,17 +269,20 @@ describe("watchtower climb path", () => {
 });
 
 describe("480² retune", () => {
-  it("forest: size, spawn, arena, and all 9 spawn tables in bounds with known mobs", () => {
+  it("forest: size, spawn, arena, and all 11 spawn tables in bounds with known mobs", () => {
     const def = loadRoomDef("forest");
     expect(def.size).toEqual({ w: 480, h: 480 });
     expect(def.spawn.x).toBe(240);
     expect(def.spawn.z).toBe(466);
     expect(def.regions[0]).toMatchObject({ x: 84, z: 354, r: 12, pvp: true });
     expect(def.portals[0]).toMatchObject({ x: 240, z: 472 });
-    expect(def.spawnTables).toHaveLength(9);
+    expect(def.spawnTables).toHaveLength(11); // +redcap-hall, +camp-livestock (Thornhollow Company)
     const ids = def.spawnTables.map((t) => t.id);
     expect(ids).toEqual(
-      expect.arrayContaining(["boar-meadow-s", "boar-meadow-e", "wolf-den-n", "fen-approach-spiders"])
+      expect.arrayContaining([
+        "boar-meadow-s", "boar-meadow-e", "wolf-den-n", "fen-approach-spiders",
+        "bandit-camp", "redcap-hall", "camp-livestock",
+      ])
     );
     for (const t of def.spawnTables) {
       expect(t.region.x - t.region.r, t.id).toBeGreaterThanOrEqual(0);
