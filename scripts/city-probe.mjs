@@ -131,18 +131,34 @@ const chatWith = (state, needle) => state.chats.some((c) => c.text?.includes(nee
 const liveMobs = (state, name) =>
   [...state.ents.values()].filter((e) => e.kind === "mob" && e.name === name && e.act !== "dead");
 
-/** Walkable-gap feet Y nearest refY (probe mirror of the server's walkYNear;
- *  goTo/heightAt path over ROOFS — useless inside the keep). */
-function floorNear(grid, x, z, refY) {
-  const xi = Math.floor(x);
-  const zi = Math.floor(z);
+/** Walkable-gap feet Y nearest refY at ONE column (probe mirror of the
+ *  server's walkYNear; goTo/heightAt path over ROOFS — useless indoors). */
+function columnGapNear(grid, xi, zi, refY) {
   let best = -1;
   for (let y = 1; y < 46; y++) {
     if (!SOLID_IDS.has(grid.get(xi, y - 1, zi))) continue;
     if (SOLID_IDS.has(grid.get(xi, y, zi)) || SOLID_IDS.has(grid.get(xi, y + 1, zi))) continue;
     if (best < 0 || Math.abs(y - refY) < Math.abs(best - refY)) best = y;
   }
-  return best >= 0 ? best : refY;
+  return best;
+}
+
+/** AABB-aware feet Y: the player radius (0.3) clips NEIGHBOUR cells, so
+ *  climbing a 1-block step needs feet at the HIGHEST gap any touched cell
+ *  demands — center-cell-only feet froze the raid on the dais lip while
+ *  the server corrected every move. */
+function floorNear(grid, x, z, refY) {
+  const R = 0.31;
+  const cells = new Set();
+  for (const dx of [-R, R]) for (const dz of [-R, R]) cells.add(`${Math.floor(x + dx)},${Math.floor(z + dz)}`);
+  let ny = -1;
+  for (const c of cells) {
+    const [xi, zi] = c.split(",").map(Number);
+    const g = columnGapNear(grid, xi, zi, refY);
+    if (g < 0 || g > refY + 1.05) return null; // wall/no-gap cell: blocked, don't wall-climb
+    if (g > ny) ny = g;
+  }
+  return ny >= 0 ? ny : refY;
 }
 // solid ids from shared/blocks.json (BOM-tolerant)
 import { readFileSync } from "node:fs";
@@ -151,18 +167,28 @@ const SOLID_IDS = new Set(
     .blocks.filter((b) => b.solid).map((b) => b.id)
 );
 
-/** Straight-line floor-aware stepping (interiors; assumes a clear line). */
+/** Straight-line floor-aware stepping (interiors; assumes a mostly clear
+ *  line; sidesteps when the direct line is blocked by a step/wall). */
 async function moveToward(ws, state, tx, tz, within = 2.2, timeoutMs = 20000) {
   const deadline = Date.now() + timeoutMs;
+  let jink = 1;
   while (Date.now() < deadline) {
     const dx = tx - state.x;
     const dz = tz - state.z;
     const d = Math.hypot(dx, dz);
     if (d <= within) return true;
     const step = Math.min(0.45, d);
-    const nx = state.x + (dx / d) * step;
-    const nz = state.z + (dz / d) * step;
-    const ny = floorNear(state.terrain, nx, nz, state.y);
+    let nx = state.x + (dx / d) * step;
+    let nz = state.z + (dz / d) * step;
+    let ny = floorNear(state.terrain, nx, nz, state.y);
+    if (ny === null) {
+      // blocked: sidestep perpendicular to the line and try again next tick
+      jink = -jink;
+      nx = state.x + (-dz / d) * step * jink;
+      nz = state.z + (dx / d) * step * jink;
+      ny = floorNear(state.terrain, nx, nz, state.y);
+      if (ny === null) { await sleep(110); continue; }
+    }
     state.seq++;
     state.x = nx; state.z = nz; state.y = ny;
     ws.send(JSON.stringify({ t: "move", seq: state.seq, x: nx, y: ny, z: nz, yaw: Math.atan2(dx, dz), anim: "move" }));
@@ -383,24 +409,34 @@ expect(chatWith(state, "NOT kneel"), "33% rally announced");
 expect(state.maxSentinels > sentinelsBefore, `rally/summon adds joined the fight (${sentinelsBefore} -> peak ${state.maxSentinels})`);
 expect(chatWith(state, "COLLAPSING"), "death announce: the city begins to collapse");
 
-// loot the king for the crown: find the bag near the DAIS (the raid may
-// have landed the kill while we were still walking in), walk over, and
-// retry pickup until the 30s owner-lock (top damage dealer) expires
+// loot the king for the crown: SENTINEL bags litter the dais too — prefer
+// the bag whose replicated loot view carries the crown, else sweep every
+// bag until it lands in the inventory (retrying through the 30s owner-lock)
 await sleep(1200);
-const bag = [...state.ents.values()].find((e) => e.kind === "loot" && Math.hypot(e.x - 128, e.z - 42) < 30);
-if (bag) {
-  await moveToward(ws, state, bag.x, bag.z, 1.5, 15000);
-  let gotCrown = false;
-  for (let i = 0; i < 20 && !gotCrown; i++) {
-    ws.send(JSON.stringify({ t: "pickup", id: bag.id }));
-    await sleep(2000);
-    gotCrown = (state.inv?.slots ?? []).some((s) => s && s.item === "sundered_crown");
-    if (!state.ents.has(bag.id) && !gotCrown) break; // someone else took it
-  }
-  expect(gotCrown, "looted The Sundered Crown from the King's bag");
-} else {
-  expect(false, "the King dropped a loot bag near the dais");
+const gotCrown = () => (state.inv?.slots ?? []).some((s) => s && s.item === "sundered_crown");
+const bagsNearDais = () =>
+  [...state.ents.values()]
+    .filter((e) => e.kind === "loot" && Math.hypot(e.x - 128, e.z - 42) < 30)
+    .sort((a, b) => {
+      const hasCrown = (e) => (e.loot ?? []).some((l) => l && l.item === "sundered_crown");
+      const ac = hasCrown(a) ? 0 : 1;
+      const bc = hasCrown(b) ? 0 : 1;
+      if (ac !== bc) return ac - bc; // the crown bag first
+      return Math.hypot(a.x - state.x, a.z - state.z) - Math.hypot(b.x - state.x, b.z - state.z);
+    });
+let sawBag = bagsNearDais().length > 0;
+const lootDeadline = Date.now() + 45_000; // the collapse gives us ~a minute
+while (!gotCrown() && Date.now() < lootDeadline) {
+  const bags = bagsNearDais();
+  if (!bags.length) { await sleep(1000); continue; }
+  sawBag = true;
+  const bag = bags[0];
+  await moveToward(ws, state, bag.x, bag.z, 1.5, 8000);
+  ws.send(JSON.stringify({ t: "pickup", id: bag.id }));
+  await sleep(1500);
 }
+expect(sawBag, "loot bags dropped near the dais");
+expect(gotCrown(), "looted The Sundered Crown from the King's bag");
 
 // ---- 5. one-minute collapse: warnings then evict ----
 const warned30 = async () => { for (let i = 0; i < 45 * 10; i++) { if (chatWith(state, "collapses in 30 seconds")) return true; await sleep(100); } return false; };

@@ -122,6 +122,10 @@ log(`entered ${state.roomId} (${state.terrain.w}x${state.terrain.h}) at ${state.
 expect(state.roomId === "atelier", `/room atelier transferred (now in ${state.roomId}, world ${state.terrain.w}x${state.terrain.h})`);
 
 // ---- 2. /prefab ruined_watchtower stamps + replicates blockSets ----
+// wipe any stamp a previous run persisted - re-stamping identical blocks
+// produces ZERO edits (applyEdit drops same-as-current), failing the count
+ws.send(JSON.stringify({ t: "chat", text: "/clearblocks" }));
+await sleep(1200);
 await sleep(500); // let any join-time traffic settle
 const editsBefore = state.blockSets;
 const chatsBefore = state.chats.length;

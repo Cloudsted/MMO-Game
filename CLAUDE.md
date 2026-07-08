@@ -1284,3 +1284,17 @@ Quick reference only — the stories behind these (and more) live in
   event-sealed gate gray + "(sealed)"). Feel checks owner-owned: falling
   mobs read right in motion, skeleton skirmisher cadence, boss fight
   difficulty (potion math assumed level ~10+ groups for bosses).
+- 2026-07-07 **THE SUNDERED CITY SHIPPED** (see the decisions-log entry for
+  the full architecture): the 10th room — Valdrenn, a PRESET war-ruined
+  city behind Gloomfen via twin paired portals, with the castle finale and
+  Vaelric, the Sundered King (L18, the hardest fight; group content).
+  Blocks 51-55, T4 royal loot, 5 new mobs, always-open-until-boss-death
+  lifecycle (60 s collapse → 300 s reset), walkYNear roofed-interior login
+  fix. Verified: 188 vitest, city-probe full live arc (paired arrivals,
+  preset blocks on the wire, district populations, 3-bot raid kill with
+  both rallies, crown loot, T-30 warning, ~60 s evict, downtime + fresh
+  reopen), travel/return/roomgraph/combat regressions green (roomgraph
+  needed a /clearblocks idempotency fix — stale atelier stamps replicate
+  zero edits). Screenshots tools/out/city-*.png, throne-room4.png. Feel
+  checks owner-owned: fight difficulty solo vs group, collapse pacing,
+  the 0.74 sunset mood, marauder/sentinel vocal pitches.
