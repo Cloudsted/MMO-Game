@@ -432,6 +432,28 @@ export class RegistryService {
           if (!kit.has(gone)) throw new Error(`mob ${id}: rank atLevel ${rank.atLevel} removes ${gone}, which it never has`);
         }
       }
+      for (const abilityId of mobAllAbilityIds(mob)) {
+        const ability = abilities[abilityId]!;
+        // Mobs have no mana component. startAbility() refuses a mana ability and
+        // returns BEFORE setting a cooldown, so chooseAttack re-picks it every
+        // tick: the mob stands there whiffing forever. Make that unauthorable.
+        if (ability.manaCost > 0) {
+          throw new Error(`mob ${id}: ability ${abilityId} costs mana (${ability.manaCost}); mobs have no mana and would whiff-loop`);
+        }
+        // Summon hygiene: a mob may not summon itself, and what it summons may not
+        // summon in turn. Exponential adds become structurally impossible, not
+        // merely unlikely-because-of-a-cap.
+        const spec = ability.summon;
+        if (!spec) continue;
+        if (spec.mob === id) throw new Error(`mob ${id}: ability ${abilityId} summons itself`);
+        const child = mobs[spec.mob];
+        if (!child) continue; // the ability-level check below reports the bad id
+        for (const childAbility of mobAllAbilityIds(child)) {
+          if (abilities[childAbility]?.summon) {
+            throw new Error(`mob ${id}: summons ${spec.mob}, which itself summons via ${childAbility} (summon chain)`);
+          }
+        }
+      }
       if (!loot[mob.loot]) throw new Error(`mob ${id}: unknown loot table ${mob.loot}`);
     }
     for (const [id, ability] of Object.entries(abilities)) {

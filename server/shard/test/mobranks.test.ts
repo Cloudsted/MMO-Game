@@ -422,3 +422,35 @@ describe("Hollow Cowl: the pack healer in a live room", () => {
     expect(mate.health!.hp).toBe(10);
   });
 });
+
+/**
+ * Two traps the R&D judges found by reading combat.ts, both now impossible to
+ * author. Neither is tripped by any shipped mob; these tests keep it that way.
+ */
+describe("registry guards against latent mob traps", () => {
+  const reg = new RegistryService();
+
+  it("no mob can carry a mana ability (it would whiff-loop forever)", () => {
+    // startAbility() refuses a mana ability on a mana-less entity and returns
+    // BEFORE setting a cooldown, so chooseAttack re-picks it every single tick.
+    for (const [id, def] of Object.entries(reg.mobs)) {
+      for (const abilityId of mobAllAbilityIds(def)) {
+        expect(reg.abilities[abilityId]!.manaCost, `mob ${id}: ${abilityId}`).toBe(0);
+      }
+    }
+  });
+
+  it("no summon summons itself, and nothing summoned can summon", () => {
+    for (const [id, def] of Object.entries(reg.mobs)) {
+      for (const abilityId of mobAllAbilityIds(def)) {
+        const spec = reg.abilities[abilityId]!.summon;
+        if (!spec) continue;
+        expect(spec.mob, `mob ${id}: ${abilityId} summons itself`).not.toBe(id);
+        const child = reg.mobs[spec.mob]!;
+        for (const childAbility of mobAllAbilityIds(child)) {
+          expect(reg.abilities[childAbility]?.summon, `${id} -> ${spec.mob} -> ${childAbility}`).toBeFalsy();
+        }
+      }
+    }
+  });
+});
