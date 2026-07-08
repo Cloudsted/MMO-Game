@@ -988,6 +988,49 @@ show their block tile).
   - Caveat kept: summoned minions still spawn at their own def level, not the
     summoner's. Revisit if a scaled summoner ever needs scaled adds.
 
+- 2026-07-08 **THE THORNHOLLOW COMPANY** — the bandit faction, and the first
+  content built on the rank system. Fiction (agent-designed, ties into the
+  Sundered City already in-game): the sapper corps and baggage train of the war
+  that broke Valdrenn, marched home to a forest with no lord left to pay them.
+  - Sprites from `Unsorted/bandits_1.png` (4 archetypes × 2 palettes; the old
+    npc5 "flat-cap burglar" is retired). `bandit` [0,0] · `bandit_enforcer`
+    [1,0] · `bandit_bombardier` [2,0] (lit fuse + bandolier of flasks — NOT a
+    shield; look at it) · `bandit_mystic` [3,0] (cloaked, no face) ·
+    `bandit_chief` [1,1] · `bandit_poacher` [0,1]. Plus `camp_cur`
+    (animals1 [3,0] — **row 0 is dogs, row 1 is cats**) and `stolen_goat`
+    (animals2 [3,0]).
+  - 7 new mobs, each mechanically distinct: `greenhood_poacher` (MIXED kit, so
+    the brain closes him toward melee between shots), `powder_brigand`
+    (pure-ranged AoE lob, deliberately NOT predictive — strafing beats it),
+    `bandit_enforcer` (a wall, not a threat), `hollow_cowl` (NO melee on
+    purpose: closing on it is the correct play), `thrace_redcap` (forest's
+    first boss; every tool he has, his men have), `camp_cur` (aggroRadius 20 —
+    a tripwire with teeth: pulling the dog pulls the camp), `stolen_goat`.
+  - **The goat needs no engine flag**: `aggroRadius 0` means the brain never
+    initiates (it skips targets outside aggroRadius while threat is 0), and
+    `fleeAtHpPct 1.0` means `hp/maxHp < 1.0` is false at full health and true
+    after any damage. It wanders, then bolts. Emergent, and exactly right.
+  - **Gloomfen's `drowned-company` table reuses the SAME defs at L11-12** — no
+    copies. Every entry crosses a rank threshold (a test asserts that a `level`
+    which unlocks nothing is a bug). The Hollow Cowl's healer appears at L10.
+  - `mend_kin` is the **first interruptible mob cast in the game** (all 40
+    shipped abilities were `interruptible:false`). `interruptIfCasting` is
+    entity-agnostic, so hitting the Cowl mid-cast staggers it and the heal
+    never lands. That counterplay is the fight.
+  - **BUG FIXED**: a per-attack `damage` override was absolute, so a rank-added
+    ability would hit for its literal authored number while the base attack
+    scaled past it — every mob's *new* trick would have been its *weakest*.
+    `resolveMob` now scales overrides by the same multiplier (no-op at delta 0).
+  - `/spawnmob <mob> [n] [level]` echoes the resolved name/level/hp/kit — the
+    only way to exercise ranks in-game. `scripts/bandit-probe.mjs` proves the
+    whole path live (it asserts on the **heal EVENT**, because a leash reset
+    heals a mob to full and would pass a naive hp check).
+  - Sound: the new mobs reuse existing vocal groups (bandit_*/marauder_*/
+    wraith_*/gravehound_*); bespoke vocals are a follow-up. The audio tree was
+    deliberately NOT rebuilt (a running client streams those oggs — see traps).
+  - Feel checks owner-owned: is the Cowl's 1.5 s cast a fair interrupt window,
+    does the brigand's lob read as dodgeable, is Thrace beatable solo at L7.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
