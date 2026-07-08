@@ -231,6 +231,47 @@ locked-but-existing files with a warning and carry on.
 
 ## Art pipeline (Time Fantasy sheets)
 
+### A "revamped" sheet is usually a repaint — match by SHAPE, not by pixels
+`tficons_limited_16` replaced `tf_icon_16`. Comparing the two cell-by-cell gave
+**zero exact matches**, which reads as "everything was redrawn, remap all 52
+items by hand". It wasn't: the palette changed and the *alpha masks were
+byte-identical*. Diffing one visually-identical cell showed all 70 opaque pixels
+shifted a few units and the 186 transparent ones differing only in their (unused)
+RGB. Matching on the alpha mask instead — `0.75*IoU + 0.25*colourSim` — recovered
+30/52 items as exact-shape matches and reduced the eyeball problem to the 22 that
+were *genuinely* redrawn (all the armour, most trophies, the bows).
+**Rules:** when two art sheets "look the same" but don't compare equal, diff one
+cell and split the difference into alpha vs colour before concluding anything.
+Never compare fully-transparent pixels — their RGB is undefined garbage. And a
+shape match is evidence, not proof: `tools/icon-proof.mjs` renders the mapping
+for a human, and `tools/verify-icons.mjs` machine-checks bounds/empties/dupes/
+ladder collisions. Both exist now; use them on any icon change.
+
+### The asset pipeline was broken for a whole commit and nothing failed
+`tools/build-assets.mjs` had been dying on `ENOENT tf_icon_32.png` since the
+asset re-init moved that sheet. Nobody noticed because **`client/assets/` is
+git-ignored**: every dev already had a stale-but-complete build on disk, the game
+ran fine, and the only way to see it was to actually run the pipeline.
+**Rule:** a generator whose output is git-ignored has no CI and no blast radius
+until someone runs it on a clean checkout. Run `node tools/build-assets.mjs`
+after touching source assets, and treat "it still runs" as part of the change.
+The same audit found ~120 lines (ground tiles, wall panels, the whole prop atlas)
+that no client code had read since the block-world pivot — dead generators are
+invisible for exactly the same reason.
+
+### New character sheets carry traps that only a rendered look finds
+The Unsorted drop's contact-sheet pass turned up, per sheet: `pirates_100` and
+`shamans_100` have a **fully transparent bottom character row** (4 usable chars,
+not 8); `ratmen`'s bottom row is pixel-identical to the top **except for a baked-in
+elliptical drop shadow** (as do lion/lioness/tiger/unicorn/sasquatch/cerberus/
+nightmare_run — a billboard with a baked shadow will float a dark ellipse in the
+air); `slicer_rmsheet`'s eight "characters" are eight *animation sets* of one
+creature; `executioner_axe`'s axe head runs flush to the left edge of its 26 px
+cell, so any rect window must be exact; `cultists_masks` packs 4 palettes x 2
+trims while `cultists_1` packs 4 designs x 2 palettes. **Rule:** `node
+tools/render-sheets.mjs` then LOOK, before mapping any cell. Ambiguous layouts get
+rendered both ways rather than guessed (`char8` vs `single` is not in the PNG).
+
 - **Alpha-trim welds in anything the window touches.** tree1's window
   overlapped a full-width tile band 11 px below the tree; trim() dutifully
   extended the sprite to include it → the white-bar saga. The pipeline now
