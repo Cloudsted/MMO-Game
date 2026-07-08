@@ -22,6 +22,8 @@ export interface CharacterDoc {
     xp: number;
     gold: number;
     inventory: Array<ItemStack | null>;
+    /** worn gear, EQUIP_SLOTS order; absent on legacy rows (= all empty) */
+    equipment?: Array<ItemStack | null>;
     roomId: string;
     x: number | null;
     y: number | null;

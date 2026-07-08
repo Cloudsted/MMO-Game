@@ -188,6 +188,17 @@
       "equip": {
         "slot": "n"
       },
+      "equipSlot": {
+        "$comment": "equip the inventory stack at invIndex into an equipment slot (occupied gear swaps into the vacated invIndex); invIndex absent = unequip to first free inventory slot. Armor must match its def slot, trinkets go offhand, weapons always refused.",
+        "slot": "s (head|chest|legs|feet|offhand)",
+        "invIndex": "n?"
+      },
+      "enchant": {
+        "$comment": "buy a fixed tier-1 enchant from an enchanter NPC for the unmodified equippable at inventory slot; server recomputes the price (enchanting constants) and refuses modified items",
+        "npc": "n",
+        "slot": "n",
+        "enchantId": "s"
+      },
       "invMove": {
         "from": "n",
         "to": "n"
@@ -327,9 +338,15 @@
         "gold": "n"
       },
       "inv": {
-        "$comment": "full inventory sync on change; held = hotbar slot index",
+        "$comment": "full inventory sync on change; held = hotbar slot index; equipment indexed head/chest/legs/feet/offhand",
         "slots": "a<ItemStack|null>",
-        "held": "n"
+        "held": "n",
+        "equipment": "a<ItemStack|null>"
+      },
+      "effects": {
+        "$comment": "self status effects for the HUD bar: aggregated gear modifiers (persistent) + timed slow/dot/hot (durMs = remaining at send; client counts down locally). speedMult = capped mods-only movement multiplier, mirrored in client prediction like the debuff slow. Sent after welcome + on any change.",
+        "speedMult": "n",
+        "list": "a<{kind:'mod',id:s,mag:n,curse:b}|{kind:'slow'|'dot',mag:n,durMs:n}|{kind:'hot',item:s,mag:n,durMs:n}>"
       },
       "evt": {
         "e": "CombatEvent"
@@ -369,10 +386,12 @@
         "text": "s"
       },
       "dialog": {
+        "$comment": "enchant = enchanter NPCs' fixed tier-1 menu; display prices computed client-side per target item (enchanting constants), server recomputes at enchant receipt",
         "id": "n",
         "name": "s",
         "lines": "a<s>",
-        "shop": "{items:a<{item:s,price:n}>,buys:b}|null"
+        "shop": "{items:a<{item:s,price:n}>,buys:b}|null",
+        "enchant": "{offers:a<{id:s,name:s,mag:n,priceMult:n}>}|null?"
       },
       "portalState": {
         "$comment": "destination room went up/down",
@@ -397,6 +416,7 @@
       "xp": "n",
       "gold": "n",
       "inventory": "a<ItemStack|null>",
+      "equipment": "a<ItemStack|null>?",
       "x": "n",
       "y": "n",
       "z": "n",
@@ -414,7 +434,8 @@
       "stats": "o<stat:s -> mult:n>?",
       "dur": "n?",
       "maxDur": "n?",
-      "$comment": "per-instance item data. Weapons carry stat rolls (multipliers around 1: dmg, spd) and rolled durability (dur counts down; breaks at 0). Minted server-side (mintItem); stackables stay uniform so they merge."
+      "mods": "o<modifierId:s -> magnitude:n>?",
+      "$comment": "per-instance item data. Equippables (weapon/armor/trinket) carry stat rolls (multipliers around 1: dmg+spd for weapons, armor for armor), rolled durability (dur counts down; breaks at 0; trinkets never wear), and possibly dynamic modifiers (shared/modifiers.json ids; curses negative). Minted server-side (mintItem); stackables stay uniform so they merge."
     },
     "EntityFull": {
       "id": "n",

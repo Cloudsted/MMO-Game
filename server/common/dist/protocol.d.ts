@@ -4,23 +4,28 @@
  * JSON for MVP; a binary encoding swaps in behind encode()/decode*() later.
  */
 import { z } from "zod";
-/** One inventory slot: per-instance item data. Weapons carry stat rolls
- *  (multipliers around 1, e.g. {dmg:1.04, spd:0.98}) and durability minted
- *  at creation (see mintItem in items.ts). */
+/** One inventory slot: per-instance item data. Equippables carry stat rolls
+ *  (multipliers around 1, e.g. {dmg:1.04, spd:0.98}), durability, and any
+ *  dynamic modifiers minted at creation (see mintItem in items.ts). */
 export declare const ItemStackSchema: z.ZodObject<{
     item: z.ZodString;
     qty: z.ZodNumber;
     rarity: z.ZodString;
-    /** per-instance stat rolls: stat id → multiplier (absent on non-weapons) */
+    /** per-instance stat rolls: stat id → multiplier (absent on non-equippables) */
     stats: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
     /** durability remaining (uses); item breaks at 0 */
     dur: z.ZodOptional<z.ZodNumber>;
     /** rolled durability ceiling for this instance */
     maxDur: z.ZodOptional<z.ZodNumber>;
+    /** dynamic modifiers: modifier id (shared/modifiers.json) → magnitude in
+     *  the modifier's units; curses negative. Absent = unmodified (the state
+     *  merge guards and the enchanter's eligibility rule key on). */
+    mods: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
 }, "strip", z.ZodTypeAny, {
     item: string;
     qty: number;
     rarity: string;
+    mods?: Record<string, number> | undefined;
     stats?: Record<string, number> | undefined;
     dur?: number | undefined;
     maxDur?: number | undefined;
@@ -28,6 +33,7 @@ export declare const ItemStackSchema: z.ZodObject<{
     item: string;
     qty: number;
     rarity: string;
+    mods?: Record<string, number> | undefined;
     stats?: Record<string, number> | undefined;
     dur?: number | undefined;
     maxDur?: number | undefined;
@@ -56,16 +62,21 @@ export declare const CharacterSnapshotSchema: z.ZodObject<{
         item: z.ZodString;
         qty: z.ZodNumber;
         rarity: z.ZodString;
-        /** per-instance stat rolls: stat id → multiplier (absent on non-weapons) */
+        /** per-instance stat rolls: stat id → multiplier (absent on non-equippables) */
         stats: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
         /** durability remaining (uses); item breaks at 0 */
         dur: z.ZodOptional<z.ZodNumber>;
         /** rolled durability ceiling for this instance */
         maxDur: z.ZodOptional<z.ZodNumber>;
+        /** dynamic modifiers: modifier id (shared/modifiers.json) → magnitude in
+         *  the modifier's units; curses negative. Absent = unmodified (the state
+         *  merge guards and the enchanter's eligibility rule key on). */
+        mods: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
     }, "strip", z.ZodTypeAny, {
         item: string;
         qty: number;
         rarity: string;
+        mods?: Record<string, number> | undefined;
         stats?: Record<string, number> | undefined;
         dur?: number | undefined;
         maxDur?: number | undefined;
@@ -73,25 +84,60 @@ export declare const CharacterSnapshotSchema: z.ZodObject<{
         item: string;
         qty: number;
         rarity: string;
+        mods?: Record<string, number> | undefined;
         stats?: Record<string, number> | undefined;
         dur?: number | undefined;
         maxDur?: number | undefined;
     }>>, "many">;
+    /** worn gear, indexed by EQUIP_SLOTS order (head/chest/legs/feet/offhand).
+     *  Optional: rows/tickets minted before equipment existed validate fine. */
+    equipment: z.ZodOptional<z.ZodArray<z.ZodNullable<z.ZodObject<{
+        item: z.ZodString;
+        qty: z.ZodNumber;
+        rarity: z.ZodString;
+        /** per-instance stat rolls: stat id → multiplier (absent on non-equippables) */
+        stats: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
+        /** durability remaining (uses); item breaks at 0 */
+        dur: z.ZodOptional<z.ZodNumber>;
+        /** rolled durability ceiling for this instance */
+        maxDur: z.ZodOptional<z.ZodNumber>;
+        /** dynamic modifiers: modifier id (shared/modifiers.json) → magnitude in
+         *  the modifier's units; curses negative. Absent = unmodified (the state
+         *  merge guards and the enchanter's eligibility rule key on). */
+        mods: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
+    }, "strip", z.ZodTypeAny, {
+        item: string;
+        qty: number;
+        rarity: string;
+        mods?: Record<string, number> | undefined;
+        stats?: Record<string, number> | undefined;
+        dur?: number | undefined;
+        maxDur?: number | undefined;
+    }, {
+        item: string;
+        qty: number;
+        rarity: string;
+        mods?: Record<string, number> | undefined;
+        stats?: Record<string, number> | undefined;
+        dur?: number | undefined;
+        maxDur?: number | undefined;
+    }>>, "many">>;
     x: z.ZodNumber;
     y: z.ZodNumber;
     z: z.ZodNumber;
     yaw: z.ZodNumber;
     roles: z.ZodArray<z.ZodString, "many">;
 }, "strip", z.ZodTypeAny, {
-    id: string;
     name: string;
     level: number;
     xp: number;
     gold: number;
+    id: string;
     inventory: ({
         item: string;
         qty: number;
         rarity: string;
+        mods?: Record<string, number> | undefined;
         stats?: Record<string, number> | undefined;
         dur?: number | undefined;
         maxDur?: number | undefined;
@@ -101,16 +147,26 @@ export declare const CharacterSnapshotSchema: z.ZodObject<{
     z: number;
     yaw: number;
     roles: string[];
+    equipment?: ({
+        item: string;
+        qty: number;
+        rarity: string;
+        mods?: Record<string, number> | undefined;
+        stats?: Record<string, number> | undefined;
+        dur?: number | undefined;
+        maxDur?: number | undefined;
+    } | null)[] | undefined;
 }, {
-    id: string;
     name: string;
     level: number;
     xp: number;
     gold: number;
+    id: string;
     inventory: ({
         item: string;
         qty: number;
         rarity: string;
+        mods?: Record<string, number> | undefined;
         stats?: Record<string, number> | undefined;
         dur?: number | undefined;
         maxDur?: number | undefined;
@@ -120,6 +176,15 @@ export declare const CharacterSnapshotSchema: z.ZodObject<{
     z: number;
     yaw: number;
     roles: string[];
+    equipment?: ({
+        item: string;
+        qty: number;
+        rarity: string;
+        mods?: Record<string, number> | undefined;
+        stats?: Record<string, number> | undefined;
+        dur?: number | undefined;
+        maxDur?: number | undefined;
+    } | null)[] | undefined;
 }>;
 export type CharacterSnapshot = z.infer<typeof CharacterSnapshotSchema>;
 export declare const EntityFullSchema: z.ZodObject<{
@@ -151,43 +216,43 @@ export declare const EntityFullSchema: z.ZodObject<{
         rarity: string;
     }>, "many">>;
 }, "strip", z.ZodTypeAny, {
+    kind: string;
     id: number;
     x: number;
     y: number;
     z: number;
     yaw: number;
-    kind: string;
     anim: string;
     name?: string | undefined;
-    level?: number | undefined;
     sprite?: string | undefined;
+    level?: number | undefined;
     hp?: number | undefined;
-    maxHp?: number | undefined;
-    act?: string | undefined;
-    actMs?: number | undefined;
     loot?: {
         item: string;
         rarity: string;
     }[] | undefined;
+    maxHp?: number | undefined;
+    act?: string | undefined;
+    actMs?: number | undefined;
 }, {
+    kind: string;
     id: number;
     x: number;
     y: number;
     z: number;
     yaw: number;
-    kind: string;
     anim: string;
     name?: string | undefined;
-    level?: number | undefined;
     sprite?: string | undefined;
+    level?: number | undefined;
     hp?: number | undefined;
-    maxHp?: number | undefined;
-    act?: string | undefined;
-    actMs?: number | undefined;
     loot?: {
         item: string;
         rarity: string;
     }[] | undefined;
+    maxHp?: number | undefined;
+    act?: string | undefined;
+    actMs?: number | undefined;
 }>;
 export type EntityFull = z.infer<typeof EntityFullSchema>;
 /** id + any changed subset of EntityFull's mutable fields. */
@@ -214,32 +279,32 @@ export declare const EntityDeltaSchema: z.ZodObject<{
     }>, "many">>;
 }, "strip", z.ZodTypeAny, {
     id: number;
+    hp?: number | undefined;
+    loot?: {
+        item: string;
+        rarity: string;
+    }[] | undefined;
     x?: number | undefined;
     y?: number | undefined;
     z?: number | undefined;
     yaw?: number | undefined;
     anim?: string | undefined;
-    hp?: number | undefined;
     act?: string | undefined;
     actMs?: number | undefined;
-    loot?: {
-        item: string;
-        rarity: string;
-    }[] | undefined;
 }, {
     id: number;
+    hp?: number | undefined;
+    loot?: {
+        item: string;
+        rarity: string;
+    }[] | undefined;
     x?: number | undefined;
     y?: number | undefined;
     z?: number | undefined;
     yaw?: number | undefined;
     anim?: string | undefined;
-    hp?: number | undefined;
     act?: string | undefined;
     actMs?: number | undefined;
-    loot?: {
-        item: string;
-        rarity: string;
-    }[] | undefined;
 }>;
 export type EntityDelta = z.infer<typeof EntityDeltaSchema>;
 /** A dropped loot bag persisted with the room (death drops survive restarts). */
@@ -248,16 +313,21 @@ export declare const DropStateSchema: z.ZodObject<{
         item: z.ZodString;
         qty: z.ZodNumber;
         rarity: z.ZodString;
-        /** per-instance stat rolls: stat id → multiplier (absent on non-weapons) */
+        /** per-instance stat rolls: stat id → multiplier (absent on non-equippables) */
         stats: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
         /** durability remaining (uses); item breaks at 0 */
         dur: z.ZodOptional<z.ZodNumber>;
         /** rolled durability ceiling for this instance */
         maxDur: z.ZodOptional<z.ZodNumber>;
+        /** dynamic modifiers: modifier id (shared/modifiers.json) → magnitude in
+         *  the modifier's units; curses negative. Absent = unmodified (the state
+         *  merge guards and the enchanter's eligibility rule key on). */
+        mods: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
     }, "strip", z.ZodTypeAny, {
         item: string;
         qty: number;
         rarity: string;
+        mods?: Record<string, number> | undefined;
         stats?: Record<string, number> | undefined;
         dur?: number | undefined;
         maxDur?: number | undefined;
@@ -265,6 +335,7 @@ export declare const DropStateSchema: z.ZodObject<{
         item: string;
         qty: number;
         rarity: string;
+        mods?: Record<string, number> | undefined;
         stats?: Record<string, number> | undefined;
         dur?: number | undefined;
         maxDur?: number | undefined;
@@ -278,34 +349,36 @@ export declare const DropStateSchema: z.ZodObject<{
     unlockAt: z.ZodNumber;
     expireAt: z.ZodNullable<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
-    gold: number;
-    x: number;
-    y: number;
-    z: number;
     items: {
         item: string;
         qty: number;
         rarity: string;
+        mods?: Record<string, number> | undefined;
         stats?: Record<string, number> | undefined;
         dur?: number | undefined;
         maxDur?: number | undefined;
     }[];
+    gold: number;
+    x: number;
+    y: number;
+    z: number;
     owner: string | null;
     unlockAt: number;
     expireAt: number | null;
 }, {
-    gold: number;
-    x: number;
-    y: number;
-    z: number;
     items: {
         item: string;
         qty: number;
         rarity: string;
+        mods?: Record<string, number> | undefined;
         stats?: Record<string, number> | undefined;
         dur?: number | undefined;
         maxDur?: number | undefined;
     }[];
+    gold: number;
+    x: number;
+    y: number;
+    z: number;
     owner: string | null;
     unlockAt: number;
     expireAt: number | null;
@@ -341,16 +414,21 @@ export declare const RoomStateSchema: z.ZodObject<{
             item: z.ZodString;
             qty: z.ZodNumber;
             rarity: z.ZodString;
-            /** per-instance stat rolls: stat id → multiplier (absent on non-weapons) */
+            /** per-instance stat rolls: stat id → multiplier (absent on non-equippables) */
             stats: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
             /** durability remaining (uses); item breaks at 0 */
             dur: z.ZodOptional<z.ZodNumber>;
             /** rolled durability ceiling for this instance */
             maxDur: z.ZodOptional<z.ZodNumber>;
+            /** dynamic modifiers: modifier id (shared/modifiers.json) → magnitude in
+             *  the modifier's units; curses negative. Absent = unmodified (the state
+             *  merge guards and the enchanter's eligibility rule key on). */
+            mods: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
         }, "strip", z.ZodTypeAny, {
             item: string;
             qty: number;
             rarity: string;
+            mods?: Record<string, number> | undefined;
             stats?: Record<string, number> | undefined;
             dur?: number | undefined;
             maxDur?: number | undefined;
@@ -358,6 +436,7 @@ export declare const RoomStateSchema: z.ZodObject<{
             item: string;
             qty: number;
             rarity: string;
+            mods?: Record<string, number> | undefined;
             stats?: Record<string, number> | undefined;
             dur?: number | undefined;
             maxDur?: number | undefined;
@@ -371,34 +450,36 @@ export declare const RoomStateSchema: z.ZodObject<{
         unlockAt: z.ZodNumber;
         expireAt: z.ZodNullable<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
-        gold: number;
-        x: number;
-        y: number;
-        z: number;
         items: {
             item: string;
             qty: number;
             rarity: string;
+            mods?: Record<string, number> | undefined;
             stats?: Record<string, number> | undefined;
             dur?: number | undefined;
             maxDur?: number | undefined;
         }[];
+        gold: number;
+        x: number;
+        y: number;
+        z: number;
         owner: string | null;
         unlockAt: number;
         expireAt: number | null;
     }, {
-        gold: number;
-        x: number;
-        y: number;
-        z: number;
         items: {
             item: string;
             qty: number;
             rarity: string;
+            mods?: Record<string, number> | undefined;
             stats?: Record<string, number> | undefined;
             dur?: number | undefined;
             maxDur?: number | undefined;
         }[];
+        gold: number;
+        x: number;
+        y: number;
+        z: number;
         owner: string | null;
         unlockAt: number;
         expireAt: number | null;
@@ -432,18 +513,19 @@ export declare const RoomStateSchema: z.ZodObject<{
     timeOfDay: number;
     savedAt: number;
     drops: {
-        gold: number;
-        x: number;
-        y: number;
-        z: number;
         items: {
             item: string;
             qty: number;
             rarity: string;
+            mods?: Record<string, number> | undefined;
             stats?: Record<string, number> | undefined;
             dur?: number | undefined;
             maxDur?: number | undefined;
         }[];
+        gold: number;
+        x: number;
+        y: number;
+        z: number;
         owner: string | null;
         unlockAt: number;
         expireAt: number | null;
@@ -461,18 +543,19 @@ export declare const RoomStateSchema: z.ZodObject<{
     timeOfDay: number;
     savedAt: number;
     drops?: {
-        gold: number;
-        x: number;
-        y: number;
-        z: number;
         items: {
             item: string;
             qty: number;
             rarity: string;
+            mods?: Record<string, number> | undefined;
             stats?: Record<string, number> | undefined;
             dur?: number | undefined;
             maxDur?: number | undefined;
         }[];
+        gold: number;
+        x: number;
+        y: number;
+        z: number;
         owner: string | null;
         unlockAt: number;
         expireAt: number | null;
@@ -519,21 +602,21 @@ export declare const RoomAdminInfoSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         name: string;
         level: number;
+        hp: number;
         gold: number;
         x: number;
         y: number;
         z: number;
-        hp: number;
         maxHp: number;
         charId: string;
     }, {
         name: string;
         level: number;
+        hp: number;
         gold: number;
         x: number;
         y: number;
         z: number;
-        hp: number;
         maxHp: number;
         charId: string;
     }>, "many">;
@@ -569,11 +652,11 @@ export declare const RoomAdminInfoSchema: z.ZodObject<{
     players: {
         name: string;
         level: number;
+        hp: number;
         gold: number;
         x: number;
         y: number;
         z: number;
-        hp: number;
         maxHp: number;
         charId: string;
     }[];
@@ -598,11 +681,11 @@ export declare const RoomAdminInfoSchema: z.ZodObject<{
     players: {
         name: string;
         level: number;
+        hp: number;
         gold: number;
         x: number;
         y: number;
         z: number;
-        hp: number;
         maxHp: number;
         charId: string;
     }[];
@@ -667,21 +750,21 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
             }, "strip", z.ZodTypeAny, {
                 name: string;
                 level: number;
+                hp: number;
                 gold: number;
                 x: number;
                 y: number;
                 z: number;
-                hp: number;
                 maxHp: number;
                 charId: string;
             }, {
                 name: string;
                 level: number;
+                hp: number;
                 gold: number;
                 x: number;
                 y: number;
                 z: number;
-                hp: number;
                 maxHp: number;
                 charId: string;
             }>, "many">;
@@ -717,11 +800,11 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
             players: {
                 name: string;
                 level: number;
+                hp: number;
                 gold: number;
                 x: number;
                 y: number;
                 z: number;
-                hp: number;
                 maxHp: number;
                 charId: string;
             }[];
@@ -746,11 +829,11 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
             players: {
                 name: string;
                 level: number;
+                hp: number;
                 gold: number;
                 x: number;
                 y: number;
                 z: number;
-                hp: number;
                 maxHp: number;
                 charId: string;
             }[];
@@ -781,11 +864,11 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
             players: {
                 name: string;
                 level: number;
+                hp: number;
                 gold: number;
                 x: number;
                 y: number;
                 z: number;
-                hp: number;
                 maxHp: number;
                 charId: string;
             }[];
@@ -816,11 +899,11 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
             players: {
                 name: string;
                 level: number;
+                hp: number;
                 gold: number;
                 x: number;
                 y: number;
                 z: number;
-                hp: number;
                 maxHp: number;
                 charId: string;
             }[];
@@ -868,11 +951,11 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
             players: {
                 name: string;
                 level: number;
+                hp: number;
                 gold: number;
                 x: number;
                 y: number;
                 z: number;
-                hp: number;
                 maxHp: number;
                 charId: string;
             }[];
@@ -911,11 +994,11 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
             players: {
                 name: string;
                 level: number;
+                hp: number;
                 gold: number;
                 x: number;
                 y: number;
                 z: number;
-                hp: number;
                 maxHp: number;
                 charId: string;
             }[];
@@ -974,16 +1057,21 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
                 item: z.ZodString;
                 qty: z.ZodNumber;
                 rarity: z.ZodString;
-                /** per-instance stat rolls: stat id → multiplier (absent on non-weapons) */
+                /** per-instance stat rolls: stat id → multiplier (absent on non-equippables) */
                 stats: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
                 /** durability remaining (uses); item breaks at 0 */
                 dur: z.ZodOptional<z.ZodNumber>;
                 /** rolled durability ceiling for this instance */
                 maxDur: z.ZodOptional<z.ZodNumber>;
+                /** dynamic modifiers: modifier id (shared/modifiers.json) → magnitude in
+                 *  the modifier's units; curses negative. Absent = unmodified (the state
+                 *  merge guards and the enchanter's eligibility rule key on). */
+                mods: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
             }, "strip", z.ZodTypeAny, {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
@@ -991,6 +1079,7 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
@@ -1004,34 +1093,36 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
             unlockAt: z.ZodNumber;
             expireAt: z.ZodNullable<z.ZodNumber>;
         }, "strip", z.ZodTypeAny, {
-            gold: number;
-            x: number;
-            y: number;
-            z: number;
             items: {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
             }[];
+            gold: number;
+            x: number;
+            y: number;
+            z: number;
             owner: string | null;
             unlockAt: number;
             expireAt: number | null;
         }, {
-            gold: number;
-            x: number;
-            y: number;
-            z: number;
             items: {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
             }[];
+            gold: number;
+            x: number;
+            y: number;
+            z: number;
             owner: string | null;
             unlockAt: number;
             expireAt: number | null;
@@ -1065,18 +1156,19 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
         timeOfDay: number;
         savedAt: number;
         drops: {
-            gold: number;
-            x: number;
-            y: number;
-            z: number;
             items: {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
             }[];
+            gold: number;
+            x: number;
+            y: number;
+            z: number;
             owner: string | null;
             unlockAt: number;
             expireAt: number | null;
@@ -1094,18 +1186,19 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
         timeOfDay: number;
         savedAt: number;
         drops?: {
-            gold: number;
-            x: number;
-            y: number;
-            z: number;
             items: {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
             }[];
+            gold: number;
+            x: number;
+            y: number;
+            z: number;
             owner: string | null;
             unlockAt: number;
             expireAt: number | null;
@@ -1130,18 +1223,19 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
         timeOfDay: number;
         savedAt: number;
         drops: {
-            gold: number;
-            x: number;
-            y: number;
-            z: number;
             items: {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
             }[];
+            gold: number;
+            x: number;
+            y: number;
+            z: number;
             owner: string | null;
             unlockAt: number;
             expireAt: number | null;
@@ -1166,18 +1260,19 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
         timeOfDay: number;
         savedAt: number;
         drops?: {
-            gold: number;
-            x: number;
-            y: number;
-            z: number;
             items: {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
             }[];
+            gold: number;
+            x: number;
+            y: number;
+            z: number;
             owner: string | null;
             unlockAt: number;
             expireAt: number | null;
@@ -1255,13 +1350,13 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
     from: z.ZodString;
     text: z.ZodString;
 }, "strip", z.ZodTypeAny, {
+    text: string;
     t: "globalChat";
     from: string;
-    text: string;
 }, {
+    text: string;
     t: "globalChat";
     from: string;
-    text: string;
 }>, z.ZodObject<{
     t: z.ZodLiteral<"mapData">;
     roomId: z.ZodString;
@@ -1302,16 +1397,21 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
                 item: z.ZodString;
                 qty: z.ZodNumber;
                 rarity: z.ZodString;
-                /** per-instance stat rolls: stat id → multiplier (absent on non-weapons) */
+                /** per-instance stat rolls: stat id → multiplier (absent on non-equippables) */
                 stats: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
                 /** durability remaining (uses); item breaks at 0 */
                 dur: z.ZodOptional<z.ZodNumber>;
                 /** rolled durability ceiling for this instance */
                 maxDur: z.ZodOptional<z.ZodNumber>;
+                /** dynamic modifiers: modifier id (shared/modifiers.json) → magnitude in
+                 *  the modifier's units; curses negative. Absent = unmodified (the state
+                 *  merge guards and the enchanter's eligibility rule key on). */
+                mods: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
             }, "strip", z.ZodTypeAny, {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
@@ -1319,6 +1419,7 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
@@ -1332,34 +1433,36 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
             unlockAt: z.ZodNumber;
             expireAt: z.ZodNullable<z.ZodNumber>;
         }, "strip", z.ZodTypeAny, {
-            gold: number;
-            x: number;
-            y: number;
-            z: number;
             items: {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
             }[];
+            gold: number;
+            x: number;
+            y: number;
+            z: number;
             owner: string | null;
             unlockAt: number;
             expireAt: number | null;
         }, {
-            gold: number;
-            x: number;
-            y: number;
-            z: number;
             items: {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
             }[];
+            gold: number;
+            x: number;
+            y: number;
+            z: number;
             owner: string | null;
             unlockAt: number;
             expireAt: number | null;
@@ -1393,18 +1496,19 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
         timeOfDay: number;
         savedAt: number;
         drops: {
-            gold: number;
-            x: number;
-            y: number;
-            z: number;
             items: {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
             }[];
+            gold: number;
+            x: number;
+            y: number;
+            z: number;
             owner: string | null;
             unlockAt: number;
             expireAt: number | null;
@@ -1422,18 +1526,19 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
         timeOfDay: number;
         savedAt: number;
         drops?: {
-            gold: number;
-            x: number;
-            y: number;
-            z: number;
             items: {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
             }[];
+            gold: number;
+            x: number;
+            y: number;
+            z: number;
             owner: string | null;
             unlockAt: number;
             expireAt: number | null;
@@ -1455,18 +1560,19 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
         timeOfDay: number;
         savedAt: number;
         drops: {
-            gold: number;
-            x: number;
-            y: number;
-            z: number;
             items: {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
             }[];
+            gold: number;
+            x: number;
+            y: number;
+            z: number;
             owner: string | null;
             unlockAt: number;
             expireAt: number | null;
@@ -1488,18 +1594,19 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
         timeOfDay: number;
         savedAt: number;
         drops?: {
-            gold: number;
-            x: number;
-            y: number;
-            z: number;
             items: {
                 item: string;
                 qty: number;
                 rarity: string;
+                mods?: Record<string, number> | undefined;
                 stats?: Record<string, number> | undefined;
                 dur?: number | undefined;
                 maxDur?: number | undefined;
             }[];
+            gold: number;
+            x: number;
+            y: number;
+            z: number;
             owner: string | null;
             unlockAt: number;
             expireAt: number | null;
@@ -1541,16 +1648,21 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
             item: z.ZodString;
             qty: z.ZodNumber;
             rarity: z.ZodString;
-            /** per-instance stat rolls: stat id → multiplier (absent on non-weapons) */
+            /** per-instance stat rolls: stat id → multiplier (absent on non-equippables) */
             stats: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
             /** durability remaining (uses); item breaks at 0 */
             dur: z.ZodOptional<z.ZodNumber>;
             /** rolled durability ceiling for this instance */
             maxDur: z.ZodOptional<z.ZodNumber>;
+            /** dynamic modifiers: modifier id (shared/modifiers.json) → magnitude in
+             *  the modifier's units; curses negative. Absent = unmodified (the state
+             *  merge guards and the enchanter's eligibility rule key on). */
+            mods: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
         }, "strip", z.ZodTypeAny, {
             item: string;
             qty: number;
             rarity: string;
+            mods?: Record<string, number> | undefined;
             stats?: Record<string, number> | undefined;
             dur?: number | undefined;
             maxDur?: number | undefined;
@@ -1558,25 +1670,60 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
             item: string;
             qty: number;
             rarity: string;
+            mods?: Record<string, number> | undefined;
             stats?: Record<string, number> | undefined;
             dur?: number | undefined;
             maxDur?: number | undefined;
         }>>, "many">;
+        /** worn gear, indexed by EQUIP_SLOTS order (head/chest/legs/feet/offhand).
+         *  Optional: rows/tickets minted before equipment existed validate fine. */
+        equipment: z.ZodOptional<z.ZodArray<z.ZodNullable<z.ZodObject<{
+            item: z.ZodString;
+            qty: z.ZodNumber;
+            rarity: z.ZodString;
+            /** per-instance stat rolls: stat id → multiplier (absent on non-equippables) */
+            stats: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
+            /** durability remaining (uses); item breaks at 0 */
+            dur: z.ZodOptional<z.ZodNumber>;
+            /** rolled durability ceiling for this instance */
+            maxDur: z.ZodOptional<z.ZodNumber>;
+            /** dynamic modifiers: modifier id (shared/modifiers.json) → magnitude in
+             *  the modifier's units; curses negative. Absent = unmodified (the state
+             *  merge guards and the enchanter's eligibility rule key on). */
+            mods: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodNumber>>;
+        }, "strip", z.ZodTypeAny, {
+            item: string;
+            qty: number;
+            rarity: string;
+            mods?: Record<string, number> | undefined;
+            stats?: Record<string, number> | undefined;
+            dur?: number | undefined;
+            maxDur?: number | undefined;
+        }, {
+            item: string;
+            qty: number;
+            rarity: string;
+            mods?: Record<string, number> | undefined;
+            stats?: Record<string, number> | undefined;
+            dur?: number | undefined;
+            maxDur?: number | undefined;
+        }>>, "many">>;
         x: z.ZodNumber;
         y: z.ZodNumber;
         z: z.ZodNumber;
         yaw: z.ZodNumber;
         roles: z.ZodArray<z.ZodString, "many">;
     }, "strip", z.ZodTypeAny, {
-        id: string;
         name: string;
         level: number;
         xp: number;
         gold: number;
+        id: string;
         inventory: ({
             item: string;
             qty: number;
             rarity: string;
+            mods?: Record<string, number> | undefined;
             stats?: Record<string, number> | undefined;
             dur?: number | undefined;
             maxDur?: number | undefined;
@@ -1586,16 +1733,26 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
         z: number;
         yaw: number;
         roles: string[];
+        equipment?: ({
+            item: string;
+            qty: number;
+            rarity: string;
+            mods?: Record<string, number> | undefined;
+            stats?: Record<string, number> | undefined;
+            dur?: number | undefined;
+            maxDur?: number | undefined;
+        } | null)[] | undefined;
     }, {
-        id: string;
         name: string;
         level: number;
         xp: number;
         gold: number;
+        id: string;
         inventory: ({
             item: string;
             qty: number;
             rarity: string;
+            mods?: Record<string, number> | undefined;
             stats?: Record<string, number> | undefined;
             dur?: number | undefined;
             maxDur?: number | undefined;
@@ -1605,6 +1762,15 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
         z: number;
         yaw: number;
         roles: string[];
+        equipment?: ({
+            item: string;
+            qty: number;
+            rarity: string;
+            mods?: Record<string, number> | undefined;
+            stats?: Record<string, number> | undefined;
+            dur?: number | undefined;
+            maxDur?: number | undefined;
+        } | null)[] | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     expiresAt: number;
@@ -1612,15 +1778,16 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
     roomId: string;
     ticket: string;
     character: {
-        id: string;
         name: string;
         level: number;
         xp: number;
         gold: number;
+        id: string;
         inventory: ({
             item: string;
             qty: number;
             rarity: string;
+            mods?: Record<string, number> | undefined;
             stats?: Record<string, number> | undefined;
             dur?: number | undefined;
             maxDur?: number | undefined;
@@ -1630,6 +1797,15 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
         z: number;
         yaw: number;
         roles: string[];
+        equipment?: ({
+            item: string;
+            qty: number;
+            rarity: string;
+            mods?: Record<string, number> | undefined;
+            stats?: Record<string, number> | undefined;
+            dur?: number | undefined;
+            maxDur?: number | undefined;
+        } | null)[] | undefined;
     };
 }, {
     expiresAt: number;
@@ -1637,15 +1813,16 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
     roomId: string;
     ticket: string;
     character: {
-        id: string;
         name: string;
         level: number;
         xp: number;
         gold: number;
+        id: string;
         inventory: ({
             item: string;
             qty: number;
             rarity: string;
+            mods?: Record<string, number> | undefined;
             stats?: Record<string, number> | undefined;
             dur?: number | undefined;
             maxDur?: number | undefined;
@@ -1655,6 +1832,15 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
         z: number;
         yaw: number;
         roles: string[];
+        equipment?: ({
+            item: string;
+            qty: number;
+            rarity: string;
+            mods?: Record<string, number> | undefined;
+            stats?: Record<string, number> | undefined;
+            dur?: number | undefined;
+            maxDur?: number | undefined;
+        } | null)[] | undefined;
     };
 }>, z.ZodObject<{
     t: z.ZodLiteral<"transferGrant">;
@@ -1697,13 +1883,13 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
     from: z.ZodString;
     text: z.ZodString;
 }, "strip", z.ZodTypeAny, {
+    text: string;
     t: "globalChat";
     from: string;
-    text: string;
 }, {
+    text: string;
     t: "globalChat";
     from: string;
-    text: string;
 }>, z.ZodObject<{
     t: z.ZodLiteral<"roomStatus">;
     roomId: z.ZodString;
@@ -1834,11 +2020,38 @@ export declare const ClientToServerSchema: z.ZodDiscriminatedUnion<"t", [z.ZodOb
     t: z.ZodLiteral<"equip">;
     slot: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    t: "equip";
     slot: number;
+    t: "equip";
 }, {
-    t: "equip";
     slot: number;
+    t: "equip";
+}>, z.ZodObject<{
+    t: z.ZodLiteral<"equipSlot">;
+    slot: z.ZodEnum<["head", "chest", "legs", "feet", "offhand"]>;
+    invIndex: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    slot: "head" | "chest" | "legs" | "feet" | "offhand";
+    t: "equipSlot";
+    invIndex?: number | undefined;
+}, {
+    slot: "head" | "chest" | "legs" | "feet" | "offhand";
+    t: "equipSlot";
+    invIndex?: number | undefined;
+}>, z.ZodObject<{
+    t: z.ZodLiteral<"enchant">;
+    npc: z.ZodNumber;
+    slot: z.ZodNumber;
+    enchantId: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    slot: number;
+    t: "enchant";
+    npc: number;
+    enchantId: string;
+}, {
+    slot: number;
+    t: "enchant";
+    npc: number;
+    enchantId: string;
 }>, z.ZodObject<{
     t: z.ZodLiteral<"invMove">;
     from: z.ZodNumber;
@@ -1855,23 +2068,23 @@ export declare const ClientToServerSchema: z.ZodDiscriminatedUnion<"t", [z.ZodOb
     t: z.ZodLiteral<"consume">;
     slot: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    t: "consume";
     slot: number;
+    t: "consume";
 }, {
-    t: "consume";
     slot: number;
+    t: "consume";
 }>, z.ZodObject<{
     t: z.ZodLiteral<"dropItem">;
     slot: z.ZodNumber;
     qty: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
     qty: number;
-    t: "dropItem";
     slot: number;
+    t: "dropItem";
 }, {
     qty: number;
-    t: "dropItem";
     slot: number;
+    t: "dropItem";
 }>, z.ZodObject<{
     t: z.ZodLiteral<"pickup">;
     id: z.ZodNumber;
@@ -1912,23 +2125,23 @@ export declare const ClientToServerSchema: z.ZodDiscriminatedUnion<"t", [z.ZodOb
     qty: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
     qty: number;
-    t: "sell";
     slot: number;
+    t: "sell";
     npc: number;
 }, {
     qty: number;
-    t: "sell";
     slot: number;
+    t: "sell";
     npc: number;
 }>, z.ZodObject<{
     t: z.ZodLiteral<"chat">;
     text: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    t: "chat";
     text: string;
+    t: "chat";
 }, {
-    t: "chat";
     text: string;
+    t: "chat";
 }>, z.ZodObject<{
     t: z.ZodLiteral<"respawn">;
 }, "strip", z.ZodTypeAny, {
@@ -1948,17 +2161,17 @@ export declare const ClientToServerSchema: z.ZodDiscriminatedUnion<"t", [z.ZodOb
     y: z.ZodNumber;
     z: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
+    slot: number;
     x: number;
     y: number;
     z: number;
     t: "blockPlace";
-    slot: number;
 }, {
+    slot: number;
     x: number;
     y: number;
     z: number;
     t: "blockPlace";
-    slot: number;
 }>, z.ZodObject<{
     t: z.ZodLiteral<"blockBreak">;
     x: z.ZodNumber;
@@ -2049,6 +2262,41 @@ export interface ShopWire {
     }>;
     buys: boolean;
 }
+/** An enchanter NPC's fixed tier-1 menu. Display prices are computed
+ *  client-side per target item from shared constants (`enchanting`:
+ *  ceil(value × rarityMult × priceMult × priceValueMult + priceBase));
+ *  the server recomputes authoritatively at `enchant` receipt. */
+export interface EnchantWire {
+    offers: Array<{
+        id: string;
+        name: string;
+        mag: number;
+        priceMult: number;
+    }>;
+}
+/** One active effect on the self status bar. `durMs` is REMAINING duration
+ *  at send time (client stamps a local end and counts down); `mod` entries
+ *  are persistent gear modifiers (one per modifier id, magnitudes summed
+ *  across equipped+held items). */
+export type EffectWire = {
+    kind: "mod";
+    id: string;
+    mag: number;
+    curse: boolean;
+} | {
+    kind: "slow";
+    mag: number;
+    durMs: number;
+} | {
+    kind: "dot";
+    mag: number;
+    durMs: number;
+} | {
+    kind: "hot";
+    item: string;
+    mag: number;
+    durMs: number;
+};
 export type ServerToClient = {
     t: "welcome";
     roomId: string;
@@ -2141,6 +2389,16 @@ export type ServerToClient = {
     t: "inv";
     slots: Array<ItemStack | null>;
     held: number;
+    equipment: Array<ItemStack | null>;
+}
+/** self status effects: aggregated gear modifiers + timed slow/dot/hot.
+ *  speedMult = the capped mods-only movement multiplier — the client
+ *  mirrors it in prediction exactly like the `debuff` slow. Sent after
+ *  welcome and whenever the set changes. */
+ | {
+    t: "effects";
+    speedMult: number;
+    list: EffectWire[];
 } | {
     t: "evt";
     e: CombatEvent;
@@ -2198,6 +2456,7 @@ export type ServerToClient = {
     name: string;
     lines: string[];
     shop: ShopWire | null;
+    enchant?: EnchantWire | null;
 } | {
     t: "portalState";
     target: string;

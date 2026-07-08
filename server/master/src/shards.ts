@@ -277,7 +277,7 @@ export class ShardManager {
     // persist live stats, but the position belongs to the target room now
     const { id, roomId: _r, x: _x, y: _y, z: _z, ...stats } = patch;
     const allowed: Record<string, unknown> = {};
-    for (const key of ["level", "xp", "gold", "inventory", "yaw"]) {
+    for (const key of ["level", "xp", "gold", "inventory", "equipment", "yaw"]) {
       if (key in stats) allowed[key] = stats[key];
     }
     // portal use: arrive at the paired portal in the target room, facing away
@@ -326,7 +326,7 @@ export class ShardManager {
       const { id, ...fields } = patch;
       if (!ObjectId.isValid(id)) continue;
       const allowed: Record<string, unknown> = {};
-      for (const key of ["level", "xp", "gold", "inventory", "roomId", "x", "y", "z", "yaw"]) {
+      for (const key of ["level", "xp", "gold", "inventory", "equipment", "roomId", "x", "y", "z", "yaw"]) {
         if (key in fields) allowed[key] = fields[key];
       }
       if (Object.keys(allowed).length === 0) continue;
@@ -459,6 +459,7 @@ export class ShardManager {
       xp: character.xp,
       gold: character.gold,
       inventory: character.inventory,
+      equipment: character.equipment ?? [],
       x: usePos ? character.x! : def.spawn.x,
       y: usePos ? character.y! : 0,
       z: usePos ? character.z! : def.spawn.z,

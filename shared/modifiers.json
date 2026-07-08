@@ -1,0 +1,534 @@
+{
+  "hpRegen": {
+    "name": "Regeneration",
+    "stat": "hpRegen",
+    "units": "hp/s",
+    "icon": [
+      1,
+      0
+    ],
+    "appliesTo": [
+      "weapon",
+      "armor",
+      "trinket"
+    ],
+    "curse": false,
+    "rolls": {
+      "common": [
+        0.4,
+        0.8
+      ],
+      "uncommon": [
+        0.7,
+        1.3
+      ],
+      "rare": [
+        1.1,
+        2
+      ],
+      "epic": [
+        1.7,
+        3.2
+      ]
+    },
+    "enchant": {
+      "mag": 0.6,
+      "priceMult": 1.5
+    }
+  },
+  "manaRegen": {
+    "name": "Meditation",
+    "stat": "manaRegen",
+    "units": "mana/s",
+    "icon": [
+      2,
+      2
+    ],
+    "appliesTo": [
+      "weapon",
+      "armor",
+      "trinket"
+    ],
+    "curse": false,
+    "rolls": {
+      "common": [
+        0.5,
+        1
+      ],
+      "uncommon": [
+        0.9,
+        1.6
+      ],
+      "rare": [
+        1.4,
+        2.4
+      ],
+      "epic": [
+        2,
+        3.8
+      ]
+    },
+    "enchant": {
+      "mag": 0.8,
+      "priceMult": 1.4
+    }
+  },
+  "moveSpeedPct": {
+    "name": "Swiftness",
+    "stat": "moveSpeedPct",
+    "units": "% move speed",
+    "icon": [
+      13,
+      0
+    ],
+    "appliesTo": [
+      "weapon",
+      "armor",
+      "trinket"
+    ],
+    "curse": false,
+    "rolls": {
+      "common": [
+        0.03,
+        0.05
+      ],
+      "uncommon": [
+        0.04,
+        0.08
+      ],
+      "rare": [
+        0.07,
+        0.12
+      ],
+      "epic": [
+        0.1,
+        0.18
+      ]
+    },
+    "enchant": {
+      "mag": 0.04,
+      "priceMult": 2
+    }
+  },
+  "maxHp": {
+    "name": "Vitality",
+    "stat": "maxHp",
+    "units": "max hp",
+    "icon": [
+      7,
+      9
+    ],
+    "appliesTo": [
+      "armor",
+      "trinket"
+    ],
+    "curse": false,
+    "integer": true,
+    "rolls": {
+      "common": [
+        4,
+        8
+      ],
+      "uncommon": [
+        7,
+        14
+      ],
+      "rare": [
+        12,
+        24
+      ],
+      "epic": [
+        20,
+        40
+      ]
+    }
+  },
+  "maxMana": {
+    "name": "Clarity",
+    "stat": "maxMana",
+    "units": "max mana",
+    "icon": [
+      3,
+      0
+    ],
+    "appliesTo": [
+      "armor",
+      "trinket"
+    ],
+    "curse": false,
+    "integer": true,
+    "rolls": {
+      "common": [
+        3,
+        6
+      ],
+      "uncommon": [
+        5,
+        10
+      ],
+      "rare": [
+        9,
+        18
+      ],
+      "epic": [
+        15,
+        30
+      ]
+    }
+  },
+  "dmgPct": {
+    "name": "Ferocity",
+    "stat": "dmgPct",
+    "units": "% damage",
+    "icon": [
+      7,
+      0
+    ],
+    "appliesTo": [
+      "weapon",
+      "trinket"
+    ],
+    "curse": false,
+    "rolls": {
+      "common": [
+        0.02,
+        0.04
+      ],
+      "uncommon": [
+        0.03,
+        0.07
+      ],
+      "rare": [
+        0.06,
+        0.1
+      ],
+      "epic": [
+        0.09,
+        0.16
+      ]
+    }
+  },
+  "meleeTakenPct": {
+    "name": "Bulwark",
+    "stat": "meleeTakenPct",
+    "units": "% less melee damage",
+    "icon": [
+      5,
+      9
+    ],
+    "appliesTo": [
+      "armor",
+      "trinket"
+    ],
+    "curse": false,
+    "rolls": {
+      "common": [
+        0.03,
+        0.05
+      ],
+      "uncommon": [
+        0.04,
+        0.08
+      ],
+      "rare": [
+        0.07,
+        0.12
+      ],
+      "epic": [
+        0.1,
+        0.18
+      ]
+    }
+  },
+  "rangedTakenPct": {
+    "name": "Deflection",
+    "stat": "rangedTakenPct",
+    "units": "% less ranged damage",
+    "icon": [
+      4,
+      9
+    ],
+    "appliesTo": [
+      "armor",
+      "trinket"
+    ],
+    "curse": false,
+    "rolls": {
+      "common": [
+        0.03,
+        0.05
+      ],
+      "uncommon": [
+        0.04,
+        0.08
+      ],
+      "rare": [
+        0.07,
+        0.12
+      ],
+      "epic": [
+        0.1,
+        0.18
+      ]
+    }
+  },
+  "magicTakenPct": {
+    "name": "Warding",
+    "stat": "magicTakenPct",
+    "units": "% less magic damage",
+    "icon": [
+      6,
+      9
+    ],
+    "appliesTo": [
+      "armor",
+      "trinket"
+    ],
+    "curse": false,
+    "rolls": {
+      "common": [
+        0.03,
+        0.05
+      ],
+      "uncommon": [
+        0.04,
+        0.08
+      ],
+      "rare": [
+        0.07,
+        0.12
+      ],
+      "epic": [
+        0.1,
+        0.18
+      ]
+    },
+    "enchant": {
+      "mag": 0.05,
+      "priceMult": 1.6
+    }
+  },
+  "thorns": {
+    "name": "Thorns",
+    "stat": "thorns",
+    "units": "reflect damage",
+    "icon": [
+      15,
+      2
+    ],
+    "appliesTo": [
+      "armor"
+    ],
+    "curse": false,
+    "integer": true,
+    "rolls": {
+      "common": [
+        1,
+        2
+      ],
+      "uncommon": [
+        2,
+        3
+      ],
+      "rare": [
+        3,
+        5
+      ],
+      "epic": [
+        4,
+        7
+      ]
+    }
+  },
+  "lifesteal": {
+    "name": "Leeching",
+    "stat": "lifesteal",
+    "units": "% damage healed",
+    "icon": [
+      2,
+      0
+    ],
+    "appliesTo": [
+      "weapon",
+      "trinket"
+    ],
+    "curse": false,
+    "rolls": {
+      "common": [
+        0.02,
+        0.03
+      ],
+      "uncommon": [
+        0.03,
+        0.05
+      ],
+      "rare": [
+        0.04,
+        0.07
+      ],
+      "epic": [
+        0.06,
+        0.1
+      ]
+    }
+  },
+  "goldFind": {
+    "name": "Fortune",
+    "stat": "goldFind",
+    "units": "% more gold",
+    "icon": [
+      0,
+      13
+    ],
+    "appliesTo": [
+      "weapon",
+      "trinket"
+    ],
+    "curse": false,
+    "rolls": {
+      "common": [
+        0.05,
+        0.1
+      ],
+      "uncommon": [
+        0.08,
+        0.15
+      ],
+      "rare": [
+        0.12,
+        0.22
+      ],
+      "epic": [
+        0.18,
+        0.35
+      ]
+    }
+  },
+  "slowness": {
+    "name": "Slowness",
+    "stat": "moveSpeedPct",
+    "units": "% move speed",
+    "icon": [
+      13,
+      2
+    ],
+    "appliesTo": [
+      "weapon",
+      "armor"
+    ],
+    "curse": true,
+    "rolls": {
+      "common": [
+        -0.05,
+        -0.03
+      ],
+      "uncommon": [
+        -0.07,
+        -0.04
+      ],
+      "rare": [
+        -0.1,
+        -0.06
+      ],
+      "epic": [
+        -0.14,
+        -0.08
+      ]
+    }
+  },
+  "brittle": {
+    "name": "Brittle",
+    "stat": "takenAllPct",
+    "units": "% more damage taken",
+    "icon": [
+      14,
+      2
+    ],
+    "appliesTo": [
+      "armor",
+      "trinket"
+    ],
+    "curse": true,
+    "rolls": {
+      "common": [
+        -0.06,
+        -0.03
+      ],
+      "uncommon": [
+        -0.08,
+        -0.04
+      ],
+      "rare": [
+        -0.12,
+        -0.06
+      ],
+      "epic": [
+        -0.16,
+        -0.09
+      ]
+    }
+  },
+  "leaden": {
+    "name": "Leaden",
+    "stat": "atkSpeedPct",
+    "units": "% attack speed",
+    "icon": [
+      10,
+      1
+    ],
+    "appliesTo": [
+      "weapon"
+    ],
+    "curse": true,
+    "rolls": {
+      "common": [
+        -0.06,
+        -0.03
+      ],
+      "uncommon": [
+        -0.08,
+        -0.05
+      ],
+      "rare": [
+        -0.11,
+        -0.07
+      ],
+      "epic": [
+        -0.15,
+        -0.09
+      ]
+    }
+  },
+  "drained": {
+    "name": "Drained",
+    "stat": "manaRegen",
+    "units": "mana/s",
+    "icon": [
+      6,
+      2
+    ],
+    "appliesTo": [
+      "weapon",
+      "trinket"
+    ],
+    "curse": true,
+    "rolls": {
+      "common": [
+        -0.8,
+        -0.4
+      ],
+      "uncommon": [
+        -1.2,
+        -0.7
+      ],
+      "rare": [
+        -1.8,
+        -1
+      ],
+      "epic": [
+        -2.6,
+        -1.5
+      ]
+    }
+  }
+}

@@ -113,6 +113,130 @@
         7
       ]
     },
+    "leather_cap": {
+      "name": "Leather Cap",
+      "kind": "armor",
+      "slot": "head",
+      "armor": 4,
+      "durability": 200,
+      "value": 30,
+      "stack": 1,
+      "icon": [
+        0,
+        10
+      ]
+    },
+    "iron_helm": {
+      "name": "Iron Helm",
+      "kind": "armor",
+      "slot": "head",
+      "armor": 8,
+      "durability": 350,
+      "value": 90,
+      "stack": 1,
+      "icon": [
+        2,
+        10
+      ]
+    },
+    "leather_jerkin": {
+      "name": "Leather Jerkin",
+      "kind": "armor",
+      "slot": "chest",
+      "armor": 6,
+      "durability": 250,
+      "value": 45,
+      "stack": 1,
+      "icon": [
+        8,
+        9
+      ]
+    },
+    "iron_cuirass": {
+      "name": "Iron Cuirass",
+      "kind": "armor",
+      "slot": "chest",
+      "armor": 12,
+      "durability": 450,
+      "value": 130,
+      "stack": 1,
+      "icon": [
+        12,
+        9
+      ]
+    },
+    "leather_boots": {
+      "name": "Leather Boots",
+      "kind": "armor",
+      "slot": "feet",
+      "armor": 3,
+      "durability": 200,
+      "value": 25,
+      "stack": 1,
+      "icon": [
+        10,
+        10
+      ]
+    },
+    "iron_boots": {
+      "name": "Iron Boots",
+      "kind": "armor",
+      "slot": "feet",
+      "armor": 6,
+      "durability": 350,
+      "value": 75,
+      "stack": 1,
+      "icon": [
+        11,
+        10
+      ]
+    },
+    "wooden_shield": {
+      "name": "Wooden Shield",
+      "kind": "armor",
+      "slot": "offhand",
+      "armor": 5,
+      "durability": 220,
+      "value": 35,
+      "stack": 1,
+      "icon": [
+        1,
+        9
+      ]
+    },
+    "iron_shield": {
+      "name": "Iron Shield",
+      "kind": "armor",
+      "slot": "offhand",
+      "armor": 9,
+      "durability": 400,
+      "value": 110,
+      "stack": 1,
+      "icon": [
+        3,
+        9
+      ]
+    },
+    "lucky_locket": {
+      "name": "Lucky Locket",
+      "kind": "trinket",
+      "value": 60,
+      "stack": 1,
+      "icon": [
+        8,
+        13
+      ]
+    },
+    "wisp_talisman": {
+      "name": "Wisp Talisman",
+      "kind": "trinket",
+      "value": 140,
+      "stack": 1,
+      "icon": [
+        9,
+        13
+      ]
+    },
     "bread": {
       "name": "Bread",
       "kind": "consumable",

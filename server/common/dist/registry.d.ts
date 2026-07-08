@@ -19,13 +19,25 @@ export declare const RaritySchema: z.ZodObject<{
     weight: number;
 }>;
 export type RarityDef = z.infer<typeof RaritySchema>;
+/** The five equipment slots, fixed order (wire/DB equipment arrays index by it). */
+export declare const EQUIP_SLOTS: readonly ["head", "chest", "legs", "feet", "offhand"];
+export type EquipSlot = (typeof EQUIP_SLOTS)[number];
+/** Kinds a player can wear/hold for modifier effects (and that roll mods). */
+export declare const EQUIPPABLE_KINDS: readonly ["weapon", "armor", "trinket"];
+export declare function isEquippable(kind: string): boolean;
 export declare const ItemDefSchema: z.ZodObject<{
     name: z.ZodString;
-    /** trophy: no use action — a trinket that exists to be sold */
-    kind: z.ZodEnum<["weapon", "consumable", "building", "trophy", "misc"]>;
+    /** trophy: no use action — sell-fodder. armor: wearable (slot+armor value).
+     *  trinket: offhand-only passive modifier carrier (no armor, no durability). */
+    kind: z.ZodEnum<["weapon", "consumable", "building", "trophy", "misc", "armor", "trinket"]>;
     ability: z.ZodOptional<z.ZodString>;
     damage: z.ZodOptional<z.ZodNumber>;
-    /** weapons: base uses before breaking (scaled per instance by rarity + roll) */
+    /** armor: which equipment slot it occupies (shields = "offhand") */
+    slot: z.ZodOptional<z.ZodEnum<["head", "chest", "legs", "feet", "offhand"]>>;
+    /** armor: base armor value before rarity/roll — total equipped armor A
+     *  reduces melee/ranged damage by A/(A+armorK) */
+    armor: z.ZodOptional<z.ZodNumber>;
+    /** weapons/armor: base uses before breaking (scaled per instance by rarity + roll) */
     durability: z.ZodOptional<z.ZodNumber>;
     /** building items: block name (shared/blocks.json) this item places */
     block: z.ZodOptional<z.ZodString>;
@@ -56,12 +68,14 @@ export declare const ItemDefSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     value: number;
     name: string;
-    kind: "weapon" | "consumable" | "building" | "trophy" | "misc";
+    kind: "building" | "weapon" | "armor" | "consumable" | "trophy" | "misc" | "trinket";
     stack: number;
     icon: [number, number];
+    durability?: number | undefined;
+    armor?: number | undefined;
     ability?: string | undefined;
     damage?: number | undefined;
-    durability?: number | undefined;
+    slot?: "head" | "chest" | "legs" | "feet" | "offhand" | undefined;
     block?: string | undefined;
     viewmodel?: string | undefined;
     effect?: {
@@ -74,12 +88,14 @@ export declare const ItemDefSchema: z.ZodObject<{
 }, {
     value: number;
     name: string;
-    kind: "weapon" | "consumable" | "building" | "trophy" | "misc";
+    kind: "building" | "weapon" | "armor" | "consumable" | "trophy" | "misc" | "trinket";
     stack: number;
     icon: [number, number];
+    durability?: number | undefined;
+    armor?: number | undefined;
     ability?: string | undefined;
     damage?: number | undefined;
-    durability?: number | undefined;
+    slot?: "head" | "chest" | "legs" | "feet" | "offhand" | undefined;
     block?: string | undefined;
     viewmodel?: string | undefined;
     effect?: {
@@ -93,6 +109,10 @@ export declare const ItemDefSchema: z.ZodObject<{
 export type ItemDef = z.infer<typeof ItemDefSchema>;
 export declare const AbilityDefSchema: z.ZodObject<{
     kind: z.ZodEnum<["melee", "projectile", "self", "pillars"]>;
+    /** damage class for taken-modifiers + armor mitigation. Defaults derive
+     *  from kind (melee→melee, projectile/pillars→magic); bows author
+     *  "ranged" explicitly. Armor mitigates melee+ranged, never magic. */
+    dmgClass: z.ZodOptional<z.ZodEnum<["melee", "ranged", "magic"]>>;
     windupMs: z.ZodOptional<z.ZodNumber>;
     activeMs: z.ZodOptional<z.ZodNumber>;
     castTimeMs: z.ZodOptional<z.ZodNumber>;
@@ -122,10 +142,10 @@ export declare const AbilityDefSchema: z.ZodObject<{
         staggerMs: z.ZodDefault<z.ZodNumber>;
         burnMs: z.ZodDefault<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
+        staggerMs: number;
         count: number;
         spacing: number;
         radius: number;
-        staggerMs: number;
         burnMs: number;
     }, {
         count: number;
@@ -190,12 +210,13 @@ export declare const AbilityDefSchema: z.ZodObject<{
     damage?: number | undefined;
     heal?: number | undefined;
     pillars?: {
+        staggerMs: number;
         count: number;
         spacing: number;
         radius: number;
-        staggerMs: number;
         burnMs: number;
     } | undefined;
+    dmgClass?: "melee" | "ranged" | "magic" | undefined;
     windupMs?: number | undefined;
     activeMs?: number | undefined;
     castTimeMs?: number | undefined;
@@ -236,6 +257,7 @@ export declare const AbilityDefSchema: z.ZodObject<{
         staggerMs?: number | undefined;
         burnMs?: number | undefined;
     } | undefined;
+    dmgClass?: "melee" | "ranged" | "magic" | undefined;
     windupMs?: number | undefined;
     activeMs?: number | undefined;
     castTimeMs?: number | undefined;
@@ -261,6 +283,67 @@ export declare const AbilityDefSchema: z.ZodObject<{
     } | undefined;
 }>;
 export type AbilityDef = z.infer<typeof AbilityDefSchema>;
+/** Resolve an ability's damage class (see AbilityDefSchema.dmgClass).
+ *  null = the ability deals no direct damage (self heals/summons). */
+export declare function abilityDmgClass(a: AbilityDef): "melee" | "ranged" | "magic" | null;
+/** A dynamic item modifier (perk or curse) rollable onto equippables at mint
+ *  time and purchasable (tier-1 only) from the enchanter. Magnitudes live ON
+ *  the item instance (`ItemStack.mods[id]`), in this def's units; curses roll
+ *  negative. Aggregation sums per `stat` across held+equipped items, clamped
+ *  to `items.mods.caps` (constants.json). */
+export declare const ModifierDefSchema: z.ZodObject<{
+    name: z.ZodString;
+    /** aggregation stat key this modifier feeds (several mods may share one,
+     *  e.g. slowness = negative moveSpeedPct) */
+    stat: z.ZodString;
+    /** tooltip/status-bar unit label, e.g. "hp/s", "% move speed" */
+    units: z.ZodString;
+    icon: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
+    appliesTo: z.ZodArray<z.ZodEnum<["weapon", "armor", "trinket"]>, "many">;
+    curse: z.ZodBoolean;
+    /** whole-number magnitudes (maxHp, thorns) */
+    integer: z.ZodOptional<z.ZodBoolean>;
+    /** rarity → [min,max] magnitude roll range (negative for curses) */
+    rolls: z.ZodRecord<z.ZodString, z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>>;
+    /** present = the enchanter offers this as a fixed tier-1 enchant */
+    enchant: z.ZodOptional<z.ZodObject<{
+        mag: z.ZodNumber;
+        priceMult: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        mag: number;
+        priceMult: number;
+    }, {
+        mag: number;
+        priceMult: number;
+    }>>;
+}, "strip", z.ZodTypeAny, {
+    name: string;
+    icon: [number, number];
+    stat: string;
+    units: string;
+    appliesTo: ("weapon" | "armor" | "trinket")[];
+    curse: boolean;
+    rolls: Record<string, [number, number]>;
+    integer?: boolean | undefined;
+    enchant?: {
+        mag: number;
+        priceMult: number;
+    } | undefined;
+}, {
+    name: string;
+    icon: [number, number];
+    stat: string;
+    units: string;
+    appliesTo: ("weapon" | "armor" | "trinket")[];
+    curse: boolean;
+    rolls: Record<string, [number, number]>;
+    integer?: boolean | undefined;
+    enchant?: {
+        mag: number;
+        priceMult: number;
+    } | undefined;
+}>;
+export type ModifierDef = z.infer<typeof ModifierDefSchema>;
 /** One option in a mob's attack kit. The mob picks among options that are
  *  usable right now (range window, cooldown, melee vertical reach) with a
  *  weighted roll — see chooseAttack in the shard sim. */
@@ -273,14 +356,14 @@ export declare const MobAttackSchema: z.ZodObject<{
     /** weighted-random share when several options are usable at once */
     weight: z.ZodDefault<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
-    weight: number;
     ability: string;
+    weight: number;
     damage?: number | undefined;
     minRange?: number | undefined;
 }, {
     ability: string;
-    weight?: number | undefined;
     damage?: number | undefined;
+    weight?: number | undefined;
     minRange?: number | undefined;
 }>;
 export type MobAttackDef = z.infer<typeof MobAttackSchema>;
@@ -303,14 +386,14 @@ export declare const MobDefSchema: z.ZodObject<{
         /** weighted-random share when several options are usable at once */
         weight: z.ZodDefault<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
-        weight: number;
         ability: string;
+        weight: number;
         damage?: number | undefined;
         minRange?: number | undefined;
     }, {
         ability: string;
-        weight?: number | undefined;
         damage?: number | undefined;
+        weight?: number | undefined;
         minRange?: number | undefined;
     }>, "many">>;
     aggroRadius: z.ZodNumber;
@@ -351,8 +434,8 @@ export declare const MobDefSchema: z.ZodObject<{
     loot: string;
     ability?: string | undefined;
     attacks?: {
-        weight: number;
         ability: string;
+        weight: number;
         damage?: number | undefined;
         minRange?: number | undefined;
     }[] | undefined;
@@ -378,8 +461,8 @@ export declare const MobDefSchema: z.ZodObject<{
     ability?: string | undefined;
     attacks?: {
         ability: string;
-        weight?: number | undefined;
         damage?: number | undefined;
+        weight?: number | undefined;
         minRange?: number | undefined;
     }[] | undefined;
     sounds?: {
@@ -403,14 +486,14 @@ export declare const LootEntrySchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     weight: number;
     item?: string | undefined;
-    table?: string | undefined;
     qty?: [number, number] | undefined;
+    table?: string | undefined;
     minRarity?: string | undefined;
 }, {
     weight: number;
     item?: string | undefined;
-    table?: string | undefined;
     qty?: [number, number] | undefined;
+    table?: string | undefined;
     minRarity?: string | undefined;
 }>;
 export declare const LootTableSchema: z.ZodObject<{
@@ -425,14 +508,14 @@ export declare const LootTableSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }, {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }>, "many">;
     /** boss-style guaranteed-drop slots: every entry always rolls once */
@@ -445,48 +528,48 @@ export declare const LootTableSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }, {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }>, "many">>;
 }, "strip", z.ZodTypeAny, {
     entries: {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }[];
-    gold: [number, number];
     rolls: [number, number];
+    gold: [number, number];
     guaranteed: {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }[];
 }, {
     entries: {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }[];
-    gold: [number, number];
     rolls: [number, number];
+    gold: [number, number];
     guaranteed?: {
         weight: number;
         item?: string | undefined;
-        table?: string | undefined;
         qty?: [number, number] | undefined;
+        table?: string | undefined;
         minRarity?: string | undefined;
     }[] | undefined;
 }>;
@@ -497,10 +580,13 @@ export declare class RegistryService {
     abilities: Record<string, AbilityDef>;
     mobs: Record<string, MobDef>;
     loot: Record<string, LootTable>;
+    modifiers: Record<string, ModifierDef>;
     constructor();
     /** (Re)load everything from shared/. Throws (leaving old data intact-ish)
      *  on schema or cross-reference errors — callers catch and report. */
     reload(): void;
+    /** Modifier ids rollable on an item kind (optionally curses/perks only). */
+    modifiersFor(kind: string, curse?: boolean): string[];
     item(id: string): ItemDef;
     ability(id: string): AbilityDef;
     mob(id: string): MobDef;

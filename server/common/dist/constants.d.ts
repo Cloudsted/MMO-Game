@@ -74,6 +74,11 @@ declare const ConstantsSchema: z.ZodObject<{
         pickupRange: z.ZodNumber;
         talkRange: z.ZodNumber;
         sellFraction: z.ZodNumber;
+        /** armor mitigation curve: reduction = A / (A + armorK) — diminishing,
+         *  never reaches immunity. Applies to melee+ranged, never magic/DoT. */
+        armorK: z.ZodNumber;
+        /** death drops equipped armor/trinkets into the bag too (full-loot) */
+        deathDropsEquipment: z.ZodBoolean;
     }, "strip", z.ZodTypeAny, {
         critChance: number;
         critMult: number;
@@ -91,6 +96,8 @@ declare const ConstantsSchema: z.ZodObject<{
         pickupRange: number;
         talkRange: number;
         sellFraction: number;
+        armorK: number;
+        deathDropsEquipment: boolean;
     }, {
         critChance: number;
         critMult: number;
@@ -108,6 +115,8 @@ declare const ConstantsSchema: z.ZodObject<{
         pickupRange: number;
         talkRange: number;
         sellFraction: number;
+        armorK: number;
+        deathDropsEquipment: boolean;
     }>;
     building: z.ZodObject<{
         placeRangeM: z.ZodNumber;
@@ -133,11 +142,44 @@ declare const ConstantsSchema: z.ZodObject<{
             rarityMult: Record<string, number>;
             spread: number;
         }>;
+        /** dynamic modifier (perk/curse) rolling at mint time — see mintItem */
+        mods: z.ZodObject<{
+            chanceByRarity: z.ZodRecord<z.ZodString, z.ZodNumber>;
+            secondModChanceByRarity: z.ZodRecord<z.ZodString, z.ZodNumber>;
+            curseChance: z.ZodNumber;
+            /** per-stat cap on the AGGREGATED (equipped+held) sum; clamped
+             *  symmetrically, so curses can't push past -cap either */
+            caps: z.ZodRecord<z.ZodString, z.ZodNumber>;
+            sellBonusPerPerk: z.ZodNumber;
+            sellPenaltyPerCurse: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            chanceByRarity: Record<string, number>;
+            secondModChanceByRarity: Record<string, number>;
+            curseChance: number;
+            caps: Record<string, number>;
+            sellBonusPerPerk: number;
+            sellPenaltyPerCurse: number;
+        }, {
+            chanceByRarity: Record<string, number>;
+            secondModChanceByRarity: Record<string, number>;
+            curseChance: number;
+            caps: Record<string, number>;
+            sellBonusPerPerk: number;
+            sellPenaltyPerCurse: number;
+        }>;
     }, "strip", z.ZodTypeAny, {
         statSpread: Record<string, Record<string, number>>;
         durability: {
             rarityMult: Record<string, number>;
             spread: number;
+        };
+        mods: {
+            chanceByRarity: Record<string, number>;
+            secondModChanceByRarity: Record<string, number>;
+            curseChance: number;
+            caps: Record<string, number>;
+            sellBonusPerPerk: number;
+            sellPenaltyPerCurse: number;
         };
     }, {
         statSpread: Record<string, Record<string, number>>;
@@ -145,6 +187,24 @@ declare const ConstantsSchema: z.ZodObject<{
             rarityMult: Record<string, number>;
             spread: number;
         };
+        mods: {
+            chanceByRarity: Record<string, number>;
+            secondModChanceByRarity: Record<string, number>;
+            curseChance: number;
+            caps: Record<string, number>;
+            sellBonusPerPerk: number;
+            sellPenaltyPerCurse: number;
+        };
+    }>;
+    enchanting: z.ZodObject<{
+        priceBase: z.ZodNumber;
+        priceValueMult: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        priceBase: number;
+        priceValueMult: number;
+    }, {
+        priceBase: number;
+        priceValueMult: number;
     }>;
     progression: z.ZodObject<{
         baseHp: z.ZodNumber;
@@ -227,6 +287,8 @@ declare const ConstantsSchema: z.ZodObject<{
         pickupRange: number;
         talkRange: number;
         sellFraction: number;
+        armorK: number;
+        deathDropsEquipment: boolean;
     };
     building: {
         placeRangeM: number;
@@ -238,6 +300,18 @@ declare const ConstantsSchema: z.ZodObject<{
             rarityMult: Record<string, number>;
             spread: number;
         };
+        mods: {
+            chanceByRarity: Record<string, number>;
+            secondModChanceByRarity: Record<string, number>;
+            curseChance: number;
+            caps: Record<string, number>;
+            sellBonusPerPerk: number;
+            sellPenaltyPerCurse: number;
+        };
+    };
+    enchanting: {
+        priceBase: number;
+        priceValueMult: number;
     };
     progression: {
         baseHp: number;
@@ -292,6 +366,8 @@ declare const ConstantsSchema: z.ZodObject<{
         pickupRange: number;
         talkRange: number;
         sellFraction: number;
+        armorK: number;
+        deathDropsEquipment: boolean;
     };
     building: {
         placeRangeM: number;
@@ -303,6 +379,18 @@ declare const ConstantsSchema: z.ZodObject<{
             rarityMult: Record<string, number>;
             spread: number;
         };
+        mods: {
+            chanceByRarity: Record<string, number>;
+            secondModChanceByRarity: Record<string, number>;
+            curseChance: number;
+            caps: Record<string, number>;
+            sellBonusPerPerk: number;
+            sellPenaltyPerCurse: number;
+        };
+    };
+    enchanting: {
+        priceBase: number;
+        priceValueMult: number;
     };
     progression: {
         baseHp: number;

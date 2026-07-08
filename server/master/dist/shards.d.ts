@@ -111,11 +111,11 @@ export declare class ShardManager {
     livePlayers(): ({
         name: string;
         level: number;
+        hp: number;
         gold: number;
         x: number;
         y: number;
         z: number;
-        hp: number;
         maxHp: number;
         charId: string;
     } & {

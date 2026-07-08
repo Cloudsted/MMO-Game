@@ -19,13 +19,29 @@ export const RaritySchema = z.object({
 });
 export type RarityDef = z.infer<typeof RaritySchema>;
 
+/** The five equipment slots, fixed order (wire/DB equipment arrays index by it). */
+export const EQUIP_SLOTS = ["head", "chest", "legs", "feet", "offhand"] as const;
+export type EquipSlot = (typeof EQUIP_SLOTS)[number];
+
+/** Kinds a player can wear/hold for modifier effects (and that roll mods). */
+export const EQUIPPABLE_KINDS = ["weapon", "armor", "trinket"] as const;
+export function isEquippable(kind: string): boolean {
+  return (EQUIPPABLE_KINDS as readonly string[]).includes(kind);
+}
+
 export const ItemDefSchema = z.object({
   name: z.string(),
-  /** trophy: no use action — a trinket that exists to be sold */
-  kind: z.enum(["weapon", "consumable", "building", "trophy", "misc"]),
+  /** trophy: no use action — sell-fodder. armor: wearable (slot+armor value).
+   *  trinket: offhand-only passive modifier carrier (no armor, no durability). */
+  kind: z.enum(["weapon", "consumable", "building", "trophy", "misc", "armor", "trinket"]),
   ability: z.string().optional(), // weapons: the ability this item grants
   damage: z.number().optional(), // weapons: base damage before rarity/level
-  /** weapons: base uses before breaking (scaled per instance by rarity + roll) */
+  /** armor: which equipment slot it occupies (shields = "offhand") */
+  slot: z.enum(EQUIP_SLOTS).optional(),
+  /** armor: base armor value before rarity/roll — total equipped armor A
+   *  reduces melee/ranged damage by A/(A+armorK) */
+  armor: z.number().optional(),
+  /** weapons/armor: base uses before breaking (scaled per instance by rarity + roll) */
   durability: z.number().int().positive().optional(),
   /** building items: block name (shared/blocks.json) this item places */
   block: z.string().optional(),
@@ -48,6 +64,10 @@ export type ItemDef = z.infer<typeof ItemDefSchema>;
 
 export const AbilityDefSchema = z.object({
   kind: z.enum(["melee", "projectile", "self", "pillars"]),
+  /** damage class for taken-modifiers + armor mitigation. Defaults derive
+   *  from kind (melee→melee, projectile/pillars→magic); bows author
+   *  "ranged" explicitly. Armor mitigates melee+ranged, never magic. */
+  dmgClass: z.enum(["melee", "ranged", "magic"]).optional(),
   // melee/bow path: windup -> active -> recover. spell path: cast -> recover.
   windupMs: z.number().int().optional(),
   activeMs: z.number().int().optional(),
@@ -111,6 +131,39 @@ export const AbilityDefSchema = z.object({
   fx: z.string(),
 });
 export type AbilityDef = z.infer<typeof AbilityDefSchema>;
+
+/** Resolve an ability's damage class (see AbilityDefSchema.dmgClass).
+ *  null = the ability deals no direct damage (self heals/summons). */
+export function abilityDmgClass(a: AbilityDef): "melee" | "ranged" | "magic" | null {
+  if (a.dmgClass) return a.dmgClass;
+  if (a.kind === "melee") return "melee";
+  if (a.kind === "projectile" || a.kind === "pillars") return "magic";
+  return null;
+}
+
+/** A dynamic item modifier (perk or curse) rollable onto equippables at mint
+ *  time and purchasable (tier-1 only) from the enchanter. Magnitudes live ON
+ *  the item instance (`ItemStack.mods[id]`), in this def's units; curses roll
+ *  negative. Aggregation sums per `stat` across held+equipped items, clamped
+ *  to `items.mods.caps` (constants.json). */
+export const ModifierDefSchema = z.object({
+  name: z.string(),
+  /** aggregation stat key this modifier feeds (several mods may share one,
+   *  e.g. slowness = negative moveSpeedPct) */
+  stat: z.string(),
+  /** tooltip/status-bar unit label, e.g. "hp/s", "% move speed" */
+  units: z.string(),
+  icon: z.tuple([z.number().int(), z.number().int()]), // (col,row) in tf_icon_16
+  appliesTo: z.array(z.enum(EQUIPPABLE_KINDS)).min(1),
+  curse: z.boolean(),
+  /** whole-number magnitudes (maxHp, thorns) */
+  integer: z.boolean().optional(),
+  /** rarity → [min,max] magnitude roll range (negative for curses) */
+  rolls: z.record(z.string(), z.tuple([z.number(), z.number()])),
+  /** present = the enchanter offers this as a fixed tier-1 enchant */
+  enchant: z.object({ mag: z.number(), priceMult: z.number() }).optional(),
+});
+export type ModifierDef = z.infer<typeof ModifierDefSchema>;
 
 /** One option in a mob's attack kit. The mob picks among options that are
  *  usable right now (range window, cooldown, melee vertical reach) with a
@@ -193,6 +246,7 @@ export class RegistryService {
   abilities!: Record<string, AbilityDef>;
   mobs!: Record<string, MobDef>;
   loot!: Record<string, LootTable>;
+  modifiers!: Record<string, ModifierDef>;
 
   constructor() {
     this.reload();
@@ -205,11 +259,39 @@ export class RegistryService {
     const abilities = z.record(z.string(), AbilityDefSchema).parse(readJsonFile(resolve(SHARED_DIR, "abilities.json")));
     const mobs = z.record(z.string(), MobDefSchema).parse(readJsonFile(resolve(SHARED_DIR, "mobs.json")));
     const loot = z.record(z.string(), LootTableSchema).parse(readJsonFile(resolve(SHARED_DIR, "loot.json")));
+    const modifiers = z.record(z.string(), ModifierDefSchema).parse(readJsonFile(resolve(SHARED_DIR, "modifiers.json")));
 
     // cross-reference validation: fail fast on dangling ids
     for (const [id, item] of Object.entries(itemsFile.items)) {
       if (item.ability && !abilities[item.ability]) throw new Error(`item ${id}: unknown ability ${item.ability}`);
       if (item.block && !BLOCK[item.block]) throw new Error(`item ${id}: unknown block ${item.block}`);
+      // equipment invariants: armor wears (slot + armor value); trinkets are
+      // offhand-only; every equippable is stack-1 so instances stay unique
+      if (item.kind === "armor") {
+        if (!item.slot) throw new Error(`item ${id}: armor needs a slot`);
+        if (item.armor === undefined) throw new Error(`item ${id}: armor needs an armor value`);
+      }
+      if (item.kind === "trinket" && item.slot !== undefined && item.slot !== "offhand") {
+        throw new Error(`item ${id}: trinkets are offhand-only`);
+      }
+      if (item.kind !== "armor" && item.kind !== "trinket" && item.slot !== undefined) {
+        throw new Error(`item ${id}: only armor/trinkets carry a slot`);
+      }
+      if (isEquippable(item.kind) && item.stack !== 1) {
+        throw new Error(`item ${id}: equippables must be stack 1 (rolled instances never merge)`);
+      }
+    }
+    for (const [id, mod] of Object.entries(modifiers)) {
+      for (const [rarity, [lo, hi]] of Object.entries(mod.rolls)) {
+        if (!itemsFile.rarities[rarity]) throw new Error(`modifier ${id}: unknown rarity ${rarity}`);
+        if (lo > hi) throw new Error(`modifier ${id}: ${rarity} roll range inverted`);
+        // sign convention keeps tooltips/aggregation honest: perks roll
+        // positive magnitudes, curses negative
+        if (mod.curse ? hi > 0 : lo < 0) {
+          throw new Error(`modifier ${id}: ${mod.curse ? "curse rolls must be <= 0" : "perk rolls must be >= 0"}`);
+        }
+      }
+      if (mod.enchant && mod.curse) throw new Error(`modifier ${id}: the enchanter sells no curses`);
     }
     for (const [id, mob] of Object.entries(mobs)) {
       const attacks = mobAttacks(mob);
@@ -238,6 +320,15 @@ export class RegistryService {
     this.abilities = abilities;
     this.mobs = mobs;
     this.loot = loot;
+    this.modifiers = modifiers;
+  }
+
+  /** Modifier ids rollable on an item kind (optionally curses/perks only). */
+  modifiersFor(kind: string, curse?: boolean): string[] {
+    return Object.entries(this.modifiers)
+      .filter(([, m]) => (m.appliesTo as readonly string[]).includes(kind))
+      .filter(([, m]) => curse === undefined || m.curse === curse)
+      .map(([id]) => id);
   }
 
   item(id: string): ItemDef {

@@ -7,7 +7,9 @@ import {
   BLOCK,
   BLOCKS,
   ensureItemInstance,
+  EQUIP_SLOTS,
   gameConstants,
+  isEquippable,
   loadRoomDefs,
   makeLogger,
   mintItem,
@@ -15,6 +17,7 @@ import {
   RegistryService,
   WORLD_HEIGHT,
   type AbilityDef,
+  type EquipSlot,
   type MobDef,
   type CharacterSnapshot,
   type CombatEvent,
@@ -53,7 +56,7 @@ import {
   startAbility,
   type Projectile,
 } from "./combat.js";
-import { addItem, HOTBAR_SIZE, INV_SIZE, normalizeInventory, removeFromSlot, rollLoot } from "./loot.js";
+import { addItem, HOTBAR_SIZE, INV_SIZE, normalizeEquipment, normalizeInventory, removeFromSlot, rollLoot } from "./loot.js";
 import {
   applyGravity,
   applyMove,
@@ -95,6 +98,8 @@ export interface PlayerSession {
   // ---- phase 4 ----
   slots: Array<ItemStack | null>; // INV_SIZE slots; hotbar = first HOTBAR_SIZE
   held: number; // hotbar slot index
+  /** worn gear, indexed by EQUIP_SLOTS order (head/chest/legs/feet/offhand) */
+  equipment: Array<ItemStack | null>;
   /** latest camera pitch from move packets — live aim for releases */
   lastPitch: number;
   xp: number;
@@ -961,6 +966,19 @@ export class RoomSim {
       if (s && !this.reg.items[s.item]) slots[i] = null;
       else if (s) slots[i] = ensureItemInstance(this.reg, this.consts, s);
     }
+    // equipment gets the same hygiene, plus a slot-validity check (an item
+    // whose def changed slots since the logout lands back in the bags)
+    const equipment = normalizeEquipment(character.equipment, EQUIP_SLOTS.length);
+    for (let i = 0; i < equipment.length; i++) {
+      const s = equipment[i];
+      if (!s) continue;
+      if (!this.reg.items[s.item] || this.slotIndexFor(this.reg.items[s.item]!) !== i) {
+        equipment[i] = null;
+        if (this.reg.items[s.item]) addItem(this.reg, slots, s);
+        continue;
+      }
+      equipment[i] = ensureItemInstance(this.reg, this.consts, s);
+    }
     const session: PlayerSession = {
       entity,
       character,
@@ -972,6 +990,7 @@ export class RoomSim {
       pendingAttack: null,
       slots,
       held: 0,
+      equipment,
       lastPitch: 0,
       xp: character.xp,
       gold: character.gold,
@@ -1539,10 +1558,15 @@ export class RoomSim {
     }
   }
 
-  /** Death drops: the entire inventory becomes a bag at the death spot. */
+  /** Death drops: the entire inventory (and, by default, worn equipment —
+   *  combat.deathDropsEquipment) becomes a bag at the death spot. */
   private dropPlayerInventory(session: PlayerSession): void {
     const now = Date.now();
     const items = session.slots.filter((s): s is ItemStack => s !== null);
+    if (this.consts.combat.deathDropsEquipment) {
+      items.push(...session.equipment.filter((s): s is ItemStack => s !== null));
+      session.equipment = normalizeEquipment([], EQUIP_SLOTS.length);
+    }
     if (items.length > 0) {
       // owner-locked corpse-run head start outside PvP zones; FFA inside
       const diedInPvp = this.inPvpZone(session.entity.pos.x, session.entity.pos.z);
@@ -1648,7 +1672,7 @@ export class RoomSim {
   }
 
   private sendInv(session: PlayerSession): void {
-    session.send({ t: "inv", slots: session.slots, held: session.held });
+    session.send({ t: "inv", slots: session.slots, held: session.held, equipment: session.equipment });
     session.dirtyInv = false;
   }
 
@@ -1671,12 +1695,51 @@ export class RoomSim {
     session.dirtyInv = true;
   }
 
+  /** Which equipment slot index an item def occupies, or -1 if not wearable.
+   *  Weapons are NEVER wearable — the offhand takes trinkets and shields
+   *  (armor with slot "offhand") only. */
+  private slotIndexFor(def: ItemDef): number {
+    if (def.kind === "armor" && def.slot) return EQUIP_SLOTS.indexOf(def.slot);
+    if (def.kind === "trinket") return EQUIP_SLOTS.indexOf("offhand");
+    return -1;
+  }
+
+  /** Equip from an inventory slot (occupied equipment swaps into the vacated
+   *  index — never needs a free slot) or, with invIndex absent, unequip to
+   *  the first free inventory slot. */
+  handleEquipSlot(session: PlayerSession, slot: EquipSlot, invIndex?: number): void {
+    if (session.entity.combat!.act === "dead") return;
+    const slotIdx = EQUIP_SLOTS.indexOf(slot);
+    if (slotIdx < 0) return;
+    if (invIndex === undefined) {
+      const worn = session.equipment[slotIdx];
+      if (!worn) return;
+      const free = session.slots.findIndex((s) => s === null);
+      if (free < 0) {
+        this.system(session, "Your bags are full.");
+        return;
+      }
+      session.slots[free] = worn;
+      session.equipment[slotIdx] = null;
+      session.dirtyInv = true;
+      return;
+    }
+    if (invIndex < 0 || invIndex >= INV_SIZE) return;
+    const stack = session.slots[invIndex];
+    if (!stack) return;
+    const def = this.reg.items[stack.item];
+    if (!def || this.slotIndexFor(def) !== slotIdx) return;
+    session.slots[invIndex] = session.equipment[slotIdx] ?? null;
+    session.equipment[slotIdx] = stack;
+    session.dirtyInv = true;
+  }
+
   handleInvMove(session: PlayerSession, from: number, to: number): void {
     if (from < 0 || from >= INV_SIZE || to < 0 || to >= INV_SIZE || from === to) return;
     const a = session.slots[from] ?? null;
     const b = session.slots[to] ?? null;
     // merge same item+rarity stacks (rolled instances never merge), else swap
-    if (a && b && a.item === b.item && a.rarity === b.rarity && a.dur === undefined && b.dur === undefined && a.stats === undefined && b.stats === undefined) {
+    if (a && b && a.item === b.item && a.rarity === b.rarity && a.dur === undefined && b.dur === undefined && a.stats === undefined && b.stats === undefined && a.mods === undefined && b.mods === undefined) {
       const max = this.reg.items[a.item]?.stack ?? 1;
       const take = Math.min(a.qty, max - b.qty);
       if (take > 0) {
@@ -1823,10 +1886,25 @@ export class RoomSim {
     const removed = removeFromSlot(session.slots, slot, qty);
     if (!removed) return;
     const rarityMult = this.reg.rarities[removed.rarity]?.mult ?? 1;
-    const price = Math.max(1, Math.floor(def.value * rarityMult * this.consts.combat.sellFraction)) * removed.qty;
+    const price = Math.max(1, Math.floor(def.value * rarityMult * this.modValueMult(removed) * this.consts.combat.sellFraction)) * removed.qty;
     session.gold += price;
     session.dirtyStats = true;
     session.dirtyInv = true;
+  }
+
+  /** Sell-value multiplier from an instance's modifiers: perks add, curses
+   *  subtract (knobs in items.mods). Kept well under enchant cost so
+   *  enchant-then-sell can never mint gold. */
+  private modValueMult(s: ItemStack): number {
+    if (!s.mods) return 1;
+    const cfg = this.consts.items.mods;
+    let mult = 1;
+    for (const id of Object.keys(s.mods)) {
+      const def = this.reg.modifiers[id];
+      if (!def) continue;
+      mult += def.curse ? -cfg.sellPenaltyPerCurse : cfg.sellBonusPerPerk;
+    }
+    return Math.max(0.25, mult);
   }
 
   // ---------- chat / admin ----------
@@ -2446,6 +2524,7 @@ export class RoomSim {
       xp: s.xp,
       gold: s.gold,
       inventory: s.slots,
+      equipment: s.equipment,
     }));
   }
 
@@ -2463,6 +2542,7 @@ export class RoomSim {
       xp: s.xp,
       gold: s.gold,
       inventory: s.slots,
+      equipment: s.equipment,
     }));
   }
 

@@ -10,8 +10,8 @@ export declare const HOTBAR_SIZE = 8;
 export declare function rollRarity(reg: RegistryService, minRarity?: string): string;
 /**
  * Roll a loot table: nested table refs recurse (depth-capped), weighted
- * entries with no item/table are "nothing". Weapons roll a rarity tier;
- * everything else drops common.
+ * entries with no item/table are "nothing". Equippables (weapons/armor/
+ * trinkets) roll a rarity tier; everything else drops common.
  */
 export declare function rollLoot(reg: RegistryService, consts: GameConstants, tableId: string, depth?: number): {
     gold: number;
@@ -27,4 +27,7 @@ export declare function addItem(reg: RegistryService, slots: Array<ItemStack | n
 export declare function removeFromSlot(slots: Array<ItemStack | null>, slot: number, qty: number): ItemStack | null;
 /** Normalize a persisted inventory to a fixed-size slot array. */
 export declare function normalizeInventory(inv: Array<ItemStack | null>): Array<ItemStack | null>;
+/** Normalize persisted equipment to the fixed EQUIP_SLOTS-length array
+ *  (legacy rows have none — every slot starts empty). */
+export declare function normalizeEquipment(equip: Array<ItemStack | null> | undefined, size: number): Array<ItemStack | null>;
 //# sourceMappingURL=loot.d.ts.map

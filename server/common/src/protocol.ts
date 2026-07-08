@@ -4,22 +4,27 @@
  * JSON for MVP; a binary encoding swaps in behind encode()/decode*() later.
  */
 import { z } from "zod";
+import { EQUIP_SLOTS } from "./registry.js";
 
 // ---------- shared value types ----------
 
-/** One inventory slot: per-instance item data. Weapons carry stat rolls
- *  (multipliers around 1, e.g. {dmg:1.04, spd:0.98}) and durability minted
- *  at creation (see mintItem in items.ts). */
+/** One inventory slot: per-instance item data. Equippables carry stat rolls
+ *  (multipliers around 1, e.g. {dmg:1.04, spd:0.98}), durability, and any
+ *  dynamic modifiers minted at creation (see mintItem in items.ts). */
 export const ItemStackSchema = z.object({
   item: z.string(),
   qty: z.number().int().positive(),
   rarity: z.string(),
-  /** per-instance stat rolls: stat id → multiplier (absent on non-weapons) */
+  /** per-instance stat rolls: stat id → multiplier (absent on non-equippables) */
   stats: z.record(z.string(), z.number()).optional(),
   /** durability remaining (uses); item breaks at 0 */
   dur: z.number().int().optional(),
   /** rolled durability ceiling for this instance */
   maxDur: z.number().int().optional(),
+  /** dynamic modifiers: modifier id (shared/modifiers.json) → magnitude in
+   *  the modifier's units; curses negative. Absent = unmodified (the state
+   *  merge guards and the enchanter's eligibility rule key on). */
+  mods: z.record(z.string(), z.number()).optional(),
 });
 export type ItemStack = z.infer<typeof ItemStackSchema>;
 
@@ -35,6 +40,9 @@ export const CharacterSnapshotSchema = z.object({
   xp: z.number(),
   gold: z.number(),
   inventory: z.array(ItemStackSchema.nullable()),
+  /** worn gear, indexed by EQUIP_SLOTS order (head/chest/legs/feet/offhand).
+   *  Optional: rows/tickets minted before equipment existed validate fine. */
+  equipment: z.array(ItemStackSchema.nullable()).optional(),
   x: z.number(),
   y: z.number(),
   z: z.number(),
@@ -292,6 +300,23 @@ export const ClientToServerSchema = z.discriminatedUnion("t", [
   z.object({ t: z.literal("attack"), yaw: z.number(), pitch: z.number() }),
   /** Select a hotbar slot (0..7) as the held item. */
   z.object({ t: z.literal("equip"), slot: z.number().int() }),
+  /** Equip the stack at invIndex into an equipment slot (occupied slot swaps
+   *  into the vacated invIndex); invIndex absent = unequip to first free
+   *  inventory slot. Armor must match its def slot; trinkets go offhand;
+   *  weapons are always refused. */
+  z.object({
+    t: z.literal("equipSlot"),
+    slot: z.enum(EQUIP_SLOTS),
+    invIndex: z.number().int().optional(),
+  }),
+  /** Buy a fixed tier-1 enchant from an enchanter NPC for the item at
+   *  inventory `slot`. Refused unless the item is an unmodified equippable. */
+  z.object({
+    t: z.literal("enchant"),
+    npc: z.number().int(),
+    slot: z.number().int(),
+    enchantId: z.string(),
+  }),
   z.object({ t: z.literal("invMove"), from: z.number().int(), to: z.number().int() }),
   z.object({ t: z.literal("consume"), slot: z.number().int() }),
   z.object({ t: z.literal("dropItem"), slot: z.number().int(), qty: z.number().int().positive() }),
@@ -361,6 +386,24 @@ export interface ShopWire {
   buys: boolean;
 }
 
+/** An enchanter NPC's fixed tier-1 menu. Display prices are computed
+ *  client-side per target item from shared constants (`enchanting`:
+ *  ceil(value × rarityMult × priceMult × priceValueMult + priceBase));
+ *  the server recomputes authoritatively at `enchant` receipt. */
+export interface EnchantWire {
+  offers: Array<{ id: string; name: string; mag: number; priceMult: number }>;
+}
+
+/** One active effect on the self status bar. `durMs` is REMAINING duration
+ *  at send time (client stamps a local end and counts down); `mod` entries
+ *  are persistent gear modifiers (one per modifier id, magnitudes summed
+ *  across equipped+held items). */
+export type EffectWire =
+  | { kind: "mod"; id: string; mag: number; curse: boolean }
+  | { kind: "slow"; mag: number; durMs: number }
+  | { kind: "dot"; mag: number; durMs: number }
+  | { kind: "hot"; item: string; mag: number; durMs: number };
+
 export type ServerToClient =
   | { t: "welcome"; roomId: string; selfId: number; name: string; sprite: string; spawn: { x: number; y: number; z: number; yaw: number }; timeOfDay: number; ents: EntityFull[]; safeZone: boolean; regions: RegionWire[]; buildingEnabled: boolean }
   /** voxel world header: dimensions + how many chunk payloads follow */
@@ -379,7 +422,12 @@ export type ServerToClient =
   | { t: "evict"; reason: string }
   // ---- phase 4: combat / inventory / economy / chat ----
   | { t: "stats"; hp: number; maxHp: number; mana: number; maxMana: number; xp: number; xpNext: number; level: number; gold: number }
-  | { t: "inv"; slots: Array<ItemStack | null>; held: number }
+  | { t: "inv"; slots: Array<ItemStack | null>; held: number; equipment: Array<ItemStack | null> }
+  /** self status effects: aggregated gear modifiers + timed slow/dot/hot.
+   *  speedMult = the capped mods-only movement multiplier — the client
+   *  mirrors it in prediction exactly like the `debuff` slow. Sent after
+   *  welcome and whenever the set changes. */
+  | { t: "effects"; speedMult: number; list: EffectWire[] }
   | { t: "evt"; e: CombatEvent }
   | { t: "proj"; id: number; fx: string; x: number; y: number; z: number; vx: number; vy: number; vz: number; ttlMs: number; scale?: number; impactFx?: string }
   | { t: "projHit"; id: number; x: number; y: number; z: number }
@@ -390,7 +438,7 @@ export type ServerToClient =
   | { t: "debuff"; id: number; slowPct: number; durMs: number }
   | { t: "died"; x: number; y: number; z: number } // self death → death screen
   | { t: "chat"; channel: "room" | "global" | "system"; from: string; text: string }
-  | { t: "dialog"; id: number; name: string; lines: string[]; shop: ShopWire | null }
+  | { t: "dialog"; id: number; name: string; lines: string[]; shop: ShopWire | null; enchant?: EnchantWire | null }
   | { t: "portalState"; target: string; open: boolean; reopenInSec?: number };
 
 // ---------- encode / decode ----------

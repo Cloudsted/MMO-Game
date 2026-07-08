@@ -3,7 +3,7 @@
  * FSM, mob AI, loot, XP, economy, chat, and interest-managed delta snapshots.
  * Networking and IPC stay in roomhost.ts — this module never touches ws.
  */
-import { RegistryService, type CharacterSnapshot, type CombatEvent, type ItemStack, type PortalDef, type PortalWire, type RoomAdminInfo, type RoomDef, type RoomState, type ServerToClient, type SpawnTable } from "@fantasy-mmo/common";
+import { RegistryService, type EquipSlot, type CharacterSnapshot, type CombatEvent, type ItemStack, type PortalDef, type PortalWire, type RoomAdminInfo, type RoomDef, type RoomState, type ServerToClient, type SpawnTable } from "@fantasy-mmo/common";
 import { type Entity, type ReplicatedState } from "./entities.js";
 import { VoxelWorld } from "./voxel.js";
 export interface PlayerSession {
@@ -26,6 +26,8 @@ export interface PlayerSession {
     } | null;
     slots: Array<ItemStack | null>;
     held: number;
+    /** worn gear, indexed by EQUIP_SLOTS order (head/chest/legs/feet/offhand) */
+    equipment: Array<ItemStack | null>;
     /** latest camera pitch from move packets — live aim for releases */
     lastPitch: number;
     xp: number;
@@ -247,7 +249,8 @@ export declare class RoomSim {
      *  Threat + damage-log credit go to the applier when it still exists. */
     private applyDotDamage;
     private kill;
-    /** Death drops: the entire inventory becomes a bag at the death spot. */
+    /** Death drops: the entire inventory (and, by default, worn equipment —
+     *  combat.deathDropsEquipment) becomes a bag at the death spot. */
     private dropPlayerInventory;
     handleRespawn(session: PlayerSession): void;
     /** H key: hub-bound transfer from anywhere. Dead players use R instead;
@@ -262,6 +265,14 @@ export declare class RoomSim {
     system(session: PlayerSession, text: string): void;
     systemAll(text: string): void;
     handleEquip(session: PlayerSession, slot: number): void;
+    /** Which equipment slot index an item def occupies, or -1 if not wearable.
+     *  Weapons are NEVER wearable — the offhand takes trinkets and shields
+     *  (armor with slot "offhand") only. */
+    private slotIndexFor;
+    /** Equip from an inventory slot (occupied equipment swaps into the vacated
+     *  index — never needs a free slot) or, with invIndex absent, unequip to
+     *  the first free inventory slot. */
+    handleEquipSlot(session: PlayerSession, slot: EquipSlot, invIndex?: number): void;
     handleInvMove(session: PlayerSession, from: number, to: number): void;
     handleConsume(session: PlayerSession, slot: number): void;
     handleDropItem(session: PlayerSession, slot: number, qty: number): void;
@@ -271,6 +282,10 @@ export declare class RoomSim {
     handleTalk(session: PlayerSession, entityId: number): void;
     handleBuy(session: PlayerSession, npcEntityId: number, itemId: string, qty: number): void;
     handleSell(session: PlayerSession, npcEntityId: number, slot: number, qty: number): void;
+    /** Sell-value multiplier from an instance's modifiers: perks add, curses
+     *  subtract (knobs in items.mods). Kept well under enchant cost so
+     *  enchant-then-sell can never mint gold. */
+    private modValueMult;
     handleChat(session: PlayerSession, text: string): void;
     /** Delivery of a relayed global-chat line (from the master, any room). */
     deliverGlobalChat(from: string, text: string): void;

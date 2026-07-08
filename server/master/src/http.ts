@@ -109,6 +109,7 @@ async function route(req: IncomingMessage, res: ServerResponse, cols: Collection
         { item: "rusty_sword", qty: 1, rarity: "common" },
         { item: "bread", qty: 3, rarity: "common" },
       ],
+      equipment: [],
       roomId: "hub",
       x: null,
       y: null,

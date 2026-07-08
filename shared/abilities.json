@@ -12,7 +12,7 @@
     "fx": "slash"
   },
   "bow_shot": {
-    "kind": "projectile", "windupMs": 480, "activeMs": 80, "recoverMs": 260,
+    "kind": "projectile", "dmgClass": "ranged", "windupMs": 480, "activeMs": 80, "recoverMs": 260,
     "projSpeed": 30, "maxRange": 45,
     "canMoveWhile": false, "interruptible": true, "cooldownMs": 0, "manaCost": 0,
     "fx": "arrow"
@@ -128,7 +128,7 @@
     "fx": "frost"
   },
   "bone_bow": {
-    "kind": "projectile", "windupMs": 650, "activeMs": 80, "recoverMs": 400,
+    "kind": "projectile", "dmgClass": "ranged", "windupMs": 650, "activeMs": 80, "recoverMs": 400,
     "projSpeed": 26, "maxRange": 30,
     "canMoveWhile": false, "interruptible": false, "cooldownMs": 2500, "manaCost": 0,
     "fx": "arrow"
@@ -171,7 +171,7 @@
     "fx": "slash"
   },
   "bolt_shot": {
-    "kind": "projectile", "windupMs": 380, "activeMs": 80, "recoverMs": 260,
+    "kind": "projectile", "dmgClass": "ranged", "windupMs": 380, "activeMs": 80, "recoverMs": 260,
     "projSpeed": 36, "maxRange": 42,
     "canMoveWhile": false, "interruptible": true, "cooldownMs": 0, "manaCost": 0,
     "fx": "arrow"

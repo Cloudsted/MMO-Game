@@ -3,7 +3,7 @@
  * slot math. Both are pure functions over registry data — RoomSim owns the
  * resulting entities and syncing.
  */
-import { mintItem, type GameConstants, type ItemStack, type RegistryService } from "@fantasy-mmo/common";
+import { isEquippable, mintItem, type GameConstants, type ItemStack, type RegistryService } from "@fantasy-mmo/common";
 
 export const INV_SIZE = 24;
 export const HOTBAR_SIZE = 8;
@@ -31,8 +31,8 @@ export function rollRarity(reg: RegistryService, minRarity?: string): string {
 
 /**
  * Roll a loot table: nested table refs recurse (depth-capped), weighted
- * entries with no item/table are "nothing". Weapons roll a rarity tier;
- * everything else drops common.
+ * entries with no item/table are "nothing". Equippables (weapons/armor/
+ * trinkets) roll a rarity tier; everything else drops common.
  */
 export function rollLoot(reg: RegistryService, consts: GameConstants, tableId: string, depth = 0): { gold: number; items: ItemStack[] } {
   const out = { gold: 0, items: [] as ItemStack[] };
@@ -44,10 +44,10 @@ export function rollLoot(reg: RegistryService, consts: GameConstants, tableId: s
     if (entry.table) {
       const sub = rollLoot(reg, consts, entry.table, depth + 1);
       out.gold += sub.gold;
-      // nested minRarity clamps the sub-rolls' weapons upward (re-mint: the
-      // instance's stat/durability rolls must match its final rarity)
+      // nested minRarity clamps the sub-rolls' equippables upward (re-mint:
+      // the instance's stat/durability rolls must match its final rarity)
       for (const s of sub.items) {
-        if (entry.minRarity && reg.item(s.item).kind === "weapon") {
+        if (entry.minRarity && isEquippable(reg.item(s.item).kind)) {
           const order = reg.rarityOrder();
           if (order.indexOf(s.rarity) < order.indexOf(entry.minRarity)) {
             out.items.push(mintItem(reg, consts, s.item, s.qty, entry.minRarity));
@@ -59,7 +59,7 @@ export function rollLoot(reg: RegistryService, consts: GameConstants, tableId: s
     } else if (entry.item) {
       const def = reg.item(entry.item);
       const qty = entry.qty ? randInt(entry.qty[0], entry.qty[1]) : 1;
-      const rarity = def.kind === "weapon" ? rollRarity(reg, entry.minRarity) : "common";
+      const rarity = isEquippable(def.kind) ? rollRarity(reg, entry.minRarity) : "common";
       out.items.push(mintItem(reg, consts, entry.item, qty, rarity));
     }
     // else: nothing
@@ -82,11 +82,11 @@ export function rollLoot(reg: RegistryService, consts: GameConstants, tableId: s
 export function addItem(reg: RegistryService, slots: Array<ItemStack | null>, stack: ItemStack): number {
   const def = reg.item(stack.item);
   let remaining = stack.qty;
-  // rolled instances (stats/durability) never merge — each is unique
-  if (def.stack > 1 && stack.dur === undefined && stack.stats === undefined) {
+  // rolled instances (stats/durability/mods) never merge — each is unique
+  if (def.stack > 1 && stack.dur === undefined && stack.stats === undefined && stack.mods === undefined) {
     for (const s of slots) {
       if (!s || s.item !== stack.item || s.rarity !== stack.rarity) continue;
-      if (s.dur !== undefined || s.stats !== undefined) continue;
+      if (s.dur !== undefined || s.stats !== undefined || s.mods !== undefined) continue;
       const room = def.stack - s.qty;
       if (room <= 0) continue;
       const take = Math.min(room, remaining);
@@ -120,5 +120,13 @@ export function removeFromSlot(slots: Array<ItemStack | null>, slot: number, qty
 export function normalizeInventory(inv: Array<ItemStack | null>): Array<ItemStack | null> {
   const slots: Array<ItemStack | null> = inv.slice(0, INV_SIZE);
   while (slots.length < INV_SIZE) slots.push(null);
+  return slots;
+}
+
+/** Normalize persisted equipment to the fixed EQUIP_SLOTS-length array
+ *  (legacy rows have none — every slot starts empty). */
+export function normalizeEquipment(equip: Array<ItemStack | null> | undefined, size: number): Array<ItemStack | null> {
+  const slots: Array<ItemStack | null> = (equip ?? []).slice(0, size);
+  while (slots.length < size) slots.push(null);
   return slots;
 }

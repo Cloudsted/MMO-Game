@@ -34,7 +34,9 @@
     "mobLootExpireMs": 300000,
     "pickupRange": 2.5,
     "talkRange": 3.5,
-    "sellFraction": 0.4
+    "sellFraction": 0.4,
+    "armorK": 120,
+    "deathDropsEquipment": true
   },
   "building": {
     "placeRangeM": 6.0,
@@ -43,12 +45,40 @@
   "items": {
     "statSpread": {
       "dmg": { "common": 0.04, "uncommon": 0.06, "rare": 0.09, "epic": 0.12 },
-      "spd": { "common": 0.02, "uncommon": 0.03, "rare": 0.045, "epic": 0.06 }
+      "spd": { "common": 0.02, "uncommon": 0.03, "rare": 0.045, "epic": 0.06 },
+      "armor": { "common": 0.05, "uncommon": 0.07, "rare": 0.1, "epic": 0.14 }
     },
     "durability": {
       "rarityMult": { "common": 1.0, "uncommon": 1.35, "rare": 1.8, "epic": 2.5 },
       "spread": 0.1
+    },
+    "mods": {
+      "chanceByRarity": { "common": 0.04, "uncommon": 0.12, "rare": 0.25, "epic": 0.45 },
+      "secondModChanceByRarity": { "common": 0.0, "uncommon": 0.02, "rare": 0.06, "epic": 0.15 },
+      "curseChance": 0.15,
+      "caps": {
+        "moveSpeedPct": 0.3,
+        "atkSpeedPct": 0.3,
+        "dmgPct": 0.5,
+        "meleeTakenPct": 0.6,
+        "rangedTakenPct": 0.6,
+        "magicTakenPct": 0.6,
+        "takenAllPct": 0.6,
+        "hpRegen": 10,
+        "manaRegen": 10,
+        "maxHp": 80,
+        "maxMana": 60,
+        "thorns": 15,
+        "lifesteal": 0.35,
+        "goldFind": 1.0
+      },
+      "sellBonusPerPerk": 0.25,
+      "sellPenaltyPerCurse": 0.15
     }
+  },
+  "enchanting": {
+    "priceBase": 25,
+    "priceValueMult": 1.5
   },
   "progression": {
     "baseHp": 80,

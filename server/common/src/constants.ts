@@ -44,6 +44,11 @@ const ConstantsSchema = z.object({
     pickupRange: z.number(),
     talkRange: z.number(),
     sellFraction: z.number(),
+    /** armor mitigation curve: reduction = A / (A + armorK) — diminishing,
+     *  never reaches immunity. Applies to melee+ranged, never magic/DoT. */
+    armorK: z.number(),
+    /** death drops equipped armor/trinkets into the bag too (full-loot) */
+    deathDropsEquipment: z.boolean(),
   }),
   building: z.object({
     placeRangeM: z.number(),
@@ -57,6 +62,21 @@ const ConstantsSchema = z.object({
       rarityMult: z.record(z.string(), z.number()),
       spread: z.number(),
     }),
+    /** dynamic modifier (perk/curse) rolling at mint time — see mintItem */
+    mods: z.object({
+      chanceByRarity: z.record(z.string(), z.number()),
+      secondModChanceByRarity: z.record(z.string(), z.number()),
+      curseChance: z.number(),
+      /** per-stat cap on the AGGREGATED (equipped+held) sum; clamped
+       *  symmetrically, so curses can't push past -cap either */
+      caps: z.record(z.string(), z.number()),
+      sellBonusPerPerk: z.number(),
+      sellPenaltyPerCurse: z.number(),
+    }),
+  }),
+  enchanting: z.object({
+    priceBase: z.number(),
+    priceValueMult: z.number(),
   }),
   progression: z.object({
     baseHp: z.number(),
