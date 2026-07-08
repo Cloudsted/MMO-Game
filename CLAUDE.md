@@ -60,7 +60,7 @@ out of the inventory window also drops it**, E interact
 (portal > loot > NPC), I/Tab inventory (**RMB armor/trinkets equips them
 into the paper-doll column; RMB a worn piece unequips; drag onto its slot
 also works**), Enter chat (`/g ` global; admins:
-`/give /gold /tp /spawnmob /time /level /reload /clearblocks /expire
+`/give /gold /tp /spawnmob <mob> [n] [level] /time /level /reload /clearblocks /expire
 /enchant /room /prefab`),
 G god panel (admin), R respawn when dead (hub: town spawn; elsewhere:
 transfer back to Hub City), **H return to the hub from anywhere** (alive,

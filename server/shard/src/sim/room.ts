@@ -2331,11 +2331,16 @@ export class RoomSim {
           return;
         }
         const n = Math.min(10, Math.max(1, parseInt(args[1] ?? "1", 10) || 1));
+        // optional level: the only way to exercise a mob's level-gated ranks
+        // in-game (spawn tables carry `level`; this is the staging equivalent)
+        const lvlArg = args[2] !== undefined ? parseInt(args[2], 10) : NaN;
+        const level = Number.isFinite(lvlArg) ? Math.min(99, Math.max(1, lvlArg)) : undefined;
         const p = session.entity.pos;
         for (let i = 0; i < n; i++) {
-          this.spawnMob(mobId, p.x + Math.sin(p.yaw) * 4 + (Math.random() - 0.5) * 2, p.z + Math.cos(p.yaw) * 4 + (Math.random() - 0.5) * 2, "");
+          this.spawnMob(mobId, p.x + Math.sin(p.yaw) * 4 + (Math.random() - 0.5) * 2, p.z + Math.cos(p.yaw) * 4 + (Math.random() - 0.5) * 2, "", level);
         }
-        this.system(session, `Spawned ${n}x ${mobId}.`);
+        const r = resolveMob(this.reg.mobs[mobId]!, level, this.consts.mobs.scaling);
+        this.system(session, `Spawned ${n}x ${r.name} (L${r.level}, ${r.hp} hp, kit: ${r.attacks.map((a) => a.ability).join("/")}).`);
         break;
       }
       case "time": {
