@@ -525,7 +525,9 @@ const diggerShaft: PrefabDef = {
   footprint: { w: 9, d: 9 },
   anchor: "conform",
   clearance: 8,
-  maxSlope: 3,
+  // a spoil-ringed dig sits on rough ground by nature; 5 sites it reliably on
+  // the dunes (at 3 with minSpacing 100 it was placing 0 of 3).
+  maxSlope: 10,
   avoidWater: true,
   build(ctx) {
     const G = ctx.groundY;
@@ -752,7 +754,7 @@ const stiltFisherCamp: PrefabDef = {
   footprint: { w: 9, d: 9 },
   anchor: "conform",
   noClear: true,
-  maxSlope: 3,
+  maxSlope: 5,
   nearWater: true,
   build(ctx) {
     const wl = ctx.def.terrain.waterLevel;

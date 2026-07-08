@@ -399,6 +399,9 @@
         "within": 60
       }
     }
+  ,
+    {"prefab":"ossuary_barrow","count":1,"minSpacing":0},
+    {"prefab":"roadside_gibbet","count":2,"minSpacing":70}
   ],
   "events": [
     {

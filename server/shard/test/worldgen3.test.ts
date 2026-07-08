@@ -82,17 +82,19 @@ describe("gloomfen (L8-12, behind forest)", () => {
     expect(JSON.stringify(a.features)).toBe(JSON.stringify(b.features));
   });
 
-  it("stamps the sunken temple: cache registered + temple-guard table locked on", () => {
+  it("authored Temple of the Tidewardens: caches registered + temple-guard on the nave", () => {
     const sim = new RoomSim(def);
-    // the authored temple cache (auto → cache_gloomfen) is registered along
-    // with whatever the scatter placed
-    expect(sim.allCaches().length).toBeGreaterThanOrEqual(1);
+    // The stamped `sunken_temple` prefab was replaced by the authored S2 setpiece
+    // (buildTidewardenTemple). Its under-vault cache is registered along with the
+    // Drownbell's two and the Lamplighters' Road furniture, and the temple-guard
+    // table (the fen's river-folk, in their own church) re-centres onto the nave.
+    expect(sim.allCaches().length).toBeGreaterThanOrEqual(3);
     expect(reg.loot["cache_gloomfen"]).toBeDefined();
     const bind = sim.world.features.bindings.find((b) => b.tableId === "temple-guard");
-    expect(bind).toMatchObject({ x: 160, z: 48 }); // stamped exactly on the def center
+    expect(bind).toMatchObject({ x: 160, z: 50 }); // TEMPLE_GUARD_RECENTER (the nave)
     const live = sim.liveSpawnTables().find((t) => t.id === "temple-guard")!;
     expect(live.region.x).toBe(160);
-    expect(live.region.z).toBe(48);
+    expect(live.region.z).toBe(50);
   });
 });
 

@@ -65,6 +65,7 @@ function authoredExclusions(def: RoomDef): Rect[] {
     out.push(DROWNBELL_EXCLUSION);
     out.push(TEMPLE_EXCLUSION);
     out.push(...LAMPLIGHTERS_ROAD_EXCLUSIONS);
+    out.push(GLOOMFEN_GAOL_EXCLUSION);
   }
   if (def.id === "cinderrift") {
     // forge ruin arena + the bone road (same constants as buildCinderrift)
@@ -119,6 +120,25 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult 
     b.portalArch(Math.round(p.x), Math.round(p.z), Math.abs(def.spawn.x - p.x) > Math.abs(def.spawn.z - p.z));
   }
   return features;
+}
+
+/** Fixed-anchor a prefab and fold its hooks into the ScatterResult — the
+ *  pattern the authored builders use for prefabs too large or too important to
+ *  leave to the scatter placer (setpiece lamps, deathwatch posts, the giant
+ *  dug structures). Same cache/extraTable wiring the scatter loop does. */
+function stampFixedPrefab(b: Builder, features: ScatterResult, id: string, ox: number, oz: number, rot: 0 | 1 | 2 | 3, ruin: 0 | 1 | 2): void {
+  const hooks = stampPrefab(b, id, ox, oz, rot, ruin);
+  if (hooks.lootCache) features.caches.push(hooks.lootCache);
+  if (hooks.spawnRegion?.table) {
+    features.extraTables.push({
+      id: `${id}-${ox}-${oz}`,
+      region: { kind: "circle", x: hooks.spawnRegion.x, z: hooks.spawnRegion.z, r: hooks.spawnRegion.r },
+      mobs: hooks.spawnRegion.table.mobs,
+      maxAlive: hooks.spawnRegion.table.maxAlive,
+      packSize: hooks.spawnRegion.table.packSize,
+      respawnSec: hooks.spawnRegion.table.respawnSec,
+    });
+  }
 }
 
 export class Builder {
@@ -538,6 +558,15 @@ const DESERT_SETPIECE_EXCLUSIONS: Rect[] = [
   { x0: 296, z0: 348, x1: 316, z1: 352 }, // aqueduct leg A (broken oasis terminus)
   { x0: 126, z0: 76, x1: 174, z1: 124 }, // the Throat (sinkhole)
   { x0: 143, z0: 34, x1: 151, z1: 76 }, // the bone road to the Cinderrift portal
+  { x0: 288, z0: 288, x1: 313, z1: 313 }, // dry_cistern (fixed anchor — 25x25 won't scatter)
+  { x0: 30, z0: 242, x1: 51, z1: 259 }, // sunscour_caravanserai (fixed anchor — 21x17 won't scatter)
+];
+
+// Two prefabs too large to scatter reliably in the constrained desert (25x25
+// and 21x17 vs ~10 exclusion rects) — fixed-anchored at surveyed flat spots.
+const DESERT_FIXED_PREFABS: Array<[string, number, number, 0 | 1 | 2 | 3, 0 | 1 | 2]> = [
+  ["dry_cistern", 288, 288, 0, 1],
+  ["sunscour_caravanserai", 30, 242, 0, 1],
 ];
 
 // Sekhat's tomb cache + the aqueduct-break caches + the Throat fissure cache.
@@ -630,20 +659,9 @@ function buildDesertRuins(b: Builder, def: RoomDef, features: ScatterResult): vo
   buildAqueductSpine(b, def);
   buildTheThroat(b, def);
   // the five deathwatch soldiers who still hold the aqueduct line
-  for (const [ox, oz, rot, ruin] of DESERT_DEATHWATCH) {
-    const hooks = stampPrefab(b, "deathwatch_post", ox, oz, rot, ruin);
-    if (hooks.lootCache) features.caches.push(hooks.lootCache);
-    if (hooks.spawnRegion?.table) {
-      features.extraTables.push({
-        id: `deathwatch-${ox}-${oz}`,
-        region: { kind: "circle", x: hooks.spawnRegion.x, z: hooks.spawnRegion.z, r: hooks.spawnRegion.r },
-        mobs: hooks.spawnRegion.table.mobs,
-        maxAlive: hooks.spawnRegion.table.maxAlive,
-        packSize: hooks.spawnRegion.table.packSize,
-        respawnSec: hooks.spawnRegion.table.respawnSec,
-      });
-    }
-  }
+  for (const [ox, oz, rot, ruin] of DESERT_DEATHWATCH) stampFixedPrefab(b, features, "deathwatch_post", ox, oz, rot, ruin);
+  // the two dug structures too large to scatter (the cistern, the caravanserai)
+  for (const [id, ox, oz, rot, ruin] of DESERT_FIXED_PREFABS) stampFixedPrefab(b, features, id, ox, oz, rot, ruin);
   // setpiece caches (Vessel sarcophagus, the three aqueduct breaks, the Throat)
   for (const c of DESERT_SETPIECE_CACHES) features.caches.push({ ...c });
 }
@@ -771,6 +789,11 @@ function buildGroundsPavilion(b: Builder, def: RoomDef): void {
 // north through the shallows to the Sunken Temple. Intact near the gate,
 // collapsing deeper in (decay gradient); every ~7th plank is gone.
 // Constants shared with authoredExclusions so scatter stays off the line.
+// sunken_gaol is 13x17 and won't scatter in the flooded fen — fixed-anchored
+// at a surveyed spot in the eastern marsh.
+const GLOOMFEN_GAOL = { ox: 184, oz: 172, rot: 0 as const, ruin: 1 as const };
+const GLOOMFEN_GAOL_EXCLUSION: Rect = { x0: 184, z0: 172, x1: 197, z1: 189 };
+
 // ---------------------------------------------------------------------------
 // Gloomfen setpieces (S1/S2/S3) live in setpieces_gloomfen.ts; buildGloomfen is
 // now their integrator. The old missing-plank causeway loop and the stamped
@@ -818,6 +841,8 @@ function buildGloomfen(b: Builder, def: RoomDef, features: ScatterResult): void 
   // the lizardmen are the fen's river-folk and the Temple is their church, not
   // an invasion: re-centre the existing temple-guard table onto the nave.
   features.bindings.push({ tableId: TEMPLE_GUARD_RECENTER.tableId, x: TEMPLE_GUARD_RECENTER.x, z: TEMPLE_GUARD_RECENTER.z });
+  // the flooded gaol (13x17, too large to scatter in the marsh) — fixed-anchored
+  stampFixedPrefab(b, features, "sunken_gaol", GLOOMFEN_GAOL.ox, GLOOMFEN_GAOL.oz, GLOOMFEN_GAOL.rot, GLOOMFEN_GAOL.ruin);
 }
 
 // ---------------------------------------------------------------------------

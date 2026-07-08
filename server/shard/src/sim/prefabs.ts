@@ -360,7 +360,7 @@ export function scatterPrefabs(b: Builder, def: RoomDef, exclusions: Rect[]): Sc
     }
     const eseed = seed ^ 0x9ef1 ^ Math.imul(i + 1, 0x9e3779b1);
     const softBudget = entry.count * 12;
-    const maxK = entry.count * 24;
+    const maxK = entry.count * 96;
     let count = 0;
     for (let k = 0; k < maxK && count < entry.count; k++) {
       const soft = k < softBudget;

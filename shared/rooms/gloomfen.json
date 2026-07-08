@@ -379,6 +379,17 @@
       "minSpacing": 25,
       "nearPortals": true
     }
+  ,
+    {"prefab":"tidewarden_ward","count":5,"minSpacing":45},
+    {"prefab":"drowned_house","count":4,"minSpacing":22},
+    {"prefab":"bone_orchard","count":2,"minSpacing":40},
+    {"prefab":"sewer_outfall","count":1,"minSpacing":0},
+    {"prefab":"raft_pyre","count":3,"minSpacing":30},
+    {"prefab":"barge_wreck","count":2,"minSpacing":40},
+    {"prefab":"roadside_gibbet","count":2,"minSpacing":50},
+    {"prefab":"ossuary_barrow","count":1,"minSpacing":0},
+    {"prefab":"stilt_fisher_camp","count":2,"minSpacing":30},
+    {"prefab":"warding_ring","count":1,"minSpacing":0,"ruinBias":1.4}
   ],
   "events": [
     {

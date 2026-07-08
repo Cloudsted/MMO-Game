@@ -161,7 +161,9 @@ TIER3.push({
   footprint: { w: 13, d: 17 },
   anchor: "flatten",
   clearance: 12,
-  maxSlope: 3,
+  // a flooded gaol carves its own floor; a 13×17 dry pad is rare in the marsh,
+  // so allow a firmer flatten cut (was placing 0 of 2 at maxSlope 3).
+  maxSlope: 5,
   floor: "dungeon_masonry",
   avoidWater: true,
   build(ctx) {
@@ -376,7 +378,7 @@ TIER3.push({
   footprint: { w: 7, d: 3 },
   anchor: "conform",
   clearance: 10,
-  maxSlope: 2,
+  maxSlope: 4,
   avoidWater: true,
   build(ctx) {
     // --- the standing gibbet, lx 0..2 -------------------------------------
@@ -575,7 +577,7 @@ TIER3.push({
   footprint: { w: 15, d: 9 },
   anchor: "flatten",
   clearance: 10,
-  maxSlope: 3,
+  maxSlope: 5,
   floor: "sand",
   avoidWater: true,
   build(ctx) {

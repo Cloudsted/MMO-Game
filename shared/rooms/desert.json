@@ -313,6 +313,12 @@
       "minSpacing": 60,
       "ruinBias": 2
     }
+  ,
+    {"prefab":"deathwatch_post","count":5,"minSpacing":55},
+    {"prefab":"buried_pylon","count":5,"minSpacing":60},
+    {"prefab":"digger_shaft","count":3,"minSpacing":100,"ruinBias":2},
+    {"prefab":"colossus_fragment","count":4,"minSpacing":90},
+    {"prefab":"carrion_nest","count":3,"minSpacing":80}
   ],
   "events": [
     {

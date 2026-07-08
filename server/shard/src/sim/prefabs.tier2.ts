@@ -311,7 +311,9 @@ const boneOrchard: PrefabDef = {
   footprint: { w: 15, d: 15 },
   anchor: "flatten",
   clearance: 14,
-  maxSlope: 3,
+  // 15×15 of dry ground is scarce in the flooded fen; a wider slope tolerance
+  // lets the orchard claim a hummock without demanding a perfect flat.
+  maxSlope: 5,
   avoidWater: true,
   build(ctx) {
     const G = ctx.groundY;
@@ -415,7 +417,9 @@ const colossusFragment: PrefabDef = {
   footprint: { w: 9, d: 9 },
   anchor: "flatten",
   clearance: 12,
-  maxSlope: 3,
+  // a fallen colossus piece rests where it fell — a firmer flatten is fine, and
+  // maxSlope 3 was only siting 2 of 4 on the dunes.
+  maxSlope: 5,
   floor: "sand",
   avoidWater: true,
   build(ctx) {
@@ -553,7 +557,10 @@ const dryCistern: PrefabDef = {
   footprint: { w: 25, d: 25 },
   anchor: "flatten",
   clearance: 8,
-  maxSlope: 2,
+  // a 25×25 flatten needs a genuinely broad pad; on amp-6 dunes maxSlope 2 over
+  // that span almost never sites. It is a DUG cistern (walled terraces down to a
+  // floor), so a deeper flatten cut reads fine — 6 lets it find the room.
+  maxSlope: 6,
   floor: "sand",
   avoidWater: true,
   build(ctx) {
@@ -667,7 +674,9 @@ const sunscourCaravanserai: PrefabDef = {
   footprint: { w: 21, d: 17 },
   anchor: "flatten",
   clearance: 12,
-  maxSlope: 3,
+  // a walled compound levels its own courtyard; 21×17 at maxSlope 3 rarely sites
+  // on amp-6 dunes. 5 lets it find a shelf without demanding a natural flat.
+  maxSlope: 5,
   floor: "sand",
   avoidWater: true,
   build(ctx) {
