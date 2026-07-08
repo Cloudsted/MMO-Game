@@ -58,7 +58,12 @@ describe("tier 1 — registered", () => {
     // wayshrine-class + fight-payload prefabs must never grow a cache
     expect(PREFABS.lamplighter_post!.hooks?.lootCache).toBeUndefined();
     expect(PREFABS.warding_ring!.hooks?.lootCache).toBeUndefined();
-    expect(PREFABS.warding_ring!.hooks?.spawnRegion?.table).toBeUndefined(); // bindSpawnTable owns it
+    // warding_ring fields the fight itself: a CARRIED fen-elite table (not a
+    // bind — a bind would relocate a real table and, at count>1, collide).
+    // Its guards are held at deep-Gloomfen level so the cold ring reads as danger.
+    const wr = PREFABS.warding_ring!.hooks?.spawnRegion?.table;
+    expect(wr, "warding_ring carries its own danger table").toBeDefined();
+    expect(wr!.mobs.every((m) => (m.level ?? 0) >= 11)).toBe(true);
     expect(PREFABS.stilt_fisher_camp!.hooks?.spawnRegion).toBeUndefined();
     expect(PREFABS.digger_shaft!.hooks?.spawnRegion).toBeUndefined();
   });

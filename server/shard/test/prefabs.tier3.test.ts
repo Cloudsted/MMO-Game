@@ -143,10 +143,18 @@ describe("tier 3: real scatter", () => {
     const named = new Set(world.features.caches.map((c) => c.table));
     for (const t of named) expect(["auto", "cache_crypt", "cache_gloomfen"]).toContain(t);
     expect(named.has("cache_crypt"), "charnel_scaffold pins cache_crypt").toBe(true);
-    // carrion_nest carries its own lioness table into the room at gen time
+    // several tier-3 prefabs now carry their own guard table into the room at
+    // gen time (carrion_nest's pride, sunken_gaol's jailers, sewer_outfall's
+    // bandits). Every carried table must be well-formed; and IF carrion_nest
+    // sited, its lioness table must be among them.
     for (const t of world.features.extraTables) {
-      expect(t.mobs[0]?.mob).toBe("duneshadow_lioness");
-      expect(t.maxAlive).toBe(2);
+      expect(t.mobs.length).toBeGreaterThan(0);
+      expect(t.maxAlive).toBeGreaterThan(0);
+    }
+    if (placed.includes("carrion_nest")) {
+      const pride = world.features.extraTables.find((t) => t.mobs.some((m) => m.mob === "duneshadow_lioness"));
+      expect(pride, "carrion_nest brings its pride").toBeDefined();
+      expect(pride!.maxAlive).toBe(2);
     }
     // roadside_gibbet contributes nothing to the economy, ever
     expect(placed).toContain("roadside_gibbet");

@@ -121,9 +121,14 @@ export interface PrefabDef {
   };
 }
 
-/** spawnTable-shaped payload a prefab can bind to its site */
+/** spawnTable-shaped payload a prefab can bind to its site. A mob entry may
+ *  carry a `level` override, exactly like a room-def spawn table — so a prefab
+ *  in a deep room spawns its guards SCALED (a bandit at the site of a Gloomfen
+ *  outfall is an L11 bandit, not the L4 one its def authors). Without this the
+ *  payload spawns everything at base level, which under-levels a deep-room
+ *  guard into weak, farmable trash (the dry_cistern-slime finding). */
 export interface SpawnRegionPayload {
-  mobs: Array<{ mob: string; weight: number }>;
+  mobs: Array<{ mob: string; weight: number; level?: number }>;
   maxAlive: number;
   packSize: [number, number];
   respawnSec: number;

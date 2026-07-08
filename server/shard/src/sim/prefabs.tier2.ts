@@ -370,8 +370,10 @@ const boneOrchard: PrefabDef = {
   },
   hooks: {
     lootCache: { local: [4, 5, 4], table: "auto", respawnSec: 420 },
-    // the weaver-hollow spider table re-centres here (scatter bindSpawnTable)
-    spawnRegion: { local: [7, 7], r: 9 },
+    // the weavers that moved into the dead orchard. A self-contained table
+    // (not a bind) so two scattered orchards never fight over one table object
+    // — the double-bind the shipped weaver-hollow tables warn against.
+    spawnRegion: { local: [7, 7], r: 9, table: { mobs: [{ mob: "giant_spider", weight: 1 }], maxAlive: 4, packSize: [2, 3], respawnSec: 70 } },
   },
 };
 

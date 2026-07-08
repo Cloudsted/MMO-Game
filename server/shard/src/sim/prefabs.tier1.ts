@@ -709,19 +709,21 @@ const wardingRing: PrefabDef = {
       if (t === 4) ctx.setIfAir(lx, FL + 1, lz, "skull_pile");
     }
   },
-  // no cache — the payload IS the fight, and the room supplies it. A scatter
-  // entry `bindSpawnTable`s a DEDICATED danger table onto this site (its region
-  // re-centered here). Two contracts the original comment got wrong:
-  //   * bind an ELITE-TRASH table, never the room's "nastiest table" — in
-  //     cinderrift/crypt_depths/gloomfen the nastiest table is a solitary,
-  //     slow-respawn *_boss that belongs in its own arena; relocating it here
-  //     strands it on a random scatter site.
-  //   * `bindSpawnTable` only re-CENTERS a region; it cannot bump maxAlive, so
-  //     the old "one over that table's usual maxAlive" was never expressible.
-  // And because a bind re-centers ONE table object, scatter count must stay 1
-  // per bound table (two rings binding the same table = last-write-wins; give
-  // the second ring its own table if you want two).
-  hooks: { spawnRegion: { local: [5, 5], r: 7 } },
+  // no cache — the payload IS the fight. A CARRIED danger table (not a bind):
+  // the original "bind the room's nastiest table" was a boss-minting trap — in
+  // cinderrift/crypt_depths/gloomfen the nastiest table is a solitary,
+  // slow-respawn *_boss that belongs in its own arena; relocating a boss onto a
+  // random scatter site, twice (count 2), strands it. So the ring fields its
+  // own fen elites, held at deep-Gloomfen level (L11-12) so the ring reads as
+  // the danger its cold rune light advertises. (The ring is placed gloomfen-
+  // only for now; a volcanic/crypt variant would carry a different table.)
+  hooks: {
+    spawnRegion: {
+      local: [5, 5],
+      r: 7,
+      table: { mobs: [{ mob: "bog_serpent", weight: 2, level: 11 }, { mob: "lizardman", weight: 2, level: 12 }, { mob: "marsh_wisp", weight: 1, level: 11 }], maxAlive: 5, packSize: [1, 3], respawnSec: 60 },
+    },
+  },
 };
 
 // ===========================================================================

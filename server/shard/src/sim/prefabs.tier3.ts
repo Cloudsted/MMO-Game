@@ -252,7 +252,10 @@ TIER3.push({
     // the wall (pickup is 3-D distance, no occlusion). lx 3 is 4.0 m in — the
     // catwalk, the fallen bar and the open cell are the only way to it.
     lootCache: { local: [3, 1, 7], table: "auto", respawnSec: 480 },
-    spawnRegion: { local: [6, 6], r: 8 },
+    // the jailers still walk the flooded catwalk — lizard river-folk and the
+    // wisps of the drowned. A carried table (levels set for the deep fen, L10-11)
+    // so the gaol fields its own guards without a fragile room-def bind.
+    spawnRegion: { local: [6, 6], r: 8, table: { mobs: [{ mob: "lizardman", weight: 2, level: 11 }, { mob: "marsh_wisp", weight: 1, level: 10 }], maxAlive: 4, packSize: [1, 2], respawnSec: 75 } },
   },
 });
 
@@ -348,8 +351,11 @@ TIER3.push({
     // distance, no occlusion). lz 10 is 3.0 m from the nearest external pose,
     // so the cut grate is the only way to it.
     lootCache: { local: [2, 1, 10], table: "auto", respawnSec: 420 },
-    // the apron, not the vault: they post a watch outside their own door
-    spawnRegion: { local: [4, 2], r: 9 },
+    // the apron, not the vault: they post a watch outside their own door. The
+    // bandits who cut the grate — carried at Gloomfen depth (L11) via the level
+    // override, so the outfall guard is the same threat as the drowned-company
+    // camp, not the L4 forest cutthroat the def authors.
+    spawnRegion: { local: [4, 2], r: 9, table: { mobs: [{ mob: "bandit", weight: 2, level: 11 }, { mob: "greenhood_poacher", weight: 1, level: 11 }], maxAlive: 3, packSize: [1, 2], respawnSec: 90 } },
   },
 });
 

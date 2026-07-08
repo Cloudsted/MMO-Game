@@ -19,10 +19,10 @@
     "kind": "blocks",
     "seed": 91177,
     "base": 12,
-    "amplitude": 2.5,
+    "amplitude": 4.5,
     "frequency": 0.025,
     "plateauRadius": 8,
-    "waterLevel": 11,
+    "waterLevel": 12,
     "liquid": "murk_water",
     "treeDensity": 0.9
   },
@@ -156,8 +156,8 @@
       "id": "lizard-ruin",
       "region": {
         "kind": "circle",
-        "x": 90,
-        "z": 80,
+        "x": 103,
+        "z": 156,
         "r": 18
       },
       "mobs": [
