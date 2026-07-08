@@ -1031,6 +1031,50 @@ show their block tile).
   - Feel checks owner-owned: is the Cowl's 1.5 s cast a fair interrupt window,
     does the brigand's lob read as dodgeable, is Thrace beatable solo at L7.
 
+- 2026-07-08 **CONTENT DESIGN 2** (`docs/content-design-2.md`, 1800 lines +
+  `docs/asset-catalog/roster-2.json`, machine-validated). The owner's requested
+  R&D swarm: 6 biome concept agents + 3 world agents + 3 adversarial judges
+  (buildability / fight feel / story) + a synthesis pass that re-verified every
+  sprite claim. **This is the spec future content passes implement from.**
+  One world, one story: Gloomfen = **Ysmere**, Valdrenn's drowned lowland vassal;
+  Desert = **Ashkaal**, which dug for water and broke into the fire (it explains
+  the aqueduct, the oasis, the skeletons AND the Cinderrift portal).
+  - The **cut list** is the valuable part, and it found real engine traps:
+    a mana ability on a mob whiff-loops forever (`startAbility` bails before
+    setting a cooldown); four desert mobs are drawn HOVERING over a painted
+    shadow and there is no hover; a splitter whose halves each pay full xp+loot
+    is a vending machine. All three are now impossible to author (registry
+    cross-checks + `summon.grantsXp/grantsLoot`).
+  - **Engine batch 0** shipped from it: `MobRankSchema` disposition overrides
+    (`aggroRadius`/`fleeAtHpPct`/`attackRange`/`leashRadius`) surfaced on
+    `ResolvedMob`, and **`tickBrain` + `chooseAttack` now read the RESOLVED mob,
+    never the raw def** — without this a rank changes a mob's numbers and its
+    buttons but never its NERVE.
+  - **Owner decision (recorded so nobody "fixes" it): the baked shadow ellipse
+    STAYS.** It is on the player, every NPC and 36 of 40 mobs — a Time Fantasy
+    convention, not a bandit bug. The doc's E0 is void. See LESSONS.md.
+
+- 2026-07-08 **BLOCKS 56–77** from `TILESETS/ruindungeons_sheet_full.png` (a
+  49×52 RPG-Maker autotile sheet). New moods: crypt/ossuary (crypt_slate,
+  skull_pile, chain, brazier), pale ruined temple (pale_ruin_stone,
+  pale_temple_brick, pale_fluted_column, temple_boards), overgrown ruin
+  (moss_carpet, hanging_moss, roots), sewer (sewer_brick, dungeon_masonry,
+  sewer_sludge — a new liquid), fen (rotting_planks, bog_candle), and Ashkaal's
+  tombs (sandstone_tomb_brick, sandstone_bricks, hieroglyph_wall, sand_with_slab)
+  plus rune_plate / rune_plate_lit.
+  - **`kind` and `cull` are SEPARATE fields.** All 35 original proposals wrote
+    `"cull":"cube"`. kind ∈ cube|cross|liquid, cull ∈ opaque|cutout|liquid.
+  - **Autotile trap**: a cell from the EDGE of an autotile blob has a bevel or a
+    notch and tiles horribly as a cube face. The safe fill tile is the blob's
+    CENTRE. `docs/asset-catalog/ruindungeons-c*.json` records which regions are
+    autotiles; the contact sheets are in `tools/out/sheets/ruindungeons-*.png`.
+  - `chain` and `skull_pile` have **no source on the sheet** and are painted in
+    code (like glass and web). `hieroglyph_wall` needed an **off-grid** grab at
+    (160,389) — the aligned cell holds a cornice band.
+  - Atlas is now 82/256 slots. Every `voxel.ts` baked `avgColor` literal is
+    copied numerically from `client/assets/blocks/tiles.json`, never guessed
+    (an unmapped block renders magenta on the admin map).
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
