@@ -11,7 +11,7 @@
  */
 import { BLOCK, WORLD_HEIGHT, type RoomDef } from "@fantasy-mmo/common";
 import { hash2, MIN_DIG_FLOOR, type VoxelWorld } from "./voxel.js";
-import { scatterPrefabs, stampPrefab, type Rect, type ScatterResult } from "./prefabs.js";
+import { scatterPrefabs, stampPrefab, type LootCachePoint, type Rect, type ScatterResult } from "./prefabs.js";
 import {
   buildDrownbell,
   buildLamplightersRoad,
@@ -23,6 +23,7 @@ import {
   TEMPLE_EXCLUSION,
   TEMPLE_GUARD_RECENTER,
 } from "./setpieces_gloomfen.js";
+import { buildAqueductSpine, buildColossusOfSekhat, buildTheThroat } from "./setpieces_desert.js";
 
 const id = (name: string): number => {
   const def = BLOCK[name];
@@ -54,6 +55,8 @@ function authoredExclusions(def: RoomDef): Rect[] {
     out.push({ x0: DESERT_RUIN_W.cx - 9, z0: DESERT_RUIN_W.cz - 8, x1: DESERT_RUIN_W.cx + 9, z1: DESERT_RUIN_W.cz + 8 });
     out.push({ x0: DESERT_RUIN_E.cx - 8, z0: DESERT_RUIN_E.cz - 7, x1: DESERT_RUIN_E.cx + 8, z1: DESERT_RUIN_E.cz + 7 });
     out.push({ x0: DESERT_OASIS.x - 10, z0: DESERT_OASIS.z - 10, x1: DESERT_OASIS.x + 10, z1: DESERT_OASIS.z + 10 });
+    // the Colossus, the aqueduct spine, and the Throat (S4/S5)
+    out.push(...DESERT_SETPIECE_EXCLUSIONS);
   }
   if (def.id === "gloomfen") {
     // three authored setpieces (S1/S2/S3) — the Drownbell, the Temple, and the
@@ -89,7 +92,7 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult 
       buildForestArena(b, def);
       break;
     case "desert":
-      buildDesertRuins(b, def);
+      buildDesertRuins(b, def, features);
       break;
     case "dungeon":
       buildCrypt(b, def);
@@ -522,7 +525,43 @@ const DESERT_RUIN_W = { cx: 114, cz: 186, w: 14, d: 11 };
 const DESERT_RUIN_E = { cx: 354, cz: 210, w: 12, d: 10 };
 const DESERT_OASIS = { x: 324, z: 354 };
 
-function buildDesertRuins(b: Builder, def: RoomDef): void {
+// Sunscour setpiece footprints (S4 Colossus + tomb, S5 Aqueduct + Throat) —
+// authored in setpieces_desert.ts, mirrored here as constants so
+// authoredExclusions() can keep prefab scatter off them before the build runs.
+// TIGHT rects (the aqueduct is a thin line): a per-leg strip, not a bounding
+// box, or half the room would be sterilised from scatter.
+const DESERT_SETPIECE_EXCLUSIONS: Rect[] = [
+  { x0: 214, z0: 226, x1: 262, z1: 266 }, // Colossus of Sekhat + the tomb beneath
+  { x0: 244, z0: 118, x1: 248, z1: 240 }, // aqueduct leg C
+  { x0: 182, z0: 116, x1: 248, z1: 120 }, // aqueduct leg D
+  { x0: 242, z0: 252, x1: 250, z1: 352 }, // aqueduct leg B + the processional
+  { x0: 296, z0: 348, x1: 316, z1: 352 }, // aqueduct leg A (broken oasis terminus)
+  { x0: 126, z0: 76, x1: 174, z1: 124 }, // the Throat (sinkhole)
+  { x0: 143, z0: 34, x1: 151, z1: 76 }, // the bone road to the Cinderrift portal
+];
+
+// Sekhat's tomb cache + the aqueduct-break caches + the Throat fissure cache.
+// (The desert setpieces have no `features` handle; buildDesertRuins pushes these.)
+const DESERT_SETPIECE_CACHES: LootCachePoint[] = [
+  { x: 238.5, y: 9, z: 241.5, table: "cache_desert", respawnSec: 900 }, // the Vessel Chamber sarcophagus
+  { x: 276.5, y: 26, z: 350.5, table: "cache_desert", respawnSec: 480 }, // aqueduct break 1 (far side)
+  { x: 246.5, y: 26, z: 296.5, table: "cache_desert", respawnSec: 480 }, // aqueduct break 2
+  { x: 246.5, y: 26, z: 166.5, table: "cache_desert", respawnSec: 480 }, // aqueduct break 3
+  { x: 152.5, y: 2, z: 100.5, table: "cache_cinderrift", respawnSec: 600 }, // the Throat fissure lip — the most dangerous 3 blocks in the room
+];
+
+// The deathwatch line: five soldiers who were told to hold the aqueduct and
+// never told to stop. Fixed-anchored at pier bases on open sand (min corners +
+// rot + ruinLevel), verified clear of every spawn table.
+const DESERT_DEATHWATCH: Array<[number, number, 0 | 1 | 2 | 3, 0 | 1 | 2]> = [
+  [250, 324, 0, 0],
+  [238, 334, 0, 1],
+  [250, 180, 0, 1],
+  [238, 130, 0, 2],
+  [286, 342, 0, 1],
+];
+
+function buildDesertRuins(b: Builder, def: RoomDef, features: ScatterResult): void {
   const seed = def.terrain.seed;
   const ruin = (cx: number, cz: number, w: number, d: number) => {
     const x0 = cx - Math.floor(w / 2);
@@ -581,6 +620,32 @@ function buildDesertRuins(b: Builder, def: RoomDef): void {
   ] as const) {
     b.palm(OX + dx, OZ + dz);
   }
+
+  // --- the Sunscour setpieces (S4/S5): Ashkaal dug for water and found fire ---
+  // The Colossus stares south down the walk from the hub gate; the aqueduct is
+  // a raised road connecting oasis -> Colossus -> the Throat in the order the
+  // story happened; the Throat is where the diggers broke through. sekhat spawns
+  // in the tomb's Vessel Chamber (the sekhat-tomb table sits at its centre).
+  buildColossusOfSekhat(b, def);
+  buildAqueductSpine(b, def);
+  buildTheThroat(b, def);
+  // the five deathwatch soldiers who still hold the aqueduct line
+  for (const [ox, oz, rot, ruin] of DESERT_DEATHWATCH) {
+    const hooks = stampPrefab(b, "deathwatch_post", ox, oz, rot, ruin);
+    if (hooks.lootCache) features.caches.push(hooks.lootCache);
+    if (hooks.spawnRegion?.table) {
+      features.extraTables.push({
+        id: `deathwatch-${ox}-${oz}`,
+        region: { kind: "circle", x: hooks.spawnRegion.x, z: hooks.spawnRegion.z, r: hooks.spawnRegion.r },
+        mobs: hooks.spawnRegion.table.mobs,
+        maxAlive: hooks.spawnRegion.table.maxAlive,
+        packSize: hooks.spawnRegion.table.packSize,
+        respawnSec: hooks.spawnRegion.table.respawnSec,
+      });
+    }
+  }
+  // setpiece caches (Vessel sarcophagus, the three aqueduct breaks, the Throat)
+  for (const c of DESERT_SETPIECE_CACHES) features.caches.push({ ...c });
 }
 
 // ---------------------------------------------------------------------------
