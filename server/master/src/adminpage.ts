@@ -818,11 +818,7 @@ function viewCharacter(id) {
       html += '<div class="kv"><div>level</div><div>' + c.level + ' (' + c.xp + ' xp)</div>' +
         '<div>gold</div><div>' + fmtGold(c.gold) + '</div></div>';
     }
-    html += '<h2>Inventory</h2>';
-    var any = false;
-    c.inventory.forEach(function(s, idx) {
-      if (!s) return;
-      any = true;
+    function stackLine(s, label, removeIdx) {
       var col = RARITY[s.rarity] || 'var(--ink)';
       var extra = [];
       if (s.stats) Object.keys(s.stats).forEach(function(st) {
@@ -830,11 +826,30 @@ function viewCharacter(id) {
         extra.push(st + ' ' + (d >= 0 ? '+' : '') + d + '%');
       });
       if (s.dur !== undefined) extra.push('dur ' + s.dur + '/' + s.maxDur);
-      html += '<div class="invitem"><span><span class="muted mono">' + (idx < 8 ? idx + 1 : '·') + '</span> ' +
+      if (s.mods) Object.keys(s.mods).forEach(function(m) {
+        extra.push('✦ ' + m + ' ' + s.mods[m]);
+      });
+      return '<div class="invitem"><span><span class="muted mono">' + label + '</span> ' +
         '<b style="color:' + col + '">' + esc(s.item) + '</b>' + (s.qty > 1 ? ' ×' + s.qty : '') + '</span>' +
         '<span class="muted">' + esc(extra.join(' · ')) +
-        (editable ? ' <button class="small danger" onclick="removeItem(\\'' + esc(c.id) + '\\',' + idx + ')">✕</button>' : '') +
+        (removeIdx !== null ? ' <button class="small danger" onclick="removeItem(\\'' + esc(c.id) + '\\',' + removeIdx + ')">✕</button>' : '') +
         '</span></div>';
+    }
+    var EQUIP_SLOTS = ['head', 'chest', 'legs', 'feet', 'off'];
+    var anyEquip = false;
+    var equipHtml = '';
+    (c.equipment || []).forEach(function(s, idx) {
+      if (!s) return;
+      anyEquip = true;
+      equipHtml += stackLine(s, EQUIP_SLOTS[idx] || '?', null);
+    });
+    if (anyEquip) html += '<h2>Equipment</h2>' + equipHtml;
+    html += '<h2>Inventory</h2>';
+    var any = false;
+    c.inventory.forEach(function(s, idx) {
+      if (!s) return;
+      any = true;
+      html += stackLine(s, idx < 8 ? String(idx + 1) : '·', editable ? idx : null);
     });
     if (!any) html += '<div class="muted">empty</div>';
     if (editable) {

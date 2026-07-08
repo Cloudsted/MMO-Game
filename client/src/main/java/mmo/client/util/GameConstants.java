@@ -27,6 +27,10 @@ public final class GameConstants {
 
     public final float dayLengthSec;
 
+    /** enchanter pricing: ceil(value × rarity × priceMult × valueMult + base) —
+     *  display only; the server recomputes authoritatively */
+    public final float enchantPriceBase, enchantPriceValueMult;
+
     private GameConstants(JsonObject root) {
         JsonObject m = root.getAsJsonObject("movement");
         walkSpeed = m.get("walkSpeed").getAsFloat();
@@ -51,6 +55,10 @@ public final class GameConstants {
 
         JsonObject wd = root.getAsJsonObject("world");
         dayLengthSec = wd.get("dayLengthSec").getAsFloat();
+
+        JsonObject en = root.getAsJsonObject("enchanting");
+        enchantPriceBase = en.get("priceBase").getAsFloat();
+        enchantPriceValueMult = en.get("priceValueMult").getAsFloat();
     }
 
     public static GameConstants load() {

@@ -328,6 +328,16 @@ export declare class RoomSim {
     private npcDef;
     private nearNpc;
     handleTalk(session: PlayerSession, entityId: number): void;
+    /** The enchanter's price for putting `mod` on `stack` — value- and
+     *  rarity-scaled from shared constants; the client computes the same
+     *  number for display, this one is authoritative. */
+    enchantPrice(stack: ItemStack, priceMult: number): number;
+    /** Buy a fixed tier-1 enchant for the inventory stack at `slot`. Server
+     *  re-validates everything at receipt (the menu may be stale: invMove/
+     *  sell/drop races just change the target): near + service + offer,
+     *  eligible kind via the modifier's appliesTo, UNMODIFIED instance only
+     *  (curses count — she cannot weave over another's work), gold. */
+    handleEnchant(session: PlayerSession, npcEntityId: number, slot: number, enchantId: string): void;
     handleBuy(session: PlayerSession, npcEntityId: number, itemId: string, qty: number): void;
     handleSell(session: PlayerSession, npcEntityId: number, slot: number, qty: number): void;
     /** Sell-value multiplier from an instance's modifiers: perks add, curses

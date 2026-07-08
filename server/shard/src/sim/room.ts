@@ -19,6 +19,7 @@ import {
   WORLD_HEIGHT,
   type AbilityDef,
   type EffectWire,
+  type EnchantWire,
   type EquipSlot,
   type MobDef,
   type CharacterSnapshot,
@@ -286,6 +287,15 @@ export class RoomSim {
     }
     if (this.eventSealed.size > 0) {
       this.log.info(`${this.eventSealed.size} portal(s) sealed behind boss events`);
+    }
+    // enchanter services: every offered id must be a modifier with an
+    // enchant block (room defs aren't registry-cross-checked at load)
+    for (const npc of this.def.npcs) {
+      for (const id of npc.service?.offers ?? []) {
+        if (!this.reg.modifiers[id]?.enchant) {
+          this.log.warn(`npc ${npc.id}: enchant offer '${id}' has no enchantable modifier`);
+        }
+      }
     }
   }
 
@@ -2060,7 +2070,68 @@ export class RoomSim {
         buys: npc.shop.buys,
       };
     }
-    session.send({ t: "dialog", id: entityId, name: npc.name, lines: npc.dialog, shop });
+    let enchant: EnchantWire | null = null;
+    if (npc.service?.kind === "enchant") {
+      const offers = npc.service.offers
+        .filter((id) => this.reg.modifiers[id]?.enchant)
+        .map((id) => {
+          const def = this.reg.modifiers[id]!;
+          return { id, name: `${def.name} I`, mag: def.enchant!.mag, priceMult: def.enchant!.priceMult };
+        });
+      if (offers.length > 0) enchant = { offers };
+    }
+    session.send({ t: "dialog", id: entityId, name: npc.name, lines: npc.dialog, shop, enchant });
+  }
+
+  /** The enchanter's price for putting `mod` on `stack` — value- and
+   *  rarity-scaled from shared constants; the client computes the same
+   *  number for display, this one is authoritative. */
+  enchantPrice(stack: ItemStack, priceMult: number): number {
+    const def = this.reg.items[stack.item];
+    const rarityMult = this.reg.rarities[stack.rarity]?.mult ?? 1;
+    const e = this.consts.enchanting;
+    return Math.ceil((def?.value ?? 0) * rarityMult * priceMult * e.priceValueMult + e.priceBase);
+  }
+
+  /** Buy a fixed tier-1 enchant for the inventory stack at `slot`. Server
+   *  re-validates everything at receipt (the menu may be stale: invMove/
+   *  sell/drop races just change the target): near + service + offer,
+   *  eligible kind via the modifier's appliesTo, UNMODIFIED instance only
+   *  (curses count — she cannot weave over another's work), gold. */
+  handleEnchant(session: PlayerSession, npcEntityId: number, slot: number, enchantId: string): void {
+    if (session.entity.combat!.act === "dead") return;
+    const npc = this.npcDef(npcEntityId);
+    if (!npc || npc.service?.kind !== "enchant" || !this.nearNpc(session, npcEntityId)) return;
+    if (!npc.service.offers.includes(enchantId)) return;
+    const mod = this.reg.modifiers[enchantId];
+    if (!mod?.enchant) return;
+    if (slot < 0 || slot >= INV_SIZE) return;
+    const stack = session.slots[slot];
+    if (!stack) return;
+    const def = this.reg.items[stack.item];
+    if (!def || !isEquippable(def.kind)) {
+      this.system(session, "Selvara shakes her head: that cannot hold an enchantment.");
+      return;
+    }
+    if (!(mod.appliesTo as readonly string[]).includes(def.kind)) {
+      this.system(session, `${mod.name} will not take on a ${def.kind}.`);
+      return;
+    }
+    if (stack.mods !== undefined && Object.keys(stack.mods).length > 0) {
+      this.system(session, "That item already bears an enchantment — I cannot weave over another's work.");
+      return;
+    }
+    const price = this.enchantPrice(stack, mod.enchant.priceMult);
+    if (session.gold < price) {
+      this.system(session, "Not enough gold.");
+      return;
+    }
+    session.gold -= price;
+    stack.mods = { [enchantId]: mod.enchant.mag };
+    session.dirtyStats = true;
+    this.touchInv(session);
+    this.system(session, `Selvara whispers over your ${def.name}... ${mod.name} I settles into it. (-${price}g)`);
+    this.log.info(`${session.character.name} enchanted ${stack.item} with ${enchantId} for ${price}g`);
   }
 
   handleBuy(session: PlayerSession, npcEntityId: number, itemId: string, qty: number): void {
@@ -2165,6 +2236,28 @@ export class RoomSim {
       case "gold": {
         session.gold += Math.max(0, parseInt(args[0] ?? "0", 10) || 0);
         session.dirtyStats = true;
+        break;
+      }
+      case "enchant": {
+        // staging/testing: stamp a modifier onto the HELD item (stacks
+        // freely, any magnitude — the NPC path enforces the real rules)
+        const modId = args[0] ?? "";
+        const mod = this.reg.modifiers[modId];
+        if (!mod) {
+          this.system(session, `Unknown modifier '${modId}'. Try: ${Object.keys(this.reg.modifiers).join(", ")}`);
+          return;
+        }
+        const held = session.slots[session.held];
+        if (!held || !isEquippable(this.reg.items[held.item]?.kind ?? "")) {
+          this.system(session, "Hold an equippable item first.");
+          return;
+        }
+        const parsed = parseFloat(args[1] ?? "");
+        const range = mod.rolls[held.rarity] ?? mod.rolls["common"] ?? [0, 0];
+        const mag = Number.isFinite(parsed) ? parsed : (range[0]! + range[1]!) / 2;
+        held.mods = { ...(held.mods ?? {}), [modId]: mod.integer ? Math.round(mag) : Math.round(mag * 1000) / 1000 };
+        this.touchInv(session);
+        this.system(session, `Enchanted held ${held.item}: ${modId} ${held.mods[modId]}.`);
         break;
       }
       case "tp": {

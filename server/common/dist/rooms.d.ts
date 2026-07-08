@@ -206,6 +206,19 @@ export declare const NpcDefSchema: z.ZodObject<{
         items: string[];
         buys: boolean;
     }>>;
+    /** enchanter service: fixed tier-1 enchant menu (modifier ids that carry
+     *  an `enchant` block in shared/modifiers.json). RoomSim warns on
+     *  dangling/offer-less ids at boot. */
+    service: z.ZodOptional<z.ZodObject<{
+        kind: z.ZodLiteral<"enchant">;
+        offers: z.ZodArray<z.ZodString, "many">;
+    }, "strip", z.ZodTypeAny, {
+        kind: "enchant";
+        offers: string[];
+    }, {
+        kind: "enchant";
+        offers: string[];
+    }>>;
 }, "strip", z.ZodTypeAny, {
     id: string;
     x: number;
@@ -219,6 +232,10 @@ export declare const NpcDefSchema: z.ZodObject<{
         items: string[];
         buys: boolean;
     } | undefined;
+    service?: {
+        kind: "enchant";
+        offers: string[];
+    } | undefined;
 }, {
     id: string;
     x: number;
@@ -231,6 +248,10 @@ export declare const NpcDefSchema: z.ZodObject<{
     shop?: {
         items: string[];
         buys: boolean;
+    } | undefined;
+    service?: {
+        kind: "enchant";
+        offers: string[];
     } | undefined;
 }>;
 export type NpcDef = z.infer<typeof NpcDefSchema>;
@@ -888,6 +909,19 @@ export declare const RoomDefSchema: z.ZodObject<{
             items: string[];
             buys: boolean;
         }>>;
+        /** enchanter service: fixed tier-1 enchant menu (modifier ids that carry
+         *  an `enchant` block in shared/modifiers.json). RoomSim warns on
+         *  dangling/offer-less ids at boot. */
+        service: z.ZodOptional<z.ZodObject<{
+            kind: z.ZodLiteral<"enchant">;
+            offers: z.ZodArray<z.ZodString, "many">;
+        }, "strip", z.ZodTypeAny, {
+            kind: "enchant";
+            offers: string[];
+        }, {
+            kind: "enchant";
+            offers: string[];
+        }>>;
     }, "strip", z.ZodTypeAny, {
         id: string;
         x: number;
@@ -901,6 +935,10 @@ export declare const RoomDefSchema: z.ZodObject<{
             items: string[];
             buys: boolean;
         } | undefined;
+        service?: {
+            kind: "enchant";
+            offers: string[];
+        } | undefined;
     }, {
         id: string;
         x: number;
@@ -913,6 +951,10 @@ export declare const RoomDefSchema: z.ZodObject<{
         shop?: {
             items: string[];
             buys: boolean;
+        } | undefined;
+        service?: {
+            kind: "enchant";
+            offers: string[];
         } | undefined;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
@@ -1038,6 +1080,10 @@ export declare const RoomDefSchema: z.ZodObject<{
             items: string[];
             buys: boolean;
         } | undefined;
+        service?: {
+            kind: "enchant";
+            offers: string[];
+        } | undefined;
     }[];
     fixedTime?: number | undefined;
     lifecycle?: {
@@ -1115,6 +1161,10 @@ export declare const RoomDefSchema: z.ZodObject<{
         shop?: {
             items: string[];
             buys: boolean;
+        } | undefined;
+        service?: {
+            kind: "enchant";
+            offers: string[];
         } | undefined;
     }[];
     wind?: number | undefined;

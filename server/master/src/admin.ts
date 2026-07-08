@@ -159,6 +159,7 @@ export async function handleAdmin(
         z: c.z,
         yaw: c.yaw,
         inventory: c.inventory,
+        equipment: c.equipment ?? [],
         account: account?.username ?? "?",
         roles: account?.roles ?? [],
         createdAt: c.createdAt,

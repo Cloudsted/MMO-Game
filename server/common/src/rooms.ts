@@ -107,6 +107,15 @@ export const NpcDefSchema = z.object({
       buys: z.boolean(), // will buy any player item at a fraction of value
     })
     .optional(),
+  /** enchanter service: fixed tier-1 enchant menu (modifier ids that carry
+   *  an `enchant` block in shared/modifiers.json). RoomSim warns on
+   *  dangling/offer-less ids at boot. */
+  service: z
+    .object({
+      kind: z.literal("enchant"),
+      offers: z.array(z.string()).min(1),
+    })
+    .optional(),
 });
 export type NpcDef = z.infer<typeof NpcDefSchema>;
 

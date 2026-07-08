@@ -142,6 +142,8 @@ function buildAtlas(sprites) {
     villager1: { file: resolve(CHARS, "npc1.png"), char: [3, 1] }, // straw-hat farmer
     villager2: { file: resolve(CHARS, "npc2.png"), char: [1, 0] },
     villager3: { file: resolve(CHARS, "npc1.png"), char: [0, 0] },
+    // silver-haired woman in purple robes + white apron (cell verified 2026-07-07)
+    npc_enchanter: { file: resolve(CHARS, "npc4.png"), char: [1, 1] },
     // phase 5: desert + dungeon roster
     skeleton: { file: resolve(MOBS, "monster4.png"), char: [3, 0] }, // armored skeleton
     cacto: { file: resolve(MOBS, "monster_cacto.png"), single: true },

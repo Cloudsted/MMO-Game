@@ -63,6 +63,14 @@ public class GameUi {
         public int price;
     }
 
+    /** One enchanter menu row (dialog `enchant` payload). */
+    public static final class EnchantOffer {
+        public String id;
+        public String name;
+        public float mag;
+        public float priceMult;
+    }
+
     public enum Window { NONE, INVENTORY, DIALOG, GOD }
 
     /** Equipment slot order — mirrors the server's EQUIP_SLOTS exactly. */
@@ -85,14 +93,27 @@ public class GameUi {
     public Window window = Window.NONE;
     /** test hook: the next dialog opens straight onto its shop tab */
     public boolean autoOpenShop = false;
+    /** test hook: the next dialog opens straight onto its enchant tab */
+    public boolean autoOpenEnchant = false;
 
-    // dialog / shop
+    // dialog / shop / enchanter
     private int dialogNpc = -1;
     private String dialogName = "";
     private final List<String> dialogLines = new ArrayList<>();
     private final List<ShopEntry> shopEntries = new ArrayList<>();
     private boolean shopBuys = false;
     private boolean shopOpen = false;
+    private final List<EnchantOffer> enchantOffers = new ArrayList<>();
+    private boolean enchantOpen = false;
+    /** inventory index picked as the enchant target (-1 = none yet) */
+    private int enchantTarget = -1;
+    private float enchantPriceBase = 25, enchantPriceValueMult = 1.5f;
+
+    /** Enchanter display pricing from shared constants (server recomputes). */
+    public void setEnchantPricing(float base, float valueMult) {
+        enchantPriceBase = base;
+        enchantPriceValueMult = valueMult;
+    }
 
     // chat
     private static final class ChatLine {
@@ -143,9 +164,10 @@ public class GameUi {
     private int effectRectCount = 0;
     private final Rectangle invPanel = new Rectangle();
     private final List<Rectangle> shopRowRects = new ArrayList<>();
+    private final List<Rectangle> enchantRowRects = new ArrayList<>();
     private final List<Runnable> godActions = new ArrayList<>();
     private final List<Rectangle> godRects = new ArrayList<>();
-    private Rectangle shopToggleRect, closeRect;
+    private Rectangle shopToggleRect, enchantToggleRect, closeRect;
 
     /** test hook: MMO_HOVER_SLOT=<n> pins the tooltip to inventory slot n
      *  (mouse hover can't be injected into a background GLFW window) */
@@ -229,6 +251,30 @@ public class GameUi {
         effects.addAll(list);
     }
 
+    /** Eligible at the enchanter: an UNMODIFIED equippable. */
+    private boolean enchantEligible(Stack s) {
+        if (s == null) return false;
+        ItemRegistry.Item def = reg.item(s.item);
+        if (def == null) return false;
+        boolean equippable = "weapon".equals(def.kind) || "armor".equals(def.kind) || "trinket".equals(def.kind);
+        return equippable && (s.mods == null || s.mods.isEmpty());
+    }
+
+    /** Can this offer's modifier exist on the target's item kind? */
+    private boolean offerFits(EnchantOffer o, Stack s) {
+        ItemRegistry.Modifier m = reg.modifiers.get(o.id);
+        ItemRegistry.Item def = s != null ? reg.item(s.item) : null;
+        return m != null && def != null && m.appliesTo.contains(def.kind);
+    }
+
+    /** Display price — same formula as the server's authoritative one. */
+    private int enchantPrice(Stack s, float priceMult) {
+        ItemRegistry.Item def = reg.item(s.item);
+        if (def == null) return 0;
+        float rarity = reg.rarityMults.getOrDefault(s.rarity, 1f);
+        return (int) Math.ceil(def.value * rarity * priceMult * enchantPriceValueMult + enchantPriceBase);
+    }
+
     /** Which equipment slot index an item goes to, or -1 if not wearable. */
     private int equipSlotIndexFor(ItemRegistry.Item def) {
         if (def == null || def.slot == null) return -1;
@@ -244,7 +290,7 @@ public class GameUi {
         chatFocus = false;
     }
 
-    public void openDialog(int npcEntityId, String name, List<String> lines, List<ShopEntry> shop, boolean buys) {
+    public void openDialog(int npcEntityId, String name, List<String> lines, List<ShopEntry> shop, boolean buys, List<EnchantOffer> enchant) {
         dialogNpc = npcEntityId;
         dialogName = name;
         dialogLines.clear();
@@ -252,7 +298,12 @@ public class GameUi {
         shopEntries.clear();
         if (shop != null) shopEntries.addAll(shop);
         shopBuys = buys;
-        shopOpen = autoOpenShop && !shopEntries.isEmpty();
+        enchantOffers.clear();
+        if (enchant != null) enchantOffers.addAll(enchant);
+        enchantOpen = autoOpenEnchant && !enchantOffers.isEmpty();
+        autoOpenEnchant = false;
+        enchantTarget = -1;
+        shopOpen = !enchantOpen && autoOpenShop && !shopEntries.isEmpty();
         autoOpenShop = false;
         window = Window.DIALOG;
     }
@@ -395,10 +446,36 @@ public class GameUi {
         if (window == Window.DIALOG) {
             if (shopToggleRect != null && shopToggleRect.contains(x, y)) {
                 shopOpen = !shopOpen;
+                enchantOpen = false;
+                return true;
+            }
+            if (enchantToggleRect != null && enchantToggleRect.contains(x, y)) {
+                enchantOpen = !enchantOpen;
+                shopOpen = false;
                 return true;
             }
             if (closeRect != null && closeRect.contains(x, y)) {
                 closeWindow();
+                return true;
+            }
+            if (enchantOpen) {
+                // pick the target item first, then click a blessing
+                for (int i = 0; i < 24; i++) {
+                    if (slotRects[i].contains(x, y)) {
+                        enchantTarget = enchantEligible(slots[i]) ? i : -1;
+                        return true;
+                    }
+                }
+                Stack target = enchantTarget >= 0 ? slots[enchantTarget] : null;
+                for (int i = 0; i < enchantRowRects.size() && i < enchantOffers.size(); i++) {
+                    if (!enchantRowRects.get(i).contains(x, y)) continue;
+                    EnchantOffer offer = enchantOffers.get(i);
+                    if (target != null && offerFits(offer, target) && gold >= enchantPrice(target, offer.priceMult)) {
+                        net.send(mmo.client.net.Protocol.enchant(dialogNpc, enchantTarget, offer.id));
+                        enchantTarget = -1; // server echo shows the result
+                    }
+                    return true;
+                }
                 return true;
             }
             if (shopOpen) {
@@ -1094,10 +1171,12 @@ public class GameUi {
     }
 
     private void renderDialog(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, int w, int h) {
-        float pw = shopOpen ? 560 : 460;
-        float ph = shopOpen ? 420 : 200;
+        boolean wide = shopOpen || enchantOpen;
+        float pw = wide ? 560 : 460;
+        float ph = wide ? 420 : 200;
         float px = MathUtils.floor(w / 2f - pw / 2f), py = MathUtils.floor(h / 2f - ph / 2f);
         shopRowRects.clear();
+        enchantRowRects.clear();
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         panel(shapes, px, py, pw, ph);
@@ -1112,6 +1191,40 @@ public class GameUi {
             shapes.rect(shopToggleRect.x, shopToggleRect.y, btnW, btnH);
         } else {
             shopToggleRect = null;
+        }
+        if (!enchantOffers.isEmpty()) {
+            float ex = px + 12 + (shopToggleRect != null ? btnW + 8 : 0);
+            enchantToggleRect = new Rectangle(ex, py + 10, btnW, btnH);
+            shapes.setColor(0.26f, 0.2f, 0.32f, 1f);
+            shapes.rect(enchantToggleRect.x, enchantToggleRect.y, btnW, btnH);
+        } else {
+            enchantToggleRect = null;
+        }
+        if (enchantOpen) {
+            // left: her blessings; right: your items (pick one, then click)
+            for (int i = 0; i < enchantOffers.size(); i++) {
+                Rectangle row = new Rectangle(px + 14, py + ph - 96 - i * 40, pw / 2f - 24, 34);
+                enchantRowRects.add(row);
+                shapes.setColor(0.2f, 0.16f, 0.28f, 1f);
+                shapes.rect(row.x, row.y, row.width, row.height);
+            }
+            float cell = 40, gap = 4;
+            for (int i = 0; i < 24; i++) {
+                int c = i % 4, r = i / 4;
+                float x = px + pw / 2f + 14 + c * (cell + gap);
+                float y = py + ph - 96 - r * (cell + gap);
+                slotRects[i].set(x, y, cell, cell);
+                boolean eligible = enchantEligible(slots[i]);
+                if (i == enchantTarget) shapes.setColor(0.45f, 0.35f, 0.6f, 1f);
+                else shapes.setColor(0.18f, 0.18f, eligible ? 0.22f : 0.18f, eligible ? 1f : 0.55f);
+                shapes.rect(x, y, cell, cell);
+                Stack s = slots[i];
+                if (s != null) {
+                    Color rc = reg.rarityColor(s.rarity);
+                    shapes.setColor(rc.r, rc.g, rc.b, eligible ? 0.85f : 0.3f);
+                    shapes.rect(x, y, cell, 2);
+                }
+            }
         }
         if (shopOpen) {
             for (int i = 0; i < shopEntries.size(); i++) {
@@ -1142,7 +1255,36 @@ public class GameUi {
         batch.begin();
         font.setColor(1f, 0.93f, 0.7f, 1f);
         font.draw(batch, dialogName, px + 14, py + ph - 14);
-        if (!shopOpen) {
+        if (enchantOpen) {
+            Stack target = enchantTarget >= 0 ? slots[enchantTarget] : null;
+            font.setColor(0.85f, 0.75f, 1f, 1f);
+            font.draw(batch, "Blessings (click)", px + 14, py + ph - 44);
+            font.draw(batch, target == null ? "Pick an unmarked item" : "Enchanting: " + itemName(target), px + pw / 2f + 14, py + ph - 44);
+            for (int i = 0; i < enchantOffers.size() && i < enchantRowRects.size(); i++) {
+                EnchantOffer o = enchantOffers.get(i);
+                Rectangle row = enchantRowRects.get(i);
+                ItemRegistry.Modifier m = reg.modifiers.get(o.id);
+                if (m != null) drawIconCell(batch, m.iconCol, m.iconRow, row.x + 6, row.y + 9, 16);
+                boolean usable = target != null && offerFits(o, target);
+                int price = target != null ? enchantPrice(target, o.priceMult) : 0;
+                boolean affordable = target == null || gold >= price;
+                font.setColor(usable && affordable ? 0.95f : 0.55f, usable && affordable ? 0.9f : 0.5f, 1f, 1f);
+                String label = o.name + (m != null ? "  " + m.fmtMag(o.mag) : "");
+                font.getData().setScale(0.5f);
+                font.draw(batch, label, row.x + 30, row.y + 28);
+                font.draw(batch, target == null ? "—" : usable ? price + "g" : "won't take", row.x + 30, row.y + 13);
+                font.getData().setScale(1f);
+            }
+            for (int i = 0; i < 24; i++) {
+                Stack s = slots[i];
+                if (s == null) continue;
+                drawIcon(batch, s.item, slotRects[i].x + 8, slotRects[i].y + 8, 24);
+            }
+            font.getData().setScale(0.5f);
+            font.setColor(0.7f, 0.65f, 0.8f, 1f);
+            font.draw(batch, "She refuses items that already bear an enchantment.", px + 14, py + 52);
+            font.getData().setScale(1f);
+        } else if (!shopOpen) {
             font.setColor(0.92f, 0.92f, 0.92f, 1f);
             float ly = py + ph - 46;
             for (String line : dialogLines) {
@@ -1181,7 +1323,16 @@ public class GameUi {
             font.setColor(0.8f, 1f, 0.85f, 1f);
             font.draw(batch, shopOpen ? "Talk" : "Shop", shopToggleRect.x + 34, shopToggleRect.y + 19);
         }
+        if (enchantToggleRect != null) {
+            font.setColor(0.9f, 0.8f, 1f, 1f);
+            font.draw(batch, enchantOpen ? "Talk" : "Enchant", enchantToggleRect.x + 18, enchantToggleRect.y + 19);
+        }
         batch.end();
+    }
+
+    private String itemName(Stack s) {
+        ItemRegistry.Item def = reg.item(s.item);
+        return def != null ? def.name : s.item;
     }
 
     private void renderGod(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, int w, int h) {

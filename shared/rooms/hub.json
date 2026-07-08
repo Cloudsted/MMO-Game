@@ -31,7 +31,7 @@
         "Steel for the wilds, friend. A slime will laugh off your fists.",
         "The iron sword holds an edge twice as long as that rusty thing."
       ],
-      "shop": { "items": ["rusty_sword", "iron_sword", "hunting_bow", "longbow"], "buys": true }
+      "shop": { "items": ["rusty_sword", "iron_sword", "hunting_bow", "longbow", "leather_cap", "leather_jerkin", "leather_boots", "wooden_shield"], "buys": true }
     },
     {
       "id": "provisioner", "name": "Mara the Provisioner", "sprite": "npc_provisioner",
@@ -50,6 +50,16 @@
         "Casting takes focus — stand still, or the spell slips away."
       ],
       "shop": { "items": ["fire_staff", "frost_staff", "heal_staff"], "buys": true }
+    },
+    {
+      "id": "enchanter", "name": "Selvara the Enchanter", "sprite": "npc_enchanter",
+      "x": 79, "z": 56, "yaw": -2.0, "wanderRadius": 0,
+      "dialog": [
+        "Every blade remembers what it was promised. I simply... remind it.",
+        "Bring me something unmarked — I cannot weave over another's work.",
+        "Regeneration, meditation, swiftness, warding. Small blessings, honest prices."
+      ],
+      "service": { "kind": "enchant", "offers": ["hpRegen", "manaRegen", "moveSpeedPct", "magicTakenPct"] }
     },
     {
       "id": "carpenter", "name": "Jib the Carpenter", "sprite": "villager1",

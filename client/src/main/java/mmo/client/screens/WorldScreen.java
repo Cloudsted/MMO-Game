@@ -231,6 +231,7 @@ public class WorldScreen extends ScreenAdapter {
         viewmodel = new Viewmodel(game.items, itemMeshes);
         decalBatch = new DecalBatch(new CameraGroupStrategy(cam));
         ui = new GameUi(socket::sendSafe, game.items);
+        ui.setEnchantPricing(game.constants.enchantPriceBase, game.constants.enchantPriceValueMult);
         ui.admin = game.master.roles.contains("admin");
 
         // sun + moon: chunky pixel-art discs (generated; nearest-filtered)
@@ -346,7 +347,7 @@ public class WorldScreen extends ScreenAdapter {
                     String uiHook = System.getenv("MMO_UI");
                     if ("inventory".equals(uiHook)) ui.window = GameUi.Window.INVENTORY;
                     else if ("god".equals(uiHook)) ui.window = GameUi.Window.GOD;
-                    else if ("talk".equals(uiHook) || "shop".equals(uiHook)) pendingTalkHook = uiHook;
+                    else if ("talk".equals(uiHook) || "shop".equals(uiHook) || "enchant".equals(uiHook)) pendingTalkHook = uiHook;
                     for (JsonElement el : Protocol.arr(msg, "ents")) addRemote(el.getAsJsonObject());
                 }
                 case "world" -> {
@@ -552,7 +553,20 @@ public class WorldScreen extends ScreenAdapter {
                             shop.add(e);
                         }
                     }
-                    ui.openDialog(msg.get("id").getAsInt(), msg.get("name").getAsString(), lines, shop, buys);
+                    List<GameUi.EnchantOffer> enchant = null;
+                    if (msg.has("enchant") && !msg.get("enchant").isJsonNull()) {
+                        enchant = new ArrayList<>();
+                        for (JsonElement el : Protocol.arr(msg.getAsJsonObject("enchant"), "offers")) {
+                            JsonObject o = el.getAsJsonObject();
+                            GameUi.EnchantOffer offer = new GameUi.EnchantOffer();
+                            offer.id = o.get("id").getAsString();
+                            offer.name = o.get("name").getAsString();
+                            offer.mag = o.get("mag").getAsFloat();
+                            offer.priceMult = o.get("priceMult").getAsFloat();
+                            enchant.add(offer);
+                        }
+                    }
+                    ui.openDialog(msg.get("id").getAsInt(), msg.get("name").getAsString(), lines, shop, buys, enchant);
                 }
                 case "transfer" -> {
                     game.audio.play("portal");
@@ -1532,6 +1546,7 @@ public class WorldScreen extends ScreenAdapter {
                 if (npc != null) {
                     socket.sendSafe(Protocol.talk(npc.id));
                     if ("shop".equals(pendingTalkHook)) ui.autoOpenShop = true;
+                    if ("enchant".equals(pendingTalkHook)) ui.autoOpenEnchant = true;
                     pendingTalkHook = null;
                 }
             }
