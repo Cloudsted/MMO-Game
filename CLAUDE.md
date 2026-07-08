@@ -57,8 +57,11 @@ in building rooms, otherwise punch), 1-8 or **scroll wheel** select the
 hotbar slot (selection only — nothing consumes on select), **Q drops 1
 from the selected hotbar stack (Ctrl+Q the whole stack); dragging a stack
 out of the inventory window also drops it**, E interact
-(portal > loot > NPC), I/Tab inventory, Enter chat (`/g ` global; admins:
-`/give /gold /tp /spawnmob /time /level /reload /clearblocks /expire`),
+(portal > loot > NPC), I/Tab inventory (**RMB armor/trinkets equips them
+into the paper-doll column; RMB a worn piece unequips; drag onto its slot
+also works**), Enter chat (`/g ` global; admins:
+`/give /gold /tp /spawnmob /time /level /reload /clearblocks /expire
+/enchant /room /prefab`),
 G god panel (admin), R respawn when dead (hub: town spawn; elsewhere:
 transfer back to Hub City), **H return to the hub from anywhere** (alive,
 no window open), Esc close window / release mouse.
@@ -826,6 +829,89 @@ show their block tile).
     master downtime + fresh reopen. Screenshots tools/out/: city-gate3,
     city-avenue3 (avenue→castle vista), throne-room4 (rose window + gold
     throne + braziers), city-market (camp at sundown).
+
+- 2026-07-07 **EQUIPMENT + DYNAMIC MODIFIERS + STATUS BAR + ENCHANTER**
+  (owner directive; design decisions asked-and-answered: armor value →
+  `A/(A+K)` diminishing physical reduction, offhand takes trinkets AND
+  shields, enchanter = deterministic tier-1 menu, additive stacking with
+  server caps). Everything below verified: 247 vitest (35 new),
+  equip-bot + enchant-probe live-stack ALL PASS, screenshots.
+  - **Modifier registry** `shared/modifiers.json` (loaded by RegistryService
+    both runtimes, hot-reload refreshes names/offers — magnitudes live ON
+    instances): 12 perks (hpRegen, manaRegen, moveSpeedPct, maxHp, maxMana,
+    dmgPct, meleeTakenPct, rangedTakenPct, magicTakenPct, thorns, lifesteal,
+    goldFind) + 4 curses as NEGATIVE rolls on the same stats (slowness,
+    brittle=takenAllPct, leaden=atkSpeedPct, drained=manaRegen). Per-def:
+    stat, units, icon [col,row] (cells verified on a gridded contact sheet),
+    appliesTo kinds, rarity → [min,max] roll ranges (sign-checked at load),
+    optional `enchant {mag, priceMult}`. `ItemStack.mods` (id → magnitude)
+    rides wire+DB via ItemStackSchema — RoomState drops round-trip it.
+  - **Minting** (`mintItem`): equippables (weapon/armor/trinket, stack-1
+    enforced) roll per-kind stats (weapon dmg/spd, armor `armor`), weapon+
+    armor durability, then the mod lottery: `items.mods.chanceByRarity`
+    (4%→45%), curseChance 0.15, secondModChanceByRarity for a rare 2nd.
+    `ensureItemInstance` backfills stats/dur but NEVER mods (no retroactive
+    lottery — the enchanter monetizes legacy gear). Loot rarity rolls +
+    minRarity re-mints widened weapon→equippable; merge guards gate on mods.
+  - **Equipment**: 5 slots (head/chest/legs/feet/offhand — EQUIP_SLOTS in
+    registry.ts), `armor` kind (slot + armor value; shields = offhand
+    armor), `trinket` kind (offhand-only, no durability). `equipSlot` wire
+    msg: equip w/ swap-in-place (displaced piece lands in the vacated
+    index — never needs a free slot), no invIndex = unequip; weapons
+    categorically refused. Persisted as `equipment` on CharacterDoc/
+    Snapshot (optional → legacy rows fine) — whitelisted in BOTH shards.ts
+    report paths + the ticket snapshot. Death drops it with the inventory
+    (`combat.deathDropsEquipment`, owner-tunable). Hydration bounces
+    slot-mismatched gear back to the bags. Items: leather/iron sets for
+    head/chest/feet + wooden/iron shields + lucky_locket/wisp_talisman
+    trinkets (LEGS ships item-less — no TF icon; boots DID exist at
+    (10,10)/(11,10)); armor_basic/armor_fine loot tables wired into six
+    mob tables + a rare+ Gravelord slot; weaponsmith sells the leather set.
+  - **Enforcement** (all server-side): per-session `EffectAgg` (byStat
+    capped sums + per-mod totals + armor + speedMult) recomputed
+    SYNCHRONOUSLY via `touchInv` at every mutation — 6 sources = 5 worn +
+    held hotbar stack iff weapon ("sword perks work in hand only").
+    `applyDamage(src,tgt,base,cls)`: damage class threads ability→melee
+    cone / Projectile.dmgClass / pillars ("magic"); new `dmgClass` field on
+    abilities (bows author "ranged", projectile default magic); taken-mods
+    (combined clamp 0.6) → armor `A/(A+armorK)` on melee/ranged only →
+    hooks: armor wears −1/physical hit (shatters at 0, agg updates
+    mid-fight), thorns reflects melee once ("true" dmg, noReflect guard),
+    lifesteal on mob damage. DoT bites bypass everything (own path).
+    Regen: gear hpRegen works THROUGH the 5 s post-damage gate; manaRegen
+    floors at 0. goldFind pays at pickup. `recomputeVitals` = the one max
+    formula (shrink clamps, growth never heals, level-up full-heals to the
+    modded max). Movement: shared `slowMult` helper (player validation +
+    mob tick) × agg.speedMult — the SAME capped value ships to the client.
+  - **Effects wire** (`effects` msg, self-only, signature-gated from tick
+    step 5): gear mods (id+summed mag+curse) + slow/dot/hot with REMAINING
+    durations (client stamps local ends, counts down); hot carries the
+    eaten item id so the bar shows the bread icon; speedMult mirrors into
+    client prediction next to the existing debuff slow. Bread was ALREADY
+    a HoT server-side — the bar just made it visible.
+  - **Client**: paper-doll column in the inventory (RMB equip/unequip,
+    drag-to-equip, ghost labels on empty slots), status-effect bar above
+    the left HP bar (gear mods first, curse frames red, snowflake=slow
+    poison-flask=dot food-icon=hot, hover tooltips, `MMO_HOVER_EFFECT`
+    hook), tooltips grew armor-roll/slot/mod lines (perks cyan, curses
+    red), enchant tab in the dialog window (offers w/ live prices for the
+    picked target, ineligible grayed, `MMO_UI=enchant` hook).
+  - **Selvara the Enchanter** (hub 79,56 by the arcanist; sprite
+    npc4.png [1,1] silver-haired purple-robed — cell verified): NpcDef
+    `service {kind:"enchant", offers}`; menu = tier-1 Regeneration/
+    Meditation/Swiftness/Warding I. `enchant` msg re-validates EVERYTHING
+    at receipt (near, offer, equippable kind, modifier appliesTo,
+    UNMODIFIED only — curses count, "cannot weave over another's work");
+    price = `ceil(value × rarity × priceMult × enchanting.priceValueMult
+    + priceBase)`, computed identically client-side for display. Perks
+    raise sell price (+25%/perk), curses cut it (−15%/curse) — enchant
+    cost >> sell delta, no gold mint. Admin `/enchant <modId> [mag]`
+    stamps the held item for staging.
+  - Admin dashboard: character drawer shows an Equipment section + ✦ mod
+    lines; character-item-add mints mods automatically via shared code.
+  - Feel checks owner-owned: curse frequency (4%→45% roll rates), armorK
+    120 tuning, enchant prices, status-bar readability at scale 1, RMB/
+    drag equip flow.
 
 ## Conventions
 

@@ -569,3 +569,26 @@ it keeps sidestepping, so naive !moved stuck-detection never fires.
   1-block dais lips because the CENTER-cell floor isn't the AABB's floor —
   a 0.3-radius body clips the next step's cell. Feet must clear the MAX
   gap across all touched cells (see city-probe's floorNear).
+
+## Staging a client scene = kill EVERY java first, then edit the FIRST character
+
+Three test cycles died staging the equipment paper-doll screenshot
+(2026-07-07) to a chain of two known-ish traps plus a new one:
+
+- **MMO_AUTOLOGIN enters the account's FIRST character** — the
+  `claude_test` ACCOUNT carries three characters ("Claude_test",
+  "Claude_test2", "claude_test"); staging the lowercase one changed a
+  character the client never loads. Stage **`Claude_test`** (capital C,
+  characters[0]) or verify with a name-regex query first.
+- The "manual DB edits race with character reports" trap has a sharper
+  edge with gradle: **TaskStop on the gradle task does NOT kill the game**
+  — the java process outlives it and its next report (or disconnect)
+  clobbers the edit minutes later. `taskkill //F //IM java.exe`, THEN
+  verify `/api/status` shows 0 players, THEN edit.
+- Command-spawned mobs (`/spawnmob`, spawner "") never despawn and are
+  not in snapshots. Leftovers parked at a room's arrival spawn ambush
+  every later bot (combat-bot died to equip-bot's slimes twice — once
+  more after its character persisted sword-less mid-forest from that
+  death). Stage fights AWAY from spawns/roads (`/tp 200 200` first) and
+  clear contamination with admin restart-room (stateful rooms resume
+  from snapshot minus the stray mobs).
