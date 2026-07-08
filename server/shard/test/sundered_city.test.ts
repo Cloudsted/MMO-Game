@@ -11,6 +11,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { BLOCK, computePortalArrival, loadRoomDef, RegistryService } from "@fantasy-mmo/common";
+import { pathfindWaypoints } from "../src/sim/mobs.js";
 import { VoxelWorld } from "../src/sim/voxel.js";
 
 const reg = new RegistryService();
@@ -156,6 +157,25 @@ describe("the Sundered King — hardest fight yet", () => {
         if (a.kind === "spawnMobs") expect(reg.mobs[a.mob], a.mob).toBeDefined();
       }
     }
+  });
+
+  it("pathfinds around the throne (the concave trap deflection steering loses)", () => {
+    // from BEHIND the throne back to the hall side: the straight line is
+    // solid gold; the BFS must route around the dais furniture
+    const path = pathfindWaypoints(world, { x: 128.5, y: 18, z: 38.5 }, { x: 128, z: 48 }, false);
+    expect(path).not.toBeNull();
+    const end = path![path!.length - 1]!;
+    expect(Math.hypot(end.x - 128, end.z - 48)).toBeLessThan(3);
+    // fire-pillar ability wiring: registered, pillars spec present
+    const flames = reg.abilities["throne_flames"]!;
+    expect(flames.kind).toBe("pillars");
+    expect(flames.pillars!.count).toBeGreaterThanOrEqual(4);
+    // the buffed wave is predictive + explodes
+    const wave = reg.abilities["sundering_wave"]!;
+    expect(wave.predictive).toBe(true);
+    expect(wave.aoeRadius).toBeGreaterThan(0);
+    expect(wave.impactFx).toBe("explosion");
+    expect(wave.projSpeed).toBeGreaterThanOrEqual(30);
   });
 
   it("summons his Oathbound (registered mob, capped)", () => {

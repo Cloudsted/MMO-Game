@@ -42,6 +42,8 @@ const USFX = "Ultimate SFX Bundle (2020)";
 const MAGIC1 = "elementalmagicsoundeffectsvol1_windows/Fusehive - Elemental Magic Spells 1 [WAV HD]";
 const INV = "inventorysoundspack_windows/Inventory_Sounds/WAV";
 const NATURE = "Pro Sound Collection v1.3/Animals_Nature_Ambiences";
+const PROV13 = "Pro Sound Collection v1.3";
+const ANCIENT = "ancientgamesfxpack_windows/Ancient_Game_16bit/Ancient_Game_16bit";
 const RPGMUS = "rpgmusicpack_completecollection_windows/RPG Music Complete Collection";
 const JRPG = "jrpgmusicpack_windows/WAV";
 const LIGHT = "lightheartedrpgsoundtrackbundle_windows";
@@ -97,6 +99,38 @@ const SFX = {
     P(`${USFX}/Bow Sounds Pro/Arrow Impact flesh (human)/Arrow Impact flesh (human) 3.wav`),
     P(`${USFX}/Bow Sounds Pro/Arrow Impact flesh (human)/Arrow Impact flesh (human) 5.wav`),
   ],
+  // ----- Sundered King boss-fight kit -----
+  // exploding fireball impact (ancientgame Magic bombs — real BOOMs)
+  explosion_big: {
+    src: [
+      P(`${ANCIENT}/Magic/Ancient_Game_Magic_Bomb_Explosion_1.wav`),
+      P(`${ANCIENT}/Magic/Ancient_Game_Magic_Bomb_Explosion_2_Short.wav`),
+      P(`${ANCIENT}/Magic/Ancient_Game_Explosion_Fire_Pop.wav`),
+    ],
+    pitchVar: 0.07,
+    vol: 0.95,
+  },
+  // fire pillar ignition whoosh (proven MAGIC1 fire risers)
+  fire_pillar: {
+    src: [
+      P(`${MAGIC1}/FIRE WHOOSH RISE TRANSITION - Burning Cracle Magic Spell Throw    [003661].wav`),
+      P(`${MAGIC1}/FIRE WHOOSH RISE TRANSITION - Burning Cracle Magic Throw with Sparkles    [003663].wav`),
+      P(`${MAGIC1}/HOT MAGIC SPELL THROW - Fast Fire or Lava Whoosh - 01    [003703].wav`),
+    ],
+    pitchVar: 0.08,
+    vol: 0.9,
+  },
+  // the King's war-horn: OATHBOUND — TO ME! (viking battle horn calls)
+  king_summon: {
+    src: [
+      P(`${PROV13}/Comedy_Cartoon/battle_viking_horn_call_close_01.wav`),
+      P(`${PROV13}/Comedy_Cartoon/battle_viking_horn_call_close_03.wav`),
+    ],
+    pitch: 0.9,
+    pitchVar: 0.04,
+    vol: 0.95,
+    cap: 3,
+  },
   mob_die: [
     P(`${USFX}/Alien sounds Pro/Alien Death_01.wav`),
     P(`${USFX}/Ghost Sounds Pro/Ghost Death_01.wav`),

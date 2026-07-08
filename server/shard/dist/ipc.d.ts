@@ -28,6 +28,7 @@ export type HostToRoom = {
     t: "roomStatus";
     roomId: string;
     open: boolean;
+    reopenInSec?: number;
 } | {
     t: "kick";
     characterId: string;

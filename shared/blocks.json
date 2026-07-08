@@ -56,6 +56,6 @@
     { "id": 52, "name": "rubble", "label": "Rubble", "solid": true, "kind": "cube", "cull": "opaque", "sounds": { "step": "gravel", "break": "stone", "place": "stone" } },
     { "id": 53, "name": "red_carpet", "label": "Royal Carpet", "solid": true, "kind": "cube", "cull": "opaque", "sounds": { "step": "plant", "break": "plant", "place": "soft" } },
     { "id": 54, "name": "gold_block", "label": "Gold Block", "solid": true, "kind": "cube", "cull": "opaque", "sounds": { "step": "metal", "break": "metal", "place": "metal" } },
-    { "id": 55, "name": "stained_glass", "label": "Stained Glass", "solid": true, "kind": "cube", "cull": "cutout", "glow": true, "light": 7, "sounds": { "step": "stone", "break": "glass", "place": "glass" } }
+    { "id": 55, "name": "stained_glass", "label": "Stained Glass", "solid": true, "kind": "cube", "cull": "cutout", "glow": true, "light": 9, "sounds": { "step": "stone", "break": "glass", "place": "glass" } }
   ]
 }

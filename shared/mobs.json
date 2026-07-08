@@ -183,11 +183,12 @@
   },
   "sundered_king": {
     "name": "Vaelric, the Sundered King", "sprite": "sundered_king", "level": 18,
-    "hp": 2200, "damage": 46, "moveSpeed": 2.8,
+    "hp": 2200, "damage": 46, "moveSpeed": 3.2,
     "attacks": [
       { "ability": "kings_cleave", "weight": 3 },
       { "ability": "crown_strike", "damage": 32, "weight": 2 },
-      { "ability": "sundering_wave", "damage": 36, "minRange": 4, "weight": 2 },
+      { "ability": "sundering_wave", "damage": 36, "minRange": 4, "weight": 3 },
+      { "ability": "throne_flames", "damage": 30, "minRange": 3, "weight": 3 },
       { "ability": "oath_summon", "weight": 5 }
     ],
     "aggroRadius": 16, "attackRange": 13,

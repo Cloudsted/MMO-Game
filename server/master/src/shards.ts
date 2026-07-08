@@ -150,9 +150,17 @@ export class ShardManager {
     this.shards.set(shardId, shard);
     this.send(shard, { t: "registered", ok: true });
     log.info(`shard ${shardId} registered (host ${gameHost}, capacity ${capacity})`);
-    // give the newcomer the current availability picture
+    // give the newcomer the current availability picture (incl. reset timers)
     for (const def of this.roomDefs.values()) {
-      this.send(shard, { t: "roomStatus", roomId: def.id, open: this.roomAssignment.get(def.id)?.status === "open" });
+      const notBefore = this.reopenNotBefore.get(def.id);
+      const reopenInSec =
+        notBefore !== undefined && notBefore > Date.now() ? Math.ceil((notBefore - Date.now()) / 1000) : undefined;
+      this.send(shard, {
+        t: "roomStatus",
+        roomId: def.id,
+        open: this.roomAssignment.get(def.id)?.status === "open",
+        ...(reopenInSec !== undefined ? { reopenInSec } : {}),
+      });
     }
     this.ensureRooms();
     return shard;
@@ -188,15 +196,18 @@ export class ShardManager {
           { $set: { shardId: null, status: "down", gameHost: null, port: null, updatedAt: new Date() } }
         );
         log.warn(`room ${msg.roomId} closed on ${shard.shardId}: ${msg.reason}`);
-        this.broadcastRoomStatus(msg.roomId, false);
-        // lifecycle expiry: sit out the downtime, then reopen fresh
+        // lifecycle expiry: sit out the downtime, then reopen fresh — set the
+        // timer BEFORE the status broadcast so portals can show the countdown
         const def = this.roomDefs.get(msg.roomId);
+        let reopenInSec: number | undefined;
         if (msg.reason === "expired" && def?.lifecycle) {
           const overrideSec = Number(process.env.MMO_DOWNTIME_OVERRIDE_SEC ?? 0);
           const downtimeSec = overrideSec > 0 ? overrideSec : def.lifecycle.downtimeSec;
           this.reopenNotBefore.set(msg.roomId, Date.now() + downtimeSec * 1000);
+          reopenInSec = downtimeSec;
           log.info(`room ${msg.roomId} enters downtime for ${downtimeSec}s`);
         }
+        this.broadcastRoomStatus(msg.roomId, false, reopenInSec);
         this.ensureRooms();
         break;
       }
@@ -361,10 +372,11 @@ export class ShardManager {
     log.info(`opening room ${roomId} on shard ${shard.shardId}${snapshot ? " (from snapshot)" : ""}`);
   }
 
-  /** Tell every shard (→ every RoomHost) a destination went up or down. */
-  private broadcastRoomStatus(roomId: string, open: boolean): void {
+  /** Tell every shard (→ every RoomHost) a destination went up or down.
+   *  Closed rooms on a reset timer carry the countdown for portal labels. */
+  private broadcastRoomStatus(roomId: string, open: boolean, reopenInSec?: number): void {
     for (const s of this.shards.values()) {
-      this.send(s, { t: "roomStatus", roomId, open });
+      this.send(s, { t: "roomStatus", roomId, open, ...(reopenInSec !== undefined ? { reopenInSec } : {}) });
     }
   }
 

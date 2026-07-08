@@ -1708,14 +1708,19 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
     t: z.ZodLiteral<"roomStatus">;
     roomId: z.ZodString;
     open: z.ZodBoolean;
+    /** closed rooms on a reset timer: seconds until the reopen (portals
+     *  display the countdown) */
+    reopenInSec: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     t: "roomStatus";
     roomId: string;
     open: boolean;
+    reopenInSec?: number | undefined;
 }, {
     t: "roomStatus";
     roomId: string;
     open: boolean;
+    reopenInSec?: number | undefined;
 }>, z.ZodObject<{
     t: z.ZodLiteral<"kick">;
     roomId: z.ZodString;
@@ -1995,6 +2000,10 @@ export interface PortalWire {
     r: number;
     /** false = destination room is down (sealed dungeon portal) */
     open: boolean;
+    /** closed rooms on a reset timer: seconds until the destination reopens
+     *  (clients count down locally from receipt; absent = no known timer,
+     *  e.g. boss-guarded seals) */
+    reopenInSec?: number;
 }
 export interface RegionWire {
     x: number;
@@ -2027,6 +2036,11 @@ export type CombatEvent = {
     kind: "levelup";
     id: number;
     level: number;
+}
+/** a summon ability released at entity `id` (clients cue the war-horn) */
+ | {
+    kind: "summon";
+    id: number;
 };
 export interface ShopWire {
     items: Array<{
@@ -2141,12 +2155,28 @@ export type ServerToClient = {
     vy: number;
     vz: number;
     ttlMs: number;
+    scale?: number;
+    impactFx?: string;
 } | {
     t: "projHit";
     id: number;
     x: number;
     y: number;
     z: number;
+}
+/** a marching line of fire pillars: each entry telegraphs for delayMs
+ *  after receipt, then ignites and burns for burnMs (visual is client-side;
+ *  damage is server-side in the ignite window) */
+ | {
+    t: "pillars";
+    list: Array<{
+        x: number;
+        y: number;
+        z: number;
+        delayMs: number;
+    }>;
+    burnMs: number;
+    radius: number;
 } | {
     t: "debuff";
     id: number;
@@ -2172,6 +2202,7 @@ export type ServerToClient = {
     t: "portalState";
     target: string;
     open: boolean;
+    reopenInSec?: number;
 };
 export declare function encode(msg: object): string;
 /** Decode + validate a shard→master control message. Throws on bad input. */

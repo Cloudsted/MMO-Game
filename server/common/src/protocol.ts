@@ -246,7 +246,14 @@ export const MasterToShardSchema = z.discriminatedUnion("t", [
   }),
   z.object({ t: z.literal("globalChat"), from: z.string(), text: z.string() }),
   /** live room availability — RoomHosts surface it as portal open/sealed */
-  z.object({ t: z.literal("roomStatus"), roomId: z.string(), open: z.boolean() }),
+  z.object({
+    t: z.literal("roomStatus"),
+    roomId: z.string(),
+    open: z.boolean(),
+    /** closed rooms on a reset timer: seconds until the reopen (portals
+     *  display the countdown) */
+    reopenInSec: z.number().optional(),
+  }),
   /** admin dashboard: evict one player from a room */
   z.object({ t: z.literal("kick"), roomId: z.string(), characterId: z.string(), reason: z.string() }),
   /** admin dashboard: teleport a player. Same room + x/z = local snap;
@@ -325,6 +332,10 @@ export interface PortalWire {
   r: number;
   /** false = destination room is down (sealed dungeon portal) */
   open: boolean;
+  /** closed rooms on a reset timer: seconds until the destination reopens
+   *  (clients count down locally from receipt; absent = no known timer,
+   *  e.g. boss-guarded seals) */
+  reopenInSec?: number;
 }
 
 export interface RegionWire {
@@ -341,7 +352,9 @@ export type CombatEvent =
   | { kind: "death"; id: number; by: number | null }
   | { kind: "stagger"; id: number }
   | { kind: "xp"; amount: number } // self only
-  | { kind: "levelup"; id: number; level: number };
+  | { kind: "levelup"; id: number; level: number }
+  /** a summon ability released at entity `id` (clients cue the war-horn) */
+  | { kind: "summon"; id: number };
 
 export interface ShopWire {
   items: Array<{ item: string; price: number }>;
@@ -368,13 +381,17 @@ export type ServerToClient =
   | { t: "stats"; hp: number; maxHp: number; mana: number; maxMana: number; xp: number; xpNext: number; level: number; gold: number }
   | { t: "inv"; slots: Array<ItemStack | null>; held: number }
   | { t: "evt"; e: CombatEvent }
-  | { t: "proj"; id: number; fx: string; x: number; y: number; z: number; vx: number; vy: number; vz: number; ttlMs: number }
+  | { t: "proj"; id: number; fx: string; x: number; y: number; z: number; vx: number; vy: number; vz: number; ttlMs: number; scale?: number; impactFx?: string }
   | { t: "projHit"; id: number; x: number; y: number; z: number }
+  /** a marching line of fire pillars: each entry telegraphs for delayMs
+   *  after receipt, then ignites and burns for burnMs (visual is client-side;
+   *  damage is server-side in the ignite window) */
+  | { t: "pillars"; list: Array<{ x: number; y: number; z: number; delayMs: number }>; burnMs: number; radius: number }
   | { t: "debuff"; id: number; slowPct: number; durMs: number }
   | { t: "died"; x: number; y: number; z: number } // self death → death screen
   | { t: "chat"; channel: "room" | "global" | "system"; from: string; text: string }
   | { t: "dialog"; id: number; name: string; lines: string[]; shop: ShopWire | null }
-  | { t: "portalState"; target: string; open: boolean };
+  | { t: "portalState"; target: string; open: boolean; reopenInSec?: number };
 
 // ---------- encode / decode ----------
 

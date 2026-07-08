@@ -148,7 +148,7 @@
     },
     {
       "id": "throne-king",
-      "region": { "kind": "circle", "x": 128, "z": 42, "r": 4 },
+      "region": { "kind": "circle", "x": 128, "z": 44, "r": 2 },
       "mobs": [{ "mob": "sundered_king", "weight": 1 }],
       "maxAlive": 1,
       "packSize": [1, 1],

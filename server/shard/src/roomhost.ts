@@ -80,7 +80,7 @@ class RoomHost {
         this.sim?.deliverGlobalChat(msg.from, msg.text);
         break;
       case "roomStatus":
-        this.sim?.setRoomStatus(msg.roomId, msg.open);
+        this.sim?.setRoomStatus(msg.roomId, msg.open, msg.reopenInSec);
         break;
       case "kick":
         this.sim?.adminKick(msg.characterId, msg.reason);

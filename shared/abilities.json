@@ -226,8 +226,15 @@
   },
   "sundering_wave": {
     "kind": "projectile", "castTimeMs": 1000, "recoverMs": 320,
-    "projSpeed": 20, "maxRange": 40,
-    "canMoveWhile": false, "interruptible": false, "cooldownMs": 2800, "manaCost": 0,
+    "projSpeed": 34, "maxRange": 44,
+    "predictive": true, "aoeRadius": 2.5, "impactFx": "explosion", "projScale": 1.9,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 2400, "manaCost": 0,
+    "fx": "firebolt"
+  },
+  "throne_flames": {
+    "kind": "pillars", "castTimeMs": 900, "recoverMs": 400,
+    "pillars": { "count": 5, "spacing": 2.2, "radius": 2.2, "staggerMs": 160, "burnMs": 1500 },
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 9000, "manaCost": 0,
     "fx": "firebolt"
   },
   "oath_summon": {

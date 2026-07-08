@@ -59,9 +59,11 @@ import {
   applyMove,
   chooseAttack,
   findSpawnPoint,
+  pathfindWaypoints,
   pickMob,
   PURPOSEFUL_MAX_DROP,
   separateEntities,
+  STUCK_TICKS_FOR_PATH,
   tickBrain,
   type AttackOption,
 } from "./mobs.js";
@@ -134,6 +136,19 @@ export class RoomSim {
   private byCharacterId = new Map<string, PlayerSession>();
   private spawners = new Map<string, Spawner>();
   private projectiles: Projectile[] = [];
+  /** live fire-pillar hazards (kind:"pillars" abilities): each ignites at
+   *  igniteAt and damages every valid target once during its short window */
+  private firePillars: Array<{
+    x: number;
+    y: number;
+    z: number;
+    igniteAt: number;
+    windowEndsAt: number;
+    ownerId: number;
+    damage: number;
+    radius: number;
+    hitIds: Set<number>;
+  }> = [];
   private pendingRemovals: Array<{ id: number; at: number }> = [];
   /** per-mob damage contributions for XP/loot ownership (mob id → char id → dmg) */
   private damageLog = new Map<number, Map<string, number>>();
@@ -157,6 +172,9 @@ export class RoomSim {
 
   /** destination-room availability (sealed dungeon portals) */
   private roomStatus = new Map<string, boolean>();
+  /** closed destinations on a reset timer: roomId → ms epoch of the reopen
+   *  (portals show players the countdown) */
+  private roomReopenAt = new Map<string, number>();
 
   /** portal ids sealed by an event gate (boss still alive); combined with
    *  roomStatus — a portal is open only when BOTH say open */
@@ -718,26 +736,45 @@ export class RoomSim {
     return (this.roomStatus.get(p.target) ?? true) && !this.eventSealed.has(p.id);
   }
 
+  /** Seconds until a closed destination reopens (undefined = no known timer,
+   *  e.g. boss-guarded seals). Clients count down locally from receipt. */
+  private reopenInSecOf(target: string): number | undefined {
+    const at = this.roomReopenAt.get(target);
+    if (at === undefined || at <= Date.now()) return undefined;
+    return Math.ceil((at - Date.now()) / 1000);
+  }
+
   private broadcastPortalState(portalId: string): void {
     const p = this.def.portals.find((x) => x.id === portalId);
     if (!p) return;
     const open = this.portalOpen(p);
-    for (const sess of this.sessions.values()) sess.send({ t: "portalState", target: p.target, open });
+    const reopenInSec = open ? undefined : this.reopenInSecOf(p.target);
+    for (const sess of this.sessions.values())
+      sess.send({ t: "portalState", target: p.target, open, ...(reopenInSec !== undefined ? { reopenInSec } : {}) });
   }
 
-  setRoomStatus(roomId: string, open: boolean): void {
+  setRoomStatus(roomId: string, open: boolean, reopenInSec?: number): void {
     const prev = this.roomStatus.get(roomId);
+    const prevReopen = this.roomReopenAt.get(roomId);
     this.roomStatus.set(roomId, open);
-    if (prev === open) return;
+    if (open || reopenInSec === undefined) this.roomReopenAt.delete(roomId);
+    else this.roomReopenAt.set(roomId, Date.now() + reopenInSec * 1000);
+    if (prev === open && this.roomReopenAt.get(roomId) === prevReopen) return;
     for (const p of this.def.portals) {
       if (p.target !== roomId) continue;
       const combined = this.portalOpen(p);
-      for (const sess of this.sessions.values()) sess.send({ t: "portalState", target: roomId, open: combined });
+      const remain = combined ? undefined : this.reopenInSecOf(roomId);
+      for (const sess of this.sessions.values())
+        sess.send({ t: "portalState", target: roomId, open: combined, ...(remain !== undefined ? { reopenInSec: remain } : {}) });
     }
   }
 
   portalsWire(): PortalWire[] {
-    return this.def.portals.map((p) => ({ ...p, open: this.portalOpen(p) }));
+    return this.def.portals.map((p) => {
+      const open = this.portalOpen(p);
+      const reopenInSec = open ? undefined : this.reopenInSecOf(p.target);
+      return { ...p, open, ...(reopenInSec !== undefined ? { reopenInSec } : {}) };
+    });
   }
 
   private randInt(lo: number, hi: number): number {
@@ -1053,6 +1090,15 @@ export class RoomSim {
       reject();
       return;
     }
+    // smoothed horizontal velocity (predictive boss projectiles lead it) —
+    // EMA over accepted packets; decays naturally when packets stop moving
+    if (dt > 0.005) {
+      const a = 0.5;
+      const e = session.entity;
+      e.velX = (e.velX ?? 0) * (1 - a) + (dx / dt) * a;
+      e.velZ = (e.velZ ?? 0) * (1 - a) + (dz / dt) * a;
+      e.lastMoveAt = now;
+    }
     p.x = x;
     p.y = y;
     p.z = z;
@@ -1189,7 +1235,36 @@ export class RoomSim {
     if (option.ability.kind === "projectile") {
       aimPitch = Math.atan2(target.pos.y + 1.0 - (mob.pos.y + 1.45), Math.max(0.1, Math.hypot(dx, dz)));
     }
+    mob.combat!.lastTargetId = target.id; // predictive release re-aims here
     return startAbility(mob, option.id, option.ability, option.damage, aimYaw, aimPitch, now) ? "started" : "wait";
+  }
+
+  /** Tracked horizontal velocity for prediction — zero once move packets go
+   *  quiet, clamped so a burst packet can't fake super-speed. */
+  private velocityOf(e: Entity, now: number): { x: number; z: number } {
+    if (!e.lastMoveAt || now - e.lastMoveAt > 400) return { x: 0, z: 0 };
+    let vx = e.velX ?? 0;
+    let vz = e.velZ ?? 0;
+    const mag = Math.hypot(vx, vz);
+    const cap = this.consts.movement.walkSpeed * 1.2;
+    if (mag > cap) {
+      vx = (vx / mag) * cap;
+      vz = (vz / mag) * cap;
+    }
+    return { x: vx, z: vz };
+  }
+
+  /** Two-pass linear intercept: where to aim so a projectile at `speed`
+   *  meets the target's current velocity. */
+  private interceptPoint(from: Entity, tgt: Entity, speed: number, now: number): { x: number; z: number } {
+    const vel = this.velocityOf(tgt, now);
+    let tHit = Math.hypot(tgt.pos.x - from.pos.x, tgt.pos.z - from.pos.z) / Math.max(1, speed);
+    for (let i = 0; i < 2; i++) {
+      const px = tgt.pos.x + vel.x * tHit;
+      const pz = tgt.pos.z + vel.z * tHit;
+      tHit = Math.hypot(px - from.pos.x, pz - from.pos.z) / Math.max(1, speed);
+    }
+    return { x: tgt.pos.x + vel.x * tHit, z: tgt.pos.z + vel.z * tHit };
   }
 
   private resolveMeleeHit(attacker: Entity, ability: AbilityDef): void {
@@ -1225,6 +1300,23 @@ export class RoomSim {
   private releaseAbility(e: Entity, ability: AbilityDef, now: number): void {
     switch (ability.kind) {
       case "projectile": {
+        // predictive mob projectiles re-aim at RELEASE toward the intercept
+        // point (the telegraph is still dodgeable — juke AFTER the release;
+        // running in a straight line is exactly what gets punished)
+        if (ability.predictive && e.kind === "mob" && e.combat!.lastTargetId !== undefined) {
+          const tgt = this.entities.get(e.combat!.lastTargetId);
+          if (tgt && tgt.combat?.act !== "dead") {
+            const speed = ability.projSpeed ?? 20;
+            const aim = this.interceptPoint(e, tgt, speed, now);
+            const dx = aim.x - e.pos.x;
+            const dz = aim.z - e.pos.z;
+            e.combat!.aimYaw = Math.atan2(dx, dz);
+            e.combat!.aimPitch = Math.atan2(
+              tgt.pos.y + 1.0 - (e.pos.y + 1.45),
+              Math.max(0.1, Math.hypot(dx, dz))
+            );
+          }
+        }
         const proj = makeProjectile(e, ability, e.combat!.pendingDamage, now);
         this.projectiles.push(proj);
         this.broadcastNear(proj.x, proj.z, {
@@ -1238,7 +1330,51 @@ export class RoomSim {
           vy: proj.vy,
           vz: proj.vz,
           ttlMs: proj.dieAt - now,
+          ...(proj.scale !== 1 ? { scale: proj.scale } : {}),
+          ...(proj.impactFx ? { impactFx: proj.impactFx } : {}),
         });
+        break;
+      }
+      case "pillars": {
+        const spec = ability.pillars;
+        if (!spec) break;
+        // the line marches from just ahead of the caster THROUGH the target's
+        // predicted position (mid-march lead) — side-stepping dodges it,
+        // straight-line kiting runs INTO the later pillars
+        let dirYaw = e.combat!.aimYaw;
+        const tgt = e.combat!.lastTargetId !== undefined ? this.entities.get(e.combat!.lastTargetId) : undefined;
+        if (tgt && tgt.combat?.act !== "dead") {
+          const lead = ((spec.count / 2) * spec.staggerMs) / 1000;
+          const vel = this.velocityOf(tgt, now);
+          const px = tgt.pos.x + vel.x * lead;
+          const pz = tgt.pos.z + vel.z * lead;
+          dirYaw = Math.atan2(px - e.pos.x, pz - e.pos.z);
+        }
+        const dirX = Math.sin(dirYaw);
+        const dirZ = Math.cos(dirYaw);
+        const list: Array<{ x: number; y: number; z: number; delayMs: number }> = [];
+        for (let i = 0; i < spec.count; i++) {
+          const x = e.pos.x + dirX * (2 + i * spec.spacing);
+          const z = e.pos.z + dirZ * (2 + i * spec.spacing);
+          if (x < 1 || x > this.def.size.w - 1 || z < 1 || z > this.def.size.h - 1) continue;
+          const y = this.world.floorY(x, z);
+          const delayMs = 350 + i * spec.staggerMs; // telegraph before ignite
+          list.push({ x, y, z, delayMs });
+          this.firePillars.push({
+            x,
+            y,
+            z,
+            igniteAt: now + delayMs,
+            windowEndsAt: now + delayMs + Math.min(spec.burnMs, 900),
+            ownerId: e.id,
+            damage: e.combat!.pendingDamage,
+            radius: spec.radius,
+            hitIds: new Set(),
+          });
+        }
+        if (list.length > 0) {
+          this.broadcastNear(e.pos.x, e.pos.z, { t: "pillars", list, burnMs: spec.burnMs, radius: spec.radius });
+        }
         break;
       }
       case "self": {
@@ -1252,7 +1388,11 @@ export class RoomSim {
         if (ability.summon && e.kind === "mob") {
           const spec = ability.summon;
           const room = Math.max(0, spec.cap - this.minionCountOf(e));
-          if (room > 0) this.summonWave(e, spec.mob, Math.min(spec.count, room), spec.radius, spec.text);
+          if (room > 0) {
+            this.summonWave(e, spec.mob, Math.min(spec.count, room), spec.radius, spec.text);
+            // clients cue the war-horn off this
+            this.broadcastEvent({ kind: "summon", id: e.id }, e.pos.x, e.pos.z);
+          }
         }
         break;
       }
@@ -1991,6 +2131,7 @@ export class RoomSim {
     // 2. mob brains → intents → body
     const players = [...this.sessions.values()].map((s) => s.entity);
     const aliveMobs = [...this.entities.values()].filter((e) => e.kind === "mob" && e.combat!.act !== "dead");
+    let pathBudget = 3; // bounded BFS computations per tick (stuck recovery)
     for (const e of aliveMobs) {
       if (!e.brain) continue;
       const def = this.reg.mobs[e.brain.mobId];
@@ -2011,7 +2152,49 @@ export class RoomSim {
       if (e.combat!.slowUntil > now) speed *= 1 - e.combat!.slowPct;
       let moved = false;
       if (decision.move) {
-        moved = applyMove(e, decision.move, speed, dt, this.world, this.def.size, this.waterLevel(), aliveMobs);
+        const b = e.brain;
+        const goal = decision.move;
+        const purposeful = goal.maxDrop !== undefined; // chase/flee/return
+        // recovery path bookkeeping: invalid once the goal drifts off its end
+        if (b.path && b.path.length) {
+          const end = b.path[b.path.length - 1]!;
+          if (Math.hypot(goal.x - end.x, goal.z - end.z) > 5) b.path = undefined;
+        }
+        if (b.path && b.path.length) {
+          const wp = b.path[0]!;
+          if (Math.hypot(e.pos.x - wp.x, e.pos.z - wp.z) < 0.7) b.path.shift();
+        }
+        const wp = b.path && b.path.length ? b.path[0]! : null;
+        const intent = wp ? { ...goal, x: wp.x, z: wp.z } : goal;
+        moved = applyMove(e, intent, speed, dt, this.world, this.def.size, this.waterLevel(), aliveMobs);
+        // progress detection: deflection steering can "move" in circles
+        // around concave obstacles (the throne!) without closing distance
+        if (purposeful) {
+          const goalD = Math.hypot(goal.x - e.pos.x, goal.z - e.pos.z);
+          if (!moved || goalD >= (b.lastGoalD ?? Number.POSITIVE_INFINITY) - 0.02) {
+            b.stuckTicks = (b.stuckTicks ?? 0) + 1;
+          } else {
+            b.stuckTicks = 0;
+          }
+          b.lastGoalD = goalD;
+          if ((b.stuckTicks ?? 0) >= STUCK_TICKS_FOR_PATH && !wp && pathBudget > 0) {
+            pathBudget--;
+            const path = pathfindWaypoints(this.world, e.pos, { x: goal.x, z: goal.z }, goal.wade ?? false);
+            if (path) {
+              b.path = path;
+              b.stuckTicks = 0;
+            } else {
+              b.stuckTicks = -10; // cooldown: don't re-BFS every tick against a wall
+            }
+          }
+          if (wp && !moved && (b.stuckTicks ?? 0) >= STUCK_TICKS_FOR_PATH) {
+            b.path = undefined; // the path itself is blocked (mob pile): rebuild later
+            b.stuckTicks = 0;
+          }
+        } else {
+          b.stuckTicks = 0;
+          b.lastGoalD = undefined;
+        }
       }
       if (decision.faceYaw !== null) e.pos.yaw = decision.faceYaw;
       if (decision.attack) {
@@ -2059,6 +2242,7 @@ export class RoomSim {
 
     // 4. projectiles (substepped for hit fidelity)
     this.tickProjectiles(now, dt);
+    this.tickFirePillars(now);
 
     // 5. player regen + food HoT
     for (const s of this.sessions.values()) {
@@ -2124,7 +2308,7 @@ export class RoomSim {
         const dx = p.x - p.startX;
         const dz = p.z - p.startZ;
         if (now + t * 1000 >= p.dieAt || dx * dx + dz * dz > p.maxRangeSq) {
-          this.broadcastNear(p.x, p.z, { t: "projHit", id: p.id, x: p.x, y: p.y, z: p.z });
+          this.endProjectile(p, null);
           alive = false;
           break;
         }
@@ -2134,7 +2318,7 @@ export class RoomSim {
           this.world.solidAt(p.x, p.y, p.z) ||
           this.world.liquidAt(p.x, p.y, p.z)
         ) {
-          this.broadcastNear(p.x, p.z, { t: "projHit", id: p.id, x: p.x, y: p.y, z: p.z });
+          this.endProjectile(p, null);
           alive = false;
           break;
         }
@@ -2143,9 +2327,7 @@ export class RoomSim {
         const targets = owner ? this.targetsOf(owner) : [];
         for (const tgt of targets) {
           if (!projectileHits(p, tgt, this.consts.combat.projectileHitRadius)) continue;
-          this.broadcastNear(p.x, p.z, { t: "projHit", id: p.id, x: p.x, y: p.y, z: p.z });
-          if (owner) this.applyDamage(owner, tgt, p.damage);
-          if (p.debuff && owner) this.applyDebuff(tgt, p.debuff, owner);
+          this.endProjectile(p, tgt);
           alive = false;
           break;
         }
@@ -2153,6 +2335,52 @@ export class RoomSim {
       if (alive) survivors.push(p);
     }
     this.projectiles = survivors;
+  }
+
+  /** Fire pillars: ignited hazards damage every valid target once inside
+   *  their radius during the ignite window (walking through mid-burn still
+   *  burns — kiters can't thread a marching line for free). */
+  private tickFirePillars(now: number): void {
+    if (this.firePillars.length === 0) return;
+    this.firePillars = this.firePillars.filter((f) => {
+      if (now < f.igniteAt) return true;
+      if (now > f.windowEndsAt) return false;
+      const owner = this.entities.get(f.ownerId);
+      if (!owner) return false;
+      for (const tgt of this.targetsOf(owner)) {
+        if (f.hitIds.has(tgt.id)) continue;
+        const d = Math.hypot(tgt.pos.x - f.x, tgt.pos.z - f.z);
+        if (d > f.radius) continue;
+        if (tgt.pos.y - f.y > 2.5 || f.y - tgt.pos.y > 1.5) continue; // same floor
+        f.hitIds.add(tgt.id);
+        this.applyDamage(owner, tgt, f.damage);
+      }
+      return true;
+    });
+  }
+
+  /** Projectile impact: direct damage on the struck target, then AoE splash
+   *  (70% damage) on every other valid target inside aoeRadius — exploding
+   *  boss fireballs punish near-misses instead of whiffing past kiters. */
+  private endProjectile(p: Projectile, directHit: Entity | null): void {
+    this.broadcastNear(p.x, p.z, { t: "projHit", id: p.id, x: p.x, y: p.y, z: p.z });
+    const owner = this.entities.get(p.ownerId);
+    if (!owner) return;
+    if (directHit) {
+      this.applyDamage(owner, directHit, p.damage);
+      if (p.debuff) this.applyDebuff(directHit, p.debuff, owner);
+    }
+    if (p.aoeRadius > 0) {
+      const splash = Math.max(1, Math.round(p.damage * 0.7));
+      for (const tgt of this.targetsOf(owner)) {
+        if (tgt === directHit) continue;
+        const d = Math.hypot(tgt.pos.x - p.x, tgt.pos.z - p.z);
+        if (d > p.aoeRadius) continue;
+        if (Math.abs(tgt.pos.y + 0.9 - p.y) > 3) continue; // roughly the same floor
+        this.applyDamage(owner, tgt, splash);
+        if (p.debuff) this.applyDebuff(tgt, p.debuff, owner);
+      }
+    }
   }
 
   private removeEntity(id: number): void {

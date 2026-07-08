@@ -50,7 +50,8 @@ export declare class ShardManager {
     /** Open a room on a shard, passing its last persisted snapshot (if any).
      *  Ephemeral rooms always start fresh. */
     private openRoomOn;
-    /** Tell every shard (→ every RoomHost) a destination went up or down. */
+    /** Tell every shard (→ every RoomHost) a destination went up or down.
+     *  Closed rooms on a reset timer carry the countdown for portal labels. */
     private broadcastRoomStatus;
     private pickShard;
     /** Drop a dead shard: mark its rooms down and reassign them. */

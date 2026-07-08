@@ -57,6 +57,9 @@ export declare class RoomSim {
     private byCharacterId;
     private spawners;
     private projectiles;
+    /** live fire-pillar hazards (kind:"pillars" abilities): each ignites at
+     *  igniteAt and damages every valid target once during its short window */
+    private firePillars;
     private pendingRemovals;
     /** per-mob damage contributions for XP/loot ownership (mob id → char id → dmg) */
     private damageLog;
@@ -80,6 +83,9 @@ export declare class RoomSim {
     onExpireRequest: ((sec: number) => void) | null;
     /** destination-room availability (sealed dungeon portals) */
     private roomStatus;
+    /** closed destinations on a reset timer: roomId → ms epoch of the reopen
+     *  (portals show players the countdown) */
+    private roomReopenAt;
     /** portal ids sealed by an event gate (boss still alive); combined with
      *  roomStatus — a portal is open only when BOTH say open */
     private eventSealed;
@@ -151,8 +157,11 @@ export declare class RoomSim {
     /** A portal is open only when its destination room is up AND no boss
      *  event holds it sealed. */
     private portalOpen;
+    /** Seconds until a closed destination reopens (undefined = no known timer,
+     *  e.g. boss-guarded seals). Clients count down locally from receipt. */
+    private reopenInSecOf;
     private broadcastPortalState;
-    setRoomStatus(roomId: string, open: boolean): void;
+    setRoomStatus(roomId: string, open: boolean, reopenInSec?: number): void;
     portalsWire(): PortalWire[];
     private randInt;
     /** 0..1, wraps; 0.25 sunrise, 0.5 noon, 0.75 sunset. */
@@ -211,6 +220,12 @@ export declare class RoomSim {
      *  a bow's minRange, target up a ledge, reloading while a melee option
      *  exists) — the tick advances the mob instead. */
     private mobAttack;
+    /** Tracked horizontal velocity for prediction — zero once move packets go
+     *  quiet, clamped so a burst packet can't fake super-speed. */
+    private velocityOf;
+    /** Two-pass linear intercept: where to aim so a projectile at `speed`
+     *  meets the target's current velocity. */
+    private interceptPoint;
     private resolveMeleeHit;
     /** Which entities this attacker can damage. Player-vs-player needs BOTH
      *  inside a PvP zone (room flag or flagged region). */
@@ -275,6 +290,14 @@ export declare class RoomSim {
     /** Simulation tick (10 Hz): FSMs, brains, projectiles, regen, respawns. */
     tick(): void;
     private tickProjectiles;
+    /** Fire pillars: ignited hazards damage every valid target once inside
+     *  their radius during the ignite window (walking through mid-burn still
+     *  burns — kiters can't thread a marching line for free). */
+    private tickFirePillars;
+    /** Projectile impact: direct damage on the struck target, then AoE splash
+     *  (70% damage) on every other valid target inside aoeRadius — exploding
+     *  boss fireballs punish near-misses instead of whiffing past kiters. */
+    private endProjectile;
     private removeEntity;
     /** Snapshot broadcast (12 Hz): per-viewer enter/leave + exact field deltas. */
     snapshot(): void;

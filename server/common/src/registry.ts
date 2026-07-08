@@ -47,7 +47,7 @@ export const ItemDefSchema = z.object({
 export type ItemDef = z.infer<typeof ItemDefSchema>;
 
 export const AbilityDefSchema = z.object({
-  kind: z.enum(["melee", "projectile", "self"]),
+  kind: z.enum(["melee", "projectile", "self", "pillars"]),
   // melee/bow path: windup -> active -> recover. spell path: cast -> recover.
   windupMs: z.number().int().optional(),
   activeMs: z.number().int().optional(),
@@ -57,6 +57,29 @@ export const AbilityDefSchema = z.object({
   arcDeg: z.number().optional(), // melee cone width
   projSpeed: z.number().optional(),
   maxRange: z.number().optional(), // projectile lifetime range
+  /** projectile leads the target's tracked velocity (boss anti-kite) */
+  predictive: z.boolean().optional(),
+  /** projectile splash: targets within this radius of the impact take 70%
+   *  damage (the direct hit takes full) */
+  aoeRadius: z.number().optional(),
+  /** flipbook played at the impact point (e.g. "explosion") — the client
+   *  also keys its impact sound off this */
+  impactFx: z.string().optional(),
+  /** render size multiplier for the projectile decal (big boss fireball) */
+  projScale: z.number().optional(),
+  /** kind:"pillars" — a staggered line of fire pillars marches from the
+   *  caster THROUGH the target's predicted position; each pillar telegraphs
+   *  (delayMs on the wire), ignites, and burns anyone inside its radius
+   *  during a short damage window. The classic anti-kite ground hazard. */
+  pillars: z
+    .object({
+      count: z.number().int().positive(),
+      spacing: z.number().positive(),
+      radius: z.number().positive(),
+      staggerMs: z.number().int().nonnegative().default(160),
+      burnMs: z.number().int().positive().default(1500),
+    })
+    .optional(),
   damage: z.number().optional(), // fallback when no item/mob damage applies
   heal: z.number().optional(),
   /** on-hit debuff: slowPct = frost-style move slow, dotTotal = poison-style

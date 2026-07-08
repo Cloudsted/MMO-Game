@@ -28,6 +28,9 @@ export interface Combat {
     aimPitch: number;
     /** held item's speed roll scaling the current ability's timings (1 = base) */
     speedMult: number;
+    /** entity id the current ability was started against (mobs) — predictive
+     *  projectiles and pillar lines re-aim at this target at RELEASE */
+    lastTargetId?: number;
     cooldowns: Map<string, number>;
     lastDamagedAt: number;
     slowPct: number;
@@ -70,6 +73,16 @@ export interface MobBrain {
     } | null;
     /** entity id of the boss that summoned this mob (caps live minions) */
     summonerId?: number;
+    /** stuck-recovery waypoints from the local BFS (pathfindWaypoints) —
+     *  followed head-first while chasing; cleared on arrival/invalidations */
+    path?: Array<{
+        x: number;
+        z: number;
+    }>;
+    /** consecutive ticks a purposeful move made no progress */
+    stuckTicks?: number;
+    /** distance to the goal last tick (progress detection for stuckTicks) */
+    lastGoalD?: number;
 }
 /** A dropped loot bag in the world. */
 export interface LootBag {
@@ -85,6 +98,12 @@ export interface Entity {
     pos: Position;
     /** vertical velocity while airborne (mob gravity — see applyGravity) */
     vy?: number;
+    /** smoothed horizontal velocity (m/s), tracked from accepted move packets —
+     *  predictive boss projectiles lead this (anti-kite) */
+    velX?: number;
+    velZ?: number;
+    /** ms epoch of the last accepted move (velocity dt) */
+    lastMoveAt?: number;
     renderable: Renderable;
     level?: number;
     health?: Health;

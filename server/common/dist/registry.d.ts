@@ -10,13 +10,13 @@ export declare const RaritySchema: z.ZodObject<{
     color: z.ZodString;
     weight: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    weight: number;
     mult: number;
     color: string;
+    weight: number;
 }, {
-    weight: number;
     mult: number;
     color: string;
+    weight: number;
 }>;
 export type RarityDef = z.infer<typeof RaritySchema>;
 export declare const ItemDefSchema: z.ZodObject<{
@@ -55,8 +55,8 @@ export declare const ItemDefSchema: z.ZodObject<{
     }>>;
 }, "strip", z.ZodTypeAny, {
     value: number;
-    kind: "building" | "weapon" | "consumable" | "trophy" | "misc";
     name: string;
+    kind: "weapon" | "consumable" | "building" | "trophy" | "misc";
     stack: number;
     icon: [number, number];
     ability?: string | undefined;
@@ -73,8 +73,8 @@ export declare const ItemDefSchema: z.ZodObject<{
     } | undefined;
 }, {
     value: number;
-    kind: "building" | "weapon" | "consumable" | "trophy" | "misc";
     name: string;
+    kind: "weapon" | "consumable" | "building" | "trophy" | "misc";
     stack: number;
     icon: [number, number];
     ability?: string | undefined;
@@ -92,7 +92,7 @@ export declare const ItemDefSchema: z.ZodObject<{
 }>;
 export type ItemDef = z.infer<typeof ItemDefSchema>;
 export declare const AbilityDefSchema: z.ZodObject<{
-    kind: z.ZodEnum<["melee", "projectile", "self"]>;
+    kind: z.ZodEnum<["melee", "projectile", "self", "pillars"]>;
     windupMs: z.ZodOptional<z.ZodNumber>;
     activeMs: z.ZodOptional<z.ZodNumber>;
     castTimeMs: z.ZodOptional<z.ZodNumber>;
@@ -101,6 +101,39 @@ export declare const AbilityDefSchema: z.ZodObject<{
     arcDeg: z.ZodOptional<z.ZodNumber>;
     projSpeed: z.ZodOptional<z.ZodNumber>;
     maxRange: z.ZodOptional<z.ZodNumber>;
+    /** projectile leads the target's tracked velocity (boss anti-kite) */
+    predictive: z.ZodOptional<z.ZodBoolean>;
+    /** projectile splash: targets within this radius of the impact take 70%
+     *  damage (the direct hit takes full) */
+    aoeRadius: z.ZodOptional<z.ZodNumber>;
+    /** flipbook played at the impact point (e.g. "explosion") — the client
+     *  also keys its impact sound off this */
+    impactFx: z.ZodOptional<z.ZodString>;
+    /** render size multiplier for the projectile decal (big boss fireball) */
+    projScale: z.ZodOptional<z.ZodNumber>;
+    /** kind:"pillars" — a staggered line of fire pillars marches from the
+     *  caster THROUGH the target's predicted position; each pillar telegraphs
+     *  (delayMs on the wire), ignites, and burns anyone inside its radius
+     *  during a short damage window. The classic anti-kite ground hazard. */
+    pillars: z.ZodOptional<z.ZodObject<{
+        count: z.ZodNumber;
+        spacing: z.ZodNumber;
+        radius: z.ZodNumber;
+        staggerMs: z.ZodDefault<z.ZodNumber>;
+        burnMs: z.ZodDefault<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        count: number;
+        spacing: number;
+        radius: number;
+        staggerMs: number;
+        burnMs: number;
+    }, {
+        count: number;
+        spacing: number;
+        radius: number;
+        staggerMs?: number | undefined;
+        burnMs?: number | undefined;
+    }>>;
     damage: z.ZodOptional<z.ZodNumber>;
     heal: z.ZodOptional<z.ZodNumber>;
     /** on-hit debuff: slowPct = frost-style move slow, dotTotal = poison-style
@@ -129,17 +162,17 @@ export declare const AbilityDefSchema: z.ZodObject<{
         /** flavor line broadcast to nearby players when the wave rises */
         text: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
-        mob: string;
         count: number;
         radius: number;
+        mob: string;
         cap: number;
         text?: string | undefined;
     }, {
-        mob: string;
         count: number;
+        mob: string;
         radius?: number | undefined;
-        text?: string | undefined;
         cap?: number | undefined;
+        text?: string | undefined;
     }>>;
     canMoveWhile: z.ZodBoolean;
     interruptible: z.ZodBoolean;
@@ -147,7 +180,7 @@ export declare const AbilityDefSchema: z.ZodObject<{
     manaCost: z.ZodNumber;
     fx: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    kind: "melee" | "projectile" | "self";
+    kind: "melee" | "projectile" | "self" | "pillars";
     recoverMs: number;
     canMoveWhile: boolean;
     interruptible: boolean;
@@ -156,6 +189,13 @@ export declare const AbilityDefSchema: z.ZodObject<{
     fx: string;
     damage?: number | undefined;
     heal?: number | undefined;
+    pillars?: {
+        count: number;
+        spacing: number;
+        radius: number;
+        staggerMs: number;
+        burnMs: number;
+    } | undefined;
     windupMs?: number | undefined;
     activeMs?: number | undefined;
     castTimeMs?: number | undefined;
@@ -163,20 +203,24 @@ export declare const AbilityDefSchema: z.ZodObject<{
     arcDeg?: number | undefined;
     projSpeed?: number | undefined;
     maxRange?: number | undefined;
+    predictive?: boolean | undefined;
+    aoeRadius?: number | undefined;
+    impactFx?: string | undefined;
+    projScale?: number | undefined;
     debuff?: {
         durMs: number;
         slowPct?: number | undefined;
         dotTotal?: number | undefined;
     } | undefined;
     summon?: {
-        mob: string;
         count: number;
         radius: number;
+        mob: string;
         cap: number;
         text?: string | undefined;
     } | undefined;
 }, {
-    kind: "melee" | "projectile" | "self";
+    kind: "melee" | "projectile" | "self" | "pillars";
     recoverMs: number;
     canMoveWhile: boolean;
     interruptible: boolean;
@@ -185,6 +229,13 @@ export declare const AbilityDefSchema: z.ZodObject<{
     fx: string;
     damage?: number | undefined;
     heal?: number | undefined;
+    pillars?: {
+        count: number;
+        spacing: number;
+        radius: number;
+        staggerMs?: number | undefined;
+        burnMs?: number | undefined;
+    } | undefined;
     windupMs?: number | undefined;
     activeMs?: number | undefined;
     castTimeMs?: number | undefined;
@@ -192,17 +243,21 @@ export declare const AbilityDefSchema: z.ZodObject<{
     arcDeg?: number | undefined;
     projSpeed?: number | undefined;
     maxRange?: number | undefined;
+    predictive?: boolean | undefined;
+    aoeRadius?: number | undefined;
+    impactFx?: string | undefined;
+    projScale?: number | undefined;
     debuff?: {
         durMs: number;
         slowPct?: number | undefined;
         dotTotal?: number | undefined;
     } | undefined;
     summon?: {
-        mob: string;
         count: number;
+        mob: string;
         radius?: number | undefined;
-        text?: string | undefined;
         cap?: number | undefined;
+        text?: string | undefined;
     } | undefined;
 }>;
 export type AbilityDef = z.infer<typeof AbilityDefSchema>;
@@ -283,8 +338,8 @@ export declare const MobDefSchema: z.ZodObject<{
     }>>;
 }, "strip", z.ZodTypeAny, {
     name: string;
-    sprite: string;
     damage: number;
+    sprite: string;
     level: number;
     hp: number;
     moveSpeed: number;
@@ -309,8 +364,8 @@ export declare const MobDefSchema: z.ZodObject<{
     } | undefined;
 }, {
     name: string;
-    sprite: string;
     damage: number;
+    sprite: string;
     level: number;
     hp: number;
     moveSpeed: number;

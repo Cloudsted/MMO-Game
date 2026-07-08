@@ -61,6 +61,12 @@ export interface Projectile {
     startZ: number;
     maxRangeSq: number;
     dieAt: number;
+    /** splash radius at the impact point (0 = direct hit only) */
+    aoeRadius: number;
+    /** impact flipbook for the wire (explosion) */
+    impactFx: string | null;
+    /** render scale for the wire (big boss fireball) */
+    scale: number;
 }
 export declare function allocProjId(): number;
 export declare function makeProjectile(owner: Entity, ability: AbilityDef, damage: number, now: number): Projectile;

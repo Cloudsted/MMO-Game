@@ -4,7 +4,7 @@
  * only through intents: "move toward X", "use ability at Y". That seam is
  * where behavior trees swap in later.
  */
-import type { AbilityDef, MobDef, SpawnTable } from "@fantasy-mmo/common";
+import { isSolidBlock, type AbilityDef, type MobDef, type SpawnTable } from "@fantasy-mmo/common";
 import type { Entity } from "./entities.js";
 import type { VoxelWorld } from "./voxel.js";
 
@@ -101,7 +101,7 @@ export function chooseAttack(
     if (o.ability.kind === "melee") {
       if (d > (o.ability.range ?? 2) + meleeGrace || dy > meleeReachY) continue;
       meleeInRange = true;
-    } else if (o.ability.kind === "projectile") {
+    } else if (o.ability.kind === "projectile" || o.ability.kind === "pillars") {
       if (d > attackRange) continue;
     }
     inRange = true;
@@ -414,6 +414,93 @@ export function separateEntities(
     e.pos.z = nz;
     e.pos.y = ny;
   }
+}
+
+// ---------- stuck recovery: bounded local pathfinding ----------
+
+const PATH_RADIUS = 24; // cells the BFS may wander from the start
+const PATH_NODE_CAP = 900;
+/** ~this many ticks of zero progress trigger a path computation */
+export const STUCK_TICKS_FOR_PATH = 4;
+
+/**
+ * Bounded BFS over the walkable floor grid (solid below, 2 of headroom,
+ * step up ≤1, drop ≤2.5, liquid only when wading) from the mob toward a
+ * goal column. Deflection steering handles the open field; this recovers
+ * CONCAVE traps — the throne a boss spawns behind, building shells, wall
+ * corners. Returns coarse waypoints (every 2nd cell, cell centers), routed
+ * to the goal or, when the goal is unreachable, to the explored cell
+ * closest to it. Null when even that is no better than standing still.
+ */
+export function pathfindWaypoints(
+  world: VoxelWorld,
+  from: { x: number; y: number; z: number },
+  to: { x: number; z: number },
+  wade: boolean
+): Array<{ x: number; z: number }> | null {
+  const sx = Math.floor(from.x);
+  const sz = Math.floor(from.z);
+  const tx = Math.floor(to.x);
+  const tz = Math.floor(to.z);
+  const key = (x: number, z: number) => x * 4096 + z;
+  const feet = new Map<number, number>();
+  const parent = new Map<number, number>();
+  const startY = world.walkYNear(from.x, from.z, from.y);
+  feet.set(key(sx, sz), startY);
+  const queue: Array<[number, number, number]> = [[sx, sz, startY]];
+  let bestKey = key(sx, sz);
+  let bestD = Math.hypot(sx - tx, sz - tz);
+  let found = false;
+  for (let head = 0; head < queue.length && head < PATH_NODE_CAP; head++) {
+    const [x, z, y] = queue[head]!;
+    const dGoal = Math.hypot(x - tx, z - tz);
+    if (dGoal < bestD) {
+      bestD = dGoal;
+      bestKey = key(x, z);
+    }
+    if (x === tx && z === tz) {
+      found = true;
+      bestKey = key(x, z);
+      break;
+    }
+    for (const [dx, dz] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const) {
+      const nx = x + dx;
+      const nz = z + dz;
+      if (Math.abs(nx - sx) > PATH_RADIUS || Math.abs(nz - sz) > PATH_RADIUS) continue;
+      const k = key(nx, nz);
+      if (feet.has(k)) continue;
+      const ny = world.walkYNear(nx + 0.5, nz + 0.5, y);
+      if (ny - y > 1.05 || y - ny > 2.5) continue; // step/drop limits
+      // walkYNear falls back to standY on gapless columns — verify the gap
+      if (isSolidBlock(world.get(nx, ny, nz)) || isSolidBlock(world.get(nx, ny + 1, nz))) continue;
+      if (!isSolidBlock(world.get(nx, ny - 1, nz))) continue;
+      if (!wade && world.liquidAt(nx + 0.5, ny + 0.1, nz + 0.5)) continue;
+      feet.set(k, ny);
+      parent.set(k, key(x, z));
+      queue.push([nx, nz, ny]);
+    }
+  }
+  // reconstruct from goal (or the closest explored cell)
+  if (!found && bestD >= Math.hypot(sx - tx, sz - tz) - 1.5) return null; // no real improvement
+  const cells: Array<{ x: number; z: number }> = [];
+  let cur: number | undefined = bestKey;
+  while (cur !== undefined && cur !== key(sx, sz)) {
+    cells.push({ x: Math.floor(cur / 4096) + 0.5, z: (cur % 4096) + 0.5 });
+    cur = parent.get(cur);
+  }
+  cells.reverse();
+  if (cells.length === 0) return null;
+  // coarse waypoints: every 2nd cell, always keeping the final one
+  const out: Array<{ x: number; z: number }> = [];
+  for (let i = 0; i < cells.length; i++) {
+    if (i % 2 === 1 || i === cells.length - 1) out.push(cells[i]!);
+  }
+  return out.length ? out : null;
 }
 
 /** Find a legal spawn point in a spawn region (dry, unobstructed, ON THE

@@ -155,6 +155,12 @@ export interface Projectile {
   startZ: number;
   maxRangeSq: number;
   dieAt: number;
+  /** splash radius at the impact point (0 = direct hit only) */
+  aoeRadius: number;
+  /** impact flipbook for the wire (explosion) */
+  impactFx: string | null;
+  /** render scale for the wire (big boss fireball) */
+  scale: number;
 }
 
 let nextProjId = 1;
@@ -193,6 +199,9 @@ export function makeProjectile(
     startZ: z,
     maxRangeSq: maxRange * maxRange,
     dieAt: now + (maxRange / speed) * 1000 + 250,
+    aoeRadius: ability.aoeRadius ?? 0,
+    impactFx: ability.impactFx ?? null,
+    scale: ability.projScale ?? 1,
   };
 }
 

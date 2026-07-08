@@ -978,11 +978,15 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
     b.paintCircle(x, z, 1.8, "ash");
     b.fill(x, FL, z, x, FL + h - 1, z, "charred_log");
   };
-  // roofless war-gutted house: aged shell, bitten walls, one collapsed
-  // corner spilling rubble, charred beams, ash-and-debris floor
+  // war-gutted house: aged shell (some two-story), windows, one collapsed
+  // corner spilling rubble, charred beams / partial roofs, debris floors.
+  // v2 after owner feedback — the h3 fully-bitten shells read as "simple
+  // pillars"; these keep enough wall to read as BUILDINGS that died.
   const ruinedHouse = (x0: number, z0: number, w: number, d: number, doorSide: "n" | "s" | "e" | "w"): void => {
     const x1 = x0 + w - 1;
     const z1 = z0 + d - 1;
+    const tall = hash2(seed ^ 0xf600, x0, z0) < 0.4; // two-story shell
+    const wallH = tall ? 7 : 4;
     b.clearAbove(x0 - 1, z0 - 1, x1 + 1, z1 + 1, G);
     // floor: scorched boards and ash
     for (let z = z0; z <= z1; z++) {
@@ -991,18 +995,23 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
         b.set(x, G, z, r < 0.35 ? "ash" : r < 0.5 ? "path" : "planks");
       }
     }
-    // walls (bitten tops, cracked faces)
-    const wallH = 3;
-    for (let x = x0; x <= x1; x++) {
-      for (const z of [z0, z1]) {
-        const bite = Math.floor(hash2(seed ^ 0xf200, x, z) * 3);
-        for (let y = FL; y <= FL + wallH - 1 - bite; y++) aged(x, y, z);
-      }
-    }
-    for (let z = z0 + 1; z <= z1 - 1; z++) {
-      for (const x of [x0, x1]) {
-        const bite = Math.floor(hash2(seed ^ 0xf200, x, z) * 3);
-        for (let y = FL; y <= FL + wallH - 1 - bite; y++) aged(x, y, z);
+    // walls: over half the columns keep FULL height; the rest lose 1-3
+    const wallCol = (x: number, z: number): void => {
+      const r = hash2(seed ^ 0xf200, x, z);
+      const bite = r < 0.55 ? 0 : 1 + Math.floor((r - 0.55) * (tall ? 6 : 4.4));
+      for (let y = FL; y <= FL + wallH - 1 - bite; y++) aged(x, y, z);
+      // window holes at eye level on surviving walls
+      if (bite === 0 && (x + z) % 3 === 0) b.set(x, FL + 1, z, 0);
+      if (tall && bite === 0 && (x + z) % 3 === 1) b.set(x, FL + 4, z, 0);
+    };
+    for (let x = x0; x <= x1; x++) for (const z of [z0, z1]) wallCol(x, z);
+    for (let z = z0 + 1; z <= z1 - 1; z++) for (const x of [x0, x1]) wallCol(x, z);
+    // two-story shells keep a broken upper floor (plank slab with a hole)
+    if (tall) {
+      for (let z = z0 + 1; z <= z1 - 1; z++) {
+        for (let x = x0 + 1; x <= x1 - 1; x++) {
+          if (hash2(seed ^ 0xf700, x, z) < 0.55) b.set(x, FL + 3, z, "planks");
+        }
       }
     }
     // door: full-height gap (the standing-height rule bots path by)
@@ -1016,13 +1025,67 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
     const [cx, cz] = corner === 0 ? [x0, z0] : corner === 1 ? [x1, z0] : corner === 2 ? [x0, z1] : [x1, z1];
     b.fill(cx - 1, FL, cz - 1, cx + 1, FL + wallH, cz + 1, 0);
     rubbleMound(cx, cz, 1, FL);
-    // charred roof beams that survived the fire
+    // roof: squat houses keep a charred half-roof, tall shells bare beams
     for (let x = x0 + 1; x < x1; x += 2) {
-      if (hash2(seed ^ 0xf400, x, z0) < 0.45) b.fill(x, FL + wallH, z0 + 1, x, FL + wallH, z1 - 1, "charred_log");
+      if (hash2(seed ^ 0xf400, x, z0) < 0.55) b.fill(x, FL + wallH, z0 + 1, x, FL + wallH, z1 - 1, "charred_log");
+    }
+    if (!tall && hash2(seed ^ 0xf401, x0, z0) < 0.45) {
+      for (let z = z0; z <= mz; z++) {
+        for (let x = x0; x <= x1; x++) {
+          if (hash2(seed ^ 0xf402, x, z) < 0.75) b.set(x, FL + wallH, z, "thatch");
+        }
+      }
     }
     // interior wreckage
     if (hash2(seed ^ 0xf500, x0, z1) < 0.6) b.set(mx - 1, FL, mz, "rubble");
     if (hash2(seed ^ 0xf501, x0, z1) < 0.35) b.set(mx + 1, FL, mz + 1, "hay");
+  };
+
+  // grand civic ruin: a big stone shell with arched window rows, interior
+  // colonnade, collapsed corner, and charred rafters — the buildings that
+  // made Valdrenn a CITY (guild hall, garrison hall, granary)
+  const grandRuin = (x0: number, z0: number, w: number, d: number): void => {
+    const x1 = x0 + w - 1;
+    const z1 = z0 + d - 1;
+    const wallH = 7;
+    b.clearAbove(x0 - 1, z0 - 1, x1 + 1, z1 + 1, G, 16);
+    for (let z = z0; z <= z1; z++) {
+      for (let x = x0; x <= x1; x++) {
+        const r = hash2(seed ^ 0xf7f1, x, z);
+        b.set(x, G, z, r < 0.3 ? "path" : "stone_bricks");
+      }
+    }
+    const wallCol = (x: number, z: number): void => {
+      const r = hash2(seed ^ 0xf800, x, z);
+      const bite = r < 0.6 ? 0 : 1 + Math.floor((r - 0.6) * 10);
+      for (let y = FL; y <= FL + wallH - 1 - bite; y++) aged(x, y, z);
+      // tall arched window slots on surviving runs
+      if (bite === 0 && (x + z) % 4 === 0) {
+        b.set(x, FL + 2, z, 0);
+        b.set(x, FL + 3, z, 0);
+      }
+    };
+    for (let x = x0; x <= x1; x++) for (const z of [z0, z1]) wallCol(x, z);
+    for (let z = z0 + 1; z <= z1 - 1; z++) for (const x of [x0, x1]) wallCol(x, z);
+    // grand doorway (3 wide) on the south face
+    const mx = Math.floor((x0 + x1) / 2);
+    b.fill(mx - 1, FL, z1, mx + 1, FL + 3, z1, 0);
+    // interior colonnade, some columns toppled
+    for (let cx = x0 + 3; cx <= x1 - 3; cx += 4) {
+      for (const cz of [z0 + 3, z1 - 3]) {
+        const h = hash2(seed ^ 0xf900, cx, cz) < 0.6 ? wallH - 1 : 2;
+        b.fill(cx, FL, cz, cx, FL + h - 1, cz, "stone_bricks");
+        if (h === 2) rubbleMound(cx + 1, cz, 1, FL);
+      }
+    }
+    // collapsed NE corner + charred rafters
+    b.fill(x1 - 2, FL, z0, x1, FL + wallH, z0 + 2, 0);
+    rubbleMound(x1 - 1, z0 + 1, 2, FL);
+    for (let x = x0 + 2; x < x1 - 2; x += 3) {
+      if (hash2(seed ^ 0xfa00, x, z0) < 0.6) b.fill(x, FL + wallH - 1, z0 + 1, x, FL + wallH - 1, z1 - 1, "charred_log");
+    }
+    b.set(mx, FL + 3, z0 + 1, "banner");
+    b.set(x0 + 1, FL + 3, Math.floor((z0 + z1) / 2), "lantern");
   };
 
   // ---- ground: districts get their own war-worn paving ----
@@ -1234,6 +1297,22 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
   }
   // ceiling (stone — a keep never wears a wooden roof) + corner towers
   b.fill(KEEP.x0, PFL + 12, KEEP.z0, KEEP.x1, PFL + 12, KEEP.z1, "stone_bricks");
+  // war-torn ceiling BREACHES: the siege tore the roof open in three places —
+  // perpetual-sunset skylight pours into the hall in shafts (the owner's
+  // "insanely dark" fix that also tells the story)
+  for (const [hx, hz, hr] of [
+    [112, 50, 2.6],
+    [144, 62, 3.1],
+    [128, 47, 2.2],
+  ] as const) {
+    for (let z = Math.floor(hz - hr - 1); z <= Math.ceil(hz + hr + 1); z++) {
+      for (let x = Math.floor(hx - hr - 1); x <= Math.ceil(hx + hr + 1); x++) {
+        const d = Math.hypot(x - hx, z - hz);
+        if (d <= hr + (hash2(seed ^ 0xce11, x, z) - 0.5) * 1.2) b.set(x, PFL + 12, z, 0);
+        else if (d <= hr + 1.4 && hash2(seed ^ 0xce12, x, z) < 0.3) b.set(x, PFL + 12, z, "cracked_bricks");
+      }
+    }
+  }
   for (const [tx, tz] of [
     [KEEP.x0, KEEP.z0],
     [KEEP.x1, KEEP.z0],
@@ -1263,14 +1342,20 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
       b.fill(wx, PFL + 3, z, wx, PFL + 4, z + 1, "stained_glass");
     }
   }
-  // colonnade: marble columns carrying banners and lanterns
+  // colonnade: marble columns — every column carries a lantern (the court's
+  // lamplighters never stopped) with banners above on the hall side
   for (const cx of [112, 144] as const) {
     for (const cz of [44, 50, 56, 62, 68] as const) {
       b.fill(cx, PFL, cz, cx, PFL + 11, cz, "marble");
       const aisle = cx === 112 ? cx + 1 : cx - 1;
-      if (cz % 12 === 8) b.set(aisle, PFL + 3, cz, "lantern");
-      else b.set(aisle, PFL + 2, cz, "banner");
+      b.set(aisle, PFL + 3, cz, "lantern");
+      b.set(aisle, PFL + 5, cz, "banner");
     }
+  }
+  // wall sconces: torch pools along both hall walls
+  for (const sz of [42, 50, 58, 66] as const) {
+    b.torch(KEEP.x0 + 1, PFL + 3, sz);
+    b.torch(KEEP.x1 - 1, PFL + 3, sz);
   }
   // the royal carpet: door → dais
   for (let z = 46; z <= KEEP.z1 - 1; z++) {
@@ -1300,6 +1385,16 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
     b.set(bx, PFL, 46, "dark_bricks");
     b.set(bx, PFL + 1, 46, "ember_crystal");
   }
+  // two more brazier pairs light the nave's length
+  for (const [bx, bz] of [
+    [120, 56],
+    [136, 56],
+    [120, 66],
+    [136, 66],
+  ] as const) {
+    b.set(bx, PFL, bz, "dark_bricks");
+    b.set(bx, PFL + 1, bz, "ember_crystal");
+  }
   // treasury (west wing): gold heaped behind a forced partition
   for (let z = KEEP.z0 + 1; z <= 50; z++) {
     for (let y = PFL; y <= PFL + 5; y++) {
@@ -1321,6 +1416,7 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
     for (let y = 0; y < h; y++) b.set(gx, PFL + y, gz, "gold_block");
   }
   b.set(106, PFL, 47, "rubble"); // the looters got this far and no further
+  b.set(100, PFL + 3, 44, "lantern");
   features.caches.push({ x: 102.5, y: PFL, z: 41.5, table: "cache_royal", respawnSec: 900 });
   // barracks (east wing): the Oathbound's last muster
   for (let z = KEEP.z0 + 1; z <= 50; z++) {
@@ -1342,6 +1438,7 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
   b.set(157, PFL, 48, "iron_bars"); // arms racks
   b.set(157, PFL, 47, "iron_bars");
   b.set(149, PFL, 48, "hay");
+  b.set(156, PFL + 3, 44, "lantern");
 
   // ---- west market quarter: burned stalls, the marauders squatting it ----
   for (let z = 168; z <= 190; z++) {
@@ -1439,6 +1536,39 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
   ruinedHouse(96, 160, 7, 6, "e");
   ruinedHouse(96, 172, 7, 6, "e");
   ruinedHouse(108, 190, 7, 6, "n");
+
+  // ---- avenue frontage: the processional was a STREET, not a field —
+  // house rows face it on both sides so the approach reads as a city canyon
+  for (const fz of [102, 116, 130, 156, 170, 184, 198] as const) {
+    ruinedHouse(114, fz, 7, 6, "e"); // west side, doors onto the avenue
+  }
+  for (const fz of [102, 116, 130, 168, 198] as const) {
+    ruinedHouse(135, fz, 7, 6, "w"); // east side (gaps where the old rows sit)
+  }
+  // guard houses flanking the castle stair
+  ruinedHouse(106, 98, 7, 6, "e");
+  ruinedHouse(143, 98, 7, 6, "w");
+  // grand civic ruins — the city's landmarks, dead
+  grandRuin(96, 136, 13, 11); // the Guild Hall, west of the avenue
+  grandRuin(150, 118, 14, 10); // the Garrison Hall, east
+  grandRuin(54, 154, 12, 10); // the Granary above the market
+
+  // ---- the broken approach: barricades bend the processional into an
+  // S-curve (rubble-and-stake walls with offset gaps — no straight sprint
+  // from the gate to the King)
+  const barricade = (bx0: number, bx1: number, bz: number): void => {
+    for (let x = bx0; x <= bx1; x++) {
+      for (let z = bz; z <= bz + 1; z++) {
+        const h = 2 + (hash2(seed ^ 0xbb01, x, z) < 0.4 ? 1 : 0);
+        b.fill(x, FL, z, x, FL + h - 1, z, hash2(seed ^ 0xbb02, x, z) < 0.6 ? "rubble" : "palisade");
+      }
+    }
+  };
+  barricade(124, 128, 140); // gap on the EAST side (x129-132)
+  barricade(129, 133, 118); // gap on the WEST side (x121-128)
+  // a house collapsed INTO the road mid-avenue: squeeze past the fan
+  rubbleMound(133, 189, 2, FL);
+  b.fill(131, FL + 1, 188, 135, FL + 3, 190, 0); // keep it step-height on the road edge
 
   // ---- chapel + graveyard quarter (NE): where the city buried its dead ----
   const CH = { x0: 168, z0: 104, x1: 190, z1: 126 };

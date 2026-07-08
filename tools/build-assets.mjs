@@ -682,13 +682,27 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
     heal: { dir: "heal", prefix: "heal1", fps: 18 },
     hit: { dir: "impact", prefix: "impact1", fps: 24 },
     arrow: { dir: "arrow", prefix: "arrow1", fps: 24 },
+    // fire4_1..11 is the FIRE PILLAR (matches animationsheets/fire.png rows
+    // 4-6): frames 1-4 grow, 5-7 full-column loop, 8-11 dissipate. Split into
+    // three strips so the client can sequence start → loop×N → end.
+    fire_pillar_start: { dir: "fire", prefix: "fire4", fps: 16, range: [1, 4] },
+    fire_pillar_loop: { dir: "fire", prefix: "fire4", fps: 12, range: [5, 7] },
+    fire_pillar_end: { dir: "fire", prefix: "fire4", fps: 16, range: [8, 11] },
+    // explosion1_1..10: the complete burst arc (grow → peak → fade)
+    explosion: { dir: "explosion", prefix: "explosion1", fps: 20 },
   };
   const manifest = {};
   for (const [key, spec] of Object.entries(FX)) {
     const dir = resolve(FX_DIR, spec.dir);
-    const files = readdirSync(dir)
+    let files = readdirSync(dir)
       .filter((f) => f.startsWith(spec.prefix + "_"))
       .sort((a, b) => parseInt(a.split("_")[1]) - parseInt(b.split("_")[1]));
+    if (spec.range) {
+      files = files.filter((f) => {
+        const n = parseInt(f.split("_")[1]);
+        return n >= spec.range[0] && n <= spec.range[1];
+      });
+    }
     if (files.length === 0) throw new Error(`fx ${key}: no frames for ${spec.prefix}`);
     const frames = files.map((f) => loadPng(resolve(dir, f)));
     const fw = frames[0].width, fh = frames[0].height;

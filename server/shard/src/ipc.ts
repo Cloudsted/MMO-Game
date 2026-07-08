@@ -7,7 +7,7 @@ export type HostToRoom =
   | { t: "transferGrant"; characterId: string; targetRoomId: string; wsUrl: string; ticket: string }
   | { t: "transferDeny"; characterId: string; reason: string }
   | { t: "globalChat"; from: string; text: string }
-  | { t: "roomStatus"; roomId: string; open: boolean }
+  | { t: "roomStatus"; roomId: string; open: boolean; reopenInSec?: number }
   | { t: "kick"; characterId: string; reason: string }
   | { t: "adminMove"; characterId: string; targetRoomId: string; x?: number; z?: number }
   | { t: "requestMap" }

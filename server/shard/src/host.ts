@@ -58,7 +58,9 @@ class ShardHost {
   private log;
   private ws: WebSocket | null = null;
   private rooms = new Map<string, RoomProc>();
-  private roomStatuses = new Map<string, boolean>(); // latest from the master
+  /** latest availability from the master; closed rooms may carry the ms
+   *  epoch they reopen at (forwards recompute the remaining seconds) */
+  private roomStatuses = new Map<string, { open: boolean; reopenAtMs?: number }>();
   private nextPortOffset = 0;
   private stopping = false;
 
@@ -161,9 +163,17 @@ class ShardHost {
         }
         break;
       case "roomStatus":
-        this.roomStatuses.set(msg.roomId, msg.open);
+        this.roomStatuses.set(msg.roomId, {
+          open: msg.open,
+          reopenAtMs: msg.reopenInSec !== undefined ? Date.now() + msg.reopenInSec * 1000 : undefined,
+        });
         for (const room of this.rooms.values()) {
-          this.sendToRoom(room, { t: "roomStatus", roomId: msg.roomId, open: msg.open });
+          this.sendToRoom(room, {
+            t: "roomStatus",
+            roomId: msg.roomId,
+            open: msg.open,
+            ...(msg.reopenInSec !== undefined ? { reopenInSec: msg.reopenInSec } : {}),
+          });
         }
         break;
       case "kick": {
@@ -234,8 +244,17 @@ class ShardHost {
         this.log.info(`room ${room.roomId} ready on port ${msg.port}`);
         this.send({ t: "roomOpened", roomId: room.roomId, port: msg.port });
         // late-opening rooms still need the current availability picture
-        for (const [roomId, open] of this.roomStatuses) {
-          this.sendToRoom(room, { t: "roomStatus", roomId, open });
+        for (const [roomId, st] of this.roomStatuses) {
+          const remain =
+            st.reopenAtMs !== undefined && st.reopenAtMs > Date.now()
+              ? Math.ceil((st.reopenAtMs - Date.now()) / 1000)
+              : undefined;
+          this.sendToRoom(room, {
+            t: "roomStatus",
+            roomId,
+            open: st.open,
+            ...(remain !== undefined ? { reopenInSec: remain } : {}),
+          });
         }
         break;
       case "stats":

@@ -47,6 +47,17 @@ public class FxSystem {
         float ttl;
         float t = 0;
         Decal decal;
+        String impactFx; // flipbook at the hit point (null = generic "hit")
+    }
+
+    /** Ground fire pillar: telegraph → start anim → loop → end anim. */
+    private static class Pillar {
+        final Vector3 pos = new Vector3(); // base (feet level)
+        float t = 0;
+        float delay; // telegraph seconds before ignition
+        float burn; // loop seconds after the start anim
+        Decal decal;
+        boolean ignitePlayed;
     }
 
     private static class Flame {
@@ -59,8 +70,11 @@ public class FxSystem {
     private final List<Playback> playing = new ArrayList<>();
     private final IntMap<Projectile> projectiles = new IntMap<>();
     private final List<Flame> flames = new ArrayList<>();
+    private final List<Pillar> pillars = new ArrayList<>();
     private float flameTime = 0;
     private final Vector3 tmp = new Vector3();
+    /** pillar bases that just ignited this frame (WorldScreen cues audio) */
+    public final List<Vector3> ignitedThisFrame = new ArrayList<>();
 
     public FxSystem() {
         JsonObject manifest = new Gson().fromJson(
@@ -107,7 +121,8 @@ public class FxSystem {
     }
 
     /** Server projectile spawn: dead-reckon until projHit or ttl. */
-    public void spawnProjectile(int id, String fx, float x, float y, float z, float vx, float vy, float vz, float ttlMs) {
+    public void spawnProjectile(int id, String fx, float x, float y, float z, float vx, float vy, float vz, float ttlMs,
+                                float scale, String impactFx) {
         Strip strip = strips.get(fx);
         if (strip == null) strip = strips.get("firebolt");
         if (strip == null) return;
@@ -117,17 +132,77 @@ public class FxSystem {
         p.pos.set(x, y, z);
         p.vel.set(vx, vy, vz);
         p.ttl = ttlMs / 1000f;
-        p.decal = Decal.newDecal(0.55f, 0.55f, strip.frames[0], true);
+        p.impactFx = impactFx;
+        p.decal = Decal.newDecal(0.55f * scale, 0.55f * scale, strip.frames[0], true);
         projectiles.put(id, p);
     }
 
-    /** Server says the projectile ended here: pop a hit flipbook. */
-    public void hitProjectile(int id, float x, float y, float z) {
-        projectiles.remove(id);
-        spawn("hit", x, y, z, 0.9f);
+    /** Server says the projectile ended here: pop its impact flipbook.
+     *  Returns the impact fx key so the caller can cue the matching sound. */
+    public String hitProjectile(int id, float x, float y, float z) {
+        Projectile p = projectiles.remove(id);
+        String impact = p != null ? p.impactFx : null;
+        if (impact != null) spawn(impact, x, y, z, 2.8f);
+        else spawn("hit", x, y, z, 0.9f);
+        return impact;
+    }
+
+    /** Server fire pillar: telegraph for delayMs, then start → loop(burnMs)
+     *  → end (fire4 strips). The decal billboards toward the camera like all
+     *  FX, so the pillar always faces the player. x/y/z is the BASE. */
+    public void spawnPillar(float x, float y, float z, float delayMs, float burnMs) {
+        Pillar p = new Pillar();
+        p.pos.set(x, y, z);
+        p.delay = delayMs / 1000f;
+        p.burn = burnMs / 1000f;
+        Strip s = strips.get("fire_pillar_loop");
+        if (s == null) return;
+        p.decal = Decal.newDecal(2.4f, 2.4f, s.frames[0], true);
+        pillars.add(p);
     }
 
     public void update(float dt, Camera cam, DecalBatch batch) {
+        ignitedThisFrame.clear();
+        // fire pillars: faint pulsing telegraph → start anim → loop → end
+        Strip pStart = strips.get("fire_pillar_start");
+        Strip pLoop = strips.get("fire_pillar_loop");
+        Strip pEnd = strips.get("fire_pillar_end");
+        if (pStart != null && pLoop != null && pEnd != null) {
+            float startLen = pStart.frames.length / pStart.fps;
+            float endLen = pEnd.frames.length / pEnd.fps;
+            Iterator<Pillar> pit = pillars.iterator();
+            while (pit.hasNext()) {
+                Pillar p = pit.next();
+                p.t += dt;
+                TextureRegion region;
+                float alpha = 1f;
+                if (p.t < p.delay) {
+                    // telegraph: the first wisp frame pulsing at the base
+                    region = pStart.frames[0];
+                    alpha = 0.45f + 0.25f * (float) Math.sin(p.t * 18f);
+                } else if (p.t < p.delay + startLen) {
+                    if (!p.ignitePlayed) {
+                        p.ignitePlayed = true;
+                        ignitedThisFrame.add(p.pos);
+                    }
+                    region = pStart.frames[Math.min(pStart.frames.length - 1, (int) ((p.t - p.delay) * pStart.fps))];
+                } else if (p.t < p.delay + startLen + p.burn) {
+                    region = pLoop.frames[(int) ((p.t - p.delay - startLen) * pLoop.fps) % pLoop.frames.length];
+                } else if (p.t < p.delay + startLen + p.burn + endLen) {
+                    region = pEnd.frames[Math.min(pEnd.frames.length - 1, (int) ((p.t - p.delay - startLen - p.burn) * pEnd.fps))];
+                } else {
+                    pit.remove();
+                    continue;
+                }
+                p.decal.setTextureRegion(region);
+                p.decal.setPosition(p.pos.x, p.pos.y + 1.2f, p.pos.z);
+                p.decal.setColor(1f, 1f, 1f, alpha);
+                tmp.set(cam.position.x, p.pos.y + 1.2f, cam.position.z);
+                p.decal.lookAt(tmp, Vector3.Y);
+                batch.add(p.decal);
+            }
+        }
+
         // torch flames: loop the fire strip, gentle flicker
         flameTime += dt;
         Strip fire = strips.get("firebolt");

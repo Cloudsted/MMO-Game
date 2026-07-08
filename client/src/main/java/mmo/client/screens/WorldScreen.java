@@ -108,6 +108,9 @@ public class WorldScreen extends ScreenAdapter {
     private final List<Portal> portals = new ArrayList<>();
     private final List<Decal> portalGlows = new ArrayList<>();
     private final java.util.Map<String, Boolean> portalOpen = new java.util.HashMap<>(); // by target room
+    /** closed destinations on a reset timer: target room → ms epoch it reopens
+     *  (labels count this down so players know when to come back) */
+    private final java.util.Map<String, Long> portalReopenAt = new java.util.HashMap<>();
     private float glowTime = 0;
 
     // regions (pvp zones) + block building state
@@ -403,6 +406,7 @@ public class WorldScreen extends ScreenAdapter {
                     portals.clear();
                     portalGlows.clear();
                     portalOpen.clear();
+                    portalReopenAt.clear();
                     for (JsonElement el : Protocol.arr(msg, "portals")) {
                         JsonObject p = el.getAsJsonObject();
                         Portal portal = new Portal(
@@ -411,11 +415,19 @@ public class WorldScreen extends ScreenAdapter {
                             p.get("x").getAsFloat(), p.get("z").getAsFloat(), p.get("r").getAsFloat());
                         portals.add(portal);
                         portalOpen.put(portal.target(), !p.has("open") || p.get("open").getAsBoolean());
+                        if (p.has("reopenInSec"))
+                            portalReopenAt.put(portal.target(), System.currentTimeMillis() + p.get("reopenInSec").getAsLong() * 1000);
                         Decal glow = Decal.newDecal(2.6f, 3.6f, radialRegion, true);
                         portalGlows.add(glow);
                     }
                 }
-                case "portalState" -> portalOpen.put(msg.get("target").getAsString(), msg.get("open").getAsBoolean());
+                case "portalState" -> {
+                    String target = msg.get("target").getAsString();
+                    portalOpen.put(target, msg.get("open").getAsBoolean());
+                    if (msg.has("reopenInSec"))
+                        portalReopenAt.put(target, System.currentTimeMillis() + msg.get("reopenInSec").getAsLong() * 1000);
+                    else portalReopenAt.remove(target);
+                }
                 case "snap" -> {
                     for (JsonElement el : Protocol.arr(msg, "enter")) addRemote(el.getAsJsonObject());
                     for (JsonElement el : Protocol.arr(msg, "ents")) {
@@ -478,16 +490,29 @@ public class WorldScreen extends ScreenAdapter {
                     fx.spawnProjectile(
                         msg.get("id").getAsInt(), pfx, px, py, pz,
                         msg.get("vx").getAsFloat(), msg.get("vy").getAsFloat(), msg.get("vz").getAsFloat(),
-                        msg.get("ttlMs").getAsFloat());
+                        msg.get("ttlMs").getAsFloat(),
+                        msg.has("scale") ? msg.get("scale").getAsFloat() : 1f,
+                        msg.has("impactFx") ? msg.get("impactFx").getAsString() : null);
                     game.audio.playAt(switch (pfx) {
                         case "arrow" -> "bow";
                         case "frost" -> "cast_ice";
                         default -> "cast_fire";
                     }, px, py, pz);
                 }
-                case "projHit" -> fx.hitProjectile(
-                    msg.get("id").getAsInt(),
-                    msg.get("x").getAsFloat(), msg.get("y").getAsFloat(), msg.get("z").getAsFloat());
+                case "projHit" -> {
+                    float hx = msg.get("x").getAsFloat(), hy = msg.get("y").getAsFloat(), hz = msg.get("z").getAsFloat();
+                    String impact = fx.hitProjectile(msg.get("id").getAsInt(), hx, hy, hz);
+                    if ("explosion".equals(impact)) game.audio.playAt("explosion_big", hx, hy, hz);
+                }
+                case "pillars" -> {
+                    float burnMs = msg.get("burnMs").getAsFloat();
+                    for (JsonElement el : Protocol.arr(msg, "list")) {
+                        JsonObject o = el.getAsJsonObject();
+                        fx.spawnPillar(
+                            o.get("x").getAsFloat(), o.get("y").getAsFloat(), o.get("z").getAsFloat(),
+                            o.get("delayMs").getAsFloat(), burnMs);
+                    }
+                }
                 case "debuff" -> {
                     if (msg.get("id").getAsInt() == selfId) {
                         slowPct = msg.get("slowPct").getAsFloat();
@@ -583,6 +608,12 @@ public class WorldScreen extends ScreenAdapter {
                         ui.addFloater(tmp, "+" + amount, new Color(0.35f, 1f, 0.4f, 1f), 1.05f);
                     }
                 }
+            }
+            case "summon" -> {
+                // a boss called reinforcements: the war-horn sells the moment
+                RemotePlayer rp = remotes.get(e.get("id").getAsInt());
+                if (rp != null) game.audio.playAt("king_summon", rp.pos.x, rp.pos.y + 1.4f, rp.pos.z);
+                else game.audio.play("king_summon");
             }
             case "xp" -> ui.addScreenFloater("+" + e.get("amount").getAsInt() + " XP", new Color(0.75f, 0.55f, 1f, 1f), 1.1f);
             case "levelup" -> {
@@ -1420,6 +1451,10 @@ public class WorldScreen extends ScreenAdapter {
         }
 
         fx.update(dt, cam, decalBatch);
+        // fire pillars that ignited this frame cue their whoosh
+        for (com.badlogic.gdx.math.Vector3 ig : fx.ignitedThisFrame) {
+            game.audio.playAt("fire_pillar", ig.x, ig.y + 1f, ig.z);
+        }
         // ambient particles: dust motes / fireflies / torch embers / leaves
         particles.update(dt, cam, voxels, dayNight.sunFactor, roomName, decalBatch);
         decalBatch.flush();
@@ -1577,7 +1612,21 @@ public class WorldScreen extends ScreenAdapter {
                 tmp.x /= uiScale;
                 tmp.y /= uiScale;
                 boolean open = portalOpen.getOrDefault(p.target(), true);
-                layout.setText(font, open ? p.label() : p.label() + "  (sealed)");
+                String text;
+                if (open) {
+                    text = p.label();
+                } else {
+                    // reset-timer destinations count down; boss seals stay "locked"
+                    Long reopenAt = portalReopenAt.get(p.target());
+                    long left = reopenAt != null ? reopenAt - System.currentTimeMillis() : 0;
+                    if (left > 0) {
+                        long s = left / 1000;
+                        text = p.label() + "  (locked - opens in " + (s / 60) + ":" + String.format("%02d", s % 60) + ")";
+                    } else {
+                        text = p.label() + "  (locked)";
+                    }
+                }
+                layout.setText(font, text);
                 if (open) font.setColor(0.55f, 0.9f, 1f, 1f);
                 else font.setColor(0.75f, 0.6f, 0.6f, 1f);
                 font.draw(hudBatch, layout, tmp.x - layout.width / 2f, tmp.y + layout.height);

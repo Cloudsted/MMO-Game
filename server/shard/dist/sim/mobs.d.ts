@@ -4,7 +4,7 @@
  * only through intents: "move toward X", "use ability at Y". That seam is
  * where behavior trees swap in later.
  */
-import type { AbilityDef, MobDef, SpawnTable } from "@fantasy-mmo/common";
+import { type AbilityDef, type MobDef, type SpawnTable } from "@fantasy-mmo/common";
 import type { Entity } from "./entities.js";
 import type { VoxelWorld } from "./voxel.js";
 /** Min center-to-center distance between alive mobs (owner-tuned: 0.9 read
@@ -103,6 +103,28 @@ export declare function separateEntities(list: Entity[], dt: number, world: Voxe
     w: number;
     h: number;
 }): void;
+/** ~this many ticks of zero progress trigger a path computation */
+export declare const STUCK_TICKS_FOR_PATH = 4;
+/**
+ * Bounded BFS over the walkable floor grid (solid below, 2 of headroom,
+ * step up ≤1, drop ≤2.5, liquid only when wading) from the mob toward a
+ * goal column. Deflection steering handles the open field; this recovers
+ * CONCAVE traps — the throne a boss spawns behind, building shells, wall
+ * corners. Returns coarse waypoints (every 2nd cell, cell centers), routed
+ * to the goal or, when the goal is unreachable, to the explored cell
+ * closest to it. Null when even that is no better than standing still.
+ */
+export declare function pathfindWaypoints(world: VoxelWorld, from: {
+    x: number;
+    y: number;
+    z: number;
+}, to: {
+    x: number;
+    z: number;
+}, wade: boolean): Array<{
+    x: number;
+    z: number;
+}> | null;
 /** Find a legal spawn point in a spawn region (dry, unobstructed, ON THE
  *  FLOOR — floorY lands under tree canopies/roofs, never on top of them). */
 export declare function findSpawnPoint(table: SpawnTable, world: VoxelWorld, _waterLevel: number | null): {
