@@ -15,10 +15,15 @@ import java.util.Map;
 public final class ItemRegistry {
     public static final class Item {
         public final String id, name, kind, ability, block;
+        /** armor: equipment slot (head/chest/legs/feet/offhand); trinkets
+         *  implicitly go offhand; null = not wearable */
+        public final String slot;
         public final int value, stack, iconCol, iconRow;
         /** weapons: base damage before rarity/rolls (0 = none) */
         public final float damage;
-        /** weapons: base durability uses (0 = unbreakable) */
+        /** armor: base armor value before rarity/rolls (0 = none) */
+        public final float armor;
+        /** weapons/armor: base durability uses (0 = unbreakable) */
         public final int durability;
         /** consumables: effect payload (0 = absent) */
         public final float effectHeal, effectMana, effectHotTotal, effectHotDurMs;
@@ -31,9 +36,11 @@ public final class ItemRegistry {
             kind = o.get("kind").getAsString();
             ability = o.has("ability") ? o.get("ability").getAsString() : null;
             block = o.has("block") ? o.get("block").getAsString() : null;
+            slot = o.has("slot") ? o.get("slot").getAsString() : ("trinket".equals(kind) ? "offhand" : null);
             value = o.get("value").getAsInt();
             stack = o.get("stack").getAsInt();
             damage = o.has("damage") ? o.get("damage").getAsFloat() : 0;
+            armor = o.has("armor") ? o.get("armor").getAsFloat() : 0;
             durability = o.has("durability") ? o.get("durability").getAsInt() : 0;
             JsonObject fx = o.has("effect") ? o.getAsJsonObject("effect") : null;
             effectHeal = fx != null && fx.has("heal") ? fx.get("heal").getAsFloat() : 0;
@@ -71,8 +78,44 @@ public final class ItemRegistry {
         }
     }
 
+    /** A dynamic item modifier (shared/modifiers.json) — display data for
+     *  tooltips, the status-effect bar, and the enchanter menu. Magnitudes
+     *  live on item instances (Stack.mods); curses carry negative values. */
+    public static final class Modifier {
+        public final String id, name, stat, units;
+        public final int iconCol, iconRow;
+        public final boolean curse;
+        /** kinds this modifier can exist on (enchant panel eligibility) */
+        public final java.util.List<String> appliesTo = new java.util.ArrayList<>();
+        /** enchanter tier-1 offer (0 mag = not offered) */
+        public final float enchantMag, enchantPriceMult;
+
+        Modifier(String id, JsonObject o) {
+            this.id = id;
+            name = o.get("name").getAsString();
+            stat = o.get("stat").getAsString();
+            units = o.get("units").getAsString();
+            curse = o.get("curse").getAsBoolean();
+            JsonArray icon = o.getAsJsonArray("icon");
+            iconCol = icon.get(0).getAsInt();
+            iconRow = icon.get(1).getAsInt();
+            for (var el : o.getAsJsonArray("appliesTo")) appliesTo.add(el.getAsString());
+            JsonObject en = o.has("enchant") ? o.getAsJsonObject("enchant") : null;
+            enchantMag = en != null ? en.get("mag").getAsFloat() : 0;
+            enchantPriceMult = en != null ? en.get("priceMult").getAsFloat() : 0;
+        }
+
+        /** "+1.5 hp/s" / "+8% move speed" — sign carried by the magnitude. */
+        public String fmtMag(float mag) {
+            if (units.startsWith("%")) return String.format("%+d%%%s", Math.round(mag * 100f), units.substring(1));
+            boolean whole = Math.abs(mag - Math.round(mag)) < 0.001f;
+            return (whole ? String.format("%+d", Math.round(mag)) : String.format("%+.1f", mag)) + " " + units;
+        }
+    }
+
     public final Map<String, Item> items = new LinkedHashMap<>();
     public final Map<String, Ability> abilities = new LinkedHashMap<>();
+    public final Map<String, Modifier> modifiers = new LinkedHashMap<>();
     public final Map<String, Color> rarityColors = new LinkedHashMap<>();
     public final Map<String, Float> rarityMults = new LinkedHashMap<>();
 
@@ -89,6 +132,9 @@ public final class ItemRegistry {
 
         JsonObject abilitiesFile = SharedJson.load("abilities.json");
         for (String key : abilitiesFile.keySet()) abilities.put(key, new Ability(abilitiesFile.getAsJsonObject(key)));
+
+        JsonObject modifiersFile = SharedJson.load("modifiers.json");
+        for (String key : modifiersFile.keySet()) modifiers.put(key, new Modifier(key, modifiersFile.getAsJsonObject(key)));
     }
 
     public Item item(String id) {

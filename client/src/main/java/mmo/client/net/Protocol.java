@@ -112,6 +112,35 @@ public final class Protocol {
         return GSON.toJson(o);
     }
 
+    /** Equip the inventory stack at invIndex into an equipment slot
+     *  (head/chest/legs/feet/offhand). Occupied slots swap in place. */
+    public static String equipSlot(String slot, int invIndex) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "equipSlot");
+        o.addProperty("slot", slot);
+        o.addProperty("invIndex", invIndex);
+        return GSON.toJson(o);
+    }
+
+    /** Unequip an equipment slot to the first free inventory slot. */
+    public static String equipSlotUnequip(String slot) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "equipSlot");
+        o.addProperty("slot", slot);
+        return GSON.toJson(o);
+    }
+
+    /** Buy a fixed tier-1 enchant from an enchanter NPC for the unmodified
+     *  equippable at inventory `slot`. */
+    public static String enchant(int npc, int slot, String enchantId) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "enchant");
+        o.addProperty("npc", npc);
+        o.addProperty("slot", slot);
+        o.addProperty("enchantId", enchantId);
+        return GSON.toJson(o);
+    }
+
     public static String invMove(int from, int to) {
         JsonObject o = new JsonObject();
         o.addProperty("t", "invMove");

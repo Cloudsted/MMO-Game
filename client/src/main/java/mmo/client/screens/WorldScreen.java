@@ -167,6 +167,9 @@ public class WorldScreen extends ScreenAdapter {
     private long movementLockedUntil = 0;
     private float slowPct = 0;
     private long slowUntil = 0;
+    /** capped gear-modifier movement multiplier from the effects message —
+     *  mirrors the exact value the server validates moves against */
+    private float effectsSpeedMult = 1f;
     private final java.util.Map<String, Long> localCooldowns = new java.util.HashMap<>();
     private long bodyBusyUntil = 0;
     /** ability of the last attack sent — an interrupt refunds its cooldown */
@@ -454,34 +457,38 @@ public class WorldScreen extends ScreenAdapter {
                 }
                 case "inv" -> {
                     List<GameUi.Stack> list = new ArrayList<>();
-                    for (JsonElement el : Protocol.arr(msg, "slots")) {
-                        if (el.isJsonNull()) {
-                            list.add(null);
-                            continue;
-                        }
-                        JsonObject o = el.getAsJsonObject();
-                        GameUi.Stack s = new GameUi.Stack();
-                        s.item = o.get("item").getAsString();
-                        s.qty = o.get("qty").getAsInt();
-                        s.rarity = o.get("rarity").getAsString();
-                        if (o.has("stats") && !o.get("stats").isJsonNull()) {
-                            JsonObject st = o.getAsJsonObject("stats");
-                            if (st.has("dmg")) s.statDmg = st.get("dmg").getAsFloat();
-                            if (st.has("spd")) s.statSpd = st.get("spd").getAsFloat();
-                        }
-                        if (o.has("dur") && !o.get("dur").isJsonNull()) s.dur = o.get("dur").getAsInt();
-                        if (o.has("maxDur") && !o.get("maxDur").isJsonNull()) s.maxDur = o.get("maxDur").getAsInt();
-                        list.add(s);
-                    }
+                    for (JsonElement el : Protocol.arr(msg, "slots")) list.add(parseStack(el));
+                    List<GameUi.Stack> equip = new ArrayList<>();
+                    for (JsonElement el : Protocol.arr(msg, "equipment")) equip.add(parseStack(el));
                     int itemsBefore = 0, itemsAfter = 0;
                     for (GameUi.Stack s : ui.slots) if (s != null) itemsBefore += s.qty;
                     for (GameUi.Stack s : list) if (s != null) itemsAfter += s.qty;
                     if (invSeen && itemsAfter > itemsBefore) game.audio.play("pickup");
                     invSeen = true;
-                    ui.setInventory(list, msg.get("held").getAsInt());
+                    ui.setInventory(list, msg.get("held").getAsInt(), equip);
                     // every item shows in the hand; the sprite key IS the item id
                     GameUi.Stack held = ui.slots[ui.held];
                     viewmodel.setHeld(held != null ? held.item : null);
+                }
+                case "effects" -> {
+                    // gear speed mods join client prediction exactly like the
+                    // debuff slow — same capped value the server validates with
+                    effectsSpeedMult = msg.get("speedMult").getAsFloat();
+                    List<GameUi.Effect> fxList = new ArrayList<>();
+                    long nowMs = System.currentTimeMillis();
+                    for (JsonElement el : Protocol.arr(msg, "list")) {
+                        JsonObject o = el.getAsJsonObject();
+                        GameUi.Effect fx = new GameUi.Effect();
+                        fx.kind = o.get("kind").getAsString();
+                        if (o.has("id")) fx.id = o.get("id").getAsString();
+                        if (o.has("item")) fx.id = o.get("item").getAsString();
+                        fx.mag = o.get("mag").getAsFloat();
+                        if (o.has("curse")) fx.curse = o.get("curse").getAsBoolean();
+                        // durMs is REMAINING at send — stamp a local end and count down
+                        if (o.has("durMs")) fx.endsAt = nowMs + o.get("durMs").getAsLong();
+                        fxList.add(fx);
+                    }
+                    ui.setEffects(fxList);
                 }
                 case "evt" -> handleEvent(msg.getAsJsonObject("e"));
                 case "proj" -> {
@@ -567,6 +574,30 @@ public class WorldScreen extends ScreenAdapter {
         if (socket.isClosed() && exitMessage == null && !leaving) {
             exitMessage = socket.getCloseReason() == null ? "disconnected" : socket.getCloseReason();
         }
+    }
+
+    /** One wire ItemStack → UI Stack (null-safe: empty slots are JSON null). */
+    private static GameUi.Stack parseStack(JsonElement el) {
+        if (el == null || el.isJsonNull()) return null;
+        JsonObject o = el.getAsJsonObject();
+        GameUi.Stack s = new GameUi.Stack();
+        s.item = o.get("item").getAsString();
+        s.qty = o.get("qty").getAsInt();
+        s.rarity = o.get("rarity").getAsString();
+        if (o.has("stats") && !o.get("stats").isJsonNull()) {
+            JsonObject st = o.getAsJsonObject("stats");
+            if (st.has("dmg")) s.statDmg = st.get("dmg").getAsFloat();
+            if (st.has("spd")) s.statSpd = st.get("spd").getAsFloat();
+            if (st.has("armor")) s.statArmor = st.get("armor").getAsFloat();
+        }
+        if (o.has("dur") && !o.get("dur").isJsonNull()) s.dur = o.get("dur").getAsInt();
+        if (o.has("maxDur") && !o.get("maxDur").isJsonNull()) s.maxDur = o.get("maxDur").getAsInt();
+        if (o.has("mods") && !o.get("mods").isJsonNull()) {
+            s.mods = new java.util.LinkedHashMap<>();
+            JsonObject mo = o.getAsJsonObject("mods");
+            for (String key : mo.keySet()) s.mods.put(key, mo.get(key).getAsFloat());
+        }
+        return s;
     }
 
     private void handleEvent(JsonObject e) {
@@ -1107,6 +1138,7 @@ public class WorldScreen extends ScreenAdapter {
         movingNow = len > 0.001f;
         float speed = game.constants.walkSpeed;
         if (slowUntil > now) speed *= 1f - slowPct;
+        speed *= effectsSpeedMult; // gear Swiftness/Slowness (server-capped)
         if (inWater) speed *= 0.55f;
         float tx = movingNow ? dxIn / len * speed : 0;
         float tz = movingNow ? dzIn / len * speed : 0;

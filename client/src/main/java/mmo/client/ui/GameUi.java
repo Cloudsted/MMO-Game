@@ -39,9 +39,23 @@ public class GameUi {
         public int qty;
         public String rarity;
         /** per-instance stat rolls (multipliers around 1); 1 = no roll */
-        public float statDmg = 1f, statSpd = 1f;
+        public float statDmg = 1f, statSpd = 1f, statArmor = 1f;
         /** durability remaining / rolled max; -1 = item doesn't wear */
         public int dur = -1, maxDur = -1;
+        /** dynamic modifiers: modifier id → magnitude (curses negative);
+         *  null = unmodified (the enchanter's eligibility rule) */
+        public java.util.LinkedHashMap<String, Float> mods = null;
+    }
+
+    /** One active status effect for the HUD bar (from the effects message). */
+    public static final class Effect {
+        public String kind; // mod | slow | dot | hot
+        /** modifier id (mod) or food item id (hot) */
+        public String id = "";
+        public float mag;
+        public boolean curse;
+        /** local ms epoch when it ends; 0 = persistent (gear modifier) */
+        public long endsAt;
     }
 
     public static final class ShopEntry {
@@ -51,10 +65,17 @@ public class GameUi {
 
     public enum Window { NONE, INVENTORY, DIALOG, GOD }
 
+    /** Equipment slot order — mirrors the server's EQUIP_SLOTS exactly. */
+    public static final String[] EQUIP_SLOTS = { "head", "chest", "legs", "feet", "offhand" };
+    private static final String[] EQUIP_LABELS = { "Head", "Chest", "Legs", "Feet", "Off" };
+
     // ---- server-synced state ----
     public int hp = 100, maxHp = 100, mana = 50, maxMana = 50, level = 1, gold = 0;
     public float xp = 0, xpNext = 60;
     public final Stack[] slots = new Stack[24];
+    public final Stack[] equipment = new Stack[5];
+    /** active status effects, gear mods first (server sends them ordered) */
+    private final List<Effect> effects = new ArrayList<>();
     public int held = 0;
     public boolean dead = false;
     public boolean admin = false;
@@ -114,6 +135,12 @@ public class GameUi {
 
     // per-frame hit rects
     private final Rectangle[] slotRects = new Rectangle[24];
+    private final Rectangle[] equipRects = new Rectangle[5];
+    private final Rectangle[] effectRects = new Rectangle[16];
+    /** effects actually drawn this frame (expired ones filtered), parallel
+     *  to effectRects — hover/tooltips index these, never the raw list */
+    private final Effect[] shownEffects = new Effect[16];
+    private int effectRectCount = 0;
     private final Rectangle invPanel = new Rectangle();
     private final List<Rectangle> shopRowRects = new ArrayList<>();
     private final List<Runnable> godActions = new ArrayList<>();
@@ -123,6 +150,8 @@ public class GameUi {
     /** test hook: MMO_HOVER_SLOT=<n> pins the tooltip to inventory slot n
      *  (mouse hover can't be injected into a background GLFW window) */
     private final int debugHoverSlot;
+    /** test hook: MMO_HOVER_EFFECT=<n> pins the tooltip to status effect n */
+    private final int debugHoverEffect;
 
     // virtual HUD canvas (WorldScreen.applyHudViewport): the UI draws at
     // fixed design sizes in vw x vh and is integer-upscaled to the window
@@ -142,12 +171,20 @@ public class GameUi {
         icons.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         iconCols = icons.getWidth() / 16;
         for (int i = 0; i < 24; i++) slotRects[i] = new Rectangle();
+        for (int i = 0; i < 5; i++) equipRects[i] = new Rectangle();
+        for (int i = 0; i < effectRects.length; i++) effectRects[i] = new Rectangle();
         int hover = -1;
         String env = System.getenv("MMO_HOVER_SLOT");
         if (env != null) {
             try { hover = Integer.parseInt(env.trim()); } catch (NumberFormatException ignored) {}
         }
         debugHoverSlot = hover;
+        int hoverFx = -1;
+        String envFx = System.getenv("MMO_HOVER_EFFECT");
+        if (envFx != null) {
+            try { hoverFx = Integer.parseInt(envFx.trim()); } catch (NumberFormatException ignored) {}
+        }
+        debugHoverEffect = hoverFx;
     }
 
     // ---------- server state ingestion ----------
@@ -177,12 +214,27 @@ public class GameUi {
         heldPredictedUntil = System.currentTimeMillis() + 800;
     }
 
-    public void setInventory(List<Stack> list, int held) {
+    public void setInventory(List<Stack> list, int held, List<Stack> equip) {
         for (int i = 0; i < 24; i++) slots[i] = i < list.size() ? list.get(i) : null;
+        for (int i = 0; i < 5; i++) equipment[i] = equip != null && i < equip.size() ? equip.get(i) : null;
         // take the server's held unless a fresher local prediction is in
         // flight — equip messages are ordered, so the final echo matches it
         if (held == this.held || System.currentTimeMillis() >= heldPredictedUntil) this.held = held;
         if (carrying >= 0 && slots[carrying] == null) carrying = -1;
+    }
+
+    /** Self status effects (server-sent on change; timers tick locally). */
+    public void setEffects(List<Effect> list) {
+        effects.clear();
+        effects.addAll(list);
+    }
+
+    /** Which equipment slot index an item goes to, or -1 if not wearable. */
+    private int equipSlotIndexFor(ItemRegistry.Item def) {
+        if (def == null || def.slot == null) return -1;
+        if (!"armor".equals(def.kind) && !"trinket".equals(def.kind)) return -1;
+        for (int i = 0; i < EQUIP_SLOTS.length; i++) if (EQUIP_SLOTS[i].equals(def.slot)) return i;
+        return -1;
     }
 
     public void onDied() {
@@ -368,13 +420,29 @@ public class GameUi {
         }
 
         if (window == Window.INVENTORY) {
+            // paper-doll: RMB a worn piece = unequip; LMB while carrying a
+            // matching wearable = equip it there
+            for (int i = 0; i < 5; i++) {
+                if (!equipRects[i].contains(x, y)) continue;
+                if (right) {
+                    if (equipment[i] != null) net.send(mmo.client.net.Protocol.equipSlotUnequip(EQUIP_SLOTS[i]));
+                } else if (carrying >= 0 && slots[carrying] != null) {
+                    if (equipSlotIndexFor(reg.item(slots[carrying].item)) == i) {
+                        net.send(mmo.client.net.Protocol.equipSlot(EQUIP_SLOTS[i], carrying));
+                    }
+                    carrying = -1;
+                }
+                return true;
+            }
             for (int i = 0; i < 24; i++) {
                 if (!slotRects[i].contains(x, y)) continue;
                 if (right) {
                     Stack s = slots[i];
                     if (s != null) {
                         ItemRegistry.Item def = reg.item(s.item);
+                        int equipIdx = equipSlotIndexFor(def);
                         if (def != null && "consumable".equals(def.kind)) net.send(mmo.client.net.Protocol.consume(i));
+                        else if (equipIdx >= 0) net.send(mmo.client.net.Protocol.equipSlot(EQUIP_SLOTS[equipIdx], i));
                         else if (def != null && "weapon".equals(def.kind) && i < 8) {
                             selectHeld(i); // instant highlight, echo confirms
                             net.send(mmo.client.net.Protocol.equip(i));
@@ -411,6 +479,17 @@ public class GameUi {
         if (button != 0 || window != Window.INVENTORY || carrying < 0) return false;
         float y = vh - syTopDown / (float) uiScale;
         float x = sx / (float) uiScale;
+        // drag onto a matching paper-doll slot = equip
+        for (int i = 0; i < 5; i++) {
+            if (!equipRects[i].contains(x, y)) continue;
+            Stack s = slots[carrying];
+            if (s != null && equipSlotIndexFor(reg.item(s.item)) == i) {
+                net.send(mmo.client.net.Protocol.equipSlot(EQUIP_SLOTS[i], carrying));
+                carrying = -1;
+                return true;
+            }
+            return false; // wrong slot: keep carrying
+        }
         for (int i = 0; i < 24; i++) {
             if (!slotRects[i].contains(x, y)) continue;
             if (i == carrying) return false; // plain click: keep carrying
@@ -465,8 +544,28 @@ public class GameUi {
         shapes.setColor(0.65f, 0.4f, 0.9f, 1f);
         shapes.rect(hbX, hbY - 8, hbW * MathUtils.clamp(xp / Math.max(1f, xpNext), 0f, 1f), 5);
 
-        // hotbar cells
         long now = System.currentTimeMillis();
+
+        // status-effect bar above the left hp bar: gear modifiers first
+        // (persistent), then timed slow/dot/hot with local countdowns.
+        // Curse/debuff frames tint red so bad news reads at a glance.
+        effectRectCount = 0;
+        float fxSize = 22, fxGap = 4, fxY = barY + barH + 8;
+        for (Effect fx : effects) {
+            if (fx.endsAt > 0 && fx.endsAt <= now) continue; // ran out locally
+            if (effectRectCount >= effectRects.length) break;
+            float x = hbX + effectRectCount * (fxSize + fxGap);
+            effectRects[effectRectCount].set(x, fxY, fxSize, fxSize);
+            shownEffects[effectRectCount] = fx;
+            boolean bad = fx.curse || "slow".equals(fx.kind) || "dot".equals(fx.kind);
+            shapes.setColor(bad ? 0.45f : 0.1f, bad ? 0.12f : 0.12f, bad ? 0.12f : 0.16f, 0.85f);
+            shapes.rect(x - 1, fxY - 1, fxSize + 2, fxSize + 2);
+            shapes.setColor(0.16f, 0.18f, 0.24f, 0.9f);
+            shapes.rect(x, fxY, fxSize, fxSize);
+            effectRectCount++;
+        }
+
+        // hotbar cells
         for (int i = 0; i < 8; i++) {
             float x = hbX + i * (cell + gap);
             slotRects[i].set(x, hbY, cell, cell);
@@ -522,6 +621,28 @@ public class GameUi {
         font.setColor(1f, 1f, 1f, 0.5f);
         for (int i = 0; i < 8; i++) font.draw(batch, String.valueOf(i + 1), slotRects[i].x + 3, slotRects[i].y + cell - 3);
         font.getData().setScale(1f);
+
+        // status-effect icons + countdowns (rects fixed in the shapes pass)
+        for (int i = 0; i < effectRectCount; i++) {
+            Effect fx = shownEffects[i];
+            Rectangle r = effectRects[i];
+            switch (fx.kind) {
+                case "hot" -> drawIcon(batch, fx.id, r.x + 3, r.y + 3, 16); // the food's own icon
+                case "slow" -> drawIconCell(batch, 3, 2, r.x + 3, r.y + 3, 16); // snowflake
+                case "dot" -> drawIconCell(batch, 8, 3, r.x + 3, r.y + 3, 16); // poison flask
+                default -> {
+                    ItemRegistry.Modifier m = reg.modifiers.get(fx.id);
+                    if (m != null) drawIconCell(batch, m.iconCol, m.iconRow, r.x + 3, r.y + 3, 16);
+                }
+            }
+            if (fx.endsAt > 0) {
+                int secs = (int) Math.ceil((fx.endsAt - now) / 1000.0);
+                font.getData().setScale(0.5f);
+                font.setColor(1f, 1f, 1f, 0.95f);
+                font.draw(batch, String.valueOf(Math.max(0, secs)), r.x + r.width - 8, r.y + 10);
+                font.getData().setScale(1f);
+            }
+        }
 
         // level + gold + bar labels
         font.setColor(1f, 0.9f, 0.6f, 1f);
@@ -659,6 +780,26 @@ public class GameUi {
         String shopItem = null;
         boolean cursorFree = !Gdx.input.isCursorCatched();
 
+        // status effects: hover (any time the cursor is free) or the test pin
+        Effect hoveredFx = null;
+        if (cursorFree || window != Window.NONE) {
+            for (int i = 0; i < effectRectCount; i++) {
+                if (effectRects[i].contains(mx, my)) {
+                    hoveredFx = shownEffects[i];
+                    break;
+                }
+            }
+        }
+        if (hoveredFx == null && debugHoverEffect >= 0 && debugHoverEffect < effectRectCount) {
+            hoveredFx = shownEffects[debugHoverEffect];
+            mx = effectRects[debugHoverEffect].x + effectRects[debugHoverEffect].width;
+            my = effectRects[debugHoverEffect].y + effectRects[debugHoverEffect].height;
+        }
+        if (hoveredFx != null) {
+            drawTipLines(batch, shapes, font, buildEffectTip(hoveredFx), mx, my, w, h);
+            return;
+        }
+
         boolean slotsVisible = window == Window.INVENTORY || (window == Window.DIALOG && shopOpen);
         boolean hotbarVisible = window == Window.NONE && cursorFree;
         if (slotsVisible || hotbarVisible) {
@@ -666,6 +807,15 @@ public class GameUi {
             for (int i = 0; i < limit; i++) {
                 if (slots[i] != null && slotRects[i].contains(mx, my)) {
                     hovered = slots[i];
+                    break;
+                }
+            }
+        }
+        // worn gear in the paper-doll column
+        if (hovered == null && window == Window.INVENTORY) {
+            for (int i = 0; i < 5; i++) {
+                if (equipment[i] != null && equipRects[i].contains(mx, my)) {
+                    hovered = equipment[i];
                     break;
                 }
             }
@@ -711,6 +861,18 @@ public class GameUi {
             if (spdPct != 0) {
                 tip.add(new TipLine(String.format("Speed  %+d%%", spdPct), pctColor(spdPct), 1f));
             }
+        }
+        if ("armor".equals(def.kind) && def.armor > 0) {
+            float armor = def.armor * rarityMult * s.statArmor;
+            int pct = Math.round((s.statArmor - 1f) * 100f);
+            String tag = pct == 0 ? "" : String.format("  (%+d%% roll)", pct);
+            tip.add(new TipLine(String.format("Armor  %.1f%s", armor, tag), pctColor(pct), 1f));
+            tip.add(new TipLine(capitalized(def.slot) + " slot", new Color(0.7f, 0.75f, 0.8f, 1f), 1f));
+        }
+        if ("trinket".equals(def.kind)) {
+            tip.add(new TipLine("Offhand trinket — passive boon", new Color(0.7f, 0.75f, 0.9f, 1f), 1f));
+        }
+        if ("weapon".equals(def.kind) || "armor".equals(def.kind)) {
             if (s.maxDur > 0) {
                 float frac = s.dur / (float) s.maxDur;
                 Color c = frac > 0.5f ? new Color(0.6f, 0.9f, 0.6f, 1f)
@@ -718,6 +880,15 @@ public class GameUi {
                 tip.add(new TipLine("Durability  " + s.dur + " / " + s.maxDur, c, 1f));
             } else if (hovered == null && def.durability > 0) {
                 tip.add(new TipLine("Durability  " + def.durability + " (base)", new Color(0.75f, 0.75f, 0.8f, 1f), 1f));
+            }
+        }
+        // dynamic modifiers: perks green, curses red — the item's magic
+        if (s.mods != null) {
+            for (var e : s.mods.entrySet()) {
+                ItemRegistry.Modifier m = reg.modifiers.get(e.getKey());
+                if (m == null) continue;
+                Color c = m.curse ? new Color(1f, 0.45f, 0.4f, 1f) : new Color(0.55f, 0.95f, 1f, 1f);
+                tip.add(new TipLine(m.fmtMag(e.getValue()) + "  —  " + m.name, c, 1f));
             }
         }
         if (def.effectHeal > 0) tip.add(new TipLine("Restores " + (int) def.effectHeal + " health", new Color(0.5f, 1f, 0.55f, 1f), 1f));
@@ -734,13 +905,51 @@ public class GameUi {
             case "weapon" -> "RMB equip";
             case "consumable" -> "RMB use";
             case "building" -> "LMB places (Building Grounds)";
+            case "armor", "trinket" -> "RMB equip · RMB worn = unequip";
             default -> null;
         };
         if (hovered != null && hint != null && window == Window.INVENTORY) {
             tip.add(new TipLine(hint, new Color(0.6f, 0.6f, 0.65f, 1f), 1f));
         }
 
-        // measure
+        drawTipLines(batch, shapes, font, tip, mx, my, w, h);
+    }
+
+    /** Status-effect tooltip content: what it is, how strong, how long. */
+    private List<TipLine> buildEffectTip(Effect fx) {
+        List<TipLine> tip = new ArrayList<>();
+        switch (fx.kind) {
+            case "slow" -> {
+                tip.add(new TipLine("Chilled", new Color(0.55f, 0.8f, 1f, 1f), 1f));
+                tip.add(new TipLine(String.format("-%d%% move speed", Math.round(fx.mag * 100f)), new Color(0.9f, 0.9f, 0.95f, 1f), 1f));
+            }
+            case "dot" -> {
+                tip.add(new TipLine("Poisoned", new Color(0.6f, 0.95f, 0.45f, 1f), 1f));
+                tip.add(new TipLine(String.format("%.1f damage per second", fx.mag), new Color(0.95f, 0.85f, 0.8f, 1f), 1f));
+            }
+            case "hot" -> {
+                ItemRegistry.Item food = reg.item(fx.id);
+                tip.add(new TipLine("Well fed — " + (food != null ? food.name : fx.id), new Color(0.6f, 1f, 0.6f, 1f), 1f));
+                tip.add(new TipLine(String.format("+%.1f health per second", fx.mag), new Color(0.85f, 0.95f, 0.85f, 1f), 1f));
+            }
+            default -> {
+                ItemRegistry.Modifier m = reg.modifiers.get(fx.id);
+                String name = m != null ? m.name : fx.id;
+                Color title = fx.curse ? new Color(1f, 0.45f, 0.4f, 1f) : new Color(0.55f, 0.95f, 1f, 1f);
+                tip.add(new TipLine(name + (fx.curse ? "  (curse)" : ""), title, 1f));
+                if (m != null) tip.add(new TipLine(m.fmtMag(fx.mag), new Color(0.9f, 0.9f, 0.95f, 1f), 1f));
+                tip.add(new TipLine("From equipped gear", new Color(0.6f, 0.6f, 0.65f, 1f), 1f));
+            }
+        }
+        if (fx.endsAt > 0) {
+            int secs = (int) Math.ceil((fx.endsAt - System.currentTimeMillis()) / 1000.0);
+            tip.add(new TipLine(Math.max(0, secs) + "s remaining", new Color(0.75f, 0.75f, 0.8f, 1f), 1f));
+        }
+        return tip;
+    }
+
+    /** Measure + draw a tooltip near the cursor, clamped on-screen. */
+    private void drawTipLines(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, List<TipLine> tip, float mx, float my, int w, int h) {
         float pad = 10, lineGap = 5, tw = 0, th = pad;
         for (TipLine l : tip) {
             font.getData().setScale(l.scale);
@@ -783,8 +992,12 @@ public class GameUi {
     private void drawIcon(SpriteBatch batch, String itemId, float x, float y, float size) {
         ItemRegistry.Item def = reg.item(itemId);
         if (def == null) return;
-        TextureRegion region = new TextureRegion(icons, def.iconCol * 16, def.iconRow * 16, 16, 16);
-        batch.draw(region, x, y, size, size);
+        drawIconCell(batch, def.iconCol, def.iconRow, x, y, size);
+    }
+
+    /** Raw atlas cell draw — status-effect icons address tf_icon cells directly. */
+    private void drawIconCell(SpriteBatch batch, int col, int row, float x, float y, float size) {
+        batch.draw(new TextureRegion(icons, col * 16, row * 16, 16, 16), x, y, size, size);
     }
 
     private void panel(ShapeRenderer shapes, float x, float y, float w, float h) {
@@ -800,19 +1013,36 @@ public class GameUi {
     private void renderInventory(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, int w, int h) {
         float cell = 52, gap = 6;
         int cols = 6, rows = 4;
+        float eqCell = 40, eqGap = 5; // paper-doll column, left of the grid
         float gw = cols * cell + (cols - 1) * gap;
         float gh = rows * cell + (rows - 1) * gap;
+        float gridX = 14 + eqCell + 14; // panel-local grid origin
         // whole-pixel panel origin: fractional centering makes the icons
         // round against the slot squares (see hotbar note)
-        float px = MathUtils.floor(w / 2f - gw / 2f - 18), py = MathUtils.floor(h / 2f - gh / 2f - 30);
-        float pw = gw + 36, ph = gh + 96;
+        float pw = gw + gridX + 18, ph = gh + 96;
+        float px = MathUtils.floor(w / 2f - pw / 2f), py = MathUtils.floor(h / 2f - ph / 2f);
         invPanel.set(px, py, pw, ph); // drag-release outside this = drop
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         panel(shapes, px, py, pw, ph);
+        // equipment slots (head/chest/legs/feet/offhand, top-down)
+        for (int i = 0; i < 5; i++) {
+            float x = px + 14;
+            float y = py + ph - 60 - eqCell - i * (eqCell + eqGap);
+            equipRects[i].set(x, y, eqCell, eqCell);
+            shapes.setColor(0.14f, 0.2f, 0.18f, 1f);
+            shapes.rect(x, y, eqCell, eqCell);
+            Stack s = equipment[i];
+            if (s != null) {
+                Color rc = reg.rarityColor(s.rarity);
+                shapes.setColor(rc.r, rc.g, rc.b, 0.85f);
+                shapes.rect(x, y, eqCell, 3);
+                drawDurabilityBar(shapes, s, x + 4, y + 5, eqCell - 8);
+            }
+        }
         for (int i = 0; i < 24; i++) {
             int c = i % cols, r = i / cols;
-            float x = px + 18 + c * (cell + gap);
+            float x = px + gridX + c * (cell + gap);
             float y = py + ph - 60 - (r + 1) * cell - r * gap;
             slotRects[i].set(x, y, cell, cell);
             boolean hotbarRow = i < 8;
@@ -832,11 +1062,23 @@ public class GameUi {
 
         batch.begin();
         font.setColor(1f, 0.95f, 0.8f, 1f);
-        font.draw(batch, "Inventory   —   " + gold + "g", px + 18, py + ph - 16);
+        font.draw(batch, "Inventory   —   " + gold + "g", px + gridX, py + ph - 16);
         font.getData().setScale(0.5f);
         font.setColor(0.7f, 0.7f, 0.75f, 1f);
-        font.draw(batch, "1-8 = hotbar · LMB move · RMB use · drag out / Q = drop", px + 18, py + 24);
+        font.draw(batch, "1-8 = hotbar · LMB move · RMB use/equip · drag out / Q = drop", px + gridX, py + 24);
         font.getData().setScale(1f);
+        for (int i = 0; i < 5; i++) {
+            Stack s = equipment[i];
+            if (s != null) {
+                drawIcon(batch, s.item, equipRects[i].x + 8, equipRects[i].y + 8, 24);
+            } else {
+                font.getData().setScale(0.5f);
+                font.setColor(0.5f, 0.55f, 0.52f, 0.9f);
+                layout.setText(font, EQUIP_LABELS[i]);
+                font.draw(batch, layout, equipRects[i].x + eqCell / 2f - layout.width / 2f, equipRects[i].y + eqCell / 2f + layout.height / 2f);
+                font.getData().setScale(1f);
+            }
+        }
         for (int i = 0; i < 24; i++) {
             Stack s = slots[i];
             if (s == null) continue;
