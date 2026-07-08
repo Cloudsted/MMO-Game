@@ -545,3 +545,27 @@ twilight.
 - Readability beats mood for combat spaces: the room ships at 0.74 (last
   light) + nightLight 1.6, and the drama comes from emissive blocks
   (stained glass, braziers, lanterns) that survive any clock setting.
+
+## Deflection steering cannot solve concave obstacles — and the throne is one
+
+The Sundered King spawned behind his own throne and could only path to
+players in his direct line of sight (2026-07-07 owner report). applyMove's
+±0.6/±1.2 rad deflection walks around PILLARS fine, but a U-shaped pocket
+(throne back + arms, building shells, wall corners) deflects the mob into
+the same dead end forever — and "moved" stays true the whole time because
+it keeps sidestepping, so naive !moved stuck-detection never fires.
+
+- **Detect stuckness by GOAL PROGRESS, not by movement**: distance-to-goal
+  not shrinking across ~4 purposeful ticks is the trigger; the mob can be
+  "moving" the entire time it is stuck.
+- The fix is a BOUNDED local BFS (24-cell radius, node cap, ≤3 computations
+  per room tick) producing coarse waypoints — not a nav mesh. Deflection
+  still handles the open field; the BFS only recovers traps, so the cost
+  stays near zero.
+- Also fix the SPAWN: a boss whose spawn circle overlaps his furniture will
+  keep starting inside the trap. (128,44) r2 in FRONT of the dais replaced
+  (128,42) r4, which could roll a point behind the throne back.
+- Verifying probes hit the same wall: straight-line bot movement stalls on
+  1-block dais lips because the CENTER-cell floor isn't the AABB's floor —
+  a 0.3-radius body clips the next step's cell. Feet must clear the MAX
+  gap across all touched cells (see city-probe's floorNear).

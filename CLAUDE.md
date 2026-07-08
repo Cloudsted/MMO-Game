@@ -1298,3 +1298,37 @@ Quick reference only — the stories behind these (and more) live in
   zero edits). Screenshots tools/out/city-*.png, throne-room4.png. Feel
   checks owner-owned: fight difficulty solo vs group, collapse pacing,
   the 0.74 sunset mood, marauder/sentinel vocal pitches.
+- 2026-07-07 **BOSS-FIGHT / CITY FEEDBACK BATCH SHIPPED** (owner's six-item
+  list). Engine: NEW ability kind `pillars` (staggered fire-pillar line
+  marched THROUGH the target's predicted position — server hazards w/
+  ignite windows + `pillars` wire msg + client flipbook from fire4_1..11:
+  start 1-4 / loop 5-7 / end 8-11, billboard = always faces the player);
+  projectiles gained `predictive` (velocity-tracked intercept re-aimed at
+  RELEASE — juking after the release still dodges), `aoeRadius` splash
+  (70%), `impactFx` + `projScale` (proj wire extras; explosion1_1..10
+  strip + explosion_big sound client-side). Mob pathing: `pathfindWaypoints`
+  stuck-recovery BFS (progress-tracked purposeful moves; ≤3 searches/tick,
+  24-cell radius, waypoints followed head-first) — fixes bosses trapped
+  behind concave furniture (the throne) and dumb wall-hugging generally.
+  Vaelric: speed 3.2, kit += throne_flames (5 pillars, 9 s cd) + buffed
+  sundering_wave (34 speed, 1.9 scale, predictive, explodes); spawns IN
+  FRONT of the dais now ((128,44) r2). Throne room brightness: 3 war-torn
+  ceiling breaches (sunset shafts), lantern on every column, wall sconces,
+  2 more brazier pairs, wing lanterns, stained_glass light 9. City v2:
+  ruinedHouse taller/two-story/windows/partial roofs (h3 stubs read as
+  "simple pillars"), 12 avenue-frontage houses forming a street canyon, 3
+  grand civic ruins (guild/garrison/granary), stair guard houses, S-bend
+  rubble barricades + collapsed-house pinch on the approach. Sounds:
+  king_summon war-horn (new `summon` evt), fire_pillar ignite, explosion_big
+  (146 groups). Gates: locked portals say "(locked)"; reset-timer
+  destinations count down "(locked - opens in m:ss)" — `reopenInSec` rides
+  master→shard→room→portals/portalState, client ticks locally (verified
+  live: 4:01 → 3:43 across frames). Verified: 187 vitest (pathfind-around-
+  throne guard), city-probe FULL PASS against the new fight, tank-bot wire
+  log (4×5-pillar casts + scale-1.9/34-speed/explosion fireball),
+  screenshots tools/out/pillar-fight2-2.png (lit hall, king off his dais,
+  5 sentinels converging), city-approach-2.png (frontage canyon +
+  barricade + patrols), gate-timer-2/5.png (ticking countdown). New
+  staging tool: scripts/city-tank-bot.mjs (survives, never attacks — for
+  photographing boss mechanics). Feel checks owner-owned: pillar/fireball
+  dodge windows, barricade flow, hall brightness, horn/whoosh mix.
