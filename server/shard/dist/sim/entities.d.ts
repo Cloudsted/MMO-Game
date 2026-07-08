@@ -79,6 +79,10 @@ export interface MobBrain {
     } | null;
     /** entity id of the boss that summoned this mob (caps live minions) */
     summonerId?: number;
+    /** false when the summoning ability said so — a splitter's halves must not
+     *  each pay full xp/loot, or waiting next to one is free levels */
+    grantsXp?: boolean;
+    grantsLoot?: boolean;
     /** stuck-recovery waypoints from the local BFS (pathfindWaypoints) —
      *  followed head-first while chasing; cleared on arrival/invalidations */
     path?: Array<{

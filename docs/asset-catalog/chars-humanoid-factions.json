@@ -1,0 +1,350 @@
+{
+  "group": "humanoid-factions",
+  "generated": "2026-07-08",
+  "method": "Every entry below was read off a rendered, zoomed PNG of the actual source cell (contact sheets in tools/out/sheets/ plus per-frame zooms). Cells I could not resolve are marked unknown.",
+  "sheets": [
+    {
+      "sheet": "bandits_1.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "note": "4 archetypes x 2 palettes. Top char-row = brown/rust hat+coat, faces hidden behind a pale cloth scarf. Bottom char-row = the same 4 with a green hat/hood and visible brown faces.",
+      "chars": [
+        {"charCell": "0,0", "who": "bandit: wide floppy brown leather hat, cream/pale cloth scarf pulled over the nose, gray-blue face mask, brown leather longcoat with cream cuffs and lapels, gray boots. No weapon drawn.", "heightM": 1.75, "mobIdea": "baseline highwayman / cutpurse — melee, packs of 3"},
+        {"charCell": "1,0", "who": "bandit in the same hat+scarf, but with a layered gray steel vest/brigandine over the coat and a wider studded belt — visibly armored.", "heightM": 1.75, "mobIdea": "bandit enforcer — tankier variant, higher armor value"},
+        {"charCell": "2,0", "who": "bandit with a small orange FLAME licking up beside the hat brim (a lit fuse/torch), a diagonal bandolier of orange-tipped beads/flasks across the chest, and a pale ice-blue rounded flask or pouch hanging at the hip.", "heightM": 1.75, "mobIdea": "powder brigand / firebomber — throws an AoE explosive, low hp"},
+        {"charCell": "3,0", "who": "fully cloaked figure: slate blue-gray hood drawn over the head so no face at all is visible, long cloak over the coat, pale bone-white clasps and one orange stud down the chest, brown boots peeking out.", "heightM": 1.75, "mobIdea": "cloaked footpad / bandit assassin — fast, backstab-flavored"},
+        {"charCell": "0,1", "who": "same silhouette as 0,0, recolored: mossy green hat/bandana, bare brown-skinned face, rust-brown coat with cream cuffs.", "heightM": 1.75, "mobIdea": "forest bandit (green palette pack)"},
+        {"charCell": "1,1", "who": "same as 1,0 recolored: green hat, gray steel vest, brown coat, face visible.", "heightM": 1.75, "mobIdea": "forest bandit enforcer"},
+        {"charCell": "2,1", "who": "same as 2,0 recolored: green hat with the orange flame at the brim, orange bandolier, blue flask at the hip.", "heightM": 1.75, "mobIdea": "forest firebomber"},
+        {"charCell": "3,1", "who": "the cloaked figure in warm brown/tan cloth: hood fully covering the face, cream clasps, an orange stud, green trousers visible under the cloak.", "heightM": 1.75, "mobIdea": "brown-cloak footpad (2nd palette)"}
+      ]
+    },
+    {
+      "sheet": "cultists_1.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "note": "4 robe variants x 2 palettes (top char-row slate blue-gray, bottom char-row purple). Every one is a floor-length hooded robe; no hands, no feet, no weapon is drawn.",
+      "chars": [
+        {"charCell": "0,0", "who": "slate blue-gray hooded robe, the inside of the hood is solid void-black (no face at all), sleeves folded across the belly, hem flaring on the ground.", "heightM": 1.75, "mobIdea": "cultist acolyte — chanter, weak melee"},
+        {"charCell": "1,0", "who": "same slate robe with a cream-white band trimming the hood opening and a long white stole/sash hanging from the collar to the hem. Void-black face.", "heightM": 1.75, "mobIdea": "cultist adept — caster with a shadow bolt"},
+        {"charCell": "2,0", "who": "slate hood, and inside it a flat featureless GOLD/tan faceplate mask ringed in orange-red — a blank golden mask floating in the dark of the hood. No hood trim.", "heightM": 1.75, "mobIdea": "masked cultist — channels a ritual buff"},
+        {"charCell": "3,0", "who": "the leader combo: cream hood trim + white stole + the golden red-rimmed faceplate mask, slate robe.", "heightM": 1.75, "mobIdea": "cult hierophant — mini-boss caster, summons acolytes"},
+        {"charCell": "0,1", "who": "identical design to 0,0 in a deep purple/violet robe. Void-black face.", "heightM": 1.75, "mobIdea": "purple-sect acolyte"},
+        {"charCell": "1,1", "who": "purple robe, cream hood trim + white stole, void face.", "heightM": 1.75, "mobIdea": "purple-sect adept"},
+        {"charCell": "2,1", "who": "purple robe, golden red-rimmed faceplate mask, no trim.", "heightM": 1.75, "mobIdea": "purple-sect masked cultist"},
+        {"charCell": "3,1", "who": "purple robe, cream trim + white stole + golden mask.", "heightM": 1.75, "mobIdea": "purple-sect hierophant"}
+      ]
+    },
+    {
+      "sheet": "cultists_b_1.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "note": "Identical four robe designs to cultists_1, different palettes. Top char-row = bone-white/cream robes with RED-ORANGE trim and an orange stole. Bottom char-row = deep green robes with YELLOW-GOLD trim and a gold stole.",
+      "chars": [
+        {"charCell": "0,0", "who": "bone-white/cream hooded robe, void-black hood interior, no trim.", "heightM": 1.75, "mobIdea": "white-robe zealot"},
+        {"charCell": "1,0", "who": "cream robe with a bright orange-red band around the hood opening and a vivid orange stole running down the front.", "heightM": 1.75, "mobIdea": "flame-sect adept"},
+        {"charCell": "2,0", "who": "cream robe, blank gold faceplate mask ringed in red-orange inside the hood, no trim.", "heightM": 1.75, "mobIdea": "flame-sect masked cultist"},
+        {"charCell": "3,0", "who": "cream robe with orange-red hood trim, orange stole AND the gold mask — the ranking figure.", "heightM": 1.75, "mobIdea": "flame-sect high priest"},
+        {"charCell": "0,1", "who": "deep green hooded robe, void-black face, no trim.", "heightM": 1.75, "mobIdea": "green-sect zealot (swamp/gloomfen flavored)"},
+        {"charCell": "1,1", "who": "green robe with a yellow-gold hood band and a gold stole down the front.", "heightM": 1.75, "mobIdea": "green-sect adept"},
+        {"charCell": "2,1", "who": "green robe, gold red-rimmed faceplate mask, no trim.", "heightM": 1.75, "mobIdea": "green-sect masked cultist"},
+        {"charCell": "3,1", "who": "green robe, gold hood band + gold stole + gold mask.", "heightM": 1.75, "mobIdea": "green-sect high priest"}
+      ]
+    },
+    {
+      "sheet": "cultists_masks_1.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "note": "Same robe silhouette as the other two cultist sheets, but the face inside every hood is a WHITE BONE SKULL MASK (pale skull plate, dark hollow eye sockets, a small toothy jaw). Packed 4 palettes x 2 trim variants, NOT 4 designs x 2 palettes.",
+      "chars": [
+        {"charCell": "0,0", "who": "slate blue-gray robe, white skull mask in the hood, no trim.", "heightM": 1.75, "mobIdea": "bone-masked cultist (slate)"},
+        {"charCell": "1,0", "who": "slate robe, cream hood trim + white stole, white skull mask.", "heightM": 1.75, "mobIdea": "bone-masked celebrant (slate)"},
+        {"charCell": "2,0", "who": "purple robe, white skull mask, no trim.", "heightM": 1.75, "mobIdea": "bone-masked cultist (purple)"},
+        {"charCell": "3,0", "who": "purple robe, cream trim + white stole, white skull mask.", "heightM": 1.75, "mobIdea": "bone-masked celebrant (purple)"},
+        {"charCell": "0,1", "who": "bone-white/cream robe, white skull mask, no trim.", "heightM": 1.75, "mobIdea": "ossuary cultist"},
+        {"charCell": "1,1", "who": "cream robe, orange-red hood trim + orange stole, white skull mask.", "heightM": 1.75, "mobIdea": "ossuary celebrant"},
+        {"charCell": "2,1", "who": "deep green robe, white skull mask, no trim.", "heightM": 1.75, "mobIdea": "fen bone-cultist"},
+        {"charCell": "3,1", "who": "green robe, gold hood trim + gold stole, white skull mask.", "heightM": 1.75, "mobIdea": "fen bone-celebrant — crypt_depths caster"}
+      ]
+    },
+    {
+      "sheet": "darkelf1_1.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "note": "Dusky-brown-skinned elves (male-read proportions), pointed ears visible, bright hair. Adventurer/civilian gear, no weapons drawn.",
+      "chars": [
+        {"charCell": "0,0", "who": "dark-skinned elf, bright yellow-blonde bowl-cut hair with side locks over the ears, sleeveless green tunic with a yellow gem clasp, brown leather straps, brown boots.", "heightM": 1.75, "mobIdea": "dark-elf scout"},
+        {"charCell": "1,0", "who": "dusky elf with big curled/braided yellow hair bunched at both cheeks, bright green shirt with a wide collar, gray-blue trousers, orange-brown boots.", "heightM": 1.75, "mobIdea": "dark-elf villager NPC"},
+        {"charCell": "2,0", "who": "dusky elf, swept yellow-blonde hair with long side strands, green vest over a brown shirt, pale gray trousers and boots.", "heightM": 1.75, "mobIdea": "dark-elf ranger"},
+        {"charCell": "3,0", "who": "dusky elf, long yellow hair framing the face to the shoulders, green tunic under a white/cream sash, pale gray-white leggings.", "heightM": 1.75, "mobIdea": "dark-elf initiate"},
+        {"charCell": "0,1", "who": "dusky elf with long yellow-orange hair and a WHITE headband/circlet across the brow, pale blue-white robe with steel pauldrons, orange belt, white boots.", "heightM": 1.75, "mobIdea": "dark-elf spellblade"},
+        {"charCell": "1,1", "who": "dusky elf in a tan/leather cap banded with green, brown hair beneath, gray-white tunic with green belt trim, rust-orange trousers, pale boots.", "heightM": 1.75, "mobIdea": "dark-elf guard"},
+        {"charCell": "2,1", "who": "dusky elf with long ginger-orange hair (or a close ginger hood) framing the face, orange collar piece, a small green necklace/gorget, gray leggings, orange boots.", "heightM": 1.75, "mobIdea": "dark-elf hunter"},
+        {"charCell": "3,1", "who": "dusky elf with a gray-blue hood pulled up (face still visible), gray robe with a green trim band at the waist, gray-white legs, orange boots.", "heightM": 1.75, "mobIdea": "dark-elf shadow-walker"}
+      ]
+    },
+    {
+      "sheet": "darkelf2_1.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "note": "Dusky-skinned female-read dark elves; top char-row are woodland/ranger types with pale blonde hair, bottom char-row are nobles/clerics.",
+      "chars": [
+        {"charCell": "0,0", "who": "dark-skinned elf woman, straight platinum-blonde hair to the shoulders, sleeveless green dress with a wide skirt, brown shoes.", "heightM": 1.7, "mobIdea": "dark-elf villager / quest NPC"},
+        {"charCell": "1,0", "who": "platinum-blonde elf, green bodice with a gold belt over a bright BLUE skirt, brown arms/gloves.", "heightM": 1.7, "mobIdea": "dark-elf mage acolyte"},
+        {"charCell": "2,0", "who": "elf with swept tan-brown hair and a small YELLOW feather/hairpin at the ear, pointed ears clearly visible, green sleeveless vest, brown shorts, brown boots.", "heightM": 1.7, "mobIdea": "dark-elf archer"},
+        {"charCell": "3,0", "who": "golden-blonde long hair with a RED headband, brown coat/robe with a green stripe down the front.", "heightM": 1.7, "mobIdea": "dark-elf wayfarer"},
+        {"charCell": "0,1", "who": "silvery-white long hair, cream jacket over a RED bodice, gold belt and gold trim at the hips, brown boots — reads noble/merchant.", "heightM": 1.7, "mobIdea": "dark-elf noble NPC / shopkeeper"},
+        {"charCell": "1,1", "who": "white-haired elf in a gray-blue tunic with a heavy GOLD collar necklace and gold belt studs, rust-orange boots.", "heightM": 1.7, "mobIdea": "dark-elf envoy NPC"},
+        {"charCell": "2,1", "who": "brown-haired elf wearing a GOLD CROWN, a purple robe with gold trim, a heavy gold sash/girdle, pale legs.", "heightM": 1.75, "mobIdea": "Dark-Elf Queen — boss/faction leader"},
+        {"charCell": "3,1", "who": "pale-haired elf under a white-silver hood/wimple marked with a WHITE CROSS on the brow, white robe with gold trim, blue-white skirt.", "heightM": 1.7, "mobIdea": "dark-elf priestess — healer support mob"}
+      ]
+    },
+    {
+      "sheet": "executioner_1.png",
+      "px": "78x144",
+      "frame": "26x36",
+      "layout": "single",
+      "chars": [
+        {"charCell": "-", "who": "hulking bare-chested headsman. Whole head is inside a blank slate-gray sack hood; across the lower face sits a tan/leather muzzle plate studded with dark-red rivets. Broad shoulders wrapped in rust-red cloth, cream-white bandaged forearms, a wide brown leather belt/loincloth with dark-red trim, a small pale-blue gem at the belt buckle, gray boots. No weapon (see executioner_axe_1).", "heightM": 2.0, "mobIdea": "Executioner — slow, huge single-hit melee; unarmed grapple variant"}
+      ]
+    },
+    {
+      "sheet": "executioner_axe_1.png",
+      "px": "78x144",
+      "frame": "26x36",
+      "layout": "single",
+      "chars": [
+        {"charCell": "-", "who": "the same hooded, muzzle-masked headsman, now planting a huge double-bit BROADAXE: two silver-white crescent blades on a blue backing, gray haft with gold bands, butt-spike on the floor. He grips the haft with the near hand.", "heightM": 2.0, "mobIdea": "Executioner (armed) — dungeon boss with a 1.3s telegraphed cleave"}
+      ]
+    },
+    {
+      "sheet": "gnomea_reg.png",
+      "px": "78x144",
+      "frame": "26x36",
+      "layout": "single",
+      "chars": [
+        {"charCell": "-", "who": "tiny garden-gnome man: tall pointed RED cone hat, an enormous white-gray bushy beard that hides everything except a strip of face, blue coat/tunic, dark trousers, gray boots. Occupies only the lower half of the 26x36 cell.", "heightM": 1.0, "mobIdea": "gnome tinker NPC / neutral critter"}
+      ]
+    },
+    {
+      "sheet": "gnomeb_reg.png",
+      "px": "78x144",
+      "frame": "26x36",
+      "layout": "single",
+      "chars": [
+        {"charCell": "-", "who": "same gnome, GREEN cone hat and a RED coat; huge white beard, gray boots.", "heightM": 1.0, "mobIdea": "second gnome NPC (pair them in a hub gnome stall)"}
+      ]
+    },
+    {
+      "sheet": "goblinkinga_1.png",
+      "px": "156x212",
+      "frame": "52x53",
+      "layout": "single",
+      "note": "Big 52x53 cell but the sprite only fills the middle ~half of it.",
+      "chars": [
+        {"charCell": "-", "who": "RED-skinned goblin king: the squat hunched goblino body (huge sideways-pointed ears, cream tusks at the mouth corners, tiny dark eyes, barrel torso, stubby clawed feet), wearing a spiked GOLD CROWN, a gold torc/necklace, gold armlets and a long GOLD CAPE (the back view is almost entirely cape).", "heightM": 1.5, "mobIdea": "Goblin King (red) — open-world boss for a goblin camp; summons goblinos"}
+      ]
+    },
+    {
+      "sheet": "goblinkingb_1.png",
+      "px": "156x212",
+      "frame": "52x53",
+      "layout": "single",
+      "chars": [
+        {"charCell": "-", "who": "identical goblin king in BLUE-VIOLET skin: gold crown, gold torc, gold armlets, long gold cape, cream tusks, wide ears.", "heightM": 1.5, "mobIdea": "Goblin King (blue) — second faction warlord / harder respawn variant"}
+      ]
+    },
+    {
+      "sheet": "goblinos_1.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "note": "4 designs x 2 palette pairs. Body is a squat hunched brute: the head is dominated by huge sideways ears, two cream tusks, small dark slit eyes; thick ribbed torso, stubby legs, cream claw-toes.",
+      "chars": [
+        {"charCell": "0,0", "who": "RED-skinned goblino, bare, with a bright orange flame-shaped mohawk tuft of hair. No clothing at all.", "heightM": 1.4, "mobIdea": "goblino brute — melee swarm"},
+        {"charCell": "1,0", "who": "GREEN-skinned goblino with a short brown hair tuft, otherwise bare.", "heightM": 1.4, "mobIdea": "goblino grunt"},
+        {"charCell": "2,0", "who": "RED goblino in a gray steel conical SPIKED HELMET banded with gold, plus a brown leather loincloth.", "heightM": 1.4, "mobIdea": "goblino warrior — armored, has a captain's gold band"},
+        {"charCell": "3,0", "who": "GREEN goblino in the same gray spiked helmet (no gold band) and brown loincloth.", "heightM": 1.4, "mobIdea": "goblino soldier"},
+        {"charCell": "0,1", "who": "PURPLE goblino with the orange flame mohawk, bare.", "heightM": 1.4, "mobIdea": "cave goblino"},
+        {"charCell": "1,1", "who": "CYAN/ice-blue goblino with a brown hair tuft, bare.", "heightM": 1.4, "mobIdea": "frost goblino"},
+        {"charCell": "2,1", "who": "PURPLE goblino in a pale-green spiked helm with a gold band, brown loincloth.", "heightM": 1.4, "mobIdea": "cave goblino warrior"},
+        {"charCell": "3,1", "who": "CYAN goblino in a pale-green spiked helm, brown loincloth.", "heightM": 1.4, "mobIdea": "frost goblino soldier"}
+      ]
+    },
+    {
+      "sheet": "Golden Spikey Knight Sprite Sheet.png",
+      "px": "282x400",
+      "frame": "94x100",
+      "layout": "single",
+      "note": "Not Time Fantasy scale/style — a 94x100 frame at a much higher pixel density. Walk grid IS a valid 3x4 (down/left/right/up).",
+      "chars": [
+        {"charCell": "-", "who": "towering knight in polished silver-steel plate with heavy GOLD trim: closed helm with a narrow T-slit visor, a huge orange-gold plume/mane behind the head (the back view is a big teardrop of orange hair), and clusters of long curved IVORY-WHITE spikes bursting from each pauldron and from the sides of the helm. Gold-banded skirt of plates, plated boots. No weapon.", "heightM": 2.8, "mobIdea": "Spikelord — a raid-tier armored boss; slow, huge armor value, shockwave slam"}
+      ]
+    },
+    {
+      "sheet": "paladin.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "note": "A holy-knight PROGRESSION: top char-row rises from acolyte to helmed knight, bottom char-row from champion to haloed saint. Blue + gold is the faction color.",
+      "chars": [
+        {"charCell": "0,0", "who": "young blond acolyte, bare head, plain brown-tan robe with a small GOLD CROSS on the chest, gold hem trim, no armor.", "heightM": 1.75, "mobIdea": "temple acolyte NPC"},
+        {"charCell": "1,0", "who": "brown-haired man, bare head, blue-and-gold plate: gold pauldrons, blue cuirass, gold greaves, cream boots.", "heightM": 1.75, "mobIdea": "paladin squire"},
+        {"charCell": "2,0", "who": "long blonde hair under a blue cap/coif, blue-and-gold plate with a white tabard bearing a blue cross, gold trim.", "heightM": 1.75, "mobIdea": "paladin"},
+        {"charCell": "3,0", "who": "fully helmed knight: cyan-blue great helm with a GOLD CROSS across the brow, heavy blue-gold plate, gold pauldrons.", "heightM": 1.8, "mobIdea": "templar — armored, shield-bash"},
+        {"charCell": "0,1", "who": "orange-gold haired/hooded warrior in ornate gold plate over a blue tabard, gold gauntlets.", "heightM": 1.8, "mobIdea": "paladin champion"},
+        {"charCell": "1,1", "who": "a cream-white HALO ring floats above the head; pale mint-white helm/hair, ornate gold armor, blue tabard with a white panel.", "heightM": 1.8, "mobIdea": "sainted paladin — healing aura elite"},
+        {"charCell": "2,1", "who": "flame-shaped orange crest/crown of hair, gold-and-blue robes with wide gold sleeves, blue skirt with gold trim.", "heightM": 1.8, "mobIdea": "high priest — ranged holy caster"},
+        {"charCell": "3,1", "who": "HALO above an elaborate gold winged crown/helm; white-mint ornate armor with gold filigree, blue tabard. The most ornate figure on the sheet.", "heightM": 1.85, "mobIdea": "Radiant Archon — holy-faction final boss"}
+      ]
+    },
+    {
+      "sheet": "pirates_100.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "note": "ONLY the top char-row exists. Char cells 0,1 / 1,1 / 2,1 / 3,1 are 100% transparent (verified by alpha count = 0). Treat as a 4-character sheet.",
+      "chars": [
+        {"charCell": "0,0", "who": "pirate captain: big navy TRICORN hat with a white skull emblem and an orange feather, brown mustache and beard, red longcoat with gold buttons and big cream cuffs, brown breeches, gray boots.", "heightM": 1.75, "mobIdea": "Pirate Captain — coastal mini-boss, pistol + cutlass kit"},
+        {"charCell": "1,0", "who": "pirate with a RED bandana, long brown hair, brown coat with yellow trim over a striped shirt, blue trousers, dark boots.", "heightM": 1.75, "mobIdea": "pirate deckhand"},
+        {"charCell": "2,0", "who": "burly balding sailor with a big bushy ORANGE beard and mustache, white/cream shirt with rolled sleeves, gray-blue trousers, brown boots.", "heightM": 1.75, "mobIdea": "pirate bruiser / dock brawler NPC"},
+        {"charCell": "3,0", "who": "blonde woman with a PURPLE headscarf, brown open coat, purple skirt/sash, brown boots.", "heightM": 1.7, "mobIdea": "pirate quartermaster NPC / smuggler"},
+        {"charCell": "0,1", "who": "empty", "heightM": 0, "mobIdea": "unusable"},
+        {"charCell": "1,1", "who": "empty", "heightM": 0, "mobIdea": "unusable"},
+        {"charCell": "2,1", "who": "empty", "heightM": 0, "mobIdea": "unusable"},
+        {"charCell": "3,1", "who": "empty", "heightM": 0, "mobIdea": "unusable"}
+      ]
+    },
+    {
+      "sheet": "ratmen.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "note": "NOT 8 characters. It is 4 fur colors, each drawn TWICE: the top char-row has NO drop shadow, the bottom char-row is the identical sprite WITH an elliptical ground shadow (verified: 339 differing pixels per pair, all under the feet). Use the top row for the billboard pipeline (the engine casts real shadows).",
+      "chars": [
+        {"charCell": "0,0", "who": "naked bipedal ratman: hunched, huge sideways-splayed ears, long tan snout, glowing yellow pinprick eyes, rust-orange fur with darker markings, pink clawed hands and pink hind paws, thin tail. No clothing, no weapon.", "heightM": 1.6, "mobIdea": "sewer ratman — fast, weak, swarms"},
+        {"charCell": "1,0", "who": "same ratman in pale gray-white fur with a cream face blaze.", "heightM": 1.6, "mobIdea": "albino ratman"},
+        {"charCell": "2,0", "who": "same ratman in mid-brown fur with a tan snout.", "heightM": 1.6, "mobIdea": "brown ratman"},
+        {"charCell": "3,0", "who": "same ratman in dark gray-green fur, yellow eyes very prominent against the dark coat.", "heightM": 1.6, "mobIdea": "plague ratman — applies a poison DoT"},
+        {"charCell": "0,1", "who": "rust-orange ratman, identical to 0,0 but with a baked-in dark ellipse ground shadow under the feet.", "heightM": 1.6, "mobIdea": "duplicate of 0,0 (shadowed) — avoid for billboards"},
+        {"charCell": "1,1", "who": "pale gray-white ratman with baked-in ground shadow.", "heightM": 1.6, "mobIdea": "duplicate of 1,0 (shadowed)"},
+        {"charCell": "2,1", "who": "brown ratman with baked-in ground shadow.", "heightM": 1.6, "mobIdea": "duplicate of 2,0 (shadowed)"},
+        {"charCell": "3,1", "who": "dark gray-green ratman with baked-in ground shadow.", "heightM": 1.6, "mobIdea": "duplicate of 3,0 (shadowed)"}
+      ]
+    },
+    {
+      "sheet": "ratmen_characters_1x.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "note": "The CLOTHED/armored ratman roster (a genuinely different sheet from ratmen.png — byte-compared, not a duplicate). Same rat anatomy, now with gear.",
+      "chars": [
+        {"charCell": "0,0", "who": "brown ratman in a purple hood/cowl pulled over the ears, olive-green tunic with a gold belt, purple sleeves, pink paws.", "heightM": 1.6, "mobIdea": "ratman skulker — rogue, stealth opener"},
+        {"charCell": "1,0", "who": "pale gray-white ratman in a brown leather harness with a steel shoulder plate, olive-green kilt, bare arms.", "heightM": 1.6, "mobIdea": "ratman scavenger"},
+        {"charCell": "2,0", "who": "brown-and-cream ratman in blue-steel plate armor: pauldrons, breastplate over a red under-tunic, bright rivet highlights.", "heightM": 1.6, "mobIdea": "ratman knight — armored front-liner"},
+        {"charCell": "3,0", "who": "figure fully wrapped in an olive-yellow hooded robe with a green sash; the face is a small gray muzzle-mask, arms folded in the sleeves. Rat ears are hidden. Reads as a robed ratman elder/mystic — I cannot see rat features beyond the muzzle, so treat the species read as inferred from the sheet, not proven by the face.", "heightM": 1.6, "mobIdea": "ratman seer — caster, buffs the pack"},
+        {"charCell": "0,1", "who": "dark-furred ratman wearing a GOLD CROWN, steel pauldrons, a red cape and red sash across the chest.", "heightM": 1.65, "mobIdea": "Rat King — warren boss, summons ratmen"},
+        {"charCell": "1,1", "who": "tan ratman in a dark purple cloak over a steel chest plate, red loincloth, a gold pouch at the hip.", "heightM": 1.6, "mobIdea": "ratman thief — steals gold on hit"},
+        {"charCell": "2,1", "who": "gray ratman in ornate GOLD armor with bright sparkle highlights on the pauldrons and belt.", "heightM": 1.6, "mobIdea": "ratman champion — elite guard of the Rat King"},
+        {"charCell": "3,1", "who": "gray ratman in a plain gray hooded robe with a broad GOLD sash running diagonally across the chest.", "heightM": 1.6, "mobIdea": "ratman monk/priest — healer"}
+      ]
+    },
+    {
+      "sheet": "shamans_100.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "note": "ONLY the top char-row exists. Char cells 0,1 / 1,1 / 2,1 / 3,1 are 100% transparent (alpha count = 0). Treat as a 4-character sheet. All four are masked tribal shamans: a big long tusked mask instead of a face, bare chest, red loincloth.",
+      "chars": [
+        {"charCell": "0,0", "who": "orange-brown skinned shaman, tall FLAME-colored plume headdress (orange/yellow), long cream tusked mask covering the whole face, bare chest, bare arms, red loincloth, bare feet.", "heightM": 1.75, "mobIdea": "flame shaman — fire bolt caster"},
+        {"charCell": "1,0", "who": "shaman in lavender-purple mask/skin tones, red-orange flame plume with a pale FEATHER jutting sideways, gold armlets, purple gloves and boots, patchwork kilt.", "heightM": 1.75, "mobIdea": "spirit shaman — slow/curse debuffs"},
+        {"charCell": "2,0", "who": "pale cream tusked mask crowned with a spray of bright GREEN leaves/fronds, a green leaf necklace, bare tan chest, red loincloth.", "heightM": 1.75, "mobIdea": "grove shaman — heals and roots (nature)"},
+        {"charCell": "3,0", "who": "WHITE SKULL mask with hollow sockets, a red flame headdress above it, a small green gem on the brow, blue arm wraps and blue boots, red loincloth.", "heightM": 1.75, "mobIdea": "bone shaman — raises skeletons; tribe boss"},
+        {"charCell": "0,1", "who": "empty", "heightM": 0, "mobIdea": "unusable"},
+        {"charCell": "1,1", "who": "empty", "heightM": 0, "mobIdea": "unusable"},
+        {"charCell": "2,1", "who": "empty", "heightM": 0, "mobIdea": "unusable"},
+        {"charCell": "3,1", "who": "empty", "heightM": 0, "mobIdea": "unusable"}
+      ]
+    },
+    {
+      "sheet": "slicer_rmsheet.png",
+      "px": "384x512",
+      "frame": "32x64",
+      "layout": "unknown",
+      "note": "The char8 guess is WRONG for content. All 8 blocks draw the SAME creature; the blocks are animation sets (idle/walk/attack/lunge), not 8 characters. Block 2,0 and 3,0 contain giant white crescent SLASH FX frames, and block 3,1 has ground-lunge poses that break the down/left/right/up convention. Only blocks 0,0 and 1,0 read as clean 3-frame directional walks.",
+      "chars": [
+        {"charCell": "0,0", "who": "pale ice-blue chitinous creature: no visible head or arms — two huge curved scythe/blade limbs sweep up and over from the shoulders, a thin segmented torso, and two long backward-jointed (digitigrade) legs with hooked toes. White highlights along every blade edge.", "heightM": 1.7, "mobIdea": "Slicer — fast bladed insectoid, leaping crescent-slash attack (the sheet ships its own slash FX frames)"},
+        {"charCell": "1,0", "who": "the same slicer, second walk set (near-identical frames, slightly different leg phase).", "heightM": 1.7, "mobIdea": "same creature — alternate walk"},
+        {"charCell": "2,0", "who": "the same slicer plus large white crescent SLASH effect frames overlapping it (attack animation, not a character).", "heightM": 1.7, "mobIdea": "attack anim frames"},
+        {"charCell": "3,0", "who": "slicer attack/spin frames with big white crescent arcs sweeping over the body.", "heightM": 1.7, "mobIdea": "attack anim frames"},
+        {"charCell": "0,1", "who": "slicer, crouched/running poses.", "heightM": 1.7, "mobIdea": "run anim frames"},
+        {"charCell": "1,1", "who": "slicer, running poses (legs extended).", "heightM": 1.7, "mobIdea": "run anim frames"},
+        {"charCell": "2,1", "who": "slicer, curled/ducking poses.", "heightM": 1.7, "mobIdea": "hurt/duck anim frames"},
+        {"charCell": "3,1", "who": "slicer, low ground-lunge and tumbling poses.", "heightM": 1.7, "mobIdea": "lunge anim frames"}
+      ]
+    },
+    {
+      "sheet": "theblackknight_1.png",
+      "px": "78x144",
+      "frame": "26x36",
+      "layout": "single",
+      "chars": [
+        {"charCell": "-", "who": "heavy full-plate knight in dark blue-black steel. Closed great helm with a slit visor and a curved GOLD/amber band arcing across the brow; spiked pauldrons; dark-red accents at the elbows; a glowing gold V-shaped clasp on the belt and gold curls running down the tasset skirt. Foot-tall crest atop the helm. No weapon drawn.", "heightM": 1.95, "mobIdea": "Black Knight — heavy elite, high armor, slow telegraphed cleave"}
+      ]
+    },
+    {
+      "sheet": "theblackknighthorseback_1.png",
+      "px": "156x212",
+      "frame": "52x53",
+      "layout": "single",
+      "chars": [
+        {"charCell": "-", "who": "the same Black Knight (dark blue-black plate, gold brow band, spiked pauldrons) mounted on a dark barded warhorse; the side view shows the horse's bridle and the knight's gold-trimmed saddle skirt. Pale hooves.", "heightM": 2.2, "mobIdea": "Black Knight (mounted) — charging elite / boss phase 1"}
+      ]
+    },
+    {
+      "sheet": "theblackknightshorse_1.png",
+      "px": "156x212",
+      "frame": "52x53",
+      "layout": "single",
+      "chars": [
+        {"charCell": "-", "who": "the riderless warhorse alone: dark slate blue-black coat, bridled and saddled with a pale saddle blanket, pale ghost-white hooves.", "heightM": 1.7, "mobIdea": "the knight's steed — mount/prop; could double as a spectral warhorse mob"}
+      ]
+    },
+    {
+      "sheet": "warden_walk_blue_1.png",
+      "px": "144x192",
+      "frame": "48x48",
+      "layout": "single",
+      "chars": [
+        {"charCell": "-", "who": "hulking stone golem 'warden': gray rock body with massive slab shoulders and knuckles, two glowing BLUE crystal horns curving up from the boulder head, glowing blue slit eyes, blue crystal shards embedded in the chest, knuckles and knees, and bright green moss/lichen creeping over the arms, thighs and feet. No weapon — the fists are the weapon.", "heightM": 2.6, "mobIdea": "Crystal Warden — slow armored guardian of a crystal cave; ground-slam AoE"}
+      ]
+    },
+    {
+      "sheet": "warden_walk_bone_1.png",
+      "px": "144x192",
+      "frame": "48x48",
+      "layout": "single",
+      "chars": [
+        {"charCell": "-", "who": "the same stone warden with BONE instead of crystal: ivory-white curved horns, ivory rib-like shards across the chest and knuckles, pale yellow slit eyes, darker blue-gray stone, the same green moss on limbs.", "heightM": 2.6, "mobIdea": "Bone Warden — crypt/ossuary guardian variant (pairs with crypt_depths)"}
+      ]
+    }
+  ],
+  "warnings": [
+    "pirates_100.png: the ENTIRE bottom character row (cells 0,1..3,1) is fully transparent — 4 usable characters, not 8. Verified by alpha-count = 0 over each 78x144 block.",
+    "shamans_100.png: same — bottom character row (0,1..3,1) is fully transparent. 4 usable characters.",
+    "slicer_rmsheet.png: the 'char8' layout guess is wrong in meaning. 384x512 at 32x64 does decompose into 8 blocks of 3x4, but every block is the SAME creature: they are animation sets (walk / run / attack / lunge), and blocks 2,0, 3,0 and 3,1 contain slash-FX and tumbling poses that are NOT down/left/right/up rows. Only 0,0 and 1,0 are usable as a directional walk grid. Classify as a single character.",
+    "ratmen.png: not 8 characters. It is 4 fur colors duplicated — the bottom character row is pixel-identical to the top except for a baked-in elliptical drop shadow under the feet (339 differing px per pair). Use the TOP row; a baked shadow would double up with the engine's real entity shadows.",
+    "executioner_axe_1.png: the axe head runs flush to the LEFT EDGE of its 26px cell in the down-facing middle frame (11 opaque rows at x=0). Any alpha-trim / rect-window extraction must grab the exact 26x36 cell or it will weld the neighbouring frame's pixels onto the sprite (the known outside.png trap).",
+    "Golden Spikey Knight Sprite Sheet.png: 94x100 frames — a completely different pixel density and art style from the 26x36 Time Fantasy sheets. Its 3x4 walk grid is valid, but it will not visually match TF mobs standing next to it. Boss-only use.",
+    "goblinkinga_1.png / goblinkingb_1.png: 52x53 cells but the sprite fills only the middle of the cell; do not infer a large creature from the frame size. They are goblino-sized (~1.5 m) with a crown and cape.",
+    "gnomea_reg / gnomeb_reg: sprite occupies only the lower ~55% of the 26x36 cell (a genuinely short character), not a misalignment.",
+    "cultists_masks_1.png packs its 8 cells as 4 palettes x 2 trim variants, while cultists_1 and cultists_b_1 pack theirs as 4 designs x 2 palettes. Do not assume the same cell means the same variant across the three cultist sheets.",
+    "No sheet in this group had a garbled / off-grid half of the wizard.png kind. bandits, cultists x3, darkelf x2, goblinos, paladin, ratmen x2 all decompose cleanly into 8 x (3 cols x 4 rows)."
+  ]
+}

@@ -454,3 +454,85 @@ describe("registry guards against latent mob traps", () => {
     }
   });
 });
+
+/**
+ * E1: ranks may change a mob's NERVE, not just its numbers and its buttons.
+ * All three R&D judges converged on this independently — without it, "the same
+ * mob is genuinely different deep" only ever means "the same mob has more hp".
+ */
+describe("rank disposition overrides", () => {
+  const timid = baseDef({
+    aggroRadius: 0,
+    fleeAtHpPct: 1.0,
+    attackRange: 1.5,
+    leashRadius: 8,
+    ranks: [
+      { atLevel: 10, add: [], remove: [], hpMult: 1, damageMult: 1, moveSpeedMult: 1,
+        aggroRadius: 12, fleeAtHpPct: 0, titleSuffix: "Wrung" },
+      { atLevel: 14, add: [], remove: [], hpMult: 1, damageMult: 1, moveSpeedMult: 1,
+        attackRange: 18, leashRadius: 40 },
+    ],
+  });
+
+  it("carries the def's disposition when no rank applies", () => {
+    const r = resolveMob(timid, 5, SCALING);
+    expect(r.aggroRadius).toBe(0);
+    expect(r.fleeAtHpPct).toBe(1.0);
+    expect(r.attackRange).toBe(1.5);
+    expect(r.leashRadius).toBe(8);
+  });
+
+  it("the harmless thing stops running", () => {
+    const r = resolveMob(timid, 10, SCALING);
+    expect(r.aggroRadius).toBe(12); // it sees you now
+    expect(r.fleeAtHpPct).toBe(0); // and it does not run
+    expect(r.name).toBe("Test Mob Wrung");
+    expect(r.attackRange).toBe(1.5); // untouched by this rank
+  });
+
+  it("later ranks override earlier ones; absolute, not multiplicative", () => {
+    const r = resolveMob(timid, 14, SCALING);
+    expect(r.aggroRadius).toBe(12);
+    expect(r.attackRange).toBe(18);
+    expect(r.leashRadius).toBe(40);
+  });
+
+  it("every shipped mob resolves to its own disposition at its own level", () => {
+    const reg = new RegistryService();
+    for (const [id, def] of Object.entries(reg.mobs)) {
+      const r = resolveMob(def, undefined, SCALING);
+      expect(r.aggroRadius, id).toBe(def.aggroRadius);
+      expect(r.attackRange, id).toBe(def.attackRange);
+      expect(r.leashRadius, id).toBe(def.leashRadius);
+      expect(r.fleeAtHpPct, id).toBe(def.fleeAtHpPct);
+    }
+  });
+});
+
+/** E2: summon grants. A splitter's halves must not each pay full xp and loot. */
+describe("summon xp/loot hygiene", () => {
+  const reg = new RegistryService();
+
+  it("shipped boss adds still grant xp and loot (an intentional risk/reward)", () => {
+    for (const id of ["lich_summon", "oath_summon"]) {
+      const spec = reg.abilities[id]!.summon!;
+      expect(spec.grantsXp, id).toBe(true);
+      expect(spec.grantsLoot, id).toBe(true);
+    }
+  });
+
+  it("the chain guard looks at the child's BASE kit, not its rank-gated kit", () => {
+    // summonWave() spawns minions with no level override, so an ability behind a
+    // rank the minion can never reach is not a chain. If summonWave learns to pass
+    // a level, this test and the registry guard must widen together.
+    for (const [id, def] of Object.entries(reg.mobs)) {
+      for (const abilityId of mobAllAbilityIds(def)) {
+        const spec = reg.abilities[abilityId]!.summon;
+        if (!spec) continue;
+        const child = reg.mobs[spec.mob]!;
+        const baseKit = (child.attacks ?? (child.ability ? [{ ability: child.ability, weight: 1 }] : []));
+        for (const a of baseKit) expect(reg.abilities[a.ability]?.summon, `${id} -> ${spec.mob}`).toBeFalsy();
+      }
+    }
+  });
+});

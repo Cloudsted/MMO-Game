@@ -4,7 +4,7 @@
  * only through intents: "move toward X", "use ability at Y". That seam is
  * where behavior trees swap in later.
  */
-import { isSolidBlock, type AbilityDef, type MobDef, type SpawnTable } from "@fantasy-mmo/common";
+import { isSolidBlock, type AbilityDef, type ResolvedMob, type SpawnTable } from "@fantasy-mmo/common";
 import type { Entity } from "./entities.js";
 import type { VoxelWorld } from "./voxel.js";
 
@@ -132,7 +132,11 @@ export function chooseAttack(
  */
 export function tickBrain(
   mob: Entity,
-  def: MobDef,
+  /** the mob evaluated at its SPAWN level. Ranks may override its disposition
+   *  (aggroRadius / fleeAtHpPct / attackRange / leashRadius), so the brain must
+   *  never read the raw def — otherwise a rank could change a mob's numbers and
+   *  its buttons but never its nerve. */
+  def: ResolvedMob,
   players: Entity[],
   now: number,
   attackReachY: number = Number.POSITIVE_INFINITY

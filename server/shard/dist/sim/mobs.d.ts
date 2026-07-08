@@ -4,7 +4,7 @@
  * only through intents: "move toward X", "use ability at Y". That seam is
  * where behavior trees swap in later.
  */
-import { type AbilityDef, type MobDef, type SpawnTable } from "@fantasy-mmo/common";
+import { type AbilityDef, type ResolvedMob, type SpawnTable } from "@fantasy-mmo/common";
 import type { Entity } from "./entities.js";
 import type { VoxelWorld } from "./voxel.js";
 /** Min center-to-center distance between alive mobs (owner-tuned: 0.9 read
@@ -67,7 +67,12 @@ export declare function chooseAttack(mob: Entity, target: Entity, options: Attac
  * 2D-close but vertically out of reach are CHASED (with drop-down moves),
  * never punched through canopies and floors.
  */
-export declare function tickBrain(mob: Entity, def: MobDef, players: Entity[], now: number, attackReachY?: number): BrainDecision;
+export declare function tickBrain(mob: Entity, 
+/** the mob evaluated at its SPAWN level. Ranks may override its disposition
+ *  (aggroRadius / fleeAtHpPct / attackRange / leashRadius), so the brain must
+ *  never read the raw def — otherwise a rank could change a mob's numbers and
+ *  its buttons but never its nerve. */
+def: ResolvedMob, players: Entity[], now: number, attackReachY?: number): BrainDecision;
 /**
  * Apply a move intent with voxel rules: walk at speed, deflect around
  * blockers, step up/down at most one block, keep headroom. Liquid blocks

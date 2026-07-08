@@ -181,11 +181,18 @@ export declare const AbilityDefSchema: z.ZodObject<{
         cap: z.ZodDefault<z.ZodNumber>;
         /** flavor line broadcast to nearby players when the wave rises */
         text: z.ZodOptional<z.ZodString>;
+        /** Boss adds grant xp/loot by design (an intentional risk/reward). A
+         *  SPLITTER must not: a mob whose halves each pay full xp and loot is a
+         *  vending machine. Set false on anything a player can farm by waiting. */
+        grantsXp: z.ZodDefault<z.ZodBoolean>;
+        grantsLoot: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
         count: number;
         radius: number;
         mob: string;
         cap: number;
+        grantsXp: boolean;
+        grantsLoot: boolean;
         text?: string | undefined;
     }, {
         count: number;
@@ -193,6 +200,8 @@ export declare const AbilityDefSchema: z.ZodObject<{
         radius?: number | undefined;
         cap?: number | undefined;
         text?: string | undefined;
+        grantsXp?: boolean | undefined;
+        grantsLoot?: boolean | undefined;
     }>>;
     /** self-kind support: on release, heal every living mob within `radius`
      *  (the caster too, unless includeSelf is false). The option only enters
@@ -263,6 +272,8 @@ export declare const AbilityDefSchema: z.ZodObject<{
         radius: number;
         mob: string;
         cap: number;
+        grantsXp: boolean;
+        grantsLoot: boolean;
         text?: string | undefined;
     } | undefined;
     allyHeal?: {
@@ -312,6 +323,8 @@ export declare const AbilityDefSchema: z.ZodObject<{
         radius?: number | undefined;
         cap?: number | undefined;
         text?: string | undefined;
+        grantsXp?: boolean | undefined;
+        grantsLoot?: boolean | undefined;
     } | undefined;
     allyHeal?: {
         amount: number;
@@ -442,6 +455,16 @@ export declare const MobRankSchema: z.ZodObject<{
     hpMult: z.ZodDefault<z.ZodNumber>;
     damageMult: z.ZodDefault<z.ZodNumber>;
     moveSpeedMult: z.ZodDefault<z.ZodNumber>;
+    /**
+     * DISPOSITION overrides — a rank may change the mob's NERVE, not just its
+     * numbers and its buttons. This is what lets the harmless thing stop running,
+     * the grazer start charging, and the sentry refuse to let you walk away.
+     * Absolute values, not multipliers; the last applicable rank wins.
+     */
+    aggroRadius: z.ZodOptional<z.ZodNumber>;
+    fleeAtHpPct: z.ZodOptional<z.ZodNumber>;
+    attackRange: z.ZodOptional<z.ZodNumber>;
+    leashRadius: z.ZodOptional<z.ZodNumber>;
     /** display suffix: "Bandit" -> "Bandit Veteran" */
     titleSuffix: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
@@ -456,6 +479,10 @@ export declare const MobRankSchema: z.ZodObject<{
     hpMult: number;
     damageMult: number;
     moveSpeedMult: number;
+    aggroRadius?: number | undefined;
+    fleeAtHpPct?: number | undefined;
+    attackRange?: number | undefined;
+    leashRadius?: number | undefined;
     titleSuffix?: string | undefined;
 }, {
     atLevel: number;
@@ -469,6 +496,10 @@ export declare const MobRankSchema: z.ZodObject<{
     hpMult?: number | undefined;
     damageMult?: number | undefined;
     moveSpeedMult?: number | undefined;
+    aggroRadius?: number | undefined;
+    fleeAtHpPct?: number | undefined;
+    attackRange?: number | undefined;
+    leashRadius?: number | undefined;
     titleSuffix?: string | undefined;
 }>;
 export type MobRankDef = z.infer<typeof MobRankSchema>;
@@ -530,6 +561,16 @@ export declare const MobDefSchema: z.ZodObject<{
         hpMult: z.ZodDefault<z.ZodNumber>;
         damageMult: z.ZodDefault<z.ZodNumber>;
         moveSpeedMult: z.ZodDefault<z.ZodNumber>;
+        /**
+         * DISPOSITION overrides — a rank may change the mob's NERVE, not just its
+         * numbers and its buttons. This is what lets the harmless thing stop running,
+         * the grazer start charging, and the sentry refuse to let you walk away.
+         * Absolute values, not multipliers; the last applicable rank wins.
+         */
+        aggroRadius: z.ZodOptional<z.ZodNumber>;
+        fleeAtHpPct: z.ZodOptional<z.ZodNumber>;
+        attackRange: z.ZodOptional<z.ZodNumber>;
+        leashRadius: z.ZodOptional<z.ZodNumber>;
         /** display suffix: "Bandit" -> "Bandit Veteran" */
         titleSuffix: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
@@ -544,6 +585,10 @@ export declare const MobDefSchema: z.ZodObject<{
         hpMult: number;
         damageMult: number;
         moveSpeedMult: number;
+        aggroRadius?: number | undefined;
+        fleeAtHpPct?: number | undefined;
+        attackRange?: number | undefined;
+        leashRadius?: number | undefined;
         titleSuffix?: string | undefined;
     }, {
         atLevel: number;
@@ -557,6 +602,10 @@ export declare const MobDefSchema: z.ZodObject<{
         hpMult?: number | undefined;
         damageMult?: number | undefined;
         moveSpeedMult?: number | undefined;
+        aggroRadius?: number | undefined;
+        fleeAtHpPct?: number | undefined;
+        attackRange?: number | undefined;
+        leashRadius?: number | undefined;
         titleSuffix?: string | undefined;
     }>, "many">>;
     aggroRadius: z.ZodNumber;
@@ -585,6 +634,10 @@ export declare const MobDefSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     name: string;
     damage: number;
+    aggroRadius: number;
+    fleeAtHpPct: number;
+    attackRange: number;
+    leashRadius: number;
     sprite: string;
     level: number;
     hp: number;
@@ -601,12 +654,12 @@ export declare const MobDefSchema: z.ZodObject<{
         hpMult: number;
         damageMult: number;
         moveSpeedMult: number;
+        aggroRadius?: number | undefined;
+        fleeAtHpPct?: number | undefined;
+        attackRange?: number | undefined;
+        leashRadius?: number | undefined;
         titleSuffix?: string | undefined;
     }[];
-    aggroRadius: number;
-    attackRange: number;
-    leashRadius: number;
-    fleeAtHpPct: number;
     xp: number;
     loot: string;
     ability?: string | undefined;
@@ -625,14 +678,14 @@ export declare const MobDefSchema: z.ZodObject<{
 }, {
     name: string;
     damage: number;
+    aggroRadius: number;
+    fleeAtHpPct: number;
+    attackRange: number;
+    leashRadius: number;
     sprite: string;
     level: number;
     hp: number;
     moveSpeed: number;
-    aggroRadius: number;
-    attackRange: number;
-    leashRadius: number;
-    fleeAtHpPct: number;
     xp: number;
     loot: string;
     ability?: string | undefined;
@@ -654,6 +707,10 @@ export declare const MobDefSchema: z.ZodObject<{
         hpMult?: number | undefined;
         damageMult?: number | undefined;
         moveSpeedMult?: number | undefined;
+        aggroRadius?: number | undefined;
+        fleeAtHpPct?: number | undefined;
+        attackRange?: number | undefined;
+        leashRadius?: number | undefined;
         titleSuffix?: string | undefined;
     }[] | undefined;
     sounds?: {
@@ -674,7 +731,8 @@ export interface MobScaling {
     xpPerLevel: number;
     maxLevelBonus: number;
 }
-/** A mob def evaluated at a concrete spawn level. */
+/** A mob def evaluated at a concrete spawn level. The brain reads THIS, never
+ *  the raw def — otherwise a rank could never change a mob's disposition. */
 export interface ResolvedMob {
     level: number;
     name: string;
@@ -683,6 +741,10 @@ export interface ResolvedMob {
     moveSpeed: number;
     xp: number;
     attacks: MobAttackDef[];
+    aggroRadius: number;
+    attackRange: number;
+    leashRadius: number;
+    fleeAtHpPct: number;
 }
 /**
  * Evaluate `def` at `level`. Stats compound per level above the def's base

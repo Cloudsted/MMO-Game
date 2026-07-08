@@ -467,7 +467,14 @@ export class RoomSim {
    *  band, dry, unobstructed — stragglers stack on the anchor and the
    *  separation pass fans them out). The wave inherits the anchor's threat
    *  table so mid-fight adds charge straight in; spawner "" = no respawn. */
-  private summonWave(around: Entity, mobId: string, count: number, radius: number, text?: string): void {
+  private summonWave(
+    around: Entity,
+    mobId: string,
+    count: number,
+    radius: number,
+    text?: string,
+    grants: { xp: boolean; loot: boolean } = { xp: true, loot: true }
+  ): void {
     const b = around.brain;
     let spawned = 0;
     for (let i = 0; i < count; i++) {
@@ -489,6 +496,8 @@ export class RoomSim {
       const minion = this.spawnMob(mobId, x, z, "");
       if (!minion) continue;
       minion.brain!.summonerId = around.id;
+      minion.brain!.grantsXp = grants.xp;
+      minion.brain!.grantsLoot = grants.loot;
       if (b) {
         minion.brain!.threat = new Map(b.threat);
         minion.brain!.targetId = b.targetId;
@@ -1344,7 +1353,7 @@ export class RoomSim {
       target,
       options,
       now,
-      def.attackRange,
+      resolved.attackRange,
       this.consts.combat.meleeRangeGrace,
       this.consts.combat.meleeVerticalReach
     );
@@ -1526,7 +1535,10 @@ export class RoomSim {
           const spec = ability.summon;
           const room = Math.max(0, spec.cap - this.minionCountOf(e));
           if (room > 0) {
-            this.summonWave(e, spec.mob, Math.min(spec.count, room), spec.radius, spec.text);
+            this.summonWave(e, spec.mob, Math.min(spec.count, room), spec.radius, spec.text, {
+              xp: spec.grantsXp,
+              loot: spec.grantsLoot,
+            });
             // clients cue the war-horn off this
             this.broadcastEvent({ kind: "summon", id: e.id }, e.pos.x, e.pos.z);
           }
@@ -1687,10 +1699,13 @@ export class RoomSim {
           }
         }
         const winner = topChar ? this.byCharacterId.get(topChar) : undefined;
-        // a mob reused above its base level is worth proportionally more xp
-        if (winner) this.awardXp(winner, this.resolvedMobOf(tgt)?.xp ?? mobDef.xp);
+        // a mob reused above its base level is worth proportionally more xp;
+        // a summoned minion may be worth none at all (splitters)
+        if (winner && (tgt.brain?.grantsXp ?? true)) this.awardXp(winner, this.resolvedMobOf(tgt)?.xp ?? mobDef.xp);
         // loot: owner-locked to the top damage dealer for a grace window
-        const rolled = rollLoot(this.reg, this.consts, mobDef.loot);
+        const rolled = (tgt.brain?.grantsLoot ?? true)
+          ? rollLoot(this.reg, this.consts, mobDef.loot)
+          : { items: [], gold: 0 };
         if (rolled.items.length > 0 || rolled.gold > 0) {
           this.spawnLootBag(
             tgt.pos.x,
@@ -2583,7 +2598,7 @@ export class RoomSim {
       const reachY = this.attackOptionsOf(resolved).some((o) => o.ability.kind === "projectile")
         ? Number.POSITIVE_INFINITY
         : this.consts.combat.meleeVerticalReach;
-      const decision = tickBrain(e, def, players, now, reachY);
+      const decision = tickBrain(e, resolved, players, now, reachY);
       const speed = resolved.moveSpeed * slowMult(e.combat!, now);
       let moved = false;
       if (decision.move) {

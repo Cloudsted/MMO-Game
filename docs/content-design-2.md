@@ -187,7 +187,21 @@ miniature of the Temple setpiece and a third burning brazier) and demoted
 
 Eight of eight Gloomfen prefabs and eight of eight crypt prefabs shipped with a
 labelled "interrupted action". A good rule became a tic. **Seven of twenty-one
-prefabs carry one.** The rest are marked *no interrupted action — deliberate*.
+prefabs carry one, and each uses a distinct device:**
+
+| prefab | device |
+|---|---|
+| `tidewarden_ward` | an object moved *inward* — sabotage |
+| `deathwatch_post` | posture |
+| `digger_shaft` | an unfinished task, doomed |
+| `stilt_fisher_camp` | an unfinished task, safe |
+| `warding_ring` | a trail showing the direction of departure |
+| `drowned_house` | intent inverted |
+| `sunken_gaol` | an absence |
+
+Everything else keeps its observation as plain prose. `ossuary_barrow`'s bent-out
+bars were demoted specifically because the *device* duplicates `drowned_house` —
+both are "intent inverted", and the second one costs the first its punch.
 When every ruin has a severed chain, no severed chain means anything.
 
 ---
@@ -233,15 +247,22 @@ Cost: ~30 lines across `registry.ts` + `mobs.ts` + 2 vitest. **No wire change, n
 
 1. `summon.grantsXp?: boolean` (default `true`) and `summon.grantsLoot?: boolean` on
    `AbilityDefSchema`; checked once in the death path. ~15 lines.
-2. A registry cross-check test: **a summon's `mob` may not be the summoner's own id,
-   and the summoned def's kit may not itself contain a summon.** This makes the
-   exponential case structurally impossible, not merely unlikely.
+2. A registry cross-check test, **and the second assertion must be written precisely**:
+   - (a) a summon's `mob` may not equal the summoner's own id;
+   - (b) `resolveMob(childDef, childDef.level, scaling).attacks` must contain no ability
+     with a `summon` payload — i.e. **resolve the child at its BASE level**, which is
+     exactly what `summonWave` spawns.
+
+   Do *not* write the naive version ("the child's kit, including every rank, may not
+   contain a summon"). I ran that check against this roster and it fires a **false
+   positive** on `grelmoss → fen_slime`, whose `slime_split` is an L14 rank a base-L8
+   summoned slime can never unlock.
 
 Belt and braces. Note the good news I verified: `summonWave` calls
-`spawnMob(mobId, x, z, "")` with **no level argument**, so minions always spawn at the
-def's *base* level. Grelmoss's `mire_spawn` therefore raises L8 `fen_slime`s, which do
-not have `slime_split` (an L14 rank). Every summon in this document sets
-`grantsXp: false, grantsLoot: false`.
+`spawnMob(mobId, x, z, "")` with **no level argument** (`room.ts:489`), so minions always
+spawn at the def's *base* level. The distinct-child rule (`fen_slimeling`) still stands,
+because it covers the direct case — a L14 `fen_slime` or a `bloatslime` casting
+`slime_split` itself. Every summon in this document sets `grantsXp: false, grantsLoot: false`.
 
 ### E3 — `cache_desert` + `cache_dungeon` in `shared/loot.json`
 
@@ -483,6 +504,11 @@ invisible to the player (`bone_bow` on a goblin's sling is fine; the fx is `arro
 `tools/build-assets.mjs`.** `AudioEngine` keys mob vocals by sprite *name*, so nothing
 orphans. (A judge warned the skeleton re-sprite would break its vocal groups. It only
 would if you renamed the sprite. Don't.)
+
+Path note, verified: `lich.png` and `skeletonarmy.png` live in **`Unsorted/`**, not in
+the monsters directory. The sheets they *replace* (`monster_lich.png`, `monster4.png`)
+are the ones under `Characters/TimeFantasy_Monsters/1x/`. In `build-assets.mjs` that is
+`UNSORTED` vs `MOBS`.
 
 | sprite name | was | becomes | why |
 |---|---|---|---|
@@ -1452,8 +1478,9 @@ get in. ⚠ **Same problem: the build spec loses track of its own coordinates. R
 crossbeam, one `chain`, an `iron_bars` cage with a `skull_pile` in it. **No loot** — a
 gibbet is a warning, not a prize (same rule as `wayshrine`). The second gibbet's beam is
 snapped and its chain lies coiled flat on the ground: a cage that was **taken down**, not
-one that fell. **Interrupted action:** the chain was **cut**, from below. Rust leaves a
-frayed, tapering end; a clean two-block gap says a blade, at night.
+one that fell. The standing cage's chain was **cut**, from below — rust leaves a frayed,
+tapering end; a clean two-block gap says a blade, at night. *(Plain prose, not a labelled
+beat: the fen already spends its severed chain on `sunken_gaol`.)*
 
 `raft_pyre` (gloomfen ×3, `nearWater`, always in open murk) — three `rotting_planks` rafts,
 each carrying a `bone_block`, a `pale_log` mast with a `banner`, and a lit `bog_candle`.

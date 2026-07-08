@@ -122,6 +122,11 @@ export const AbilityDefSchema = z.object({
       cap: z.number().int().positive().default(4),
       /** flavor line broadcast to nearby players when the wave rises */
       text: z.string().optional(),
+      /** Boss adds grant xp/loot by design (an intentional risk/reward). A
+       *  SPLITTER must not: a mob whose halves each pay full xp and loot is a
+       *  vending machine. Set false on anything a player can farm by waiting. */
+      grantsXp: z.boolean().default(true),
+      grantsLoot: z.boolean().default(true),
     })
     .optional(),
   /** self-kind support: on release, heal every living mob within `radius`
@@ -212,6 +217,16 @@ export const MobRankSchema = z.object({
   hpMult: z.number().positive().default(1),
   damageMult: z.number().positive().default(1),
   moveSpeedMult: z.number().positive().default(1),
+  /**
+   * DISPOSITION overrides — a rank may change the mob's NERVE, not just its
+   * numbers and its buttons. This is what lets the harmless thing stop running,
+   * the grazer start charging, and the sentry refuse to let you walk away.
+   * Absolute values, not multipliers; the last applicable rank wins.
+   */
+  aggroRadius: z.number().optional(),
+  fleeAtHpPct: z.number().optional(),
+  attackRange: z.number().optional(),
+  leashRadius: z.number().optional(),
   /** display suffix: "Bandit" -> "Bandit Veteran" */
   titleSuffix: z.string().optional(),
 });
@@ -263,7 +278,8 @@ export interface MobScaling {
   maxLevelBonus: number;
 }
 
-/** A mob def evaluated at a concrete spawn level. */
+/** A mob def evaluated at a concrete spawn level. The brain reads THIS, never
+ *  the raw def — otherwise a rank could never change a mob's disposition. */
 export interface ResolvedMob {
   level: number;
   name: string;
@@ -272,6 +288,10 @@ export interface ResolvedMob {
   moveSpeed: number;
   xp: number;
   attacks: MobAttackDef[];
+  aggroRadius: number;
+  attackRange: number;
+  leashRadius: number;
+  fleeAtHpPct: number;
 }
 
 /**
@@ -297,6 +317,10 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
 
   let attacks = mobAttacks(def).slice();
   let name = def.name;
+  let aggroRadius = def.aggroRadius;
+  let attackRange = def.attackRange;
+  let leashRadius = def.leashRadius;
+  let fleeAtHpPct = def.fleeAtHpPct;
 
   for (const rank of [...def.ranks].sort((a, b) => a.atLevel - b.atLevel)) {
     if (lvl < rank.atLevel) continue;
@@ -308,6 +332,11 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
     hpMult *= rank.hpMult;
     dmgMult *= rank.damageMult;
     speedMult *= rank.moveSpeedMult;
+    // disposition: absolute, last applicable rank wins
+    if (rank.aggroRadius !== undefined) aggroRadius = rank.aggroRadius;
+    if (rank.attackRange !== undefined) attackRange = rank.attackRange;
+    if (rank.leashRadius !== undefined) leashRadius = rank.leashRadius;
+    if (rank.fleeAtHpPct !== undefined) fleeAtHpPct = rank.fleeAtHpPct;
     if (rank.titleSuffix) name = `${def.name} ${rank.titleSuffix}`;
   }
 
@@ -328,6 +357,10 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
     moveSpeed: def.moveSpeed * speedMult,
     xp: Math.max(1, Math.round(def.xp * xpMult)),
     attacks: scaled,
+    aggroRadius,
+    attackRange,
+    leashRadius,
+    fleeAtHpPct,
   };
 }
 
@@ -443,14 +476,19 @@ export class RegistryService {
         // Summon hygiene: a mob may not summon itself, and what it summons may not
         // summon in turn. Exponential adds become structurally impossible, not
         // merely unlikely-because-of-a-cap.
+        //
+        // The child is checked at its BASE kit, not its whole reachable kit:
+        // summonWave() spawns minions with no level override, so a summon sitting
+        // behind a rank the minion can never reach is not a chain. If summonWave
+        // ever learns to pass a level, this must widen to mobAllAbilityIds.
         const spec = ability.summon;
         if (!spec) continue;
         if (spec.mob === id) throw new Error(`mob ${id}: ability ${abilityId} summons itself`);
         const child = mobs[spec.mob];
         if (!child) continue; // the ability-level check below reports the bad id
-        for (const childAbility of mobAllAbilityIds(child)) {
-          if (abilities[childAbility]?.summon) {
-            throw new Error(`mob ${id}: summons ${spec.mob}, which itself summons via ${childAbility} (summon chain)`);
+        for (const childAttack of mobAttacks(child)) {
+          if (abilities[childAttack.ability]?.summon) {
+            throw new Error(`mob ${id}: summons ${spec.mob}, whose base kit summons via ${childAttack.ability} (summon chain)`);
           }
         }
       }
