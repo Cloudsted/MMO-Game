@@ -10,6 +10,13 @@
  * never Math.random. Use `ctx.plate` / `ctx.fill` / `ctx.set` — never
  * `ctx.b.*` for geometry, because Builder is world-space and would ignore the
  * placement rotation.
+ *
+ * Tier 3 is the tier about CONTAINERS THAT FAILED. A charnel pit that was
+ * never filled. A gaol with one empty cell. A grate cut from the inside. A
+ * gibbet whose cage came down. A funeral that drifted. A barge that sank with
+ * one hand still on the tiller. A strongbox that ended up inside a nest.
+ * Six of the seven can be looted; the seventh is a warning, and warnings are
+ * not paid for.
  */
 import type { PrefabDef } from "./prefabs.js";
 export declare const TIER3: PrefabDef[];

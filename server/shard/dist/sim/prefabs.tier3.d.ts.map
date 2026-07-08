@@ -1,1 +1,1 @@
-{"version":3,"file":"prefabs.tier3.d.ts","sourceRoot":"","sources":["../../src/sim/prefabs.tier3.ts"],"names":[],"mappings":"AAAA;;;;;;;;;;;;GAYG;AACH,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,cAAc,CAAC;AAE9C,eAAO,MAAM,KAAK,EAAE,SAAS,EAAO,CAAC"}
+{"version":3,"file":"prefabs.tier3.d.ts","sourceRoot":"","sources":["../../src/sim/prefabs.tier3.ts"],"names":[],"mappings":"AAAA;;;;;;;;;;;;;;;;;;;GAmBG;AACH,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,cAAc,CAAC;AAE9C,eAAO,MAAM,KAAK,EAAE,SAAS,EAAO,CAAC"}

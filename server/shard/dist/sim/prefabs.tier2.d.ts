@@ -10,6 +10,11 @@
  * never Math.random. Use `ctx.plate` / `ctx.fill` / `ctx.set` — never
  * `ctx.b.*` for geometry, because Builder is world-space and would ignore the
  * placement rotation.
+ *
+ * Seven structures, and the same rule as the shipped catalog: light is a
+ * language. A lantern means somebody was here. A crystal means the thing that
+ * killed them is still nearby. Nothing here is lit without a reason you could
+ * name out loud.
  */
 import type { PrefabDef } from "./prefabs.js";
 export declare const TIER2: PrefabDef[];

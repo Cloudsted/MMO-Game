@@ -5,11 +5,12 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CharacterSnapshot, ItemStack, ServerToClient } from "@fantasy-mmo/common";
-import { isSolidBlock, loadRoomDef, RegistryService, RoomDefSchema } from "@fantasy-mmo/common";
+import { loadRoomDef, RegistryService, RoomDefSchema } from "@fantasy-mmo/common";
 import { PREFABS, stampPrefab } from "../src/sim/prefabs.js";
 import { RoomSim } from "../src/sim/room.js";
 import { VoxelWorld } from "../src/sim/voxel.js";
 import { Builder } from "../src/sim/voxelstructures.js";
+import { canReach, flatProvingGround } from "./prefabhelpers.js";
 
 const reg = new RegistryService();
 
@@ -98,8 +99,11 @@ describe("prefab scatter", () => {
     }
   });
 
-  it("every cataloged prefab stamps without throwing (all 14)", () => {
-    expect(Object.keys(PREFABS)).toHaveLength(14);
+  it("every cataloged prefab stamps without throwing (14 engine + 21 catalog)", () => {
+    // 14 engine-era prefabs (prefabs.ts) + the 21 story prefabs of the three
+    // tier modules. This asserts every registered prefab stamps clean at once;
+    // the count is a canary for an id that failed to register (or a dupe).
+    expect(Object.keys(PREFABS)).toHaveLength(35);
     const entries = Object.keys(PREFABS).map((id) => ({ prefab: id, count: 1, minSpacing: 0 }));
     const def = scatterDef(entries, { size: { w: 320, h: 320 }, spawn: { x: 160, z: 300, yaw: 0 } });
     const world = new VoxelWorld(def); // throws on any bad block name / oob math
@@ -198,69 +202,14 @@ describe("prefab loot caches", () => {
 });
 
 describe("watchtower climb path", () => {
-  /** Flat empty proving ground; the tower is stamped manually per case. */
-  function flatWorld() {
-    const def = scatterDef([], {
-      size: { w: 96, h: 96 },
-      spawn: { x: 10, z: 10, yaw: 0 },
-      terrain: { kind: "blocks", seed: 777, base: 12, amplitude: 0, frequency: 0.02 },
-      portals: [],
-    });
-    return { def, world: new VoxelWorld(def) };
-  }
-
-  /**
-   * Conservative movement BFS over (cell, feetY) states: 4-dir level walks,
-   * 1-block jump mounts (which additionally need a free cell above the head
-   * at BOTH the take-off and landing columns), drops up to 3 with a clear
-   * fall corridor. If THIS reaches the target, real physics (jump apex
-   * 1.28 m, height <1.8) certainly does.
-   */
-  function canClimb(world: VoxelWorld, sx: number, sz: number, tx: number, tz: number, ty: number): boolean {
-    const free = (x: number, y: number, z: number) => !isSolidBlock(world.get(x, y, z));
-    const standing = (x: number, y: number, z: number) => !free(x, y - 1, z) && free(x, y, z) && free(x, y + 1, z);
-    const key = (x: number, y: number, z: number) => `${x},${y},${z}`;
-    const start = { x: sx, y: world.floorY(sx + 0.5, sz + 0.5), z: sz };
-    const seen = new Set([key(start.x, start.y, start.z)]);
-    const queue = [start];
-    while (queue.length > 0) {
-      const c = queue.shift()!;
-      if (c.x === tx && c.z === tz && c.y === ty) return true;
-      for (const [dx, dz] of [
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1],
-      ] as const) {
-        const nx = c.x + dx;
-        const nz = c.z + dz;
-        for (const ny of [c.y + 1, c.y, c.y - 1, c.y - 2, c.y - 3]) {
-          if (ny < 1 || !standing(nx, ny, nz)) continue;
-          if (ny === c.y + 1 && (!free(c.x, c.y + 2, c.z) || !free(nx, c.y + 2, nz))) continue; // jump arc headroom
-          if (ny < c.y) {
-            let corridor = true;
-            for (let y = ny + 2; y <= c.y + 1 && corridor; y++) corridor = free(nx, y, nz);
-            if (!corridor) continue;
-          }
-          const k = key(nx, ny, nz);
-          if (!seen.has(k)) {
-            seen.add(k);
-            queue.push({ x: nx, y: ny, z: nz });
-          }
-        }
-      }
-    }
-    return false;
-  }
-
   it("has a jumpable ground → cache path at every rotation × ruin level", () => {
     for (const rot of [0, 1, 2, 3] as const) {
       for (const ruin of [0, 1, 2] as const) {
-        const { def, world } = flatWorld();
+        const { def, world } = flatProvingGround();
         const hooks = stampPrefab(new Builder(world, def), "ruined_watchtower", 40, 40, rot, ruin);
         const cache = hooks.lootCache!;
         expect(
-          canClimb(world, 36, 36, Math.floor(cache.x), Math.floor(cache.z), cache.y),
+          canReach(world, 36, 36, Math.floor(cache.x), Math.floor(cache.z), cache.y),
           `rot ${rot} ruin ${ruin}: no path from the ground to the cache`
         ).toBe(true);
       }
