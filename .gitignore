@@ -1,6 +1,3 @@
-# Commercial assets — NEVER commit or publish (licensing)
-assets/
-
 # Pipeline outputs (built from commercial assets — also never published)
 client/assets/
 tools/out/
