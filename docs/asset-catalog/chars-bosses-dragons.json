@@ -1,0 +1,329 @@
+{
+  "group": "bosses-dragons",
+  "sourceDir": "assets/time-fantasy/Unsorted/",
+  "contactSheets": "tools/out/sheets/",
+  "method": "Every entry below was read from the pre-rendered contact-sheet PNG (and, where the sprite was too small to read at contact-sheet scale, from an extra 7x-14x zoom crop of the raw source PNG). Nothing was inferred from filenames alone.",
+  "entries": [
+    {
+      "sheet": "angel.png",
+      "layout": "char8",
+      "charCell": "0,0",
+      "frame": "38x36",
+      "who": "Female angel: long lavender/white hair under a pale headband, silver-white breastplate with small orange shoulder studs, deep purple skirt/gown, pale mint-and-cream feathered wings that arc up beside her; up-facing frame shows both wings fully spread.",
+      "heightM": 1.9,
+      "mobIdea": "Seraph of the Lavender Choir — healer/support angel; buffs and lifts allies, low melee."
+    },
+    {
+      "sheet": "angel.png",
+      "layout": "char8",
+      "charCell": "1,0",
+      "frame": "38x36",
+      "who": "Boyish angel with spiky lavender-white hair, dark navy tunic with gold belt and gold trim, bare arms, pale mint feathered wings.",
+      "heightM": 1.9,
+      "mobIdea": "Cherub Skirmisher — fast, low-HP flying add that dives in packs."
+    },
+    {
+      "sheet": "angel.png",
+      "layout": "char8",
+      "charCell": "2,0",
+      "frame": "38x36",
+      "who": "Angel with a big flame-red mane of hair, white robe/tunic with a red sash and white-gold skirt, pale mint feathered wings (up-view shows a red crest between the wings).",
+      "heightM": 1.9,
+      "mobIdea": "Ember Herald — angel that casts firebolt-class magic."
+    },
+    {
+      "sheet": "angel.png",
+      "layout": "char8",
+      "charCell": "3,0",
+      "frame": "38x36",
+      "who": "Faceless-looking angel: white bulbous helm, a bright orange-gold rectangular visor frame around a blank pale face, an orange-gold stole hanging down the chest, gray-white plate body, pale mint wings.",
+      "heightM": 1.9,
+      "mobIdea": "Gilded Judge — hovering inquisitor angel; slow telegraph, heavy holy smite."
+    },
+    {
+      "sheet": "angel.png",
+      "layout": "char8",
+      "charCell": "0,1",
+      "frame": "38x36",
+      "who": "Armored valkyrie: very long silver-white hair, ornate gray-white plate with orange/gold collar and pauldrons, pale mint feathered wings.",
+      "heightM": 1.9,
+      "mobIdea": "Valkyrie of the Bright Host — elite winged melee guard."
+    },
+    {
+      "sheet": "angel.png",
+      "layout": "char8",
+      "charCell": "1,1",
+      "frame": "38x36",
+      "who": "Faceless herald: blank pale cream mask-head with no features, crimson-red segmented body armor with gold trim, brown gauntlets, and large DARK SLATE-BLUE feathered wings that shroud the body like a cowl.",
+      "heightM": 1.9,
+      "mobIdea": "Faceless Herald — creepy silent mini-boss; blue-winged, red-plated, no face."
+    },
+    {
+      "sheet": "angel.png",
+      "layout": "char8",
+      "charCell": "2,1",
+      "frame": "38x36",
+      "who": "Angel with vivid purple hair, white-and-gold plate armor with a gold sash, pale mint feathered wings (up-view shows a purple crest).",
+      "heightM": 1.9,
+      "mobIdea": "Amethyst Warden — caster-knight angel."
+    },
+    {
+      "sheet": "angel.png",
+      "layout": "char8",
+      "charCell": "3,1",
+      "frame": "38x36",
+      "who": "Bone-white skull-like helmed head with dark hollow eye sockets, steel-blue plate cuirass over a white banded skirt, and BRIGHT CRIMSON-RED feathered wings. The only red-winged figure on the sheet.",
+      "heightM": 2.0,
+      "mobIdea": "Fallen Seraph / Crimson-Winged Wraith Knight — flagship fallen-angel boss."
+    },
+
+    {
+      "sheet": "angel_wingless.png",
+      "layout": "char8",
+      "charCell": "0,0",
+      "frame": "38x36",
+      "who": "Same lavender-haired female angel as angel.png 0,0 but with the wings removed: silver-white breastplate, purple gown, long lavender hair.",
+      "heightM": 1.75,
+      "mobIdea": "Grounded/exiled angel NPC (priestess) — use for a town cleric."
+    },
+    {
+      "sheet": "angel_wingless.png",
+      "layout": "char8",
+      "charCell": "1,0",
+      "frame": "38x36",
+      "who": "Wingless version of the spiky lavender-haired boy in navy tunic + gold belt.",
+      "heightM": 1.75,
+      "mobIdea": "Acolyte / temple novice NPC."
+    },
+    {
+      "sheet": "angel_wingless.png",
+      "layout": "char8",
+      "charCell": "2,0",
+      "frame": "38x36",
+      "who": "Wingless version of the red-maned angel: white robe, red sash. Up-view is a big red hair mass.",
+      "heightM": 1.75,
+      "mobIdea": "Fire priestess NPC / caster."
+    },
+    {
+      "sheet": "angel_wingless.png",
+      "layout": "char8",
+      "charCell": "3,0",
+      "frame": "38x36",
+      "who": "Wingless faceless figure: white helm/hood, orange-gold visor frame with a blank pale face, orange-gold stole, long white robe. Up-view is a plain white column with a gold hem — reads as a hooded robe.",
+      "heightM": 1.75,
+      "mobIdea": "Masked Inquisitor NPC — silent temple enforcer."
+    },
+    {
+      "sheet": "angel_wingless.png",
+      "layout": "char8",
+      "charCell": "0,1",
+      "frame": "38x36",
+      "who": "Wingless armored valkyrie: silver-white long hair, gray-white ornate plate with orange collar.",
+      "heightM": 1.75,
+      "mobIdea": "Temple guard / paladin NPC."
+    },
+    {
+      "sheet": "angel_wingless.png",
+      "layout": "char8",
+      "charCell": "1,1",
+      "frame": "38x36",
+      "who": "Wingless faceless herald: blank cream mask-face, crimson body armor with gold trim, brown gauntlets, and a tall DARK TEAL hooded cloak/mantle behind the head (the shape that reads as wings on angel.png is a mantle here — the up-view is a plain teal cylinder).",
+      "heightM": 1.75,
+      "mobIdea": "Cloaked Faceless Cultist — ground-tier version of the herald."
+    },
+    {
+      "sheet": "angel_wingless.png",
+      "layout": "char8",
+      "charCell": "2,1",
+      "frame": "38x36",
+      "who": "Wingless purple-haired angel in white-and-gold plate.",
+      "heightM": 1.75,
+      "mobIdea": "Arcane knight NPC."
+    },
+    {
+      "sheet": "angel_wingless.png",
+      "layout": "char8",
+      "charCell": "3,1",
+      "frame": "38x36",
+      "who": "Wingless skull-helmed knight: bone-white helm with dark sockets, steel-blue plate, white banded skirt. No red wings.",
+      "heightM": 1.75,
+      "mobIdea": "Deathless Knight — a stripped, grounded elite that the winged version 'ascends' into."
+    },
+
+    {
+      "sheet": "boss_chimera_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "Golden winged chimera: amber-gold lion body on four clawed legs, shaggy brown-gold maned lion head with glowing pink eyes and two curved gray horns, enormous cream-and-gold feathered wings, and a GREEN SERPENT rearing over its back as a tail with its own snake head. Back view shows only the gold wings, the horns, and the green serpent neck.",
+      "heightM": 2.6,
+      "mobIdea": "Chimera of the Gilded Waste — three-attack boss: lion maul, serpent-tail poison bite, wing-buffet knockback."
+    },
+    {
+      "sheet": "boss_drider_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "Drider: pale gray-green eight-legged spider body with a bulbous abdomen; a slender humanoid female torso rises from the front of it, long stringy white hair over the face, one arm holding a curved orange-hilted scimitar out to the side. Up-view is the white hair-mass and the spider abdomen from behind.",
+      "heightM": 2.2,
+      "mobIdea": "Spinnerqueen — web-caster boss for the spider hollow prefab; summons giant_spider adds, poison DoT + scimitar cleave."
+    },
+    {
+      "sheet": "boss_garuda_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "Bipedal eagle-man: cream-white feathered eagle head with a golden hooked beak and a small dark eye, crimson-red feathered chest and arms, huge cream-and-gold wings spread wide, yellow scaled bird legs with big talons. Back view shows the wings as solid bright RED.",
+      "heightM": 2.3,
+      "mobIdea": "Garuda, Storm-Talon — flying boss; dive attack, wing gust, ranged feather volley."
+    },
+    {
+      "sheet": "boss_giant_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "Bald bearded brute drawn in a warm sepia/tan palette only: pale domed bald head, big brown beard, bare cream-colored arms, a brown one-shoulder hide tunic, brown boots, and a huge brown wooden club/log resting on his shoulder in every frame (up-view shows the club laid across both shoulders).",
+      "heightM": 3.0,
+      "mobIdea": "Hill Giant / Ogre Chieftain — huge slow club boss; big telegraph slam, ground-shock knockback."
+    },
+    {
+      "sheet": "boss_kraken_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "Pale mint-green cephalopod: an enormous ribbed bulbous mantle (banded like a segmented dome), two glowing orange slit eyes at its base, and eight long sprawling tentacles fanned out around it. No face beyond the eyes. Back view: mantle from behind, tentacles curling forward.",
+      "heightM": 2.6,
+      "mobIdea": "Kraken of the Drowned Temple — water-room boss; tentacle sweep, ink cloud (blind/slow), grab-and-drag."
+    },
+    {
+      "sheet": "boss_statue_east_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "A solid GOLD idol, all one metal color: SIX arms (two raised high, two out to the sides, two lowered with round fists), a tall crowned/finialed helm-head topped with a small spike, a blank mask-like face with slit eyes, and a smooth wrapped robe from waist to base. Reads as an eastern temple deity statue come to life.",
+      "heightM": 2.6,
+      "mobIdea": "Gilded Idol — six-armed animated statue boss; multi-hit flurry, immune to physical until 'cracked', gold-drop loot."
+    },
+    {
+      "sheet": "boss_statue_west_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "A white/gray MARBLE statue of a Greco-Roman warrior, monochrome stone throughout: bare chest, a draped sash/cloak over one shoulder, short pleated tunic, greaved boots, and a straight sword held raised overhead in one hand in every frame.",
+      "heightM": 2.3,
+      "mobIdea": "Marble Sentinel — animated statue guarding a chapel/colonnade; slow overhead cleave, reverts to 'statue' idle."
+    },
+
+    {
+      "sheet": "demoness_single_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "26x36",
+      "who": "Pink/red-skinned demon woman: two large curved red horns sweeping up and back, long silver-white hair, a gold circlet on the brow, gold bracelets and anklets, bare pink torso, dark navy loincloth/skirt, barefoot. Up-view is the white hair mass between the horns.",
+      "heightM": 1.75,
+      "mobIdea": "Succubus / Demoness — charm or drain caster; consort add for the Demon King fight."
+    },
+    {
+      "sheet": "demonking_full_wings_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "Ice-blue demon lord: two large pale curved bull horns, a rust-ORANGE fanged oni-like face/muzzle with big white teeth and pointed ears, pale ice-blue plate cuirass and vambraces, a rust-red loincloth over blue legs, and huge pale-blue leathery BAT WINGS spread wide. Back view: orange spiked back-plate between the wings.",
+      "heightM": 2.6,
+      "mobIdea": "Frostbrand Demon King — winged final-boss form; flight phase, wing buffet, oni roar fear."
+    },
+    {
+      "sheet": "demonking_full_nowings_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "Exactly the same ice-blue demon lord (pale horns, orange fanged face, ice-blue plate, rust-red loincloth) with the bat wings removed. Wingless walk cycle only.",
+      "heightM": 2.4,
+      "mobIdea": "Demon King, grounded phase — swap to the winged sheet at 50% HP for a dramatic phase transition."
+    },
+    {
+      "sheet": "demonkingb_full_wings_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "Second demon lord (B variant, a distinct design not just a recolor): bright GOLD curved horns, a brown/bronze fanged demonic face, scarlet-red armor with heavy gold trim and a gold-yellow belt, a long flowing RED CAPE behind, gray boots, and pale-blue leathery bat wings tipped with yellow claws. Up-view is dominated by the red cape.",
+      "heightM": 2.6,
+      "mobIdea": "Crimson Demon Emperor — the second, harder demon king; caped, gold-horned, casts fire."
+    },
+    {
+      "sheet": "demonkingb_full_mowings_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "The same gold-horned, red-and-gold-armored, red-caped demon lord with the wings removed (filename typo: 'mowings' = nowings). Up-view is the red cape alone with the gold horns above it.",
+      "heightM": 2.4,
+      "mobIdea": "Crimson Demon Emperor, grounded phase."
+    },
+
+    {
+      "sheet": "dragon_big_red.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "Large QUADRUPED red-brown dragon: long snout with a crown of three-to-four backswept horns, pale yellow eyes, four clawed limbs (visible forelegs AND hind legs in the side views), broad rust-red membranous wings with cream claw-hooks at the joints, ridged belly, long curling tail. Back view: spined back, wings out, tail curling forward.",
+      "heightM": 2.8,
+      "mobIdea": "Elder Red Wyrm — apex world boss; fire breath cone, wing gust, tail sweep."
+    },
+    {
+      "sheet": "dragon_big_green.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "107x92",
+      "who": "Identical anatomy to dragon_big_red, recolored to a muted sage/forest green (green wings, olive scales, same cream claw hooks and yellow eyes). Quadruped, horned crown, long tail.",
+      "heightM": 2.8,
+      "mobIdea": "Elder Green Wyrm — forest/swamp apex boss; poison breath variant."
+    },
+    {
+      "sheet": "dragon_red_reg.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "who": "Smaller, chunkier BIPEDAL dragon in bright orange-red, flat 3-tone shading (much simpler art than the big dragons): stands upright on two legs with a pot belly, small clawed forearms held at the chest, a horned crested head with a long snout, folded/half-open wings hanging at its sides, thick tail. Up-view: back-facing with wings folded down like a cloak.",
+      "heightM": 1.9,
+      "mobIdea": "Fire Drakeling — mid-tier standing dragon mob; small firebolt + claw swipe. Good pack mob near a big dragon's lair."
+    },
+    {
+      "sheet": "dragon_green_reg.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "who": "The same chunky bipedal drake in bright grass-green with dark teal wing shadow. Upright, pot-bellied, small forearms, horned crest, folded wings, thick tail.",
+      "heightM": 1.9,
+      "mobIdea": "Forest Drakeling — green pack version; acid spit."
+    },
+    {
+      "sheet": "wyvern_single_red_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "112x80",
+      "who": "Red-brown WYVERN: same head/wing art style as dragon_big_red (crown of backswept horns, cream claw-hooks on the wing joints, ridged belly) but built as a two-legged wyvern — the wings ARE the forelimbs and the side views show only hind legs and a long ground-dragging tail; the body squats low between the wings.",
+      "heightM": 2.6,
+      "mobIdea": "Blood Wyvern — flying mini-boss/mount candidate; swoop, tail lash, no fire breath (bite instead)."
+    },
+    {
+      "sheet": "wyvern_single_green_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "112x80",
+      "who": "The same two-legged wyvern in muted sage/forest green with olive wings and cream claw-hooks. Squat body, no forelegs, long curling tail.",
+      "heightM": 2.6,
+      "mobIdea": "Fen Wyvern — Gloomfen/forest flier; dive attack, venom bite."
+    }
+  ],
+  "warnings": [
+    "NAMING ARTIFACT (not a content problem): every contact sheet in this group is named '<name>-chars.png' even for the single-character sheets. index.json is the source of truth for layout: only angel.png and angel_wingless.png are char8 (456x288, 38x36 frames); everything else is a single character.",
+    "NO off-grid halves found in this group. All 21 sheets decomposed cleanly into their stated grids: the two char8 sheets read as 4x2 characters each with a coherent 3-col x 4-row (down/left/right/up) walk grid, and every 'single' sheet read as exactly one 3x4 walk grid. Nothing resembling the wizard.png / elemental.png bottom-half garbage was observed.",
+    "angel.png 1,1 vs angel_wingless.png 1,1: in the WINGED sheet the dark teal shape is a pair of slate-blue feathered wings; in the WINGLESS sheet the same character keeps a tall dark-teal HOODED CLOAK/MANTLE behind the head (the up-view is a plain teal cylinder, not feathers). Do not describe the wingless one as winged.",
+    "demonkingb_full_mowings_1.png — 'mowings' is a typo in the source filename for 'nowings'. Content is the wingless variant of demonkingb_full_wings_1.png.",
+    "dragon_big_* (107x92) and wyvern_single_* (112x80) share head/wing art. The distinguishing feature I verified visually: the big dragons show four limbs (forelegs under the neck in the side views), the wyverns show only hind legs with the wings serving as forelimbs. If a pipeline ever needs to be certain, re-inspect the left/right rows at >=6x zoom.",
+    "dragon_red_reg / dragon_green_reg (52x53) are drawn in a much flatter, simpler 3-tone style than every other sheet in this group and are BIPEDAL, pot-bellied drakes — they are NOT small versions of dragon_big_*. Mixing them in the same scene will look stylistically off.",
+    "boss_giant_1.png is drawn in a restricted sepia/tan palette (browns, creams, one dark outline) with no other hues. It will read as 'monochrome' next to the full-color bosses; consider a tint pass or accept it as a stone/earth giant.",
+    "boss_statue_west_1.png is likewise fully monochrome white/gray (marble) by design, and boss_statue_east_1.png is fully monochrome gold. Both are statues, so this is intentional.",
+    "Frame boxes are large relative to the drawn sprite on several 107x92 sheets (boss_giant especially — the figure fills maybe half the frame height). Billboard heightM below assumes the sprite is alpha-trimmed first, as the existing pipeline does."
+  ]
+}

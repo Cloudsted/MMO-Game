@@ -47,7 +47,7 @@ export const ItemDefSchema = z.object({
   block: z.string().optional(),
   value: z.number().int(), // shop base price (gold); shops buy at a fraction
   stack: z.number().int().positive(),
-  icon: z.tuple([z.number().int(), z.number().int()]), // (col,row) in tf_icon_16
+  icon: z.tuple([z.number().int(), z.number().int()]), // (col,row) in tficons_limited_16
   viewmodel: z.string().optional(), // first-person held sprite key
   effect: z
     .object({
@@ -168,7 +168,7 @@ export const ModifierDefSchema = z.object({
   stat: z.string(),
   /** tooltip/status-bar unit label, e.g. "hp/s", "% move speed" */
   units: z.string(),
-  icon: z.tuple([z.number().int(), z.number().int()]), // (col,row) in tf_icon_16
+  icon: z.tuple([z.number().int(), z.number().int()]), // (col,row) in tficons_limited_16
   appliesTo: z.array(z.enum(EQUIPPABLE_KINDS)).min(1),
   curse: z.boolean(),
   /** whole-number magnitudes (maxHp, thorns) */

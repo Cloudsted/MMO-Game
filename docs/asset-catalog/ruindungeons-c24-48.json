@@ -1,0 +1,214 @@
+{
+  "file": "assets/time-fantasy/Time Fantasy/TILESETS/ruindungeons_sheet_full.png",
+  "sheetSize": { "px": [784, 832], "tiles16": [49, 52] },
+  "columnHalf": "c24-c48",
+  "method": "Read the 5x contact sheets tools/out/sheets/ruindungeons-r*-c24-48.png, then re-cropped every claimed region at 10-22x with a magenta tile grid and a magenta/blue transparency checker, plus a per-cell alpha histogram (fully-opaque / fully-transparent / mixed) computed straight from the PNG. Every coordinate below was LOOKED AT. Cells I could not read are marked unknown.",
+
+  "themes": [
+    { "id": "pale", "rows": "1-16",  "look": "bone-white / pale marble with steel-blue accents", "moods": ["ruined temple", "ossuary", "crypt", "eldritch pale stone"] },
+    { "id": "gold", "rows": "18-33", "look": "gold + sandstone, pharaonic",                        "moods": ["tomb", "treasure vault", "catacomb"] },
+    { "id": "clay", "rows": "35-50", "look": "terracotta / red-brown, jade + gold inlay, mesoamerican",  "moods": ["jungle temple", "sewer", "sacrificial altar", "brick catacomb"] }
+  ],
+  "themeStructureNote": "The three themes are the SAME layout recolored + re-detailed. Column bands: c26-28 = water autotile; c32-39 = props (plaques, urns, rubble, statues); c40-43 = building set (frame -> pilaster+gable -> brick wall); c44-46 = second wall material (planks, then stone masonry); c47 = shelves + ladder. Rows 0, 17, 34, 51 are blank separator rows across c24-48.",
+
+  "blockCandidates": [
+    { "c": 41, "r": 15, "name": "pale_temple_brick",     "why": "Alpha-verified 256/256 opaque. Plain bone-white ashlar brick with grey-green mortar, no trim, no gable diagonal. The clean fill row of the pale building set (r14 has the pediment diagonal, r16 adds a blue basecourse stripe). Best ruined-temple / ossuary wall we have.", "confidence": "high" },
+    { "c": 42, "r": 15, "name": "pale_temple_brick_b",   "why": "Identical partner tile to (41,15) with a different brick offset - use the pair to break repetition on long walls. Fully opaque.", "confidence": "high" },
+    { "c": 45, "r": 15, "name": "pale_ruined_masonry",   "why": "Fully opaque. Centre column of the 3x2 pale rubble-masonry panel (c44-46 x r14-15); c44/c46 carry vertical pilaster trim so ONLY c45 is safe. Irregular cracked stones with blue-grey gaps - reads as crumbling crypt wall / ossuary fill.", "confidence": "high" },
+    { "c": 45, "r": 12, "name": "pale_plank_boards",     "why": "Fully opaque. Centre of the 3x2 cream+blue horizontal-board panel (c44-46 x r11-12); c44/c46 have edge posts. Painted plank boarding - prison hoarding / sewer boardwalk face. (45,11) is the same tile with a grey grime smear (variant).", "confidence": "high" },
+    { "c": 40, "r": 11, "name": "pale_fluted_column",    "why": "Fully opaque, vertically fluted marble pilaster with a dark seam down one edge - tiles vertically into a column shaft. Caveat: it is the LEFT pilaster of the building set, so the seam is on one side only (c43 is its mirror).", "confidence": "medium" },
+
+    { "c": 41, "r": 32, "name": "sandstone_tomb_brick",  "why": "Fully opaque. Plain gold-sandstone ashlar, the clean fill row of the gold building set (r31 carries the roof diagonal, r33 a cream basecourse). Tomb / pharaoh-vault wall.", "confidence": "high" },
+    { "c": 42, "r": 32, "name": "sandstone_tomb_brick_b","why": "Opaque partner tile of (41,32), different brick offset.", "confidence": "high" },
+    { "c": 45, "r": 32, "name": "dungeon_stone_brick",   "why": "Fully opaque. Centre of the brown stacked-stone masonry panel (c44-46 x r31-32); c44/c46 have gold edge posts. Warm brown irregular blocks - generic dungeon / catacomb masonry.", "confidence": "high" },
+    { "c": 45, "r": 29, "name": "wood_planks_brown",     "why": "Fully opaque. Centre of the brown horizontal plank panel (c44-46 x r28-29). Clean board texture, no nails/edges - good prison-floor / boarded-passage block.", "confidence": "high" },
+    { "c": 40, "r": 28, "name": "sandstone_fluted_column","why": "Fully opaque tan fluted pilaster tile, gold-theme twin of (40,11). Same one-sided-seam caveat.", "confidence": "medium" },
+
+    { "c": 41, "r": 49, "name": "dark_red_brick",        "why": "Fully opaque. Plain dark maroon/red brick, clean fill row of the terracotta building set (r48 has the roof diagonal + gold trim, r50 a gold basecourse). The darkest masonry on the sheet - sewer / catacomb / blood-temple mood we currently lack.", "confidence": "high" },
+    { "c": 42, "r": 49, "name": "dark_red_brick_b",      "why": "Opaque partner tile of (41,49).", "confidence": "high" },
+    { "c": 45, "r": 49, "name": "ruin_cobble_brown",     "why": "Fully opaque. Centre of the brown rough-cobble panel (c44-46 x r48-49); outer columns carry gold posts. Rougher, more irregular than (45,32) - collapsed-ruin fill.", "confidence": "high" },
+    { "c": 45, "r": 46, "name": "wood_planks_brown_b",   "why": "Fully opaque; terracotta-theme twin of (45,29), very slightly warmer boards. Centre of c44-46 x r45-46.", "confidence": "high" },
+    { "c": 40, "r": 45, "name": "clay_fluted_column",    "why": "Fully opaque terracotta fluted pilaster, clay-theme twin of (40,11).", "confidence": "medium" },
+
+    { "c": 27, "r": 4,  "name": "pale_pool_water",  "why": "AUTOTILE CENTRE of the 3x3 outer block c26-28 x r3-5 (pale-marble pool rim). Pure animated water, fully opaque - this is the ONLY safe cell of that blob. Frames 2 and 3 are (27,9) and (27,14).", "confidence": "high" },
+    { "c": 27, "r": 21, "name": "sandstone_pool_water", "why": "AUTOTILE CENTRE of the 3x3 block c26-28 x r20-22 (sandstone rim). Frames 2/3 at (27,26) and (27,31).", "confidence": "high" },
+    { "c": 27, "r": 38, "name": "clay_pool_water",  "why": "AUTOTILE CENTRE of the 3x3 block c26-28 x r37-39 (terracotta rim). Frames 2/3 at (27,43) and (27,48).", "confidence": "high" }
+  ],
+
+  "rejectedButOpaque": [
+    { "cells": "(41,16)(42,16) / (41,33)(42,33) / (41,50)(42,50)", "note": "Same brick as the fill row but with a coloured basecourse stripe along the bottom. Fine as a plinth/trim row, wrong as a cube face." },
+    { "cells": "(40,15)(43,15), (40,32)(43,32), (40,49)(43,49)", "note": "Brick wall with a pilaster edge stripe baked in. Corner pieces of the building set." },
+    { "cells": "(44,*) and (46,*) of every c44-46 panel", "note": "Carry vertical edge posts/trim. Only the c45 centre column is a clean tile." },
+    { "cells": "(46,5)", "note": "Opaque, but it is the middle of the big ornate fountain object (c45-47 x r4-6)." },
+    { "cells": "(33,33)(34,33)(37,33)(38,33)", "note": "Opaque, but they are the underside slabs of the gold biers." },
+    { "cells": "(41,19)(42,19)(45,19)(46,19), (41,22)(46,22)", "note": "Opaque, but interior cells of the 4-wide gold sarcophagi." },
+    { "cells": "(43,35)(46,35), (43,38)(46,38)", "note": "Opaque, but interior cells of the giant stone/jade heads." }
+  ],
+
+  "autotileRegions": [
+    {
+      "rect": "c26-28 x r1-15",
+      "kind": "RPG-Maker A1 water autotile, PALE MARBLE rim, 3 animation frames",
+      "layout": "Each frame = 2 rows of inner-corner pieces (c27-28 only; c26 blank) followed by a 3x3 outer block (c26-28). Frame 1: inner r1-2, block r3-5. Frame 2: inner r6-7, block r8-10. Frame 3: inner r11-12, block r13-15.",
+      "safeCells": "(27,4), (27,9), (27,14) - the 3x3 centres = pure water. EVERY other cell has a rim/notch."
+    },
+    {
+      "rect": "c26-28 x r18-32",
+      "kind": "same water autotile, SANDSTONE rim, 3 frames",
+      "layout": "Frame 1: inner r18-19, block r20-22. Frame 2: inner r23-24, block r25-27. Frame 3: inner r28-29, block r30-32.",
+      "safeCells": "(27,21), (27,26), (27,31)"
+    },
+    {
+      "rect": "c26-28 x r35-49",
+      "kind": "same water autotile, TERRACOTTA rim, 3 frames",
+      "layout": "Frame 1: inner r35-36, block r37-39. Frame 2: inner r40-41, block r42-44. Frame 3: inner r45-46, block r47-49.",
+      "safeCells": "(27,38), (27,43), (27,48)"
+    },
+    {
+      "rect": "c40-43 x r8-16 (pale), r25-33 (gold), r42-50 (clay)",
+      "kind": "NOT an autotile but an ASSEMBLED BUILDING ELEVATION - treat it the same way",
+      "layout": "rows +0..+1 = ornate arch/window frame (transparent interior); rows +2..+6 = fluted pilasters at c40 & c43 with a gable/pediment filling c41-c42; rows +7..+8 = the brick wall (row +7 plain, row +8 with basecourse). Grabbing anything from the pilaster/gable band ships a diagonal roof edge or a column seam."
+    },
+    {
+      "rect": "c44-46 x r11-15 (pale), r28-32 (gold), r45-49 (clay)",
+      "kind": "two 3x2 wall-material panels stacked (planks on top, stone masonry below), separated by a blank row",
+      "layout": "Pale: planks r11-12, blank r13, rubble masonry r14-15. Gold: planks r28-29, blank r30, stone brick r31-32. Clay: planks r45-46, blank r47, cobble r48-49. Left column (c44) and right column (c46) both carry a vertical edge post - only c45 is a clean tile."
+    },
+    {
+      "rect": "c40-47 x r1-2, r18-19",
+      "kind": "paired 2x2 trough/coffer objects, not tiles",
+      "layout": "Pale (r1-2): four stone basins side by side at c40-41, c42-43, c44-45, c46-47; the right two are overgrown with green vines. Gold (r18-19): two 4x2 gold-rimmed open coffers filled with grey stone rubble."
+    }
+  ],
+
+  "decorations": {
+    "pale_theme_rows_1_16": [
+      { "cells": "(33,1)", "what": "small framed stone plaque with blue rune glyphs" },
+      { "cells": "(34,1)-(35,1)", "what": "wide stone plaque, blue runes (2x1)" },
+      { "cells": "(36,1)-(37,2)", "what": "large rune board / stele on a stand (2x2)" },
+      { "cells": "(38,1)-(38,3)", "what": "intact fluted column, 3 tall, dark cap on top, blue collar at the base" },
+      { "cells": "(39,1)-(39,3)", "what": "cracked/damaged column, 3 tall" },
+      { "cells": "(32,2)-(35,4)", "what": "urns, jars, amphorae with blue bands - intact (c32,c34) and broken (c33,c35) variants; row 4 has them toppled on their sides" },
+      { "cells": "(36,3)-(37,3)", "what": "pots lying on their sides / stone rings" },
+      { "cells": "(32,4)-(37,4)", "what": "pot shards" },
+      { "cells": "(38,4)", "what": "framed stone tablet / slab" },
+      { "cells": "(39,4)", "what": "cracked stone tablet" },
+      { "cells": "(32,5)-(37,6)", "what": "pebbles, rubble piles, boulders (many single-cell scatter props)" },
+      { "cells": "(38,5)-(39,7)", "what": "statues / busts, whole and broken - white stone figures" },
+      { "cells": "(32,7)-(39,7)", "what": "further standing statues (row continues into r8); individual identities not confidently readable at this size" },
+      { "cells": "(40,1)-(43,2)", "what": "two stone water troughs / basins with rubble inside (each 2x2)" },
+      { "cells": "(44,1)-(47,2)", "what": "same two basins, overgrown with green vines" },
+      { "cells": "(40,3)-(46,3)", "what": "fallen fluted columns lying horizontally: ends with blue collars, a round capital ball, plain shafts, and a shattered end. Assemble left-to-right." },
+      { "cells": "(47,3)", "what": "single round boulder" },
+      { "cells": "(40,4)-(44,6)", "what": "stone balustrade / colonnade railing - posts at c40, c42, c44, rails between" },
+      { "cells": "(45,4)-(47,6)", "what": "large ornate stone fountain / font: wide winged bowl with a central pillar (3x3)" },
+      { "cells": "(40,7)-(43,7)", "what": "falling water-drop particles (1, 4, 2, 3 drops)" },
+      { "cells": "(44,7)-(47,7)", "what": "dark floor puddles / stains, increasing density" },
+      { "cells": "(40,8)-(44,9)", "what": "ornate marble arch / window frame, transparent interior (5x2)" },
+      { "cells": "(45,8)-(47,11)", "what": "thin marble posts and small wall shelves/steps - exact per-cell split unknown" },
+      { "cells": "(33,8)-(34,10)", "what": "beast-head fountain statue on a stepped pedestal (approx 2-3 wide x 3 tall)" },
+      { "cells": "(36,8)-(37,10)", "what": "second beast-head fountain statue on a pedestal" },
+      { "cells": "(38,8)-(39,9)", "what": "curled volute / broken scrollwork ornaments" },
+      { "cells": "(32,11)-(35,14)", "what": "hanging green vines and moss tufts, long and short" },
+      { "cells": "(36,11)-(39,14)", "what": "vine-smothered columns, stones and bowls - the mossy-overgrown-ruin set" },
+      { "cells": "(34,14)-(35,14)", "what": "mossy round stones with a dark socket - read as skulls / eyed stones" },
+      { "cells": "(32,15)-(39,16)", "what": "large white rounded forms (broken statue heads or boulders), 2x2 each; the c36-39 pair is moss-covered. Identity uncertain." },
+      { "cells": "(47,13)-(47,15)", "what": "pale wooden ladder, 3 tall" },
+      { "cells": "(40,16)-(43,16)", "what": "brick wall row with a blue basecourse - trim, not a block" }
+    ],
+
+    "gold_theme_rows_18_33": [
+      { "cells": "(33,18)", "what": "small gold plaque with runes" },
+      { "cells": "(34,18)-(35,18)", "what": "wide gold plaque" },
+      { "cells": "(36,18)-(37,19)", "what": "large gold rune board on a stand (2x2)" },
+      { "cells": "(38,18)-(38,21)", "what": "tall gold obelisk/column, dark hood at the top (4 tall)" },
+      { "cells": "(39,18)-(39,21)", "what": "cracked gold column" },
+      { "cells": "(32,19)-(37,21)", "what": "grey urns with gold bands, jars, rings, broken pots" },
+      { "cells": "(32,22)-(37,23)", "what": "gold nuggets / coin piles, grey rubble, stone chunks, a gold bell-dome" },
+      { "cells": "(38,22)-(38,23)", "what": "GOLD jackal (Anubis) statue seated on a plinth (1x2)" },
+      { "cells": "(39,22)-(39,23)", "what": "STONE jackal (Anubis) statue seated on a plinth (1x2)" },
+      { "cells": "(32,24)-(39,24)", "what": "canopic jars - grey bell-shaped urns with gold collars, singles, pairs and one toppled (39,24)" },
+      { "cells": "(40,18)-(43,19)", "what": "gold-rimmed open coffer full of grey rubble (4x2)" },
+      { "cells": "(44,18)-(47,19)", "what": "second gold-rimmed rubble coffer (4x2)" },
+      { "cells": "(40,21)-(43,23)", "what": "GOLD SARCOPHAGUS with a pharaoh effigy, lid closed (4x3)" },
+      { "cells": "(44,21)-(47,23)", "what": "second gold sarcophagus with effigy (4x3)" },
+      { "cells": "(24,24)-(24,25)", "what": "left edge of a gold plinth/column that continues into the c0-23 half" },
+      { "cells": "(32,25)-(33,27)", "what": "standing mummy case, plain gold (2x3)" },
+      { "cells": "(34,25)-(35,27)", "what": "standing mummy case, gold with red inlay (2x3)" },
+      { "cells": "(36,25)-(37,27)", "what": "standing pharaoh sarcophagus, gold nemes headdress (2x3)" },
+      { "cells": "(38,25)-(39,27)", "what": "standing pharaoh sarcophagus, grey stone + gold (2x3)" },
+      { "cells": "(32,28)-(35,29)", "what": "ornate gold bier / bed with a bolster (4x2)" },
+      { "cells": "(36,28)-(39,29)", "what": "second gold bier / bed (4x2)" },
+      { "cells": "(32,30)-(35,31)", "what": "gold slab with a red mattress and iron shackles - sacrificial table / rack (4x2)" },
+      { "cells": "(36,30)-(39,31)", "what": "second shackled red-mattress slab (4x2)" },
+      { "cells": "(32,32)-(35,33)", "what": "gold altar table with legs (4x2)" },
+      { "cells": "(36,32)-(39,33)", "what": "second gold altar table (4x2)" },
+      { "cells": "(40,25)-(44,26)", "what": "ornate gold arch / window frame, transparent interior" },
+      { "cells": "(45,25)-(47,28)", "what": "thin gold posts and small wall shelves - exact per-cell split unknown" },
+      { "cells": "(47,30)-(47,31)", "what": "wooden ladder (gold-theme palette)" },
+      { "cells": "(40,24)-(43,24)", "what": "falling water-drop particles" },
+      { "cells": "(44,24)-(47,24)", "what": "dark floor stains / puddles" },
+      { "cells": "(47,32)", "what": "small dark-red table / bench" }
+    ],
+
+    "clay_theme_rows_35_50": [
+      { "cells": "(33,35)", "what": "small terracotta plaque with glyphs" },
+      { "cells": "(34,35)-(35,35)", "what": "wide terracotta plaque" },
+      { "cells": "(36,35)-(37,36)", "what": "large clay rune board with gold rails (2x2)" },
+      { "cells": "(38,35)-(38,37)", "what": "terracotta column, dark cap, gold collar (3 tall)" },
+      { "cells": "(39,35)-(39,37)", "what": "cracked terracotta column" },
+      { "cells": "(32,36)-(37,38)", "what": "clay pots, urns, amphorae with gold bands, whole and shattered" },
+      { "cells": "(38,38)-(39,38)", "what": "framed clay tablets, one cracked" },
+      { "cells": "(32,39)-(39,40)", "what": "clay rubble, broken bricks, shards" },
+      { "cells": "(40,35)-(41,36)", "what": "giant carved stone head, brown, closed eyes (2x2)" },
+      { "cells": "(42,35)-(44,36)", "what": "larger carved stone head with round disc ears (3x2)" },
+      { "cells": "(46,35)-(47,36)", "what": "carved stone head with GOLD disc ears (2x2)" },
+      { "cells": "(40,37)-(41,38)", "what": "jade/turquoise carved head (2x2)" },
+      { "cells": "(42,37)-(44,38)", "what": "larger jade head with disc ears (3x2)" },
+      { "cells": "(46,37)-(47,38)", "what": "jade head, gold disc ears, red-and-gold headdress (2x2)" },
+      { "cells": "(32,41)-(39,41)", "what": "scattered glowing red gems / embers, 1 to 4 per cell" },
+      { "cells": "(40,41)-(43,41)", "what": "falling water-drop particles" },
+      { "cells": "(44,41)-(47,41)", "what": "dark floor stains / puddles" },
+      { "cells": "(32,42)-(35,43)", "what": "leafy green bushes / shrubs (small and large)" },
+      { "cells": "(36,42)-(39,43)", "what": "berry bushes, red berries (small and large)" },
+      { "cells": "(32,44)-(36,44)", "what": "gold coin piles / loose treasure" },
+      { "cells": "(37,44)-(38,44)", "what": "clay pots overflowing with gold coins" },
+      { "cells": "(39,44)", "what": "golden skull" },
+      { "cells": "(24,43)-(24,44)", "what": "left edge of a terracotta urn/plinth continuing into the c0-23 half" },
+      { "cells": "(32,45)-(34,47)", "what": "terracotta altar / dais front face; the r47 base row is a SKULL FRIEZE set into a dark recess" },
+      { "cells": "(35,45)-(35,47)", "what": "cracked altar face variant with cobwebbed base" },
+      { "cells": "(36,45)-(38,47)", "what": "terracotta altar with a gold-framed panel; base row is a gold-ring/glyph frieze" },
+      { "cells": "(39,45)-(39,47)", "what": "cracked altar face with broken gold trim" },
+      { "cells": "(32,48)-(33,50)", "what": "brown stone tiki/idol head on a plinth (2x3)" },
+      { "cells": "(34,48)-(35,50)", "what": "second brown idol head on a ribbed plinth (2x3)" },
+      { "cells": "(36,48)-(37,49)", "what": "jade/turquoise idol head (2x2)" },
+      { "cells": "(38,48)-(39,49)", "what": "second jade idol head (2x2)" },
+      { "cells": "(37,50)-(38,50)", "what": "lit brazier / fire bowl with red-and-yellow flames" },
+      { "cells": "(40,42)-(44,43)", "what": "ornate terracotta arch / window frame, transparent interior" },
+      { "cells": "(45,42)-(47,45)", "what": "thin clay posts and small wall shelves - exact per-cell split unknown" },
+      { "cells": "(47,47)-(47,49)", "what": "wooden ladder (terracotta palette)" }
+    ]
+  },
+
+  "emptyCells": {
+    "columns": "c24, c25, c29, c30, c31 and c48 are blank across essentially the whole sheet in this half (c24 has only three 2-cell fragments at r9-10, r24-25, r43-44 that belong to objects in the c0-23 half).",
+    "rows": "r0, r17, r34, r51 are fully blank in c24-48 (theme separators)."
+  },
+
+  "moodsGained": [
+    "crypt / ossuary: pale_temple_brick + pale_ruined_masonry + the moss/vine set (32-39, 11-16) + skull-frieze altar (32-34, 45-47)",
+    "ruined temple: fallen columns (40-46, 3), balustrade (40-44, 4-6), fountain (45-47, 4-6), rune steles",
+    "sewer / catacomb: dark_red_brick + ruin_cobble_brown + wood_planks_brown + floor stains (44-47, 7/24/41) + drips (40-43, 7/24/41)",
+    "tomb: sandstone_tomb_brick + sarcophagi + mummy cases + canopic jars + Anubis statues",
+    "ancient / eldritch: jade heads (40-47, 37-38), tiki idols (32-39, 48-50), glowing red gems (32-39, 41), brazier (37-38, 50)",
+    "prison: red-mattress shackle slabs (32-39, 30-31), iron-less but boarded plank walls, ladders"
+  ],
+
+  "traps": [
+    "Every c44/c46 cell of a c44-46 panel has a vertical trim post baked in. Only c45 is a clean tile.",
+    "The building-set brick wall is only TWO rows tall per theme (pale r15-16, gold r32-33, clay r49-50) and the lower of the two carries a coloured basecourse stripe. Use the upper row.",
+    "The three water blobs are true RPG-Maker autotiles with THREE animation frames stacked vertically. Only the 3x3 centres are tileable.",
+    "The rows just above each brick wall look like brick but contain the pediment diagonal (pale r14, gold r31, clay r48).",
+    "c47 is a narrow column of shelves/steps/ladders, never a full tile."
+  ]
+}

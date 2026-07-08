@@ -1,0 +1,2502 @@
+{
+  "source": "tf_icon_16 -> tficons_limited_16",
+  "method": "0.75*maskIoU + 0.25*colourSim",
+  "entries": [
+    {
+      "id": "rusty_sword",
+      "kind": "weapon",
+      "name": "Rusty Sword",
+      "old": [
+        1,
+        6
+      ],
+      "pixels": 64,
+      "candidates": [
+        {
+          "cell": [
+            3,
+            27
+          ],
+          "iou": 0.941,
+          "colour": 0.825,
+          "total": 0.912
+        },
+        {
+          "cell": [
+            7,
+            27
+          ],
+          "iou": 0.889,
+          "colour": 0.828,
+          "total": 0.874
+        },
+        {
+          "cell": [
+            8,
+            27
+          ],
+          "iou": 0.842,
+          "colour": 0.789,
+          "total": 0.829
+        },
+        {
+          "cell": [
+            4,
+            27
+          ],
+          "iou": 0.842,
+          "colour": 0.758,
+          "total": 0.821
+        }
+      ]
+    },
+    {
+      "id": "iron_sword",
+      "kind": "weapon",
+      "name": "Iron Sword",
+      "old": [
+        2,
+        6
+      ],
+      "pixels": 72,
+      "candidates": [
+        {
+          "cell": [
+            7,
+            27
+          ],
+          "iou": 1,
+          "colour": 0.909,
+          "total": 0.977
+        },
+        {
+          "cell": [
+            8,
+            27
+          ],
+          "iou": 0.947,
+          "colour": 0.803,
+          "total": 0.911
+        },
+        {
+          "cell": [
+            14,
+            27
+          ],
+          "iou": 0.878,
+          "colour": 0.773,
+          "total": 0.852
+        },
+        {
+          "cell": [
+            4,
+            27
+          ],
+          "iou": 0.873,
+          "colour": 0.723,
+          "total": 0.836
+        }
+      ]
+    },
+    {
+      "id": "hunting_bow",
+      "kind": "weapon",
+      "name": "Hunting Bow",
+      "old": [
+        11,
+        7
+      ],
+      "pixels": 108,
+      "candidates": [
+        {
+          "cell": [
+            6,
+            33
+          ],
+          "iou": 0.688,
+          "colour": 0.786,
+          "total": 0.713
+        },
+        {
+          "cell": [
+            3,
+            33
+          ],
+          "iou": 0.656,
+          "colour": 0.799,
+          "total": 0.692
+        },
+        {
+          "cell": [
+            1,
+            33
+          ],
+          "iou": 0.661,
+          "colour": 0.628,
+          "total": 0.653
+        },
+        {
+          "cell": [
+            2,
+            33
+          ],
+          "iou": 0.662,
+          "colour": 0.626,
+          "total": 0.653
+        }
+      ]
+    },
+    {
+      "id": "longbow",
+      "kind": "weapon",
+      "name": "Longbow",
+      "old": [
+        13,
+        7
+      ],
+      "pixels": 154,
+      "candidates": [
+        {
+          "cell": [
+            8,
+            33
+          ],
+          "iou": 1,
+          "colour": 0.925,
+          "total": 0.981
+        },
+        {
+          "cell": [
+            7,
+            8
+          ],
+          "iou": 0.696,
+          "colour": 0.731,
+          "total": 0.705
+        },
+        {
+          "cell": [
+            7,
+            37
+          ],
+          "iou": 0.696,
+          "colour": 0.685,
+          "total": 0.693
+        },
+        {
+          "cell": [
+            15,
+            34
+          ],
+          "iou": 0.689,
+          "colour": 0.685,
+          "total": 0.688
+        }
+      ]
+    },
+    {
+      "id": "fire_staff",
+      "kind": "weapon",
+      "name": "Fire Staff",
+      "old": [
+        6,
+        7
+      ],
+      "pixels": 58,
+      "candidates": [
+        {
+          "cell": [
+            7,
+            30
+          ],
+          "iou": 1,
+          "colour": 0.944,
+          "total": 0.986
+        },
+        {
+          "cell": [
+            8,
+            30
+          ],
+          "iou": 0.897,
+          "colour": 0.717,
+          "total": 0.852
+        },
+        {
+          "cell": [
+            4,
+            30
+          ],
+          "iou": 0.831,
+          "colour": 0.774,
+          "total": 0.817
+        },
+        {
+          "cell": [
+            3,
+            29
+          ],
+          "iou": 0.814,
+          "colour": 0.778,
+          "total": 0.805
+        }
+      ]
+    },
+    {
+      "id": "frost_staff",
+      "kind": "weapon",
+      "name": "Frost Staff",
+      "old": [
+        7,
+        7
+      ],
+      "pixels": 52,
+      "candidates": [
+        {
+          "cell": [
+            8,
+            30
+          ],
+          "iou": 1,
+          "colour": 0.921,
+          "total": 0.98
+        },
+        {
+          "cell": [
+            3,
+            29
+          ],
+          "iou": 0.906,
+          "colour": 0.753,
+          "total": 0.868
+        },
+        {
+          "cell": [
+            7,
+            30
+          ],
+          "iou": 0.897,
+          "colour": 0.719,
+          "total": 0.852
+        },
+        {
+          "cell": [
+            2,
+            29
+          ],
+          "iou": 0.849,
+          "colour": 0.801,
+          "total": 0.837
+        }
+      ]
+    },
+    {
+      "id": "heal_staff",
+      "kind": "weapon",
+      "name": "Staff of Mending",
+      "old": [
+        3,
+        7
+      ],
+      "pixels": 61,
+      "candidates": [
+        {
+          "cell": [
+            4,
+            30
+          ],
+          "iou": 1,
+          "colour": 0.943,
+          "total": 0.986
+        },
+        {
+          "cell": [
+            8,
+            29
+          ],
+          "iou": 0.887,
+          "colour": 0.75,
+          "total": 0.853
+        },
+        {
+          "cell": [
+            7,
+            30
+          ],
+          "iou": 0.831,
+          "colour": 0.791,
+          "total": 0.821
+        },
+        {
+          "cell": [
+            3,
+            29
+          ],
+          "iou": 0.803,
+          "colour": 0.818,
+          "total": 0.807
+        }
+      ]
+    },
+    {
+      "id": "leather_cap",
+      "kind": "armor",
+      "name": "Leather Cap",
+      "old": [
+        0,
+        10
+      ],
+      "pixels": 136,
+      "candidates": [
+        {
+          "cell": [
+            1,
+            44
+          ],
+          "iou": 0.834,
+          "colour": 0.809,
+          "total": 0.828
+        },
+        {
+          "cell": [
+            11,
+            14
+          ],
+          "iou": 0.8,
+          "colour": 0.752,
+          "total": 0.788
+        },
+        {
+          "cell": [
+            5,
+            14
+          ],
+          "iou": 0.804,
+          "colour": 0.727,
+          "total": 0.785
+        },
+        {
+          "cell": [
+            12,
+            14
+          ],
+          "iou": 0.791,
+          "colour": 0.758,
+          "total": 0.782
+        }
+      ]
+    },
+    {
+      "id": "iron_helm",
+      "kind": "armor",
+      "name": "Iron Helm",
+      "old": [
+        2,
+        10
+      ],
+      "pixels": 127,
+      "candidates": [
+        {
+          "cell": [
+            8,
+            54
+          ],
+          "iou": 0.804,
+          "colour": 0.746,
+          "total": 0.79
+        },
+        {
+          "cell": [
+            11,
+            35
+          ],
+          "iou": 0.812,
+          "colour": 0.703,
+          "total": 0.784
+        },
+        {
+          "cell": [
+            15,
+            45
+          ],
+          "iou": 0.79,
+          "colour": 0.757,
+          "total": 0.782
+        },
+        {
+          "cell": [
+            8,
+            16
+          ],
+          "iou": 0.806,
+          "colour": 0.698,
+          "total": 0.779
+        }
+      ]
+    },
+    {
+      "id": "leather_jerkin",
+      "kind": "armor",
+      "name": "Leather Jerkin",
+      "old": [
+        8,
+        9
+      ],
+      "pixels": 119,
+      "candidates": [
+        {
+          "cell": [
+            10,
+            14
+          ],
+          "iou": 0.853,
+          "colour": 0.79,
+          "total": 0.837
+        },
+        {
+          "cell": [
+            1,
+            36
+          ],
+          "iou": 0.858,
+          "colour": 0.762,
+          "total": 0.834
+        },
+        {
+          "cell": [
+            7,
+            38
+          ],
+          "iou": 0.852,
+          "colour": 0.778,
+          "total": 0.833
+        },
+        {
+          "cell": [
+            12,
+            38
+          ],
+          "iou": 0.852,
+          "colour": 0.748,
+          "total": 0.826
+        }
+      ]
+    },
+    {
+      "id": "iron_cuirass",
+      "kind": "armor",
+      "name": "Iron Cuirass",
+      "old": [
+        12,
+        9
+      ],
+      "pixels": 110,
+      "candidates": [
+        {
+          "cell": [
+            3,
+            44
+          ],
+          "iou": 0.855,
+          "colour": 0.717,
+          "total": 0.82
+        },
+        {
+          "cell": [
+            2,
+            7
+          ],
+          "iou": 0.825,
+          "colour": 0.714,
+          "total": 0.797
+        },
+        {
+          "cell": [
+            4,
+            44
+          ],
+          "iou": 0.803,
+          "colour": 0.762,
+          "total": 0.793
+        },
+        {
+          "cell": [
+            0,
+            37
+          ],
+          "iou": 0.825,
+          "colour": 0.687,
+          "total": 0.79
+        }
+      ]
+    },
+    {
+      "id": "leather_boots",
+      "kind": "armor",
+      "name": "Leather Boots",
+      "old": [
+        10,
+        10
+      ],
+      "pixels": 148,
+      "candidates": [
+        {
+          "cell": [
+            1,
+            48
+          ],
+          "iou": 0.849,
+          "colour": 0.797,
+          "total": 0.836
+        },
+        {
+          "cell": [
+            14,
+            16
+          ],
+          "iou": 0.852,
+          "colour": 0.763,
+          "total": 0.83
+        },
+        {
+          "cell": [
+            2,
+            47
+          ],
+          "iou": 0.834,
+          "colour": 0.811,
+          "total": 0.828
+        },
+        {
+          "cell": [
+            4,
+            47
+          ],
+          "iou": 0.847,
+          "colour": 0.764,
+          "total": 0.826
+        }
+      ]
+    },
+    {
+      "id": "iron_boots",
+      "kind": "armor",
+      "name": "Iron Boots",
+      "old": [
+        11,
+        10
+      ],
+      "pixels": 153,
+      "candidates": [
+        {
+          "cell": [
+            4,
+            47
+          ],
+          "iou": 0.843,
+          "colour": 0.763,
+          "total": 0.823
+        },
+        {
+          "cell": [
+            14,
+            16
+          ],
+          "iou": 0.848,
+          "colour": 0.728,
+          "total": 0.818
+        },
+        {
+          "cell": [
+            15,
+            16
+          ],
+          "iou": 0.848,
+          "colour": 0.711,
+          "total": 0.814
+        },
+        {
+          "cell": [
+            2,
+            47
+          ],
+          "iou": 0.831,
+          "colour": 0.716,
+          "total": 0.802
+        }
+      ]
+    },
+    {
+      "id": "wooden_shield",
+      "kind": "armor",
+      "name": "Wooden Shield",
+      "old": [
+        1,
+        9
+      ],
+      "pixels": 120,
+      "candidates": [
+        {
+          "cell": [
+            10,
+            14
+          ],
+          "iou": 1,
+          "colour": 0.776,
+          "total": 0.944
+        },
+        {
+          "cell": [
+            13,
+            50
+          ],
+          "iou": 0.937,
+          "colour": 0.749,
+          "total": 0.89
+        },
+        {
+          "cell": [
+            12,
+            14
+          ],
+          "iou": 0.93,
+          "colour": 0.749,
+          "total": 0.885
+        },
+        {
+          "cell": [
+            12,
+            0
+          ],
+          "iou": 0.909,
+          "colour": 0.764,
+          "total": 0.873
+        }
+      ]
+    },
+    {
+      "id": "iron_shield",
+      "kind": "armor",
+      "name": "Iron Shield",
+      "old": [
+        3,
+        9
+      ],
+      "pixels": 144,
+      "candidates": [
+        {
+          "cell": [
+            7,
+            44
+          ],
+          "iou": 0.938,
+          "colour": 0.767,
+          "total": 0.895
+        },
+        {
+          "cell": [
+            1,
+            37
+          ],
+          "iou": 0.91,
+          "colour": 0.755,
+          "total": 0.871
+        },
+        {
+          "cell": [
+            9,
+            44
+          ],
+          "iou": 0.903,
+          "colour": 0.768,
+          "total": 0.869
+        },
+        {
+          "cell": [
+            11,
+            44
+          ],
+          "iou": 0.918,
+          "colour": 0.722,
+          "total": 0.869
+        }
+      ]
+    },
+    {
+      "id": "lucky_locket",
+      "kind": "trinket",
+      "name": "Lucky Locket",
+      "old": [
+        8,
+        13
+      ],
+      "pixels": 83,
+      "candidates": [
+        {
+          "cell": [
+            4,
+            51
+          ],
+          "iou": 0.883,
+          "colour": 0.874,
+          "total": 0.881
+        },
+        {
+          "cell": [
+            12,
+            49
+          ],
+          "iou": 0.72,
+          "colour": 0.686,
+          "total": 0.712
+        },
+        {
+          "cell": [
+            6,
+            14
+          ],
+          "iou": 0.708,
+          "colour": 0.63,
+          "total": 0.688
+        },
+        {
+          "cell": [
+            13,
+            50
+          ],
+          "iou": 0.669,
+          "colour": 0.715,
+          "total": 0.681
+        }
+      ]
+    },
+    {
+      "id": "wisp_talisman",
+      "kind": "trinket",
+      "name": "Wisp Talisman",
+      "old": [
+        9,
+        13
+      ],
+      "pixels": 119,
+      "candidates": [
+        {
+          "cell": [
+            9,
+            17
+          ],
+          "iou": 0.871,
+          "colour": 0.647,
+          "total": 0.815
+        },
+        {
+          "cell": [
+            10,
+            44
+          ],
+          "iou": 0.839,
+          "colour": 0.703,
+          "total": 0.805
+        },
+        {
+          "cell": [
+            7,
+            17
+          ],
+          "iou": 0.844,
+          "colour": 0.66,
+          "total": 0.798
+        },
+        {
+          "cell": [
+            9,
+            44
+          ],
+          "iou": 0.818,
+          "colour": 0.707,
+          "total": 0.79
+        }
+      ]
+    },
+    {
+      "id": "bread",
+      "kind": "consumable",
+      "name": "Bread",
+      "old": [
+        4,
+        4
+      ],
+      "pixels": 141,
+      "candidates": [
+        {
+          "cell": [
+            1,
+            20
+          ],
+          "iou": 1,
+          "colour": 0.911,
+          "total": 0.978
+        },
+        {
+          "cell": [
+            4,
+            53
+          ],
+          "iou": 0.85,
+          "colour": 0.807,
+          "total": 0.839
+        },
+        {
+          "cell": [
+            6,
+            53
+          ],
+          "iou": 0.85,
+          "colour": 0.788,
+          "total": 0.835
+        },
+        {
+          "cell": [
+            7,
+            53
+          ],
+          "iou": 0.85,
+          "colour": 0.783,
+          "total": 0.833
+        }
+      ]
+    },
+    {
+      "id": "health_potion",
+      "kind": "consumable",
+      "name": "Health Potion",
+      "old": [
+        5,
+        3
+      ],
+      "pixels": 138,
+      "candidates": [
+        {
+          "cell": [
+            1,
+            17
+          ],
+          "iou": 1,
+          "colour": 0.899,
+          "total": 0.975
+        },
+        {
+          "cell": [
+            0,
+            17
+          ],
+          "iou": 0.905,
+          "colour": 0.8,
+          "total": 0.879
+        },
+        {
+          "cell": [
+            8,
+            17
+          ],
+          "iou": 0.928,
+          "colour": 0.637,
+          "total": 0.855
+        },
+        {
+          "cell": [
+            9,
+            1
+          ],
+          "iou": 0.887,
+          "colour": 0.744,
+          "total": 0.851
+        }
+      ]
+    },
+    {
+      "id": "mana_potion",
+      "kind": "consumable",
+      "name": "Mana Potion",
+      "old": [
+        6,
+        3
+      ],
+      "pixels": 142,
+      "candidates": [
+        {
+          "cell": [
+            2,
+            17
+          ],
+          "iou": 1,
+          "colour": 0.897,
+          "total": 0.974
+        },
+        {
+          "cell": [
+            8,
+            17
+          ],
+          "iou": 0.901,
+          "colour": 0.727,
+          "total": 0.858
+        },
+        {
+          "cell": [
+            2,
+            19
+          ],
+          "iou": 0.897,
+          "colour": 0.683,
+          "total": 0.843
+        },
+        {
+          "cell": [
+            1,
+            17
+          ],
+          "iou": 0.918,
+          "colour": 0.579,
+          "total": 0.833
+        }
+      ]
+    },
+    {
+      "id": "steel_sword",
+      "kind": "weapon",
+      "name": "Steel Sword",
+      "old": [
+        3,
+        6
+      ],
+      "pixels": 76,
+      "candidates": [
+        {
+          "cell": [
+            5,
+            27
+          ],
+          "iou": 0.817,
+          "colour": 0.732,
+          "total": 0.796
+        },
+        {
+          "cell": [
+            10,
+            27
+          ],
+          "iou": 0.783,
+          "colour": 0.702,
+          "total": 0.762
+        },
+        {
+          "cell": [
+            1,
+            29
+          ],
+          "iou": 0.737,
+          "colour": 0.692,
+          "total": 0.726
+        },
+        {
+          "cell": [
+            9,
+            27
+          ],
+          "iou": 0.679,
+          "colour": 0.695,
+          "total": 0.683
+        }
+      ]
+    },
+    {
+      "id": "war_axe",
+      "kind": "weapon",
+      "name": "Fen-Cleaver Axe",
+      "old": [
+        8,
+        6
+      ],
+      "pixels": 54,
+      "candidates": [
+        {
+          "cell": [
+            5,
+            28
+          ],
+          "iou": 1,
+          "colour": 0.929,
+          "total": 0.982
+        },
+        {
+          "cell": [
+            4,
+            28
+          ],
+          "iou": 0.907,
+          "colour": 0.709,
+          "total": 0.858
+        },
+        {
+          "cell": [
+            0,
+            22
+          ],
+          "iou": 0.689,
+          "colour": 0.764,
+          "total": 0.707
+        },
+        {
+          "cell": [
+            5,
+            4
+          ],
+          "iou": 0.615,
+          "colour": 0.703,
+          "total": 0.637
+        }
+      ]
+    },
+    {
+      "id": "venom_dagger",
+      "kind": "weapon",
+      "name": "Weaver's Fang",
+      "old": [
+        0,
+        6
+      ],
+      "pixels": 45,
+      "candidates": [
+        {
+          "cell": [
+            0,
+            30
+          ],
+          "iou": 0.918,
+          "colour": 0.674,
+          "total": 0.857
+        },
+        {
+          "cell": [
+            1,
+            28
+          ],
+          "iou": 0.822,
+          "colour": 0.792,
+          "total": 0.815
+        },
+        {
+          "cell": [
+            3,
+            28
+          ],
+          "iou": 0.678,
+          "colour": 0.783,
+          "total": 0.704
+        },
+        {
+          "cell": [
+            2,
+            31
+          ],
+          "iou": 0.722,
+          "colour": 0.616,
+          "total": 0.696
+        }
+      ]
+    },
+    {
+      "id": "ranger_crossbow",
+      "kind": "weapon",
+      "name": "Marsh Ranger's Crossbow",
+      "old": [
+        10,
+        7
+      ],
+      "pixels": 103,
+      "candidates": [
+        {
+          "cell": [
+            3,
+            33
+          ],
+          "iou": 0.683,
+          "colour": 0.904,
+          "total": 0.738
+        },
+        {
+          "cell": [
+            6,
+            33
+          ],
+          "iou": 0.656,
+          "colour": 0.834,
+          "total": 0.7
+        },
+        {
+          "cell": [
+            1,
+            33
+          ],
+          "iou": 0.675,
+          "colour": 0.699,
+          "total": 0.681
+        },
+        {
+          "cell": [
+            5,
+            33
+          ],
+          "iou": 0.632,
+          "colour": 0.763,
+          "total": 0.664
+        }
+      ]
+    },
+    {
+      "id": "wisp_wand",
+      "kind": "weapon",
+      "name": "Wisp Wand",
+      "old": [
+        4,
+        7
+      ],
+      "pixels": 48,
+      "candidates": [
+        {
+          "cell": [
+            2,
+            31
+          ],
+          "iou": 1,
+          "colour": 0.935,
+          "total": 0.984
+        },
+        {
+          "cell": [
+            1,
+            28
+          ],
+          "iou": 0.7,
+          "colour": 0.701,
+          "total": 0.7
+        },
+        {
+          "cell": [
+            0,
+            30
+          ],
+          "iou": 0.672,
+          "colour": 0.746,
+          "total": 0.691
+        },
+        {
+          "cell": [
+            0,
+            29
+          ],
+          "iou": 0.625,
+          "colour": 0.72,
+          "total": 0.649
+        }
+      ]
+    },
+    {
+      "id": "fen_staff",
+      "kind": "weapon",
+      "name": "Staff of the Fen",
+      "old": [
+        8,
+        7
+      ],
+      "pixels": 84,
+      "candidates": [
+        {
+          "cell": [
+            13,
+            29
+          ],
+          "iou": 1,
+          "colour": 0.872,
+          "total": 0.968
+        },
+        {
+          "cell": [
+            14,
+            29
+          ],
+          "iou": 1,
+          "colour": 0.742,
+          "total": 0.936
+        },
+        {
+          "cell": [
+            12,
+            29
+          ],
+          "iou": 0.869,
+          "colour": 0.746,
+          "total": 0.838
+        },
+        {
+          "cell": [
+            15,
+            29
+          ],
+          "iou": 0.864,
+          "colour": 0.724,
+          "total": 0.829
+        }
+      ]
+    },
+    {
+      "id": "emberpike",
+      "kind": "weapon",
+      "name": "Emberpike",
+      "old": [
+        13,
+        6
+      ],
+      "pixels": 73,
+      "candidates": [
+        {
+          "cell": [
+            7,
+            29
+          ],
+          "iou": 1,
+          "colour": 0.931,
+          "total": 0.983
+        },
+        {
+          "cell": [
+            11,
+            29
+          ],
+          "iou": 0.853,
+          "colour": 0.707,
+          "total": 0.817
+        },
+        {
+          "cell": [
+            10,
+            29
+          ],
+          "iou": 0.779,
+          "colour": 0.727,
+          "total": 0.766
+        },
+        {
+          "cell": [
+            14,
+            30
+          ],
+          "iou": 0.79,
+          "colour": 0.661,
+          "total": 0.758
+        }
+      ]
+    },
+    {
+      "id": "rift_greataxe",
+      "kind": "weapon",
+      "name": "Riftwarden Greataxe",
+      "old": [
+        9,
+        6
+      ],
+      "pixels": 81,
+      "candidates": [
+        {
+          "cell": [
+            6,
+            28
+          ],
+          "iou": 1,
+          "colour": 0.927,
+          "total": 0.982
+        },
+        {
+          "cell": [
+            9,
+            32
+          ],
+          "iou": 0.608,
+          "colour": 0.679,
+          "total": 0.626
+        },
+        {
+          "cell": [
+            0,
+            55
+          ],
+          "iou": 0.622,
+          "colour": 0.636,
+          "total": 0.625
+        },
+        {
+          "cell": [
+            4,
+            22
+          ],
+          "iou": 0.596,
+          "colour": 0.705,
+          "total": 0.623
+        }
+      ]
+    },
+    {
+      "id": "gravewind_scythe",
+      "kind": "weapon",
+      "name": "Gravewind Scythe",
+      "old": [
+        14,
+        6
+      ],
+      "pixels": 86,
+      "candidates": [
+        {
+          "cell": [
+            11,
+            28
+          ],
+          "iou": 1,
+          "colour": 0.921,
+          "total": 0.98
+        },
+        {
+          "cell": [
+            12,
+            28
+          ],
+          "iou": 0.752,
+          "colour": 0.758,
+          "total": 0.754
+        },
+        {
+          "cell": [
+            14,
+            28
+          ],
+          "iou": 0.694,
+          "colour": 0.686,
+          "total": 0.692
+        },
+        {
+          "cell": [
+            13,
+            28
+          ],
+          "iou": 0.694,
+          "colour": 0.654,
+          "total": 0.684
+        }
+      ]
+    },
+    {
+      "id": "ashen_scepter",
+      "kind": "weapon",
+      "name": "Ashen Scepter",
+      "old": [
+        2,
+        7
+      ],
+      "pixels": 37,
+      "candidates": [
+        {
+          "cell": [
+            2,
+            30
+          ],
+          "iou": 1,
+          "colour": 0.923,
+          "total": 0.981
+        },
+        {
+          "cell": [
+            3,
+            31
+          ],
+          "iou": 0.816,
+          "colour": 0.828,
+          "total": 0.819
+        },
+        {
+          "cell": [
+            0,
+            28
+          ],
+          "iou": 0.786,
+          "colour": 0.654,
+          "total": 0.753
+        },
+        {
+          "cell": [
+            3,
+            58
+          ],
+          "iou": 0.732,
+          "colour": 0.773,
+          "total": 0.742
+        }
+      ]
+    },
+    {
+      "id": "tidecaller_staff",
+      "kind": "weapon",
+      "name": "Tidecaller Staff",
+      "old": [
+        9,
+        7
+      ],
+      "pixels": 84,
+      "candidates": [
+        {
+          "cell": [
+            14,
+            29
+          ],
+          "iou": 1,
+          "colour": 0.851,
+          "total": 0.963
+        },
+        {
+          "cell": [
+            13,
+            29
+          ],
+          "iou": 1,
+          "colour": 0.657,
+          "total": 0.914
+        },
+        {
+          "cell": [
+            12,
+            29
+          ],
+          "iou": 0.869,
+          "colour": 0.755,
+          "total": 0.841
+        },
+        {
+          "cell": [
+            15,
+            29
+          ],
+          "iou": 0.864,
+          "colour": 0.734,
+          "total": 0.831
+        }
+      ]
+    },
+    {
+      "id": "dwarven_arbalest",
+      "kind": "weapon",
+      "name": "Dwarven Arbalest",
+      "old": [
+        12,
+        7
+      ],
+      "pixels": 152,
+      "candidates": [
+        {
+          "cell": [
+            6,
+            33
+          ],
+          "iou": 1,
+          "colour": 0.937,
+          "total": 0.984
+        },
+        {
+          "cell": [
+            5,
+            33
+          ],
+          "iou": 0.75,
+          "colour": 0.885,
+          "total": 0.784
+        },
+        {
+          "cell": [
+            4,
+            33
+          ],
+          "iou": 0.75,
+          "colour": 0.807,
+          "total": 0.764
+        },
+        {
+          "cell": [
+            9,
+            33
+          ],
+          "iou": 0.667,
+          "colour": 0.712,
+          "total": 0.678
+        }
+      ]
+    },
+    {
+      "id": "greater_health_potion",
+      "kind": "consumable",
+      "name": "Greater Health Potion",
+      "old": [
+        9,
+        3
+      ],
+      "pixels": 100,
+      "candidates": [
+        {
+          "cell": [
+            5,
+            17
+          ],
+          "iou": 1,
+          "colour": 0.909,
+          "total": 0.977
+        },
+        {
+          "cell": [
+            6,
+            17
+          ],
+          "iou": 1,
+          "colour": 0.767,
+          "total": 0.942
+        },
+        {
+          "cell": [
+            7,
+            17
+          ],
+          "iou": 0.873,
+          "colour": 0.744,
+          "total": 0.84
+        },
+        {
+          "cell": [
+            11,
+            24
+          ],
+          "iou": 0.831,
+          "colour": 0.727,
+          "total": 0.805
+        }
+      ]
+    },
+    {
+      "id": "greater_mana_potion",
+      "kind": "consumable",
+      "name": "Greater Mana Potion",
+      "old": [
+        11,
+        3
+      ],
+      "pixels": 106,
+      "candidates": [
+        {
+          "cell": [
+            7,
+            17
+          ],
+          "iou": 1,
+          "colour": 0.906,
+          "total": 0.976
+        },
+        {
+          "cell": [
+            6,
+            17
+          ],
+          "iou": 0.873,
+          "colour": 0.773,
+          "total": 0.848
+        },
+        {
+          "cell": [
+            5,
+            17
+          ],
+          "iou": 0.873,
+          "colour": 0.745,
+          "total": 0.841
+        },
+        {
+          "cell": [
+            7,
+            10
+          ],
+          "iou": 0.875,
+          "colour": 0.655,
+          "total": 0.82
+        }
+      ]
+    },
+    {
+      "id": "antidote",
+      "kind": "consumable",
+      "name": "Fenleaf Antidote",
+      "old": [
+        10,
+        3
+      ],
+      "pixels": 100,
+      "candidates": [
+        {
+          "cell": [
+            6,
+            17
+          ],
+          "iou": 1,
+          "colour": 0.914,
+          "total": 0.978
+        },
+        {
+          "cell": [
+            5,
+            17
+          ],
+          "iou": 1,
+          "colour": 0.781,
+          "total": 0.945
+        },
+        {
+          "cell": [
+            7,
+            17
+          ],
+          "iou": 0.873,
+          "colour": 0.787,
+          "total": 0.851
+        },
+        {
+          "cell": [
+            10,
+            24
+          ],
+          "iou": 0.831,
+          "colour": 0.758,
+          "total": 0.812
+        }
+      ]
+    },
+    {
+      "id": "roast_boar_leg",
+      "kind": "consumable",
+      "name": "Roast Boar Leg",
+      "old": [
+        5,
+        4
+      ],
+      "pixels": 108,
+      "candidates": [
+        {
+          "cell": [
+            2,
+            20
+          ],
+          "iou": 1,
+          "colour": 0.932,
+          "total": 0.983
+        },
+        {
+          "cell": [
+            1,
+            20
+          ],
+          "iou": 0.729,
+          "colour": 0.738,
+          "total": 0.731
+        },
+        {
+          "cell": [
+            15,
+            54
+          ],
+          "iou": 0.74,
+          "colour": 0.696,
+          "total": 0.729
+        },
+        {
+          "cell": [
+            12,
+            54
+          ],
+          "iou": 0.74,
+          "colour": 0.671,
+          "total": 0.723
+        }
+      ]
+    },
+    {
+      "id": "wolf_pelt",
+      "kind": "trophy",
+      "name": "Wolf Pelt",
+      "old": [
+        8,
+        15
+      ],
+      "pixels": 111,
+      "candidates": [
+        {
+          "cell": [
+            1,
+            59
+          ],
+          "iou": 1,
+          "colour": 0.949,
+          "total": 0.987
+        },
+        {
+          "cell": [
+            2,
+            59
+          ],
+          "iou": 0.878,
+          "colour": 0.822,
+          "total": 0.864
+        },
+        {
+          "cell": [
+            10,
+            53
+          ],
+          "iou": 0.873,
+          "colour": 0.813,
+          "total": 0.858
+        },
+        {
+          "cell": [
+            13,
+            53
+          ],
+          "iou": 0.85,
+          "colour": 0.826,
+          "total": 0.844
+        }
+      ]
+    },
+    {
+      "id": "boar_tusk",
+      "kind": "trophy",
+      "name": "Boar Tusk",
+      "old": [
+        10,
+        15
+      ],
+      "pixels": 79,
+      "candidates": [
+        {
+          "cell": [
+            8,
+            55
+          ],
+          "iou": 1,
+          "colour": 0.914,
+          "total": 0.978
+        },
+        {
+          "cell": [
+            7,
+            55
+          ],
+          "iou": 0.833,
+          "colour": 0.767,
+          "total": 0.817
+        },
+        {
+          "cell": [
+            0,
+            35
+          ],
+          "iou": 0.675,
+          "colour": 0.772,
+          "total": 0.699
+        },
+        {
+          "cell": [
+            1,
+            42
+          ],
+          "iou": 0.653,
+          "colour": 0.77,
+          "total": 0.683
+        }
+      ]
+    },
+    {
+      "id": "raptor_talon",
+      "kind": "trophy",
+      "name": "Raptor Talon",
+      "old": [
+        11,
+        15
+      ],
+      "pixels": 77,
+      "candidates": [
+        {
+          "cell": [
+            9,
+            55
+          ],
+          "iou": 1,
+          "colour": 0.905,
+          "total": 0.976
+        },
+        {
+          "cell": [
+            7,
+            55
+          ],
+          "iou": 0.698,
+          "colour": 0.654,
+          "total": 0.687
+        },
+        {
+          "cell": [
+            8,
+            55
+          ],
+          "iou": 0.677,
+          "colour": 0.681,
+          "total": 0.678
+        },
+        {
+          "cell": [
+            3,
+            21
+          ],
+          "iou": 0.604,
+          "colour": 0.761,
+          "total": 0.643
+        }
+      ]
+    },
+    {
+      "id": "slime_gel",
+      "kind": "trophy",
+      "name": "Slime Gel",
+      "old": [
+        11,
+        16
+      ],
+      "pixels": 81,
+      "candidates": [
+        {
+          "cell": [
+            0,
+            3
+          ],
+          "iou": 0.86,
+          "colour": 0.649,
+          "total": 0.807
+        },
+        {
+          "cell": [
+            0,
+            2
+          ],
+          "iou": 0.86,
+          "colour": 0.641,
+          "total": 0.806
+        },
+        {
+          "cell": [
+            9,
+            16
+          ],
+          "iou": 0.8,
+          "colour": 0.693,
+          "total": 0.773
+        },
+        {
+          "cell": [
+            6,
+            13
+          ],
+          "iou": 0.849,
+          "colour": 0.529,
+          "total": 0.769
+        }
+      ]
+    },
+    {
+      "id": "venom_sac",
+      "kind": "trophy",
+      "name": "Venom Sac",
+      "old": [
+        9,
+        2
+      ],
+      "pixels": 89,
+      "candidates": [
+        {
+          "cell": [
+            2,
+            59
+          ],
+          "iou": 0.732,
+          "colour": 0.686,
+          "total": 0.721
+        },
+        {
+          "cell": [
+            10,
+            36
+          ],
+          "iou": 0.67,
+          "colour": 0.7,
+          "total": 0.677
+        },
+        {
+          "cell": [
+            15,
+            57
+          ],
+          "iou": 0.654,
+          "colour": 0.744,
+          "total": 0.677
+        },
+        {
+          "cell": [
+            2,
+            52
+          ],
+          "iou": 0.664,
+          "colour": 0.705,
+          "total": 0.674
+        }
+      ]
+    },
+    {
+      "id": "ember_core",
+      "kind": "trophy",
+      "name": "Ember Core",
+      "old": [
+        1,
+        2
+      ],
+      "pixels": 80,
+      "candidates": [
+        {
+          "cell": [
+            9,
+            20
+          ],
+          "iou": 0.846,
+          "colour": 0.663,
+          "total": 0.8
+        },
+        {
+          "cell": [
+            4,
+            19
+          ],
+          "iou": 0.8,
+          "colour": 0.639,
+          "total": 0.76
+        },
+        {
+          "cell": [
+            9,
+            0
+          ],
+          "iou": 0.77,
+          "colour": 0.712,
+          "total": 0.755
+        },
+        {
+          "cell": [
+            10,
+            20
+          ],
+          "iou": 0.752,
+          "colour": 0.701,
+          "total": 0.74
+        }
+      ]
+    },
+    {
+      "id": "spirit_essence",
+      "kind": "trophy",
+      "name": "Spirit Essence",
+      "old": [
+        7,
+        2
+      ],
+      "pixels": 111,
+      "candidates": [
+        {
+          "cell": [
+            12,
+            10
+          ],
+          "iou": 0.784,
+          "colour": 0.751,
+          "total": 0.775
+        },
+        {
+          "cell": [
+            13,
+            50
+          ],
+          "iou": 0.822,
+          "colour": 0.602,
+          "total": 0.767
+        },
+        {
+          "cell": [
+            9,
+            25
+          ],
+          "iou": 0.805,
+          "colour": 0.65,
+          "total": 0.766
+        },
+        {
+          "cell": [
+            11,
+            6
+          ],
+          "iou": 0.769,
+          "colour": 0.727,
+          "total": 0.759
+        }
+      ]
+    },
+    {
+      "id": "ancient_coin",
+      "kind": "trophy",
+      "name": "Ancient Coin",
+      "old": [
+        2,
+        13
+      ],
+      "pixels": 76,
+      "candidates": [
+        {
+          "cell": [
+            14,
+            22
+          ],
+          "iou": 0.727,
+          "colour": 0.8,
+          "total": 0.746
+        },
+        {
+          "cell": [
+            0,
+            47
+          ],
+          "iou": 0.64,
+          "colour": 0.716,
+          "total": 0.659
+        },
+        {
+          "cell": [
+            3,
+            24
+          ],
+          "iou": 0.627,
+          "colour": 0.746,
+          "total": 0.657
+        },
+        {
+          "cell": [
+            12,
+            53
+          ],
+          "iou": 0.638,
+          "colour": 0.708,
+          "total": 0.656
+        }
+      ]
+    },
+    {
+      "id": "bone_charm",
+      "kind": "trophy",
+      "name": "Bone Charm",
+      "old": [
+        6,
+        0
+      ],
+      "pixels": 88,
+      "candidates": [
+        {
+          "cell": [
+            6,
+            0
+          ],
+          "iou": 1,
+          "colour": 0.925,
+          "total": 0.981
+        },
+        {
+          "cell": [
+            14,
+            57
+          ],
+          "iou": 0.956,
+          "colour": 0.769,
+          "total": 0.909
+        },
+        {
+          "cell": [
+            10,
+            57
+          ],
+          "iou": 0.956,
+          "colour": 0.74,
+          "total": 0.902
+        },
+        {
+          "cell": [
+            12,
+            57
+          ],
+          "iou": 0.956,
+          "colour": 0.728,
+          "total": 0.899
+        }
+      ]
+    },
+    {
+      "id": "kingsrend_greataxe",
+      "kind": "weapon",
+      "name": "Kingsrend Greataxe",
+      "old": [
+        10,
+        6
+      ],
+      "pixels": 127,
+      "candidates": [
+        {
+          "cell": [
+            7,
+            28
+          ],
+          "iou": 1,
+          "colour": 0.925,
+          "total": 0.981
+        },
+        {
+          "cell": [
+            9,
+            28
+          ],
+          "iou": 0.927,
+          "colour": 0.827,
+          "total": 0.902
+        },
+        {
+          "cell": [
+            10,
+            28
+          ],
+          "iou": 0.903,
+          "colour": 0.727,
+          "total": 0.859
+        },
+        {
+          "cell": [
+            8,
+            28
+          ],
+          "iou": 0.927,
+          "colour": 0.598,
+          "total": 0.845
+        }
+      ]
+    },
+    {
+      "id": "oathbreaker_pike",
+      "kind": "weapon",
+      "name": "Oathbreaker Pike",
+      "old": [
+        12,
+        6
+      ],
+      "pixels": 83,
+      "candidates": [
+        {
+          "cell": [
+            6,
+            29
+          ],
+          "iou": 1,
+          "colour": 0.904,
+          "total": 0.976
+        },
+        {
+          "cell": [
+            14,
+            29
+          ],
+          "iou": 0.815,
+          "colour": 0.719,
+          "total": 0.791
+        },
+        {
+          "cell": [
+            13,
+            29
+          ],
+          "iou": 0.815,
+          "colour": 0.623,
+          "total": 0.767
+        },
+        {
+          "cell": [
+            10,
+            29
+          ],
+          "iou": 0.771,
+          "colour": 0.731,
+          "total": 0.761
+        }
+      ]
+    },
+    {
+      "id": "sovereign_scythe",
+      "kind": "weapon",
+      "name": "Sovereign Scythe",
+      "old": [
+        15,
+        6
+      ],
+      "pixels": 105,
+      "candidates": [
+        {
+          "cell": [
+            12,
+            28
+          ],
+          "iou": 1,
+          "colour": 0.913,
+          "total": 0.978
+        },
+        {
+          "cell": [
+            11,
+            28
+          ],
+          "iou": 0.752,
+          "colour": 0.752,
+          "total": 0.752
+        },
+        {
+          "cell": [
+            14,
+            28
+          ],
+          "iou": 0.697,
+          "colour": 0.785,
+          "total": 0.719
+        },
+        {
+          "cell": [
+            13,
+            28
+          ],
+          "iou": 0.697,
+          "colour": 0.659,
+          "total": 0.688
+        }
+      ]
+    },
+    {
+      "id": "scepter_of_ruin",
+      "kind": "weapon",
+      "name": "Scepter of Ruin",
+      "old": [
+        0,
+        7
+      ],
+      "pixels": 30,
+      "candidates": [
+        {
+          "cell": [
+            0,
+            31
+          ],
+          "iou": 1,
+          "colour": 0.927,
+          "total": 0.982
+        },
+        {
+          "cell": [
+            4,
+            31
+          ],
+          "iou": 0.75,
+          "colour": 0.781,
+          "total": 0.758
+        },
+        {
+          "cell": [
+            3,
+            31
+          ],
+          "iou": 0.722,
+          "colour": 0.81,
+          "total": 0.744
+        },
+        {
+          "cell": [
+            2,
+            30
+          ],
+          "iou": 0.634,
+          "colour": 0.835,
+          "total": 0.684
+        }
+      ]
+    },
+    {
+      "id": "war_medal",
+      "kind": "trophy",
+      "name": "War Medal",
+      "old": [
+        7,
+        13
+      ],
+      "pixels": 68,
+      "candidates": [
+        {
+          "cell": [
+            3,
+            26
+          ],
+          "iou": 0.971,
+          "colour": 0.886,
+          "total": 0.95
+        },
+        {
+          "cell": [
+            9,
+            16
+          ],
+          "iou": 0.842,
+          "colour": 0.81,
+          "total": 0.834
+        },
+        {
+          "cell": [
+            10,
+            16
+          ],
+          "iou": 0.853,
+          "colour": 0.72,
+          "total": 0.82
+        },
+        {
+          "cell": [
+            4,
+            20
+          ],
+          "iou": 0.861,
+          "colour": 0.686,
+          "total": 0.817
+        }
+      ]
+    },
+    {
+      "id": "royal_seal",
+      "kind": "trophy",
+      "name": "Royal Seal of Valdrenn",
+      "old": [
+        9,
+        12
+      ],
+      "pixels": 150,
+      "candidates": [
+        {
+          "cell": [
+            10,
+            35
+          ],
+          "iou": 0.843,
+          "colour": 0.772,
+          "total": 0.826
+        },
+        {
+          "cell": [
+            5,
+            53
+          ],
+          "iou": 0.837,
+          "colour": 0.734,
+          "total": 0.811
+        },
+        {
+          "cell": [
+            0,
+            46
+          ],
+          "iou": 0.826,
+          "colour": 0.76,
+          "total": 0.809
+        },
+        {
+          "cell": [
+            7,
+            53
+          ],
+          "iou": 0.837,
+          "colour": 0.72,
+          "total": 0.808
+        }
+      ]
+    },
+    {
+      "id": "sundered_crown",
+      "kind": "trophy",
+      "name": "The Sundered Crown",
+      "old": [
+        6,
+        10
+      ],
+      "pixels": 176,
+      "candidates": [
+        {
+          "cell": [
+            8,
+            46
+          ],
+          "iou": 0.818,
+          "colour": 0.688,
+          "total": 0.786
+        },
+        {
+          "cell": [
+            0,
+            46
+          ],
+          "iou": 0.818,
+          "colour": 0.687,
+          "total": 0.785
+        },
+        {
+          "cell": [
+            4,
+            53
+          ],
+          "iou": 0.819,
+          "colour": 0.664,
+          "total": 0.78
+        },
+        {
+          "cell": [
+            4,
+            46
+          ],
+          "iou": 0.818,
+          "colour": 0.665,
+          "total": 0.78
+        }
+      ]
+    }
+  ]
+}

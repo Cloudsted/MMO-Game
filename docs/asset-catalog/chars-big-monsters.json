@@ -1,0 +1,208 @@
+{
+  "group": "big-monsters",
+  "generatedBy": "visual inspection of pre-rendered contact sheets in tools/out/sheets/",
+  "note": "index.json lists EVERY sheet in this group as layout 'single' (one character, 3 cols x 4 rows = down/left/right/up). The contact sheets are named '<name>-chars.png' but each renders as a 3x4 frame grid, i.e. a single character, NOT an 8-character 4x2 grid. Every sheet in this group decomposed cleanly as 3x4; none showed off-grid junk in the bottom half. charCell is therefore '-' for all entries.",
+  "entries": [
+    {
+      "sheet": "ogre_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Bulky green-skinned brute. Bald bulbous head with a heavy jutting brow and an underbite showing tusks/teeth; tiny pointed ears. Massive shoulders and belly, thick fists held low. Wears a reddish-brown loincloth/skirt, dark red arm wraps at the forearms and matching wrapped boots. Unarmed — no weapon in any frame. Down/up frames read as squat and wide; side frames show a heavy hunched trudge.",
+      "heightM": 2.6,
+      "mobIdea": "Ogre brute — slow, heavy melee slam with a long telegraph; a mini-boss for a cave/camp. Kit: slam + a knock-back sweep."
+    },
+    {
+      "sheet": "troll1a_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Lanky yellow-green troll. Huge bald domed cranium far wider than the shoulders, with long pointed ears that sweep up and back; small round white eyes, no visible nose. Wiry, gangly arms hanging past the knees with long clawed fingers. Dull red/maroon wraps bound around both forearms and both shins, a small dark loincloth. Hunched, knees bent posture in all four directions.",
+      "heightM": 2.4,
+      "mobIdea": "Forest/bridge troll — long-reach clawing melee, regenerates out of combat unless hit by fire."
+    },
+    {
+      "sheet": "troll1b_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Identical rig and pose set to troll1a, recolored: slate blue-gray / pale teal hide instead of green, with bright orange-red forearm and shin wraps and an orange loincloth. Same oversized bald dome head, upswept pointed ears, white eyes, gangly clawed arms, hunched stance.",
+      "heightM": 2.4,
+      "mobIdea": "Cave troll (stone-gray palette) — the darker, tougher sibling of the forest troll; use in the crypt/depths tier."
+    },
+    {
+      "sheet": "troll2a_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Same green troll body as troll1a, now adorned as a shaman: a LARGE white skull is worn over/in front of the face (the green dome and upswept ears still show behind and above it), and a smaller white skull hangs at each wrist/hand. Red-brown wraps on forearms and shins, ragged loincloth. Reads as a bone-fetish witch-doctor troll.",
+      "heightM": 2.4,
+      "mobIdea": "Troll bonespeaker — a caster troll: hurls a bone/curse bolt, applies a DoT, and buffs nearby trolls. Pairs naturally with troll1a as its pack leader."
+    },
+    {
+      "sheet": "troll2b_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Slate blue-gray recolor of troll2a: gray-teal hide, orange-red wraps, and the same large white skull worn over the face plus a small skull dangling from each wrist. Hunched, long-armed, big-domed silhouette.",
+      "heightM": 2.4,
+      "mobIdea": "Cave-troll shaman — depths-tier caster; summons or empowers cave trolls."
+    },
+    {
+      "sheet": "gargoyle_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "48x48",
+      "px": "144x192",
+      "who": "Stone-gray winged demon in a crouch. Broad snarling head with two curled ram-like horns sweeping outward, blunt snout, no visible eyes (blank stone). Large ribbed bat wings held half-spread behind it, taller than the body. Squat hunched torso, arms planted forward like a beast about to pounce, clawed feet. Up-facing frames show the wing membranes and a ridged spine.",
+      "heightM": 2.0,
+      "mobIdea": "Gargoyle sentinel — stands as a decorative statue block/prop until a player nears, then animates. Melee dive + high physical armor, weak to blunt/magic."
+    },
+    {
+      "sheet": "gryphon_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "73x58",
+      "px": "219x232",
+      "who": "Full-size gryphon: golden-tan eagle head with a hooked yellow beak, huge cream-and-gold layered feathered wings raised high, lion's body in deep gold/ochre, four legs (front pair reads as taloned bird feet), and a long thin tail ending in a tuft. Side frames show the classic eagle-front/lion-rear profile with the wing furled up over the back. Drawn with a ground shadow — a walker, not a flyer.",
+      "heightM": 2.2,
+      "mobIdea": "Gryphon — fast charging beast, high move speed, a leaping pounce; a highland/mountain elite or a tameable mount candidate."
+    },
+    {
+      "sheet": "gryphon_baby_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "A small gryphon cub. Pale cream eagle head with a stubby beak on a stocky golden lion cub body with a thin curling tail. NO wings visible in any frame. Sprite occupies only the lower-center of its 52x53 cell — a genuinely small creature.",
+      "heightM": 0.9,
+      "mobIdea": "Gryphon chick — a low-level critter, or a non-hostile nest ambient that aggros the adult gryphon when attacked."
+    },
+    {
+      "sheet": "hydra_3_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Bright green three-headed serpent. No limbs. Three snake necks rise from a coiled base; each head is small, skull-like and flat, with dark hollow eyes and a slit mouth. Down-frames show all three heads fanned side-by-side above the coil; side frames show two heads visible in profile over an S-curved tail that trails behind. Flat two-tone green shading, no scale detail.",
+      "heightM": 2.2,
+      "mobIdea": "Lesser hydra — a swamp/gloomfen boss-lite. Three heads = three simultaneous bite abilities; taking it below a threshold could split the fight."
+    },
+    {
+      "sheet": "hydra_5_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Same green limbless serpent, but FIVE necks/heads. Down-frame shows five skull-like flat heads fanned across the top on braided green necks over a broad coiled base; the sprite is noticeably wider and bulkier than hydra_3. Side frames show the head cluster over a long S-curved tail.",
+      "heightM": 2.6,
+      "mobIdea": "Elder hydra — a true multi-phase boss; the 3-head sheet is the 'wounded' phase and the 5-head is the opener (or vice versa: heads regrow)."
+    },
+    {
+      "sheet": "medusa_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Snake-woman. Pale blue-gray torso, arms and face; the head is nearly hidden under a huge writhing crown of bright-green snake tendrils that fan out in every direction. Wears an orange sash/collar across the chest and an orange belt at the waist. From the waist down she becomes a thick green serpent tail — in side frames the tail stretches out long and low behind her; in the down/up frames it coils into a bulbous green mound she rests on. Unarmed, hands free.",
+      "heightM": 2.0,
+      "mobIdea": "Medusa — gaze attack that roots/petrifies (a slow debuff), plus a lashing tail melee. Guards a ruin/temple; petrified-statue props tell the story."
+    },
+    {
+      "sheet": "beholder_a_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "A floating gray-lavender orb with a heavy brow ridge, one huge single white eye with a dark pupil, and a wide gaping mouth full of blunt square teeth. A row of small blunt nubs/spikes rings the top of the head — NOT the long eyestalks of beholder_b. Drawn with a clear gap between the body and a small oval ground shadow: it hovers. Side frames turn the eye and mouth in profile; the up-facing frames show only a smooth featureless gray dome (its back).",
+      "heightM": 1.2,
+      "mobIdea": "Gazer / lesser beholder — a hovering caster; a single-target eye beam and a fear/slow gaze. Never touches the ground, so it ignores terrain-step logic."
+    },
+    {
+      "sheet": "beholder_b_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "The classic beholder, in green. A floating spherical body with one large central white eye and a wide toothed grin below it. Roughly six or seven long curling green eyestalks sprout from the crown, each tipped with a small white eyeball; one central stalk rises straight up. The up-facing frames show the stalks splayed outward over a plain green dome. Hovers above an oval ground shadow.",
+      "heightM": 1.4,
+      "mobIdea": "Beholder — signature dungeon caster. Each eyestalk = a different bolt (slow, poison DoT, drain); a rotating multi-ability kit fits the existing 'attacks' array perfectly."
+    },
+    {
+      "sheet": "centaur_a_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Centaur with a chestnut/red-brown horse body and gray hooves. Bare-chested tan-skinned male torso; the head is almost entirely covered by a huge dark-gray/charcoal mass of curly hair and mane that continues down the horse's neck. No weapon and no clothing visible in any frame. Side frames show a clean four-legged walk with the human torso rising from the shoulders.",
+      "heightM": 2.4,
+      "mobIdea": "Centaur warrior (dark-maned) — fast flanker; charge attack that stuns, then heavy hoof melee. Could also be a neutral plains tribe with an NPC quest-giver."
+    },
+    {
+      "sheet": "centaur_b_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Golden/palomino centaur. Same rig as centaur_a: bare-chested pale-tan male torso, four-legged horse body in bright gold-ochre with gray hooves. Its hair/mane is a spiky reddish-brown crest that fans backward. Unarmed.",
+      "heightM": 2.4,
+      "mobIdea": "Centaur scout — a bow user (add a ranged ability; the sprite is unarmed so a projectile fx sells it). Sun-plains palette."
+    },
+    {
+      "sheet": "centaur_c_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Slate-gray centaur. Cool blue-gray horse body and pale gray hooves; pale/washed-out bare human torso. Long dark wild hair falling over the shoulder and down the neck. Unarmed. Reads distinctly ghostlier/colder than the other two — its lighter frames verge on translucent.",
+      "heightM": 2.4,
+      "mobIdea": "Spectral / winter centaur — a night-time or gloomfen variant; slow aura or a cold DoT. Its pale palette suits a phased/undead treatment."
+    },
+    {
+      "sheet": "harpy_a_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Grounded bird-woman. Cream-and-gold layered feathered wings in place of arms, hanging folded at her sides and reaching nearly to the ground. A small pale human face with dark eyes under a swept brown hair-crest; brown feathered body/skirt. Bright orange scaly bird legs ending in splayed talons planted on the ground (ground shadow touching the feet). Standing/walking frames.",
+      "heightM": 1.7,
+      "mobIdea": "Harpy (perched) — the idle/grounded state of a cliffside nester. Pair with harpy_a_fly for a take-off animation."
+    },
+    {
+      "sheet": "harpy_a_fly_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "The same cream/tan harpy, airborne. The three frames per row are a genuine flap cycle: wings tucked down, wings half-out, wings fully spread horizontally. The talons are tucked up under the body and dangle; a small oval shadow sits well below the sprite, confirming hover height.",
+      "heightM": 1.7,
+      "mobIdea": "Harpy in flight — the chase/attack state. Hovering mob that dives; use the fly sheet as its move animation and the standing sheet as its perched idle."
+    },
+    {
+      "sheet": "harpy_b_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "Grounded harpy variant: bright BLUE hair (a long swept crest) with a red headband, pale bare midriff and chest wrap, and warm mid-brown feathered wings folded at her sides. Blue scaly legs ending in orange three-toed talons on the ground. Same rig as harpy_a, distinctly different palette.",
+      "heightM": 1.7,
+      "mobIdea": "Blue harpy matriarch/elite — a tougher perched variant, or a screech that applies a slow/silence to the party."
+    },
+    {
+      "sheet": "harpy_b_fly_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "px": "156x212",
+      "who": "The blue-haired, brown-winged harpy airborne. Same three-step flap cycle per row (tucked / half-spread / fully spread horizontal wings), blue legs and orange talons tucked beneath, a small oval shadow well below the body.",
+      "heightM": 1.7,
+      "mobIdea": "Blue harpy in flight — flying elite that dives from a nest prefab; use with harpy_b as its perched pose."
+    }
+  ],
+  "warnings": "No off-grid or garbled sheets found in this group — all 20 decomposed cleanly into a 3x3-visible walk grid across 4 direction rows (down/left/right/up), consistent with index.json's 'single' layout. NOTE: the contact-sheet filenames all carry the '-chars' suffix, which is misleading; NONE of these is an 8-character char8 sheet. Two per-sheet observations worth flagging: (1) gryphon_baby_1's sprite fills only a small fraction of its 52x53 cell (a deliberately tiny cub), so a naive full-cell billboard will float it; trim to content. (2) beholder_a_1's up-facing row is an intentionally featureless gray dome (the back of its head) rather than damaged art. (3) beholder_a has short blunt nubs around the crown, NOT eyestalks; only beholder_b has true eyestalks with eyeballs. (4) centaur_a/b/c and both trolls are drawn UNARMED — any weapon must come from FX/projectiles, not the sprite."
+}

@@ -1,0 +1,424 @@
+{
+  "group": "nature-fae-vermin",
+  "generated": "2026-07-08",
+  "method": "Every entry below was recorded by opening the pre-rendered contact sheet in tools/out/sheets/ and describing what is visibly drawn. Coordinates are the 'cx,cy' labels printed on the contact sheets. Cells I could not identify are marked 'unknown'.",
+  "sheets": [
+    {
+      "sheet": "dryad_green_1.png",
+      "px": "78x144",
+      "frame": "26x36",
+      "layout": "single",
+      "layoutConfirmed": true,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "Slender female humanoid with bright GREEN skin, a huge mass of dark-green leaf 'hair' swept over the head and down the back, two bare brown branch/twig antlers curving up out of the leaves, red berries or small red flowers tucked into the foliage. White dot eyes on the down-facing row. Wears a short leafy wrap/skirt with a small yellow-gold clasp at the waist; bare green legs. The up-facing row is almost entirely the leaf mass and antlers seen from behind.",
+          "heightM": 1.75,
+          "mobIdea": "Dryad / grove-warden — a forest guardian that only aggros if you break blocks near her tree; roots-snare (slow debuff) + thorn HoT on herself."
+        }
+      ]
+    },
+    {
+      "sheet": "dryad_skin_1.png",
+      "px": "78x144",
+      "frame": "26x36",
+      "layout": "single",
+      "layoutConfirmed": true,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "Identical pose set and leaf/antler headdress to dryad_green_1, but the SKIN is pale cream/ivory instead of green (a pale birch-bark body). Same brown twig antlers, same green leaf mane with red berries, same leafy hip wrap; bark-brown shading on the limbs.",
+          "heightM": 1.75,
+          "mobIdea": "Pale birch-dryad — the friendly NPC variant (grove hermit / seed-vendor) so the green one can stay hostile."
+        }
+      ]
+    },
+    {
+      "sheet": "littlefairies_1.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "layoutConfirmed": true,
+      "entries": [
+        { "charCell": "0,0", "who": "Tiny pixie: pale skin, PURPLE hair in two big side-buns, small purple top; a broad pair of white/silvery insect wings spread wide behind her (visible in every row). Hovers — no ground contact.", "heightM": 0.6, "mobIdea": "Wisp-pixie swarm — 3-4 hover in a glade, cast a tiny arcane bolt, flee at low hp." },
+        { "charCell": "1,0", "who": "Same tiny winged pixie, BLUE hair/buns and blue top, white spread wings.", "heightM": 0.6, "mobIdea": "Frost pixie (chill bolt / slow)." },
+        { "charCell": "2,0", "who": "Same tiny winged pixie, GREEN hair/buns and green top, white spread wings.", "heightM": 0.6, "mobIdea": "Leaf pixie — heals other fae, kill it first." },
+        { "charCell": "3,0", "who": "Same tiny winged pixie, RED hair/buns and red top; her wings are tinted red/white.", "heightM": 0.6, "mobIdea": "Ember pixie (firebolt)." },
+        { "charCell": "0,1", "who": "The SAME purple pixie WITHOUT the big spread wings — just the tiny body with purple hair-buns and a pale dot beneath (a small shadow/dust mote). Reads as a wingless / grounded fairy.", "heightM": 0.5, "mobIdea": "Grounded sprite — a critter/ambient mob or the pixie's 'landed' idle." },
+        { "charCell": "1,1", "who": "Wingless blue-haired tiny pixie.", "heightM": 0.5, "mobIdea": "Ambient fae critter." },
+        { "charCell": "2,1", "who": "Wingless green-haired tiny pixie.", "heightM": 0.5, "mobIdea": "Ambient fae critter." },
+        { "charCell": "3,1", "who": "Wingless red-haired tiny pixie.", "heightM": 0.5, "mobIdea": "Ambient fae critter." }
+      ],
+      "warnings": "Sprites are extremely small inside their 26x36 cells (a lot of empty headroom). Trim before billboarding or they will float. The bottom-row characters differ from the top row only by the loss of the big white wings — verify by pixel diff before treating them as distinct mobs."
+    },
+    {
+      "sheet": "forestboys_tfcolor.png",
+      "px": "192x256",
+      "frame": "16x32 (NOT the 64x64 the index guessed)",
+      "layout": "char8",
+      "layoutConfirmed": true,
+      "entries": [
+        { "charCell": "0,0", "who": "Squat root/mandrake creature: a brown ACORN-CAP head with a small face, sprigs of green leaves erupting around the cap, an orange scarf/sash across the chest, and a knotty root body with two stubby root legs.", "heightM": 0.9, "mobIdea": "Mandrake sprout — burrows, pops up under you, weak melee, spawns in packs around a big tree." },
+        { "charCell": "1,0", "who": "Same root creature but with a TALL brown pot/urn-shaped cap (like an upturned flowerpot), pale cream body, green leaf sprigs at the shoulders, orange root feet.", "heightM": 0.9, "mobIdea": "Pot-headed sapling homunculus." },
+        { "charCell": "2,0", "who": "Root creature with a pale WHITE/bone-colored elongated head that has two glowing white slot-eyes, green leaves fanning out behind, orange root body.", "heightM": 0.9, "mobIdea": "Hollow-eyed rootling — the 'cursed' variant, poison DoT." },
+        { "charCell": "3,0", "who": "Root creature with a brown mushroom/acorn dome cap, cream-white face plate with two white slot-eyes, green leaves, golden-yellow root limbs.", "heightM": 0.9, "mobIdea": "Golden rootling (rare, drops seeds/loot)." },
+        { "charCell": "0,1", "who": "Appears IDENTICAL to 0,0 (acorn cap, orange scarf).", "heightM": 0.9, "mobIdea": "duplicate of 0,0" },
+        { "charCell": "1,1", "who": "Appears IDENTICAL to 1,0 (tall pot cap).", "heightM": 0.9, "mobIdea": "duplicate of 1,0" },
+        { "charCell": "2,1", "who": "Appears IDENTICAL to 2,0 (white slot-eyed head).", "heightM": 0.9, "mobIdea": "duplicate of 2,0" },
+        { "charCell": "3,1", "who": "Appears IDENTICAL to 3,0 (cream face plate, golden limbs).", "heightM": 0.9, "mobIdea": "duplicate of 3,0" }
+      ],
+      "warnings": "index.json guessed 'single+char8' with a 64x64 frame — WRONG. The raw PNG is a standard 12x8 frame grid, so char8 with 16x32 frames. The bottom half (0,1..3,1) looks like the SAME four characters as the top half at this zoom; pixel-diff before assuming 8 distinct mobs. Frames are only 16x32, the smallest character frames in the whole library."
+    },
+    {
+      "sheet": "forestboysB_tfcolor.png",
+      "px": "192x256",
+      "frame": "16x32 (NOT 64x64)",
+      "layout": "char8",
+      "layoutConfirmed": true,
+      "entries": [
+        { "charCell": "0,0", "who": "Walking mushroom: bright RED toadstool cap with white spots, a squat green leafy/mossy body beneath with two little legs and a dark mouth-line.", "heightM": 0.8, "mobIdea": "Toadstool shambler — spore-cloud AoE DoT on death (feeds the existing DoT system)." },
+        { "charCell": "1,0", "who": "Walking mushroom: TAN/brown domed cap with a pale cream underside gill ring, green leafy body, an orange scarf at the foot.", "heightM": 0.8, "mobIdea": "Brown capling — the harmless critter variant / mushroom-farm ambience." },
+        { "charCell": "2,0", "who": "Walking gourd: bright ORANGE pumpkin head with a stem on top and carved dark eye-holes (jack-o'-lantern), green vine/leaf body with tendrils.", "heightM": 0.8, "mobIdea": "Pumpkin-head creeper for a harvest/autumn event." },
+        { "charCell": "3,0", "who": "Walking gourd: pale CREAM/yellow pumpkin head with a stem and carved eye-holes, green vine body.", "heightM": 0.8, "mobIdea": "Ghost-gourd (pale variant)." },
+        { "charCell": "0,1", "who": "Appears IDENTICAL to 0,0 (red spotted toadstool).", "heightM": 0.8, "mobIdea": "duplicate of 0,0" },
+        { "charCell": "1,1", "who": "Appears IDENTICAL to 1,0 (tan cap).", "heightM": 0.8, "mobIdea": "duplicate of 1,0" },
+        { "charCell": "2,1", "who": "Appears IDENTICAL to 2,0 (orange pumpkin).", "heightM": 0.8, "mobIdea": "duplicate of 2,0" },
+        { "charCell": "3,1", "who": "Appears IDENTICAL to 3,0 (cream pumpkin).", "heightM": 0.8, "mobIdea": "duplicate of 3,0" }
+      ],
+      "warnings": "Same as forestboys: index layout/frame guess wrong; top and bottom halves look like the same four characters."
+    },
+    {
+      "sheet": "merlocs_tf_1.png",
+      "px": "192x256",
+      "frame": "16x32 (NOT 64x64)",
+      "layout": "char8",
+      "layoutConfirmed": true,
+      "entries": [
+        { "charCell": "0,0", "who": "Upright fish-man (murloc-like): GOLD/yellow scaly body, a large fanged fish jaw, a spiky orange dorsal crest running over the skull, orange fin-frills on the forearms, wide orange webbed feet. Unarmed/unarmored.", "heightM": 1.6, "mobIdea": "Marsh merloc grunt — pack mob for Gloomfen shallows; wades (the wade/swim path already exists)." },
+        { "charCell": "1,0", "who": "The gold merloc again, but wearing grey/steel scrap armor: a metal skirt or loincloth and grey plates on the shins; the up-facing row clearly shows a metal back-plate.", "heightM": 1.6, "mobIdea": "Merloc raider (armored — pairs with the new armor mitigation math)." },
+        { "charCell": "2,0", "who": "GREEN scaly merloc, orange crest and fins, fanged jaw. Unarmored.", "heightM": 1.6, "mobIdea": "Reef merloc." },
+        { "charCell": "3,0", "who": "Green merloc with the same grey scrap armor skirt/plates.", "heightM": 1.6, "mobIdea": "Reef merloc warrior." },
+        { "charCell": "0,1", "who": "PINK/magenta scaly merloc with a blue-white crest ridge and orange fins; unarmored.", "heightM": 1.6, "mobIdea": "Coral merloc (rarer variant)." },
+        { "charCell": "1,1", "who": "Pink merloc with grey scrap armor.", "heightM": 1.6, "mobIdea": "Coral merloc warrior." },
+        { "charCell": "2,1", "who": "BLUE scaly merloc with a red-orange crest and red webbed feet; unarmored.", "heightM": 1.6, "mobIdea": "Deep merloc." },
+        { "charCell": "3,1", "who": "Blue merloc with grey scrap armor.", "heightM": 1.6, "mobIdea": "Deep merloc warrior — the tanky one for a sunken-temple pack." }
+      ],
+      "warnings": "index guessed 'single+char8' 64x64 — wrong; the raw PNG is a 12x8 frame grid (16x32 frames). Four color families x (unarmored / armored). Very small frames."
+    },
+    {
+      "sheet": "frogs_base_noshadow.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "layoutConfirmed": true,
+      "entries": [
+        { "charCell": "0,0", "who": "Naked bipedal frogfolk: bright GREEN, big round white eyes with dark pupils, wide flat mouth, pot belly, four-toed splayed feet, no clothing or gear at all.", "heightM": 1.3, "mobIdea": "Base frogfolk — the recolor template; use for the weakest bog frog." },
+        { "charCell": "1,0", "who": "Same naked frogfolk, TEAL / blue-green.", "heightM": 1.3, "mobIdea": "Pond frogfolk." },
+        { "charCell": "2,0", "who": "Same naked frogfolk, OLIVE / muddy dark yellow-green.", "heightM": 1.3, "mobIdea": "Mud frogfolk (Gloomfen fodder)." },
+        { "charCell": "3,0", "who": "Same naked frogfolk, bright YELLOW.", "heightM": 1.3, "mobIdea": "Poison-dart frogfolk — obvious DoT-on-hit candidate." },
+        { "charCell": "0,1", "who": "Same naked frogfolk, ORANGE.", "heightM": 1.3, "mobIdea": "Ember frogfolk (Cinderrift edge)." },
+        { "charCell": "1,1", "who": "Same naked frogfolk, BLUE.", "heightM": 1.3, "mobIdea": "Cold-water frogfolk." },
+        { "charCell": "2,1", "who": "Same naked frogfolk, PINK/salmon.", "heightM": 1.3, "mobIdea": "Rare pink frogfolk." },
+        { "charCell": "3,1", "who": "Same naked frogfolk, GREY/slate.", "heightM": 1.3, "mobIdea": "Stone frogfolk." }
+      ],
+      "warnings": "This is a pure recolor/base sheet: all eight are the same silhouette with zero gear. Walk grids look clean in both halves."
+    },
+    {
+      "sheet": "frogs_noshadow.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "layoutConfirmed": true,
+      "entries": [
+        { "charCell": "0,0", "who": "Green frogfolk wearing an orange/red sash across the chest and a belt; empty hands.", "heightM": 1.3, "mobIdea": "Frogfolk scout." },
+        { "charCell": "1,0", "who": "Olive/grey-green frogfolk carrying a round blue-grey wooden SHIELD on one arm and a brown-handled club or mace in the other.", "heightM": 1.3, "mobIdea": "Bog defender — shield mob to exercise armor mitigation." },
+        { "charCell": "2,0", "who": "Green frogfolk with red/orange war-paint stripes over the head and an orange sash; holds a slim shaft (spear or dart).", "heightM": 1.3, "mobIdea": "Frogfolk hunter (ranged spear/dart)." },
+        { "charCell": "3,0", "who": "Green frogfolk wearing an enormous flat GREEN LILY-PAD as a hat/helmet that overhangs the whole sprite, with a yellow belt beneath.", "heightM": 1.3, "mobIdea": "Lilypad sentry — comic, great for a bog village." },
+        { "charCell": "0,1", "who": "Frogfolk shaman under a giant RED TOADSTOOL cap (white-spotted) used as an umbrella/hat; grey-white robe body beneath. The cap dominates the sprite.", "heightM": 1.4, "mobIdea": "Toadstool shaman — caster, heals the pack, spore DoT." },
+        { "charCell": "1,1", "who": "Dark mossy-green frogfolk with a gold/yellow sash and a bright yellow staff or spear held across the body.", "heightM": 1.3, "mobIdea": "Frogfolk spearman / champion's honor guard." },
+        { "charCell": "2,1", "who": "A small plain GREEN frog: rounded low body, big head, no clothing, no visible arms in most frames — reads as a squat toad/critter rather than a humanoid.", "heightM": 0.7, "mobIdea": "Bog toad critter — ambient, 1-hit kill, drops nothing." },
+        { "charCell": "3,1", "who": "A small squat OLIVE/khaki toad, same low rounded body, darker and muddier. The up-facing (4th) row looks like a flattened dome with legs and is hard to read.", "heightM": 0.7, "mobIdea": "Mud toad critter." }
+      ],
+      "warnings": "Characters 2,1 and 3,1 are NOT humanoid frogfolk like the other six — they are small crouching toads on the same 26x36 grid, so they sit low in their cells. 3,1's up-row is the hardest cell to read on this sheet; verify before mapping."
+    },
+    {
+      "sheet": "frog_champ_noshadow.png",
+      "px": "78x144",
+      "frame": "26x36",
+      "layout": "single",
+      "layoutConfirmed": true,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "Frogfolk chieftain: green frog face with white eyes, crowned by a large fanning ORANGE/RUST headdress of feathers-or-leaves that spreads wide past the shoulders with a single green sprig standing straight up at the crown. Body armored in tan/bone-colored plates and brown hide straps, yellow bead necklaces, green leaf accents at the hips, holds a small pale object (a bone or shell) in one hand. Broad, top-heavy silhouette.",
+          "heightM": 1.9,
+          "mobIdea": "Frog chieftain mini-boss for a Gloomfen bog village: summons frogfolk adds (the summon system exists), a leaping slam, and a spore-cloud pillar line."
+        }
+      ]
+    },
+    {
+      "sheet": "frog_champ_emote_noshadow.png",
+      "px": "78x144",
+      "frame": "26x36",
+      "layout": "single",
+      "layoutConfirmed": true,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "The same orange-headdressed frog chieftain, but the twelve frames are FACIAL EXPRESSION / emote variants of the front-facing pose rather than a walk cycle: rows 1-2 show the head-on chieftain with the mouth and eyes changing (open-mouthed shout, narrowed eyes), row 3 shows the face replaced by a large flat green rectangle (an eyes-shut / blank plate), row 4 shows the head tilted with a big white eye and green mouth. Not directional.",
+          "heightM": 1.9,
+          "mobIdea": "Not a mob — reuse as boss dialogue/telegraph portraits if a portrait system is ever added."
+        }
+      ],
+      "warnings": "This is an EMOTE sheet, not a down/left/right/up walk grid. Do not feed it to the billboard animation mapper. The row-3 'green rectangle face' frames are legitimate art (a closed/blank expression), not corruption, but they are unusable as movement frames."
+    },
+    {
+      "sheet": "frog_champ_battler_noshadow.png",
+      "px": "432x288",
+      "frame": "36x36 (per index)",
+      "layout": "unknown",
+      "layoutConfirmed": false,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "An RPG-Maker-style side-view BATTLER animation strip for the orange-headdressed frog chieftain: scattered attack poses (side-facing lunges, a two-handed overhead swing accompanied by a huge crescent-shaped cream/white slash arc that spills across two cells, a weapon-thrust, a guard stance, a knocked-back pose) with many empty cells. It does NOT decompose into 8 characters x (3 cols x 4 rows) of walk frames.",
+          "heightM": 1.9,
+          "mobIdea": "Source for attack-swing FX / a boss telegraph flipbook — NOT a walk sheet."
+        }
+      ],
+      "warnings": "index.json guessed char8; that guess is WRONG. Cells are sparse and pose-based. The big cream crescent is a slash effect drawn OVER the sprite and spanning cell boundaries, so naive frame extraction will weld it onto neighbouring frames."
+    },
+    {
+      "sheet": "frogmother_1.png",
+      "px": "78x144",
+      "frame": "26x36",
+      "layout": "single",
+      "layoutConfirmed": true,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "Visually the SAME sprite as frog_champ_noshadow — green frog face, wide fanning orange/rust feather-leaf headdress with a green sprig at the crown, bone/tan plate armor, brown hide straps, yellow beads, green leaf hip skirt, small pale object in hand — except this sheet HAS the dark elliptical drop-shadow baked under each frame.",
+          "heightM": 1.9,
+          "mobIdea": "Frogmother — matriarch boss of the bog village; identical art to the champ, so pick ONE and rename, or tint one of them."
+        }
+      ],
+      "warnings": "frogmother_1 and frog_champ_noshadow look identical apart from the baked drop-shadow. Since this project draws its own shadows, prefer the *_noshadow file and treat 'frogmother' as a naming duplicate until a pixel diff proves otherwise."
+    },
+    {
+      "sheet": "insect_base_noshadow.png",
+      "px": "372x288",
+      "frame": "31x36",
+      "layout": "char8",
+      "layoutConfirmed": false,
+      "entries": [
+        { "charCell": "0,0", "who": "Upright bipedal insect-man, GREY-BLUE chitin: a head with two long forked/antler-like horns splaying outward, glowing pink-red compound eyes, a segmented ribbed abdomen down the front of the torso, thin jointed limbs. Completely nude/unarmored.", "heightM": 1.7, "mobIdea": "Chitin drone — the base recolor for a hive faction." },
+        { "charCell": "1,0", "who": "Same insect-man, TAN/beige chitin, pink eyes.", "heightM": 1.7, "mobIdea": "Sand-hive drone." },
+        { "charCell": "2,0", "who": "Same insect-man, dark TEAL-BLUE chitin.", "heightM": 1.7, "mobIdea": "Deep-hive drone." },
+        { "charCell": "3,0", "who": "Same insect-man, dusty PINK-MAUVE chitin.", "heightM": 1.7, "mobIdea": "Brood drone." },
+        { "charCell": "0,1", "who": "Pale grey-lilac insect-man — BUT the frames here are all front-facing repeats, see warnings.", "heightM": 1.7, "mobIdea": "unknown / unusable as a walk grid" },
+        { "charCell": "1,1", "who": "Khaki/tan insect-man, same front-facing repeats.", "heightM": 1.7, "mobIdea": "unknown / unusable as a walk grid" },
+        { "charCell": "2,1", "who": "Dark slate-blue insect-man, same front-facing repeats.", "heightM": 1.7, "mobIdea": "unknown / unusable as a walk grid" },
+        { "charCell": "3,1", "who": "Dusty-rose insect-man, same front-facing repeats.", "heightM": 1.7, "mobIdea": "unknown / unusable as a walk grid" }
+      ],
+      "warnings": "SUSPECTED OFF-GRID BOTTOM HALF (the wizard.png/elemental.png trap). The TOP half (0,0..3,0) reads as a proper down/left/right/up walk grid. In the BOTTOM half (0,1..3,1) the first three rows all show the SAME head-on standing pose and the fourth row shows a different, wider mandible-faced sprite — that is not a walk cycle. Treat the bottom half as unusable until someone slices the raw PNG and checks."
+    },
+    {
+      "sheet": "bugtribe_base_1.png",
+      "px": "372x288",
+      "frame": "31x36",
+      "layout": "char8",
+      "layoutConfirmed": false,
+      "entries": [
+        { "charCell": "0,0", "who": "Identical art to insect_base_noshadow 0,0 (grey-blue horned insect-man) but WITH a baked elliptical drop-shadow under each frame.", "heightM": 1.7, "mobIdea": "duplicate of insect_base 0,0 (shadowed copy)" },
+        { "charCell": "1,0", "who": "Tan/beige horned insect-man, shadowed copy of insect_base 1,0.", "heightM": 1.7, "mobIdea": "duplicate" },
+        { "charCell": "2,0", "who": "Teal-blue horned insect-man, shadowed copy of insect_base 2,0.", "heightM": 1.7, "mobIdea": "duplicate" },
+        { "charCell": "3,0", "who": "Pink-mauve horned insect-man, shadowed copy of insect_base 3,0.", "heightM": 1.7, "mobIdea": "duplicate" },
+        { "charCell": "0,1", "who": "Pale grey-lilac insect-man; same broken front-facing repeats as insect_base's bottom half.", "heightM": 1.7, "mobIdea": "unknown / unusable" },
+        { "charCell": "1,1", "who": "Khaki insect-man; broken bottom half.", "heightM": 1.7, "mobIdea": "unknown / unusable" },
+        { "charCell": "2,1", "who": "Slate-blue insect-man; broken bottom half.", "heightM": 1.7, "mobIdea": "unknown / unusable" },
+        { "charCell": "3,1", "who": "Dusty-rose insect-man; broken bottom half.", "heightM": 1.7, "mobIdea": "unknown / unusable" }
+      ],
+      "warnings": "bugtribe_base_1 == insect_base_noshadow with baked shadows. Same bottom-half off-grid problem. Prefer the *_noshadow file."
+    },
+    {
+      "sheet": "insects_noshadow.png",
+      "px": "372x288",
+      "frame": "31x36",
+      "layout": "char8",
+      "layoutConfirmed": true,
+      "entries": [
+        { "charCell": "0,0", "who": "Grey insect warrior: forked antler-horned head, red compound eyes, grey chitin plate armor over the chest and thighs, a rust-orange sash/belt cloth hanging down the front.", "heightM": 1.7, "mobIdea": "Hive soldier — melee, spawns in tunnels/hollows." },
+        { "charCell": "1,0", "who": "Same horned bug warrior with paler tan-grey chitin and a slate-BLUE tunic/tabard.", "heightM": 1.7, "mobIdea": "Hive spearbug." },
+        { "charCell": "2,0", "who": "Darker bug warrior in a heavy grey plate SKIRT with red accents at the joints; stockier and more armored than 0,0.", "heightM": 1.7, "mobIdea": "Hive guard (high armor value)." },
+        { "charCell": "3,0", "who": "A bug figure entirely wrapped in a hooded ORANGE/copper robe or cloak — the cowl covers the head, only the shape of the horns shows through; moth-like fuzzy silhouette, robe hangs to the ground.", "heightM": 1.7, "mobIdea": "Moth-priest / hive cultist — caster, buffs the swarm." },
+        { "charCell": "0,1", "who": "Grey horned bug-man with BLUE (not red) compound eyes, wearing a green tunic/wrap.", "heightM": 1.7, "mobIdea": "Blue-eyed hive caste — elite drone." },
+        { "charCell": "1,1", "who": "Grey horned bug-man, BLUE eyes, wearing a long rust-orange robe/tabard.", "heightM": 1.7, "mobIdea": "Hive adept (ranged bolt)." },
+        { "charCell": "2,1", "who": "A small bright YELLOW bee-like insect: rounded fuzzy yellow body with dark stripes, two short antennae, tiny legs. Much smaller than the humanoid bugs.", "heightM": 0.7, "mobIdea": "Bee critter — swarms, tiny damage, dies to one hit; drops honey." },
+        { "charCell": "3,1", "who": "A pale WHITE segmented grub/larva or cocoon: a limbless ribbed white blob with a faint face at the top. Sits low in the frame.", "heightM": 0.5, "mobIdea": "Hive grub — stationary hp piñata inside the nest; killing them slows the hive respawn." }
+      ]
+    },
+    {
+      "sheet": "bugtribe_chars_1.png",
+      "px": "372x288",
+      "frame": "31x36",
+      "layout": "char8",
+      "layoutConfirmed": true,
+      "entries": [
+        { "charCell": "0,0", "who": "Grey horned bug warrior with rust sash — same art as insects_noshadow 0,0, but with a baked drop-shadow.", "heightM": 1.7, "mobIdea": "duplicate (shadowed)" },
+        { "charCell": "1,0", "who": "Tan-grey bug warrior, blue tabard — shadowed copy.", "heightM": 1.7, "mobIdea": "duplicate" },
+        { "charCell": "2,0", "who": "Heavily armored grey bug guard — shadowed copy.", "heightM": 1.7, "mobIdea": "duplicate" },
+        { "charCell": "3,0", "who": "Hooded orange-robed moth-priest — shadowed copy.", "heightM": 1.7, "mobIdea": "duplicate" },
+        { "charCell": "0,1", "who": "Blue-eyed bug-man in green tunic — shadowed copy.", "heightM": 1.7, "mobIdea": "duplicate" },
+        { "charCell": "1,1", "who": "Blue-eyed bug-man in orange robe — shadowed copy.", "heightM": 1.7, "mobIdea": "duplicate" },
+        { "charCell": "2,1", "who": "Small yellow bee critter — shadowed copy.", "heightM": 0.7, "mobIdea": "duplicate" },
+        { "charCell": "3,1", "who": "White segmented grub/cocoon — shadowed copy.", "heightM": 0.5, "mobIdea": "duplicate" }
+      ],
+      "warnings": "bugtribe_chars_1 == insects_noshadow with baked shadows. Use the *_noshadow version (this project renders real sprite shadows)."
+    },
+    {
+      "sheet": "bigbeetlesheet_1.png",
+      "px": "372x288",
+      "frame": "31x36",
+      "layout": "char8",
+      "layoutConfirmed": true,
+      "entries": [
+        { "charCell": "0,0", "who": "Giant six-legged beetle seen in three-quarter/top-down: a domed dark RED-RUST elytra shell, small grey legs poking out, a pair of short pincer mandibles at the front. Low, wide, ground-hugging.", "heightM": 0.7, "mobIdea": "Rust beetle — armored trash mob; high armor, low damage." },
+        { "charCell": "1,0", "who": "Same giant beetle, GREEN shell with bright yellow-green leg tips.", "heightM": 0.7, "mobIdea": "Leaf beetle (forest ambience)." },
+        { "charCell": "2,0", "who": "Giant BLUE beetle with a prominent forked HORN projecting forward from the head (rhinoceros-beetle style) — the horn reads as a pale blue fork in the down and up rows.", "heightM": 0.7, "mobIdea": "Rhino beetle — charges in a straight line, knockback." },
+        { "charCell": "3,0", "who": "Giant PURPLE/violet stag beetle: two big curved crescent MANDIBLE pincers arcing forward from the head, glossy purple shell.", "heightM": 0.7, "mobIdea": "Stag beetle — grapples/holds you in place." },
+        { "charCell": "0,1", "who": "Golden-orange beetle with short pincers (recolor of 0,0).", "heightM": 0.7, "mobIdea": "Gilded beetle (rare, drops ore)." },
+        { "charCell": "1,1", "who": "Orange-yellow beetle, plain rounded shell (recolor of 1,0).", "heightM": 0.7, "mobIdea": "Amber beetle." },
+        { "charCell": "2,1", "who": "Orange beetle with the forward forked HORN (recolor of 2,0).", "heightM": 0.7, "mobIdea": "Ember rhino beetle (Cinderrift)." },
+        { "charCell": "3,1", "who": "Orange stag beetle with the big curved crescent pincers (recolor of 3,0).", "heightM": 0.7, "mobIdea": "Gold stag beetle mini-boss." }
+      ],
+      "warnings": "These are LOW quadruped-style sprites, not humanoids — they sit at the bottom of their 31x36 cells with a lot of empty headroom. Trim before billboarding."
+    },
+    {
+      "sheet": "gwasp_1.png",
+      "px": "165x156",
+      "frame": "55x39",
+      "layout": "single",
+      "layoutConfirmed": true,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "Giant hornet/wasp, hovering (a dark elliptical shadow is baked beneath every frame): two pairs of long cream-white translucent wings held out wide, a black-and-yellow banded abdomen tapering to a stinger, dark thorax, and a yellow head with two large glowing pale-BLUE compound eyes. The down row faces the viewer with the blue eyes; the up row shows the striped abdomen and dark thorax from behind. Very wide sprite (55 px) because of the wingspan.",
+          "heightM": 1.1,
+          "mobIdea": "Giant wasp — a flying mob for the forest/gloomfen canopy; poison sting DoT, dive attacks. Note: nothing in the engine flies yet, so it would hover on the floorY like other mobs."
+        }
+      ],
+      "warnings": "Drop-shadow is baked into the art; the client draws its own shadows so this will double up."
+    },
+    {
+      "sheet": "insect_champ_noshadow.png",
+      "px": "93x144",
+      "frame": "31x36",
+      "layout": "single",
+      "layoutConfirmed": true,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "Insect champion: steel-grey chitin, a head crowned with two enormous forked antler-horns spreading wide like a stag beetle's, TWO glowing sapphire-BLUE compound eyes, a big round RED gem/heart set in the middle of the chest, rows of gold-yellow spike studs running down the torso and limbs, and rust-brown pauldrons over the shoulders. The up-facing row shows a broad copper/brown wing-case or cape from behind with the horns rising above it.",
+          "heightM": 2.0,
+          "mobIdea": "Hive Champion — a boss for an insect hive room: summons drones and grubs (summon system exists), a ground-slam and a bone/chitin blade cleave."
+        }
+      ]
+    },
+    {
+      "sheet": "bughero_walking_1.png",
+      "px": "93x144",
+      "frame": "31x36",
+      "layout": "single",
+      "layoutConfirmed": true,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "Visually IDENTICAL to insect_champ_noshadow: the grey stag-horned insect champion with blue compound eyes, red chest gem, gold spike studs, rust pauldrons, and a copper wing-case/cape seen in the up row.",
+          "heightM": 2.0,
+          "mobIdea": "Same as insect_champ — pick one file. Could be reskinned as a friendly 'bug hero' NPC if the hive is made a faction."
+        }
+      ],
+      "warnings": "bughero_walking_1 and insect_champ_noshadow render pixel-for-pixel the same to the eye. Duplicate; keep one."
+    },
+    {
+      "sheet": "insect_champ_emote_noshadow.png",
+      "px": "93x144",
+      "frame": "31x36",
+      "layout": "single",
+      "layoutConfirmed": true,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "The insect champion in twelve FRONT-FACING bust/emote poses — the antlers, blue eyes, red chest gem and gold studs stay put while the antenna angle, eye brightness and head tilt change from frame to frame. No side or back views anywhere. Not a walk cycle.",
+          "heightM": 2.0,
+          "mobIdea": "Not a mob — boss emote/telegraph frames only."
+        }
+      ],
+      "warnings": "EMOTE sheet, not a directional walk grid despite the 'single' 3x4 shape. Do not map to down/left/right/up."
+    },
+    {
+      "sheet": "insect_champ_sv_noshadow.png",
+      "px": "432x288",
+      "frame": "36x36 (per index)",
+      "layout": "unknown",
+      "layoutConfirmed": false,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "Side-view BATTLER animation strip for the insect champion: sparse, pose-based cells — side lunges, a bow-draw with a dark curved bow and a red arrow, an overhead swing trailing a huge cream/white crescent slash arc that bleeds across cell boundaries, a small white 'sparkle/impact' burst, a guard pose, a defeated slump. Does not decompose into 8 characters x 3x4 walk grids.",
+          "heightM": 2.0,
+          "mobIdea": "Attack-FX / telegraph source, not a walk sheet."
+        }
+      ],
+      "warnings": "index.json guessed char8 — WRONG. Same slash-arc-spanning-cells extraction hazard as frog_champ_battler."
+    },
+    {
+      "sheet": "rats_noshadow.png",
+      "px": "312x288",
+      "frame": "26x36",
+      "layout": "char8",
+      "layoutConfirmed": true,
+      "entries": [
+        { "charCell": "0,0", "who": "Ratman: brown-furred rat head with a long snout, round pink ears, wearing a dark blue-purple hooded tunic with a green sash at the waist and small brown boots. Long thin tail. Hands empty.", "heightM": 1.5, "mobIdea": "Sewer ratkin — cheap pack trash for a warren/undercity." },
+        { "charCell": "1,0", "who": "Ratman with WHITE/pale grey fur, wearing a broad cream conical straw hat that overhangs the head, brown leather cross-straps, and a tan-gold robe (the up row shows the wide hat and gold robe back).", "heightM": 1.5, "mobIdea": "Ratkin wanderer/monk — evasive, fast." },
+        { "charCell": "2,0", "who": "Brown-furred ratman in heavy dark NAVY armor plates studded with small white/silver spikes; the bulkiest of the eight.", "heightM": 1.5, "mobIdea": "Ratkin bruiser — high armor, slow." },
+        { "charCell": "3,0", "who": "Hunched, forward-stooped ratman in a TAN/ORANGE hooded cloak with a green sash, brownish fur, head low. Reads as a scavenger or thief.", "heightM": 1.4, "mobIdea": "Ratkin scavenger — steals gold on hit, flees." },
+        { "charCell": "0,1", "who": "Brown-furred ratman in dark blue tunic with RED belt and red trim on the sleeves.", "heightM": 1.5, "mobIdea": "Ratkin blade." },
+        { "charCell": "1,1", "who": "Ratman with pale TAN/cream fur and very large ears, dark grey tunic, a red sash and yellow buttons/studs.", "heightM": 1.5, "mobIdea": "Ratkin lookout." },
+        { "charCell": "2,1", "who": "BLACK-furred ratman with white eyes and bright YELLOW claw-gauntlets and yellow accents down the body — the most sinister of the set.", "heightM": 1.5, "mobIdea": "Ratkin assassin — poison DoT, fast, low hp." },
+        { "charCell": "3,1", "who": "Dark grey/black hooded ratman, cowl up, an orange-tan sash across the body; face mostly in shadow under the hood.", "heightM": 1.5, "mobIdea": "Plague-rat cultist — caster, spreads a DoT." }
+      ]
+    },
+    {
+      "sheet": "rat_champ_noshadow.png",
+      "px": "78x144",
+      "frame": "26x36",
+      "layout": "single",
+      "layoutConfirmed": true,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "Rat champion: a WHITE/silver-furred rat head with a long snout and dark eye, wearing ornate GOLD-and-ORANGE lamellar armor with flared shoulder pieces, deep RED cloth (a red skirt/tabard and red boots), and a glowing red-orange gem or medallion at the belt. The up-facing row shows a big domed orange-gold cloak or shell from behind, topped by a white crescent (the rat's horned helm crest or skull ornament).",
+          "heightM": 1.8,
+          "mobIdea": "Ratkin Warlord — warren mini-boss; summons ratkin adds, a sword cleave, and a squeal that rallies the pack (fits the existing summon + hp-rally event hooks)."
+        }
+      ]
+    },
+    {
+      "sheet": "rat_champ_sv_noshadow.png",
+      "px": "432x288",
+      "frame": "36x36 (per index)",
+      "layout": "unknown",
+      "layoutConfirmed": false,
+      "entries": [
+        {
+          "charCell": "-",
+          "who": "Side-view BATTLER strip for the white-furred, gold-armored rat champion: sparse pose cells — sword raised, a swing with a large cream crescent slash arc spilling into the next cell, a bow-draw with a curved red bow, a thrust, a guard, a knocked-down pose. Many empty cells. Not a char8 walk grid.",
+          "heightM": 1.8,
+          "mobIdea": "Attack-FX / telegraph source only."
+        }
+      ],
+      "warnings": "index.json guessed char8 — WRONG (sparse SV battler). Slash arcs cross cell boundaries."
+    }
+  ]
+}

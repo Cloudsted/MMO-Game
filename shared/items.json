@@ -31,8 +31,8 @@
       "value": 8,
       "stack": 1,
       "icon": [
-        1,
-        6
+        11,
+        27
       ]
     },
     "iron_sword": {
@@ -44,8 +44,8 @@
       "value": 40,
       "stack": 1,
       "icon": [
-        2,
-        6
+        7,
+        27
       ]
     },
     "hunting_bow": {
@@ -57,8 +57,8 @@
       "value": 15,
       "stack": 1,
       "icon": [
-        11,
-        7
+        1,
+        33
       ]
     },
     "longbow": {
@@ -70,8 +70,8 @@
       "value": 60,
       "stack": 1,
       "icon": [
-        13,
-        7
+        3,
+        33
       ]
     },
     "fire_staff": {
@@ -83,8 +83,8 @@
       "value": 50,
       "stack": 1,
       "icon": [
-        6,
-        7
+        7,
+        30
       ]
     },
     "frost_staff": {
@@ -96,8 +96,8 @@
       "value": 50,
       "stack": 1,
       "icon": [
-        7,
-        7
+        8,
+        30
       ]
     },
     "heal_staff": {
@@ -109,8 +109,8 @@
       "value": 45,
       "stack": 1,
       "icon": [
-        3,
-        7
+        5,
+        30
       ]
     },
     "leather_cap": {
@@ -122,8 +122,8 @@
       "value": 30,
       "stack": 1,
       "icon": [
-        0,
-        10
+        14,
+        43
       ]
     },
     "iron_helm": {
@@ -136,7 +136,7 @@
       "stack": 1,
       "icon": [
         2,
-        10
+        44
       ]
     },
     "leather_jerkin": {
@@ -148,8 +148,8 @@
       "value": 45,
       "stack": 1,
       "icon": [
-        8,
-        9
+        0,
+        38
       ]
     },
     "iron_cuirass": {
@@ -161,8 +161,8 @@
       "value": 130,
       "stack": 1,
       "icon": [
-        12,
-        9
+        1,
+        38
       ]
     },
     "leather_boots": {
@@ -174,8 +174,8 @@
       "value": 25,
       "stack": 1,
       "icon": [
-        10,
-        10
+        0,
+        47
       ]
     },
     "iron_boots": {
@@ -187,8 +187,8 @@
       "value": 75,
       "stack": 1,
       "icon": [
-        11,
-        10
+        4,
+        47
       ]
     },
     "wooden_shield": {
@@ -200,8 +200,8 @@
       "value": 35,
       "stack": 1,
       "icon": [
-        1,
-        9
+        0,
+        36
       ]
     },
     "iron_shield": {
@@ -213,8 +213,8 @@
       "value": 110,
       "stack": 1,
       "icon": [
-        3,
-        9
+        14,
+        36
       ]
     },
     "lucky_locket": {
@@ -223,8 +223,8 @@
       "value": 60,
       "stack": 1,
       "icon": [
-        8,
-        13
+        13,
+        49
       ]
     },
     "wisp_talisman": {
@@ -233,8 +233,8 @@
       "value": 140,
       "stack": 1,
       "icon": [
-        9,
-        13
+        4,
+        26
       ]
     },
     "bread": {
@@ -243,8 +243,8 @@
       "value": 3,
       "stack": 10,
       "icon": [
-        4,
-        4
+        1,
+        20
       ],
       "effect": {
         "hotTotal": 24,
@@ -258,7 +258,7 @@
       "stack": 10,
       "icon": [
         5,
-        3
+        17
       ],
       "effect": {
         "heal": 40
@@ -270,8 +270,8 @@
       "value": 12,
       "stack": 10,
       "icon": [
-        6,
-        3
+        8,
+        17
       ],
       "effect": {
         "mana": 40
@@ -285,7 +285,7 @@
       "stack": 50,
       "icon": [
         0,
-        21
+        64
       ]
     },
     "block_log": {
@@ -296,7 +296,7 @@
       "stack": 50,
       "icon": [
         1,
-        21
+        64
       ]
     },
     "block_cobblestone": {
@@ -307,7 +307,7 @@
       "stack": 50,
       "icon": [
         2,
-        21
+        64
       ]
     },
     "block_stone_bricks": {
@@ -318,7 +318,7 @@
       "stack": 50,
       "icon": [
         3,
-        21
+        64
       ]
     },
     "block_thatch": {
@@ -329,7 +329,7 @@
       "stack": 50,
       "icon": [
         4,
-        21
+        64
       ]
     },
     "block_glass": {
@@ -340,7 +340,7 @@
       "stack": 50,
       "icon": [
         5,
-        21
+        64
       ]
     },
     "block_torch": {
@@ -351,7 +351,7 @@
       "stack": 50,
       "icon": [
         6,
-        21
+        64
       ]
     },
     "steel_sword": {
@@ -362,7 +362,10 @@
       "durability": 700,
       "value": 140,
       "stack": 1,
-      "icon": [3, 6]
+      "icon": [
+        10,
+        27
+      ]
     },
     "war_axe": {
       "name": "Fen-Cleaver Axe",
@@ -372,7 +375,10 @@
       "durability": 650,
       "value": 170,
       "stack": 1,
-      "icon": [8, 6]
+      "icon": [
+        6,
+        28
+      ]
     },
     "venom_dagger": {
       "name": "Weaver's Fang",
@@ -382,7 +388,10 @@
       "durability": 500,
       "value": 160,
       "stack": 1,
-      "icon": [0, 6]
+      "icon": [
+        2,
+        28
+      ]
     },
     "ranger_crossbow": {
       "name": "Marsh Ranger's Crossbow",
@@ -392,7 +401,10 @@
       "durability": 550,
       "value": 180,
       "stack": 1,
-      "icon": [10, 7]
+      "icon": [
+        0,
+        34
+      ]
     },
     "wisp_wand": {
       "name": "Wisp Wand",
@@ -402,7 +414,10 @@
       "durability": 450,
       "value": 150,
       "stack": 1,
-      "icon": [4, 7]
+      "icon": [
+        0,
+        32
+      ]
     },
     "fen_staff": {
       "name": "Staff of the Fen",
@@ -412,7 +427,10 @@
       "durability": 600,
       "value": 170,
       "stack": 1,
-      "icon": [8, 7]
+      "icon": [
+        9,
+        30
+      ]
     },
     "emberpike": {
       "name": "Emberpike",
@@ -422,7 +440,10 @@
       "durability": 800,
       "value": 320,
       "stack": 1,
-      "icon": [13, 6]
+      "icon": [
+        9,
+        29
+      ]
     },
     "rift_greataxe": {
       "name": "Riftwarden Greataxe",
@@ -432,7 +453,10 @@
       "durability": 900,
       "value": 380,
       "stack": 1,
-      "icon": [9, 6]
+      "icon": [
+        10,
+        28
+      ]
     },
     "gravewind_scythe": {
       "name": "Gravewind Scythe",
@@ -442,7 +466,10 @@
       "durability": 850,
       "value": 420,
       "stack": 1,
-      "icon": [14, 6]
+      "icon": [
+        12,
+        28
+      ]
     },
     "ashen_scepter": {
       "name": "Ashen Scepter",
@@ -452,7 +479,10 @@
       "durability": 700,
       "value": 400,
       "stack": 1,
-      "icon": [2, 7]
+      "icon": [
+        13,
+        30
+      ]
     },
     "tidecaller_staff": {
       "name": "Tidecaller Staff",
@@ -462,7 +492,10 @@
       "durability": 700,
       "value": 380,
       "stack": 1,
-      "icon": [9, 7]
+      "icon": [
+        14,
+        29
+      ]
     },
     "dwarven_arbalest": {
       "name": "Dwarven Arbalest",
@@ -472,14 +505,20 @@
       "durability": 750,
       "value": 420,
       "stack": 1,
-      "icon": [12, 7]
+      "icon": [
+        1,
+        34
+      ]
     },
     "greater_health_potion": {
       "name": "Greater Health Potion",
       "kind": "consumable",
       "value": 35,
       "stack": 10,
-      "icon": [9, 3],
+      "icon": [
+        1,
+        17
+      ],
       "effect": {
         "heal": 100
       }
@@ -489,7 +528,10 @@
       "kind": "consumable",
       "value": 35,
       "stack": 10,
-      "icon": [11, 3],
+      "icon": [
+        9,
+        17
+      ],
       "effect": {
         "mana": 100
       }
@@ -499,7 +541,10 @@
       "kind": "consumable",
       "value": 20,
       "stack": 10,
-      "icon": [10, 3],
+      "icon": [
+        6,
+        17
+      ],
       "effect": {
         "cureDot": true
       }
@@ -509,7 +554,10 @@
       "kind": "consumable",
       "value": 10,
       "stack": 10,
-      "icon": [5, 4],
+      "icon": [
+        2,
+        20
+      ],
       "effect": {
         "hotTotal": 60,
         "hotDurMs": 12000
@@ -520,63 +568,90 @@
       "kind": "trophy",
       "value": 6,
       "stack": 10,
-      "icon": [8, 15]
+      "icon": [
+        4,
+        42
+      ]
     },
     "boar_tusk": {
       "name": "Boar Tusk",
       "kind": "trophy",
       "value": 5,
       "stack": 10,
-      "icon": [10, 15]
+      "icon": [
+        10,
+        55
+      ]
     },
     "raptor_talon": {
       "name": "Raptor Talon",
       "kind": "trophy",
       "value": 9,
       "stack": 10,
-      "icon": [11, 15]
+      "icon": [
+        9,
+        55
+      ]
     },
     "slime_gel": {
       "name": "Slime Gel",
       "kind": "trophy",
       "value": 2,
       "stack": 10,
-      "icon": [11, 16]
+      "icon": [
+        12,
+        56
+      ]
     },
     "venom_sac": {
       "name": "Venom Sac",
       "kind": "trophy",
       "value": 14,
       "stack": 10,
-      "icon": [9, 2]
+      "icon": [
+        15,
+        56
+      ]
     },
     "ember_core": {
       "name": "Ember Core",
       "kind": "trophy",
       "value": 25,
       "stack": 10,
-      "icon": [1, 2]
+      "icon": [
+        9,
+        57
+      ]
     },
     "spirit_essence": {
       "name": "Spirit Essence",
       "kind": "trophy",
       "value": 30,
       "stack": 10,
-      "icon": [7, 2]
+      "icon": [
+        14,
+        57
+      ]
     },
     "ancient_coin": {
       "name": "Ancient Coin",
       "kind": "trophy",
       "value": 20,
       "stack": 10,
-      "icon": [2, 13]
+      "icon": [
+        9,
+        22
+      ]
     },
     "bone_charm": {
       "name": "Bone Charm",
       "kind": "trophy",
       "value": 12,
       "stack": 10,
-      "icon": [6, 0]
+      "icon": [
+        14,
+        55
+      ]
     },
     "block_dark_bricks": {
       "name": "Dark Bricks",
@@ -584,7 +659,10 @@
       "block": "dark_bricks",
       "value": 6,
       "stack": 50,
-      "icon": [7, 21]
+      "icon": [
+        7,
+        64
+      ]
     },
     "block_marble": {
       "name": "Marble",
@@ -592,7 +670,10 @@
       "block": "marble",
       "value": 8,
       "stack": 50,
-      "icon": [8, 21]
+      "icon": [
+        8,
+        64
+      ]
     },
     "block_lantern": {
       "name": "Lantern",
@@ -600,7 +681,10 @@
       "block": "lantern",
       "value": 8,
       "stack": 50,
-      "icon": [9, 21]
+      "icon": [
+        9,
+        64
+      ]
     },
     "block_palisade": {
       "name": "Palisade",
@@ -608,7 +692,10 @@
       "block": "palisade",
       "value": 4,
       "stack": 50,
-      "icon": [10, 21]
+      "icon": [
+        10,
+        64
+      ]
     },
     "block_hay": {
       "name": "Hay Bale",
@@ -616,7 +703,10 @@
       "block": "hay",
       "value": 2,
       "stack": 50,
-      "icon": [11, 21]
+      "icon": [
+        11,
+        64
+      ]
     },
     "block_iron_bars": {
       "name": "Iron Bars",
@@ -624,7 +714,10 @@
       "block": "iron_bars",
       "value": 6,
       "stack": 50,
-      "icon": [12, 21]
+      "icon": [
+        12,
+        64
+      ]
     },
     "block_bookshelf": {
       "name": "Bookshelf",
@@ -632,7 +725,10 @@
       "block": "bookshelf",
       "value": 10,
       "stack": 50,
-      "icon": [13, 21]
+      "icon": [
+        13,
+        64
+      ]
     },
     "kingsrend_greataxe": {
       "name": "Kingsrend Greataxe",
@@ -642,7 +738,10 @@
       "durability": 950,
       "value": 560,
       "stack": 1,
-      "icon": [10, 6]
+      "icon": [
+        8,
+        28
+      ]
     },
     "oathbreaker_pike": {
       "name": "Oathbreaker Pike",
@@ -652,7 +751,10 @@
       "durability": 900,
       "value": 520,
       "stack": 1,
-      "icon": [12, 6]
+      "icon": [
+        8,
+        29
+      ]
     },
     "sovereign_scythe": {
       "name": "Sovereign Scythe",
@@ -662,7 +764,10 @@
       "durability": 900,
       "value": 560,
       "stack": 1,
-      "icon": [15, 6]
+      "icon": [
+        13,
+        28
+      ]
     },
     "scepter_of_ruin": {
       "name": "Scepter of Ruin",
@@ -672,28 +777,40 @@
       "durability": 750,
       "value": 540,
       "stack": 1,
-      "icon": [0, 7]
+      "icon": [
+        15,
+        30
+      ]
     },
     "war_medal": {
       "name": "War Medal",
       "kind": "trophy",
       "value": 28,
       "stack": 10,
-      "icon": [7, 13]
+      "icon": [
+        7,
+        51
+      ]
     },
     "royal_seal": {
       "name": "Royal Seal of Valdrenn",
       "kind": "trophy",
       "value": 45,
       "stack": 10,
-      "icon": [9, 12]
+      "icon": [
+        8,
+        24
+      ]
     },
     "sundered_crown": {
       "name": "The Sundered Crown",
       "kind": "trophy",
       "value": 400,
       "stack": 1,
-      "icon": [6, 10]
+      "icon": [
+        13,
+        45
+      ]
     }
   }
 }

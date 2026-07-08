@@ -1,0 +1,483 @@
+{
+  "group": "elemental-magic-misc",
+  "generated": "2026-07-08",
+  "method": "Every entry below was read off the pre-rendered labelled contact sheets in tools/out/sheets/ with the Read tool. Coordinates are quoted exactly as printed under each character block. Cells that could not be identified are marked 'unknown'.",
+  "warnings": [
+    "slimevariants_1: layout guess 'char8' is HALF WRONG. Only the TOP row of character blocks (0,0 / 1,0 / 2,0 / 3,0) contains art. The whole bottom row (0,1 / 1,1 / 2,1 / 3,1) is empty transparent cells. Treat as a 4-character sheet. Also, within each character the 4 'direction' rows are IDENTICAL — the 3 columns are a squash/bounce cycle, not a walk cycle. Usable directly (all facings look the same, which is correct for a blob).",
+    "slime_big_single / slime_king_single: 3x4 grid exists, but all 4 direction rows are identical; the 3 columns are a squash/stretch bounce. Non-directional by design.",
+    "witch1_cauldron_1 / witch2_cauldron_1: NOT a walk grid. The source is 96x192 = 3 cols x 4 rows at 32x48, but ONLY THE MIDDLE COLUMN has pixels; columns 0 and 2 are fully empty (the contact sheet paints them as solid orange/green empty-cell markers). What exists is a 4-frame front-facing 'stirring the cauldron' idle animation. Use as an animated prop/NPC, not as a walking character.",
+    "lantphant_rm_1: layout guess 'char8' is only partly right. Character blocks 0,0 and 0,1 are full 3-column strips. Blocks 1,0 / 1,1 / 2,0 / 2,1 / 3,0 / 3,1 have ONLY their middle column populated (single-column animation strips); cols 0 and 2 are empty. Also every 'direction' row of 0,0 / 0,1 looks front-facing — this is an idle/flicker animation set, not a 4-direction walk grid.",
+    "beast_hero_*_emote (all 5): layout guess 'single' (3x4 walk grid) is WRONG. All 12 frames are FRONT-FACING poses of the same hero as the matching beast_hero_N sheet, varying arm position / facial expression. These are emote/portrait pose sheets, not walk grids. Do not map them to down/left/right/up.",
+    "chocobos_saddle_1 / mondinos_1 / mondinos_saddle_1: 8 character blocks = 4 color morphs, each duplicated. The top-row block and its bottom-row twin are the same creature; the bottom-row copies are drawn WITH a baked-in elliptical ground shadow, the top-row ones WITHOUT. Prefer the top row (the engine draws its own shadows).",
+    "beast_tribe_5 char 1,1: a fishfolk in a hood rendered almost entirely in flat desaturated gray with almost no interior detail. Could be a shadow/silhouette palette variant or an unfinished cell — treat as low confidence.",
+    "warelementals_1 / warelementals_f_1: both decompose cleanly into 8 x (3 cols x 4 rows). No off-grid junk half (unlike wizard.png/elemental.png). Rows read down / left / right / up in the usual order.",
+    "shark_full_blue_1 / shark_full_brown_1: valid 3x4 grid, but the 'down' row is a head-on top-down view and the 'up' row is a tail-on top-down view. This is a top-down swim sheet; billboarding it in a first-person 3D world will look wrong from most angles unless you only ever use the left/right profile rows."
+  ],
+  "sheets": [
+    {
+      "sheet": "warelementals_1.png",
+      "contactSheet": "tools/out/sheets/warelementals_1-chars.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "0,0", "who": "Crimson armored elemental knight. Faceless helmet with a tall U-shaped red crest, red plate over gray metal limbs, blocky shoulders, no visible eyes or mouth.", "heightM": 1.9, "mobIdea": "Ember Warplate — fire-elemental knight, melee cleave + burn DoT" },
+        { "charCell": "1,0", "who": "Blue armored knight, tall sharply pointed crested helm like a shark fin, spiky ice-blue plate with gold buckles at the waist.", "heightM": 1.9, "mobIdea": "Frostplate Sentinel — melee slow-on-hit" },
+        { "charCell": "2,0", "who": "Squat gray-stone golem body with jagged green crystal shards jutting out of the shoulders like wings, and a green crystal crest over a dark faceless head.", "heightM": 2.0, "mobIdea": "Verdant Crystal Golem — slow, heavy slam, high armor" },
+        { "charCell": "3,0", "who": "White-and-gold armored elemental. Big golden flame-shaped plume erupting from the helm, gold pauldrons and greaves, orange trim.", "heightM": 1.9, "mobIdea": "Solar Warden — radiant melee + light burst" },
+        { "charCell": "0,1", "who": "Pale ice-blue armored elemental with a rounded steel helm and layered icicle-like plates; silver-blue and gray, no facial features.", "heightM": 1.9, "mobIdea": "Glacier Guard — armored, reflect/thorns flavored" },
+        { "charCell": "1,1", "who": "Deep red armored elemental with a rounded closed helm and glowing orange accent lines down the chest and boots.", "heightM": 1.9, "mobIdea": "Magma Knight — melee with molten thorns" },
+        { "charCell": "2,1", "who": "Dark charcoal-gray rock body cracked with molten orange fissures, gold horn/wing plates sweeping off the head, chunky lava-lit limbs.", "heightM": 2.1, "mobIdea": "Cinder Colossus — mini-boss for Cinderrift, lava splash" },
+        { "charCell": "3,1", "who": "Deep blue crystalline knight, tall faceted shard helm, blue-and-silver crystal plates.", "heightM": 1.9, "mobIdea": "Sapphire Warden — magic-damage caster/melee hybrid" }
+      ]
+    },
+    {
+      "sheet": "warelementals_f_1.png",
+      "contactSheet": "tools/out/sheets/warelementals_f_1-chars.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "note": "Slimmer, female-proportioned counterparts of warelementals_1.",
+      "chars": [
+        { "charCell": "0,0", "who": "Slim red-armored female elemental, tall red spike/plume headpiece rising off the helm, red flame-shaped plating over a gray core, narrow waist.", "heightM": 1.8, "mobIdea": "Flame Valkyrie — fast fire melee" },
+        { "charCell": "1,0", "who": "Gray-armored female with a large gold curved horn-loop headdress (like a lyre or crescent), gold belt and trim, orange glow at the hips.", "heightM": 1.8, "mobIdea": "Sun-Ring Herald — caster, radiant bolts" },
+        { "charCell": "2,0", "who": "Blue armored female with oversized angular blue pauldrons and a horned blue helm, white/silver limbs.", "heightM": 1.8, "mobIdea": "Rime Lancer — ranged frost bolts" },
+        { "charCell": "3,0", "who": "Spiky white crystal crown/hair fanning upward, green plate armor with yellow lightning-bolt accents on the arms and legs.", "heightM": 1.8, "mobIdea": "Storm Dryad — lightning caster" },
+        { "charCell": "0,1", "who": "Light-blue female elemental, rounded helm topped with a pointed icicle spire, layered pale-blue ice plating.", "heightM": 1.8, "mobIdea": "Icicle Maiden — slow bolt, freeze" },
+        { "charCell": "1,1", "who": "Red female elemental with a single big red loop-horn arcing over the head, gray core armor, glowing orange molten belt and boot glow.", "heightM": 1.8, "mobIdea": "Emberloop Sorceress — fire caster" },
+        { "charCell": "2,1", "who": "Green armored female with wide flared green shoulder plates and a white crest on the head, mossy green limbs.", "heightM": 1.8, "mobIdea": "Bloomguard — poison DoT applier" },
+        { "charCell": "3,1", "who": "Gray stone female with a spiky silver crown, orange lava accents at the waist and pale blue crystal bits on the forearms.", "heightM": 1.8, "mobIdea": "Riftstone Adept — mixed fire/earth caster" }
+      ]
+    },
+    {
+      "sheet": "witch1_1.png",
+      "contactSheet": "tools/out/sheets/witch1_1-chars.png",
+      "layout": "single",
+      "px": "78x144",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "-", "who": "Short, chibi-proportioned witch. An oversized dark blue-gray pointed hat with a wide brim and a yellow band completely shadows the face; cream-colored hands peek out of a blue-gray robe with a yellow trimmed hem. The 'up' (back) row shows a mane of white/silver hair spilling out under the hat.", "heightM": 1.55, "mobIdea": "Hedge Witch — hostile caster in a swamp/forest hut, hexes and slows" }
+      ]
+    },
+    {
+      "sheet": "witch2_1.png",
+      "contactSheet": "tools/out/sheets/witch2_1-chars.png",
+      "layout": "single",
+      "px": "78x144",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "-", "who": "Identical silhouette to witch1 but GREEN-SKINNED: same oversized blue-gray pointed hat with yellow band, blue-gray robe with yellow hem, but the hands and the sliver of face are bright green. White hair on the back view. A hag.", "heightM": 1.55, "mobIdea": "Bog Hag — Gloomfen caster, poison DoT + curse" }
+      ]
+    },
+    {
+      "sheet": "witch1_cauldron_1.png",
+      "contactSheet": "tools/out/sheets/witch1_cauldron_1-chars.png",
+      "layout": "unknown",
+      "px": "96x192",
+      "frame": "32x48",
+      "chars": [
+        { "charCell": "middle column only (4 frames)", "who": "The pale-skinned witch (gray-blue pointed hat, yellow hatband, orange-brown hair visible at the shoulders) standing behind a round stone cauldron full of bubbling green brew, stirring it with a brown wooden spoon. Four frames of the stir/bubble cycle. Left and right columns of the source image are fully empty.", "heightM": 1.7, "mobIdea": "Cauldron Witch — static hostile NPC / quest-giver anchoring a hut prefab; animated idle" }
+      ]
+    },
+    {
+      "sheet": "witch2_cauldron_1.png",
+      "contactSheet": "tools/out/sheets/witch2_cauldron_1-chars.png",
+      "layout": "unknown",
+      "px": "96x192",
+      "frame": "32x48",
+      "chars": [
+        { "charCell": "middle column only (4 frames)", "who": "Green-skinned hag version of the above: same gray-blue pointed hat with yellow band, white hair, green face and green hands, stirring a stone cauldron of bubbling green brew with a wooden spoon. Middle column only; other columns empty.", "heightM": 1.7, "mobIdea": "Bog Hag at her cauldron — Gloomfen hut boss, brews the poison she throws" }
+      ]
+    },
+    {
+      "sheet": "witchqueen_1.png",
+      "contactSheet": "tools/out/sheets/witchqueen_1-chars.png",
+      "layout": "single",
+      "px": "81x192",
+      "frame": "27x48",
+      "chars": [
+        { "charCell": "-", "who": "Tall slim sorceress in a floor-length dark slate-blue gown that flares into a hem — no legs are drawn, she reads as gliding. Long straight silver-white hair down to the waist, pale face, and glowing amber/orange jewelry: a V-shaped chain necklace across the chest, orange bands at the wrists and a glowing headpiece over the brow. Back view shows the full white hair fall and the orange belt chain.", "heightM": 1.85, "mobIdea": "The Witch Queen — hovering caster boss, shadow bolts + hex" }
+      ]
+    },
+    {
+      "sheet": "witchqueen_hat_1.png",
+      "contactSheet": "tools/out/sheets/witchqueen_hat_1-chars.png",
+      "layout": "single",
+      "px": "81x192",
+      "frame": "27x48",
+      "chars": [
+        { "charCell": "-", "who": "Same slate-blue gowned witch queen, now wearing a wide-brimmed pointed dark blue-gray witch hat that shadows the upper face and hides the hair from the front. Same glowing amber necklace/bracelets/belt chain, same legless flared gown.", "heightM": 1.85, "mobIdea": "Witch Queen (hatted) — phase-1 appearance; drop the hat sheet on phase 2" }
+      ]
+    },
+    {
+      "sheet": "witchqueen_red_1.png",
+      "contactSheet": "tools/out/sheets/witchqueen_red_1-chars.png",
+      "layout": "single",
+      "px": "81x192",
+      "frame": "27x48",
+      "chars": [
+        { "charCell": "-", "who": "Witch queen in a deep crimson/scarlet floor-length gown with gold chain necklace, gold wrist bands and a gold belt chain; long silver-white hair, pale face, no hat. Legless flared hem, same gliding pose set.", "heightM": 1.85, "mobIdea": "Crimson Witch Queen — fire/blood variant boss" }
+      ]
+    },
+    {
+      "sheet": "witchqueen_red_hat_1.png",
+      "contactSheet": "tools/out/sheets/witchqueen_red_hat_1-chars.png",
+      "layout": "single",
+      "px": "81x192",
+      "frame": "27x48",
+      "chars": [
+        { "charCell": "-", "who": "Crimson-gowned witch queen wearing a matching wide-brimmed pointed RED witch hat. Gold chains at the neck and waist, silver-white hair spilling out the back (visible in the 'up' row), flared legless skirt.", "heightM": 1.85, "mobIdea": "Crimson Witch Queen (hatted) — coven leader NPC/boss" }
+      ]
+    },
+    {
+      "sheet": "geniea_1.png",
+      "contactSheet": "tools/out/sheets/geniea_1-chars.png",
+      "layout": "single",
+      "px": "156x212",
+      "frame": "52x53",
+      "chars": [
+        { "charCell": "-", "who": "Blue-skinned djinn. Bare muscular torso with arms folded across the chest, thick gold armbands and gold bracelets, a gold sash/belt. Below the belt the body dissolves into a tapering column of blue vapor — no legs. Small dark topknot/turban and pointed ears. A separate drop shadow sits under him: he hovers.", "heightM": 2.1, "mobIdea": "Djinn of the Lamp — floating caster, wind/gravity abilities; can't be knocked down" }
+      ]
+    },
+    {
+      "sheet": "genieb_1.png",
+      "contactSheet": "tools/out/sheets/genieb_1-chars.png",
+      "layout": "single",
+      "px": "156x212",
+      "frame": "52x53",
+      "chars": [
+        { "charCell": "-", "who": "Grander royal djinn. Blue skin, huge banded purple turban with a gold gem clasp and a red flame-like plume rising off it, gold shoulder rings and heavy gold arm bracelets, blue vest over a bare blue chest, purple-and-gold sash. Lower body tapers into purple/blue vapor; hovering (drop shadow below).", "heightM": 2.2, "mobIdea": "Djinn Sultan — boss, summons lesser djinn, ranged sand/wind bolts" }
+      ]
+    },
+    {
+      "sheet": "femaledjinn_1.png",
+      "contactSheet": "tools/out/sheets/femaledjinn_1-chars.png",
+      "layout": "single",
+      "px": "156x212",
+      "frame": "52x53",
+      "chars": [
+        { "charCell": "-", "who": "Blue-skinned female djinn dominated by an enormous starburst mane of wild blue flame-like hair radiating outward in long spikes (nearly twice the width of her body). Gold beads in the hair, gold earrings, a gold collar/bra and gold armlets and belt. Torso is blue and bare-midriffed; below the belt she tapers into a smoky wisp — no legs, hovering with a drop shadow.", "heightM": 2.2, "mobIdea": "Djinn Enchantress — hovering boss add / caster, charm + fire nova" }
+      ]
+    },
+    {
+      "sheet": "slimevariants_1.png",
+      "contactSheet": "tools/out/sheets/slimevariants_1-chars.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "note": "Only the top row of character blocks is populated; the bottom row is entirely empty. Each block's 3 columns are a squash/bounce cycle; the 4 rows are duplicates.",
+      "chars": [
+        { "charCell": "0,0", "who": "Small green blob slime with a white specular highlight. Frames go tall-round -> mid -> flat pancake.", "heightM": 0.8, "mobIdea": "Green Slime (matches the existing slime) — recolor family anchor" },
+        { "charCell": "1,0", "who": "Small blue blob slime with a white highlight, same squash cycle.", "heightM": 0.8, "mobIdea": "Chill Slime — water/ice room filler, applies brief slow" },
+        { "charCell": "2,0", "who": "Not a blob: a standing tongue of orange-yellow FLAME with a rising flickering crest and a bright yellow core. Same 3-frame flicker/squash.", "heightM": 0.9, "mobIdea": "Ember Wisp — Cinderrift trash mob, contact burn" },
+        { "charCell": "3,0", "who": "Tan/sand-colored rounded mound with five or six pale cream spikes/tendrils fanning up out of its top like a crown. Squashes flat like the slimes.", "heightM": 0.8, "mobIdea": "Sand Burr — desert slime with spines, thorns/reflect on melee" },
+        { "charCell": "0,1", "who": "empty", "heightM": 0, "mobIdea": "n/a" },
+        { "charCell": "1,1", "who": "empty", "heightM": 0, "mobIdea": "n/a" },
+        { "charCell": "2,1", "who": "empty", "heightM": 0, "mobIdea": "n/a" },
+        { "charCell": "3,1", "who": "empty", "heightM": 0, "mobIdea": "n/a" }
+      ]
+    },
+    {
+      "sheet": "slime_big_single.png",
+      "contactSheet": "tools/out/sheets/slime_big_single-chars.png",
+      "layout": "single",
+      "px": "138x192",
+      "frame": "46x48",
+      "chars": [
+        { "charCell": "-", "who": "A large emerald-green slime: a fat rounded dome with a darker green base rim and two white glossy highlight dots on the upper left. Three frames of a squash/settle bounce; all four rows identical (non-directional).", "heightM": 1.3, "mobIdea": "Greater Slime — the thing a Green Slime splits FROM, or splits INTO two smalls on death" }
+      ]
+    },
+    {
+      "sheet": "slime_king_single.png",
+      "contactSheet": "tools/out/sheets/slime_king_single-chars.png",
+      "layout": "single",
+      "px": "138x192",
+      "frame": "46x48",
+      "chars": [
+        { "charCell": "-", "who": "A big golden-amber slime with white glossy highlights, wearing a small spiked orange-gold CROWN that sits half-sunk into the top of its body. Same squash/settle bounce, non-directional.", "heightM": 1.5, "mobIdea": "Slime King — meadow open-world boss; splits into Greater Slimes at 50% hp, guaranteed gold-heavy loot" }
+      ]
+    },
+    {
+      "sheet": "lantphant_rm_1.png",
+      "contactSheet": "tools/out/sheets/lantphant_rm_1-chars.png",
+      "layout": "char8",
+      "px": "384x256",
+      "frame": "32x32",
+      "note": "Mixed layout — see warnings. Blocks 0,0 and 0,1 are 3-column strips; the rest are single-column animation strips.",
+      "chars": [
+        { "charCell": "0,0", "who": "A hooded phantom: pointed dark gray cowl with no face except two glowing teal eyes, ragged white-tipped tattered sleeves floating where arms would be, no legs (the robe frays into nothing). In its right hand it carries a small square teal-glowing LANTERN. Full 3-column strip, all rows front-facing.", "heightM": 1.7, "mobIdea": "Lantern Phantom — crypt/graveyard wraith that carries the only light source in a dark room" },
+        { "charCell": "0,1", "who": "The same hooded gray phantom with glowing teal eyes and tattered sleeves, but WITHOUT the lantern.", "heightM": 1.7, "mobIdea": "Doused Phantom — the same wraith after you break its lantern (phase 2, room goes dark)" },
+        { "charCell": "1,0", "who": "Middle column only: the lantern-carrying phantom again, 4-frame idle bob. Cols 0/2 empty.", "heightM": 1.7, "mobIdea": "idle-only strip; use as an animated prop" },
+        { "charCell": "1,1", "who": "Middle column only: the phantom holding a brighter WHITE lantern, 4-frame idle. Cols 0/2 empty.", "heightM": 1.7, "mobIdea": "Lit-lantern variant for a brighter light state" },
+        { "charCell": "2,0", "who": "Middle column only: a free-floating teal ghostly FLAME/wisp, flickering across 4 frames. No body, no face.", "heightM": 0.6, "mobIdea": "Corpse-candle wisp — tiny ranged add, or a light-emitting decoration" },
+        { "charCell": "2,1", "who": "Middle column only: a very small teal spark that grows over 4 frames into a small flame. An ignition/spawn animation.", "heightM": 0.4, "mobIdea": "spawn FX for the wisp" },
+        { "charCell": "3,0", "who": "Middle column only: another teal ghostly flame/wisp flicker cycle, near-identical to 2,0 (slightly different frame shapes).", "heightM": 0.6, "mobIdea": "wisp animation variant" },
+        { "charCell": "3,1", "who": "Middle column only: small teal spark growing into a flame, near-identical to 2,1.", "heightM": 0.4, "mobIdea": "spawn FX variant" }
+      ]
+    },
+    {
+      "sheet": "chocobos_saddle_1.png",
+      "contactSheet": "tools/out/sheets/chocobos_saddle_1-chars.png",
+      "layout": "char8",
+      "px": "456x288",
+      "frame": "38x36",
+      "note": "4 color morphs x 2 copies. Bottom-row copies have a baked-in ground shadow ellipse; top-row copies do not.",
+      "chars": [
+        { "charCell": "0,0", "who": "Blue chocobo — a large flightless riding bird: fanned plume crest on the head, stubby wings, long orange legs with three toes, orange beak, wearing a brown leather saddle and bridle with reins. No baked shadow.", "heightM": 1.8, "mobIdea": "Azure Roc — tameable mount / skittish neutral wildlife that flees" },
+        { "charCell": "1,0", "who": "Yellow-gold chocobo, same crest/beak/legs, brown leather saddle and bridle. No baked shadow.", "heightM": 1.8, "mobIdea": "Classic golden riding bird — the stable NPC's mount" },
+        { "charCell": "2,0", "who": "Green chocobo with the same fanned crest, saddle and reins. No baked shadow.", "heightM": 1.8, "mobIdea": "Forest strider — forest-room neutral mob" },
+        { "charCell": "3,0", "who": "White/cream chocobo, orange beak and legs, brown saddle and bridle. No baked shadow.", "heightM": 1.8, "mobIdea": "Snow strider — rare white mount" },
+        { "charCell": "0,1", "who": "Blue chocobo, identical to 0,0 but drawn with a dark elliptical shadow under its feet.", "heightM": 1.8, "mobIdea": "duplicate of 0,0 (prefer 0,0)" },
+        { "charCell": "1,1", "who": "Yellow chocobo, identical to 1,0 with a baked ground shadow.", "heightM": 1.8, "mobIdea": "duplicate of 1,0" },
+        { "charCell": "2,1", "who": "Green chocobo, identical to 2,0 with a baked ground shadow.", "heightM": 1.8, "mobIdea": "duplicate of 2,0" },
+        { "charCell": "3,1", "who": "White chocobo, identical to 3,0 with a baked ground shadow.", "heightM": 1.8, "mobIdea": "duplicate of 3,0" }
+      ]
+    },
+    {
+      "sheet": "mondinos_1.png",
+      "contactSheet": "tools/out/sheets/mondinos_1-chars.png",
+      "layout": "char8",
+      "px": "456x288",
+      "frame": "38x36",
+      "note": "4 color morphs x 2 copies (bottom row has baked ground shadows). No saddle on this sheet.",
+      "chars": [
+        { "charCell": "0,0", "who": "Bright green bipedal raptor-dinosaur: long snout, a spray of white horns/spines fanning back off the skull, long counterbalancing tail, small clawed forearms, two heavy clawed hind legs. Bare (no tack).", "heightM": 1.5, "mobIdea": "Wild Raptor — fast pack hunter, quick_stab bites" },
+        { "charCell": "1,0", "who": "Orange-red raptor, same white head spines, tail and clawed legs. Bare.", "heightM": 1.5, "mobIdea": "Scorch Raptor — desert/Cinderrift pack" },
+        { "charCell": "2,0", "who": "Slate gray-blue raptor with white head spines. Bare.", "heightM": 1.5, "mobIdea": "Ashen Raptor" },
+        { "charCell": "3,0", "who": "White/pale raptor with white head spines and pale blue shading. Bare.", "heightM": 1.5, "mobIdea": "Rime Raptor — rare white pack leader" },
+        { "charCell": "0,1", "who": "Green raptor identical to 0,0 with a baked elliptical ground shadow.", "heightM": 1.5, "mobIdea": "duplicate of 0,0" },
+        { "charCell": "1,1", "who": "Orange raptor identical to 1,0 with a baked ground shadow.", "heightM": 1.5, "mobIdea": "duplicate of 1,0" },
+        { "charCell": "2,1", "who": "Gray-blue raptor identical to 2,0 with a baked ground shadow.", "heightM": 1.5, "mobIdea": "duplicate of 2,0" },
+        { "charCell": "3,1", "who": "White raptor identical to 3,0 with a baked ground shadow.", "heightM": 1.5, "mobIdea": "duplicate of 3,0" }
+      ]
+    },
+    {
+      "sheet": "mondinos_saddle_1.png",
+      "contactSheet": "tools/out/sheets/mondinos_saddle_1-chars.png",
+      "layout": "char8",
+      "px": "456x288",
+      "frame": "38x36",
+      "note": "Same four raptors as mondinos_1, now wearing tack. Bottom-row copies have baked ground shadows.",
+      "chars": [
+        { "charCell": "0,0", "who": "Green raptor with a brown leather saddle on its back and a brown bridle/reins loop around the snout. White head spines, long tail.", "heightM": 1.5, "mobIdea": "Raptor mount (saddled) — mounted lizardman rider, or a player mount" },
+        { "charCell": "1,0", "who": "Orange-red raptor with brown leather saddle and bridle.", "heightM": 1.5, "mobIdea": "Saddled scorch raptor — marauder cavalry" },
+        { "charCell": "2,0", "who": "Slate gray-blue raptor with brown leather saddle and bridle.", "heightM": 1.5, "mobIdea": "Saddled ashen raptor" },
+        { "charCell": "3,0", "who": "White/pale raptor with brown leather saddle and bridle.", "heightM": 1.5, "mobIdea": "Saddled rime raptor — captain's mount" },
+        { "charCell": "0,1", "who": "Saddled green raptor identical to 0,0 with a baked ground shadow.", "heightM": 1.5, "mobIdea": "duplicate of 0,0" },
+        { "charCell": "1,1", "who": "Saddled orange raptor identical to 1,0 with a baked ground shadow.", "heightM": 1.5, "mobIdea": "duplicate of 1,0" },
+        { "charCell": "2,1", "who": "Saddled gray-blue raptor identical to 2,0 with a baked ground shadow.", "heightM": 1.5, "mobIdea": "duplicate of 2,0" },
+        { "charCell": "3,1", "who": "Saddled white raptor identical to 3,0 with a baked ground shadow.", "heightM": 1.5, "mobIdea": "duplicate of 3,0" }
+      ]
+    },
+    {
+      "sheet": "shark_full_blue_1.png",
+      "contactSheet": "tools/out/sheets/shark_full_blue_1-chars.png",
+      "layout": "single",
+      "px": "192x192",
+      "frame": "64x48",
+      "chars": [
+        { "charCell": "-", "who": "A full blue-gray shark seen top-down. Row 1 (down): head-on from above, snout toward the viewer, open mouth showing a white sawtooth grin, pectoral fins spread, dorsal fin and tail trailing away. Rows 2-3 (left/right): classic side profile — pointed snout, black eye, gill slits, tall dorsal fin, crescent tail, pale white belly. Row 4 (up): swimming away, tail toward the viewer.", "heightM": 1.6, "mobIdea": "Reef Shark — hostile water mob for deep water / sunken temple; body length ~3.5 m" }
+      ]
+    },
+    {
+      "sheet": "shark_full_brown_1.png",
+      "contactSheet": "tools/out/sheets/shark_full_brown_1-chars.png",
+      "layout": "single",
+      "px": "192x192",
+      "frame": "64x48",
+      "chars": [
+        { "charCell": "-", "who": "Identical shark art in a dusty brown/tan palette with a dark teal outline: head-on toothy view (down), two side profiles with black eye, gill slits, dorsal fin, crescent tail and pale belly, and a tail-on away view (up).", "heightM": 1.6, "mobIdea": "Silt Shark — murk_water predator for Gloomfen's flooded runs" }
+      ]
+    },
+    {
+      "sheet": "beast_tribe_1.png",
+      "contactSheet": "tools/out/sheets/beast_tribe_1-chars.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "note": "Canine (fox/wolf) beastfolk villagers and warriors.",
+      "chars": [
+        { "charCell": "0,0", "who": "Orange-brown fox-eared beastman with a muzzle and dark eyes, bare arms, wearing a plain dark gray sleeveless tunic and a brown belt.", "heightM": 1.7, "mobIdea": "Vulpin villager — neutral NPC of a beastfolk settlement" },
+        { "charCell": "1,0", "who": "Orange fox beastman in a mustard-yellow tunic with a green sash/belt, bare arms and feet.", "heightM": 1.7, "mobIdea": "Vulpin trader NPC" },
+        { "charCell": "2,0", "who": "Gray wolf-eared beastman, darker gray muzzle, wearing a white/light-gray tunic with a brown shoulder sash.", "heightM": 1.75, "mobIdea": "Wolfkin hunter — ranged bow mob" },
+        { "charCell": "3,0", "who": "Brown wolf beastman in steel plate shoulder guards and bracers with yellow-gold trim over a dark undertunic — a warrior.", "heightM": 1.75, "mobIdea": "Wolfkin warrior — melee, cleave" },
+        { "charCell": "0,1", "who": "Gray wolf beastman in white plate armor with a green sash across the chest.", "heightM": 1.75, "mobIdea": "Wolfkin guard — shield/armor heavy" },
+        { "charCell": "1,1", "who": "Orange fox beastman in white-and-blue armor with gold trim.", "heightM": 1.7, "mobIdea": "Vulpin knight" },
+        { "charCell": "2,1", "who": "White/silver wolf beastman in a white tunic with a green belt, pale fur.", "heightM": 1.75, "mobIdea": "Snow-wolfkin elder NPC" },
+        { "charCell": "3,1", "who": "Orange-tan fox beastman in a rust-orange tunic with brown trim.", "heightM": 1.7, "mobIdea": "Vulpin scout" }
+      ]
+    },
+    {
+      "sheet": "beast_tribe_2.png",
+      "contactSheet": "tools/out/sheets/beast_tribe_2-chars.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "note": "Canine beastfolk in more elaborate eastern-flavored garb; two of the eight are child-sized.",
+      "chars": [
+        { "charCell": "0,0", "who": "Gray wolf beastman in a long blue robe with a broad red sash running diagonally down the chest.", "heightM": 1.75, "mobIdea": "Wolfkin ronin — melee duelist" },
+        { "charCell": "1,0", "who": "Brown fox beastman in a WHITE martial-arts gi/kimono with a dark belt; bare feet.", "heightM": 1.7, "mobIdea": "Vulpin monk — barehanded fast attacker" },
+        { "charCell": "2,0", "who": "Orange fox beastman in a blue kimono with red-and-white trim.", "heightM": 1.7, "mobIdea": "Vulpin shrine keeper NPC" },
+        { "charCell": "3,0", "who": "Orange fox beastman in a plain dark gray/charcoal tunic and pants.", "heightM": 1.7, "mobIdea": "Vulpin commoner" },
+        { "charCell": "0,1", "who": "Brown-red canine beastman in heavy dark red plate armor with gray metal joints.", "heightM": 1.75, "mobIdea": "Bloodfang legionary" },
+        { "charCell": "1,1", "who": "SAMURAI: a beastfolk in lacquered crimson-red segmented armor with a gold-crested horned kabuto helmet, red shoulder plates and skirt tassets. The most ornate figure on the sheet.", "heightM": 1.8, "mobIdea": "Crimson Samurai — mini-boss, parry/counter melee kit" },
+        { "charCell": "2,1", "who": "A small child-sized orange fox kit in a yellow dress/tunic, short body proportions.", "heightM": 1.1, "mobIdea": "Vulpin child — village ambience NPC" },
+        { "charCell": "3,1", "who": "A small child-sized tan fox kit in a green tunic.", "heightM": 1.1, "mobIdea": "Vulpin child NPC (second variant)" }
+      ]
+    },
+    {
+      "sheet": "beast_tribe_3.png",
+      "contactSheet": "tools/out/sheets/beast_tribe_3-chars.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "note": "Lizardfolk / reptilian beastmen. Direct upgrade material for the existing lizardman mob.",
+      "chars": [
+        { "charCell": "0,0", "who": "Green scaly lizardman with a blunt snout and a ridged crest, wearing gray-and-red armor with a white pauldron on one shoulder; clawed green feet.", "heightM": 1.8, "mobIdea": "Scale warrior — armored lizardman melee" },
+        { "charCell": "1,0", "who": "Yellow-green lizardman in a red tunic with a red hood/cape over the shoulders, gray leg wraps.", "heightM": 1.8, "mobIdea": "Scale raider — bandit-style lizardman" },
+        { "charCell": "2,0", "who": "Olive-green lizardman in a blue sleeveless tunic with gray leg wrappings.", "heightM": 1.8, "mobIdea": "Marsh lizardman (matches the existing Gloomfen mob)" },
+        { "charCell": "3,0", "who": "A green lizard head with big dark eyes peering out from under a large hooded tan/brown cloak that covers the whole body; only clawed green feet show.", "heightM": 1.8, "mobIdea": "Scale shaman — ranged poison/hex caster" },
+        { "charCell": "0,1", "who": "RED-scaled lizardman in gray steel plate armor with a yellow belt.", "heightM": 1.85, "mobIdea": "Bloodscale champion — elite melee" },
+        { "charCell": "1,1", "who": "Red-scaled lizardman in a flowing yellow/gold robe with orange trim.", "heightM": 1.8, "mobIdea": "Bloodscale flamespeaker — fire caster" },
+        { "charCell": "2,1", "who": "Small child-proportioned green lizard in a plain gray tunic.", "heightM": 1.1, "mobIdea": "Lizard hatchling — swarm add, or village NPC" },
+        { "charCell": "3,1", "who": "Small child-proportioned green lizard in a tan/brown tunic.", "heightM": 1.1, "mobIdea": "Lizard hatchling variant" }
+      ]
+    },
+    {
+      "sheet": "beast_tribe_4.png",
+      "contactSheet": "tools/out/sheets/beast_tribe_4-chars.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "note": "Avian beastfolk — beaked heads, orange three-toed clawed feet, feathered bodies.",
+      "chars": [
+        { "charCell": "0,0", "who": "Tan-feathered birdman with an orange beak, wearing a striped straw-colored hat and a blue vest/apron over a yellow-trimmed shirt.", "heightM": 1.6, "mobIdea": "Corvid merchant NPC — beastfolk market stall" },
+        { "charCell": "1,0", "who": "Silver-gray birdman in white plate armor with red trim and orange clawed feet.", "heightM": 1.65, "mobIdea": "Sky-guard knight" },
+        { "charCell": "2,0", "who": "Rust-red feathered birdman in a green tunic, orange beak and feet.", "heightM": 1.6, "mobIdea": "Kenku forager NPC" },
+        { "charCell": "3,0", "who": "Brown birdman in a green tunic with a light scarf, orange beak and feet.", "heightM": 1.6, "mobIdea": "Kenku scout — bow user" },
+        { "charCell": "0,1", "who": "Slate blue-gray birdman in a blue-and-white long coat with gold buttons.", "heightM": 1.65, "mobIdea": "Roost magistrate NPC" },
+        { "charCell": "1,1", "who": "Reddish-brown birdman in a gold/yellow robe with orange trim.", "heightM": 1.65, "mobIdea": "Kenku augur — magic caster" },
+        { "charCell": "2,1", "who": "Small white birdman in a red tunic, child-ish proportions.", "heightM": 1.2, "mobIdea": "Fledgling NPC" },
+        { "charCell": "3,1", "who": "Small yellow chick-like birdman in blue overalls.", "heightM": 1.1, "mobIdea": "Fledgling NPC (second variant)" }
+      ]
+    },
+    {
+      "sheet": "beast_tribe_5.png",
+      "contactSheet": "tools/out/sheets/beast_tribe_5-chars.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "note": "Aquatic fishfolk — smooth bulbous domed heads, side gill-fins, bare torsos with colorful wraps.",
+      "chars": [
+        { "charCell": "0,0", "who": "Blue fishfolk with a smooth domed head, side fins where ears would be, a red-orange sash across the bare chest and blue fin-frilled forearms.", "heightM": 1.7, "mobIdea": "Deepkin raider — spear melee, buffs in water" },
+        { "charCell": "1,0", "who": "Green fishfolk wearing a big spiky green frill headdress like a crown, striped yellow-and-red sash, yellow webbed feet. Clearly the chief/shaman of the set.", "heightM": 1.75, "mobIdea": "Tidecaller Chief — mini-boss, heals and buffs deepkin" },
+        { "charCell": "2,0", "who": "Blue-domed fishfolk with pink gill fins, wearing an olive-green body wrap with yellow trim.", "heightM": 1.7, "mobIdea": "Deepkin trapper" },
+        { "charCell": "3,0", "who": "Purple fishfolk with a red sash and pale bone-white rib-like markings across the chest.", "heightM": 1.7, "mobIdea": "Abyss cultist — shadow caster" },
+        { "charCell": "0,1", "who": "Green fishfolk with a large spiky green crest and blue/orange trimmed wraps.", "heightM": 1.7, "mobIdea": "Deepkin warden" },
+        { "charCell": "1,1", "who": "unknown — a hooded fishfolk rendered almost entirely in flat desaturated gray with very little interior detail; the beak/face and a small purple eye area are the only readable features. Possibly a silhouette/shadow palette or an unfinished cell. Low confidence.", "heightM": 1.7, "mobIdea": "unclear — possibly a shade/ghost variant; verify against the raw PNG before using" },
+        { "charCell": "2,1", "who": "Blue-domed fishfolk in a red body wrap with blue arm fins.", "heightM": 1.7, "mobIdea": "Deepkin spearman" },
+        { "charCell": "3,1", "who": "Purple fishfolk wearing a yellow/gold skirt-sash.", "heightM": 1.7, "mobIdea": "Deepkin oracle NPC" }
+      ]
+    },
+    {
+      "sheet": "beast_hero_1.png",
+      "contactSheet": "tools/out/sheets/beast_hero_1-chars.png",
+      "layout": "single",
+      "px": "78x144",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "-", "who": "Wolf-headed beastfolk champion: gray wolf muzzle and tall pointed ears, dark steel plate armor with bright gold shoulder trim and a gold chest chain, and a long flowing CRIMSON CAPE that fills most of the back-facing frames.", "heightM": 1.85, "mobIdea": "Warchief of the Wolfkin — armored boss, cleave + rally summons his tribe" }
+      ]
+    },
+    {
+      "sheet": "beast_hero_1_emote.png",
+      "contactSheet": "tools/out/sheets/beast_hero_1_emote-chars.png",
+      "layout": "unknown",
+      "px": "78x144",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "12 front-facing pose frames", "who": "The same gray wolf champion in dark plate with gold trim and a red cape — all 12 frames face the camera, varying arm position (arms at sides, arms raised, hands out) and head tilt. NOT a directional walk grid; this is an emote/gesture set.", "heightM": 1.85, "mobIdea": "boss taunt / cheer / cast-telegraph poses for the Wolfkin Warchief" }
+      ]
+    },
+    {
+      "sheet": "beast_hero_2.png",
+      "contactSheet": "tools/out/sheets/beast_hero_2-chars.png",
+      "layout": "single",
+      "px": "78x144",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "-", "who": "Tan fox-eared beastfolk in a long navy-blue floor-length robe (no legs visible), with big gold pom-pom tassels on both shoulders and looped gold chains hanging down the chest. The back view shows a white collar emblem.", "heightM": 1.75, "mobIdea": "Vulpin Archmage — robed caster boss, arcane bolts and shields" }
+      ]
+    },
+    {
+      "sheet": "beast_hero_2_emote.png",
+      "contactSheet": "tools/out/sheets/beast_hero_2_emote-chars.png",
+      "layout": "unknown",
+      "px": "78x144",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "12 front-facing pose frames", "who": "The tan fox archmage in his navy robe and gold shoulder tassels, all 12 frames facing forward with varying facial expressions (eyes closed, grinning with visible teeth, mouth open) and arm gestures. Emote/expression set, not a walk grid.", "heightM": 1.75, "mobIdea": "dialogue-portrait / spellcast poses for the Vulpin Archmage" }
+      ]
+    },
+    {
+      "sheet": "beast_hero_3.png",
+      "contactSheet": "tools/out/sheets/beast_hero_3-chars.png",
+      "layout": "single",
+      "px": "78x144",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "-", "who": "Green lizardfolk hero: large reptilian snouted head with a dark eye and jaw line, bone-white segmented plate armor over the torso with reddish-brown leather straps and pauldrons, and a heavy brown cloak that dominates the back-facing frames. Clawed green feet.", "heightM": 1.85, "mobIdea": "Scale Warlord — lizardfolk boss, thrust/gore kit, summons scale warriors" }
+      ]
+    },
+    {
+      "sheet": "beast_hero_3_emote.png",
+      "contactSheet": "tools/out/sheets/beast_hero_3_emote-chars.png",
+      "layout": "unknown",
+      "px": "78x144",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "12 front-facing pose frames", "who": "The green lizardfolk hero in white plate and brown straps, all 12 frames facing forward. Poses vary: mouth closed, jaw open showing teeth, arms crossed, arms spread. Emote set, not a walk grid.", "heightM": 1.85, "mobIdea": "roar/taunt/telegraph poses for the Scale Warlord" }
+      ]
+    },
+    {
+      "sheet": "beast_hero_4.png",
+      "contactSheet": "tools/out/sheets/beast_hero_4-chars.png",
+      "layout": "single",
+      "px": "78x144",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "-", "who": "Burly rust-red feathered birdfolk champion in ornate GOLD armor set with big blue gems: a gold crown-helm whose ornaments sweep up like wings, gold gorget and chest plate, gold gauntlets and boots, blue gem at the throat and hips. Beaked head, heavy shoulders. Back view is a rounded feathered head between two gold shoulder wings.", "heightM": 1.9, "mobIdea": "The Gilded Roost King — avian boss, dive/gust attacks, high armor" }
+      ]
+    },
+    {
+      "sheet": "beast_hero_4_emote.png",
+      "contactSheet": "tools/out/sheets/beast_hero_4_emote-chars.png",
+      "layout": "unknown",
+      "px": "78x144",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "12 front-facing pose frames", "who": "The gold-armored red birdfolk king, all 12 frames facing forward, with varying beak/eye expressions and arm/gauntlet positions (one hand raised, both fists in, arms spread). Emote set, not a walk grid.", "heightM": 1.9, "mobIdea": "throne-room idle and roar poses for the Roost King" }
+      ]
+    },
+    {
+      "sheet": "beast_hero_5.png",
+      "contactSheet": "tools/out/sheets/beast_hero_5-chars.png",
+      "layout": "single",
+      "px": "78x144",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "-", "who": "Pink/magenta fishfolk royal: bulbous smooth pink head with wide side fins, topped by a spiked GOLD CROWN; a gold torc/necklace, cyan-blue armored chest and greaves with gold rings on the arms, purple-pink limbs.", "heightM": 1.85, "mobIdea": "The Coral King — deepkin boss for a sunken temple, water bolts + summons deepkin" }
+      ]
+    },
+    {
+      "sheet": "beast_hero_5_emote.png",
+      "contactSheet": "tools/out/sheets/beast_hero_5_emote-chars.png",
+      "layout": "unknown",
+      "px": "78x144",
+      "frame": "26x36",
+      "chars": [
+        { "charCell": "12 front-facing pose frames", "who": "The pink crowned fishfolk king, all 12 frames facing the camera, varying mouth shape (closed, wide open) and arm position (down, raised, both out). Emote set, not a walk grid.", "heightM": 1.85, "mobIdea": "court/decree and cast-telegraph poses for the Coral King" }
+      ]
+    }
+  ]
+}

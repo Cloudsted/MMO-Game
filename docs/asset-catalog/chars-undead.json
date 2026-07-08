@@ -1,0 +1,389 @@
+{
+  "group": "undead",
+  "generatedFrom": "tools/out/sheets/*-chars.png contact sheets (visually inspected) + per-cell zooms",
+  "sheetRoot": "assets/time-fantasy/Unsorted/",
+  "entries": [
+    {
+      "sheet": "lich.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "charCell": "0,0",
+      "who": "Skeletal knight in pale ice-blue/white plate armor; bone-white skull face with dark sockets under a horned/finned helm; heavy pauldrons, plate skirt, brown boots. Reads as a frost/bone death-knight.",
+      "heightM": 1.85,
+      "mobIdea": "Frostbone Knight — armored melee undead, slow heavy swing, applies chill/slow"
+    },
+    {
+      "sheet": "lich.png",
+      "layout": "char8",
+      "charCell": "1,0",
+      "who": "Bulkier death knight: dark steel-grey spiked helm with horns, teal-white bone-plate cuirass and huge pauldrons, gold/tan belt, brown boots. Row 3 (up) shows a wide white/grey cape.",
+      "heightM": 1.9,
+      "mobIdea": "Grave Champion — elite armored undead miniboss, cleave + shield-wall"
+    },
+    {
+      "sheet": "lich.png",
+      "layout": "char8",
+      "charCell": "2,0",
+      "who": "Figure in solid red/scarlet plate whose head is a bright orange molten flame-skull with glowing yellow eye slits; red gauntlets and greaves; small flame licks off the head each frame.",
+      "heightM": 1.85,
+      "mobIdea": "Cinder Revenant — fire-aspect undead for the Cinderrift, melee + ignite"
+    },
+    {
+      "sheet": "lich.png",
+      "layout": "char8",
+      "charCell": "3,0",
+      "who": "Same red-plate silhouette but wearing a spiked GOLD crown and gold pauldron/greave trim; head is a large yellow-gold flame corona. Row 3 shows a dark cloak with gold hem.",
+      "heightM": 1.95,
+      "mobIdea": "Ember King — flame-crowned boss, fire pillars + summon cinder revenants"
+    },
+    {
+      "sheet": "lich.png",
+      "layout": "char8",
+      "charCell": "0,1",
+      "who": "Classic lich: dark blue-grey hooded robe, tall gold crown, glowing red eyes and red mouth in a skull face; bright GOLD skeletal ribcage/arm bones drawn over the robe; gold-gloved hands.",
+      "heightM": 1.9,
+      "mobIdea": "Gilded Lich — caster boss, shadow bolt + raise-dead summons"
+    },
+    {
+      "sheet": "lich.png",
+      "layout": "char8",
+      "charCell": "1,1",
+      "who": "Same robe/crown silhouette as 0,1 but a bone-WHITE skull face (black sockets, no red glow) with gold ribcage and gold bone trim on the dark robe.",
+      "heightM": 1.9,
+      "mobIdea": "Bone Archlich — pale variant, alternate boss skin / lieutenant"
+    },
+    {
+      "sheet": "lich.png",
+      "layout": "char8",
+      "charCell": "2,1",
+      "who": "Hooded dark grey robe with red piping down the front; head is a tan/orange skull crowned by a spray of pale CYAN flame 'hair'; hands hidden in sleeves.",
+      "heightM": 1.9,
+      "mobIdea": "Wisp-Crowned Necromancer — cold caster, spawns marsh wisps"
+    },
+    {
+      "sheet": "lich.png",
+      "layout": "char8",
+      "charCell": "3,1",
+      "who": "Dark grey robe with red/orange piping, no hood; large bare WHITE skull head with big black eye sockets sitting atop the robe. Simplest of the four robed variants.",
+      "heightM": 1.9,
+      "mobIdea": "Crypt Warlock — low-tier caster add for lich encounters"
+    },
+
+    {
+      "sheet": "skeletonarmy.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "charCell": "0,0",
+      "who": "Bare bone-WHITE skeleton, naked, no gear, empty hands, big round skull with black sockets and a tooth row.",
+      "heightM": 1.75,
+      "mobIdea": "Restless Bones — weakest trash undead, unarmed claw"
+    },
+    {
+      "sheet": "skeletonarmy.png",
+      "layout": "char8",
+      "charCell": "1,0",
+      "who": "White skeleton wearing a tattered brown/orange cloth loincloth-wrap; unarmed, hands empty.",
+      "heightM": 1.75,
+      "mobIdea": "Grave Rag Skeleton — trash melee"
+    },
+    {
+      "sheet": "skeletonarmy.png",
+      "layout": "char8",
+      "charCell": "2,0",
+      "who": "Yellowed/tan aged skeleton (bone stained ochre) with a dark red cloth kilt; unarmed.",
+      "heightM": 1.75,
+      "mobIdea": "Ancient Skeleton — tougher tan-bone trash"
+    },
+    {
+      "sheet": "skeletonarmy.png",
+      "layout": "char8",
+      "charCell": "3,0",
+      "who": "Tan skeleton wearing a wide-brimmed blue-grey steel kettle helm and a red kilt; unarmed hands.",
+      "heightM": 1.75,
+      "mobIdea": "Skeleton Levy — helmeted unarmed conscript"
+    },
+    {
+      "sheet": "skeletonarmy.png",
+      "layout": "char8",
+      "charCell": "0,1",
+      "who": "White skeleton with a blue-grey brimmed helm and brown leather harness/straps over the ribs; hands empty.",
+      "heightM": 1.75,
+      "mobIdea": "Skeleton Guard — unarmed but armored, pairs with sword variants"
+    },
+    {
+      "sheet": "skeletonarmy.png",
+      "layout": "char8",
+      "charCell": "1,1",
+      "who": "Tan skeleton in a crested/domed steel helm and brown leather kilt, HOLDING a pale blue-white straight sword held out diagonally.",
+      "heightM": 1.75,
+      "mobIdea": "Skeleton Soldier — sword melee, the workhorse skeleton"
+    },
+    {
+      "sheet": "skeletonarmy.png",
+      "layout": "char8",
+      "charCell": "2,1",
+      "who": "Bare-headed tan skeleton with a dark red kilt, HOLDING a pale blue-white sword.",
+      "heightM": 1.75,
+      "mobIdea": "Skeleton Marauder — faster, unarmored swordsman"
+    },
+    {
+      "sheet": "skeletonarmy.png",
+      "layout": "char8",
+      "charCell": "3,1",
+      "who": "Tan skeleton with a headband/browplate, HOLDING a pale blue-white sword in one hand and a round riveted STEEL SHIELD in the other.",
+      "heightM": 1.75,
+      "mobIdea": "Skeleton Shieldbearer — high armor, low damage, blocks frontal hits"
+    },
+
+    {
+      "sheet": "skeletonarmy_down.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "charCell": "all 8 (0,0 .. 3,1)",
+      "who": "The SAME eight skeletons from skeletonarmy.png but in a PRONE / collapsed pose — bones sprawled flat on the ground, skull facing up, arms and legs splayed. Each 3x4 block is 12 near-identical frames (a subtle twitch/settle animation), NOT a 4-direction walk grid. Blocks 0,0-3,0 = the unarmed/helmeted set, 0,1-3,1 = the helmeted/armed set (helm + brown kilt visible, weapons not readable in the prone pose).",
+      "heightM": 0.3,
+      "mobIdea": "Ground-corpse decoration that stands up: play this as the 'dormant' state, then swap to skeletonarmy.png on aggro (a rise-from-the-boneyard ambush)"
+    },
+
+    {
+      "sheet": "mzombies_1.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "charCell": "0,0",
+      "who": "Shambling zombie: sallow yellow-tan skin, mostly bald with rust-red hair tufts at the sides, sunken white eyes, mouth agape; dark maroon/red torn shirt, blue-grey trousers, arms hanging out from the body.",
+      "heightM": 1.75,
+      "mobIdea": "Rotting Villager — slow shambler trash, high hp low speed"
+    },
+    {
+      "sheet": "mzombies_1.png",
+      "layout": "char8",
+      "charCell": "1,0",
+      "who": "Zombie with dark blue-grey hair, torn dirty white/pale shirt over a bare chest, dark trousers; head lolling to one side.",
+      "heightM": 1.75,
+      "mobIdea": "Shambling Corpse — plague variant"
+    },
+    {
+      "sheet": "mzombies_1.png",
+      "layout": "char8",
+      "charCell": "2,0",
+      "who": "Zombie with a messy mop of blond/orange hair, dark open jacket over a bare torso, maroon trousers.",
+      "heightM": 1.75,
+      "mobIdea": "Risen Farmhand — trash"
+    },
+    {
+      "sheet": "mzombies_1.png",
+      "layout": "char8",
+      "charCell": "3,0",
+      "who": "Zombie with dark unkempt hair, bare yellow-green torso (no shirt), grey-blue trousers, pale white shoes.",
+      "heightM": 1.75,
+      "mobIdea": "Bloated Corpse — trash"
+    },
+    {
+      "sheet": "mzombies_1.png",
+      "layout": "char8",
+      "charCell": "0,1 / 1,1 / 2,1 / 3,1",
+      "who": "The SAME four zombies as the top row, redrawn with bright red BLOOD/GORE added: head wounds, blood running down the face, chest and arms, splattered clothing. A 'bloodied' variant set, one-for-one with 0,0..3,0.",
+      "heightM": 1.75,
+      "mobIdea": "Bloodied variants — use for elite/enraged zombies or after they land a bite"
+    },
+
+    {
+      "sheet": "mzombies_ground_a_1.png",
+      "layout": "unknown",
+      "px": "312x288",
+      "frame": "26x36",
+      "charCell": "-",
+      "who": "NOT eight characters. This is a zombie RISE-FROM-THE-GROUND sequence spread across the 8 blocks. Top band (cy=0) belongs to the maroon-shirt bald zombie, bottom band (cy=1) to the white-shirt zombie. Block 0,*: a mound of brown dirt clods swelling out of the ground (small ripple -> big heap). Block 1,*: the zombie's head and torso clawing up out of a ring of dirt clods, arms braced. Block 3,*: an open grave hole ringed with dirt with a pale bony hand/forearm reaching straight up out of it.",
+      "heightM": 1.75,
+      "mobIdea": "Graveyard ambush FX: dirt mound -> clawing torso -> hand-from-grave; pairs with mzombies_1 for the walking state"
+    },
+    {
+      "sheet": "mzombies_ground_a_1.png",
+      "layout": "char8",
+      "charCell": "2,0",
+      "who": "VALID 3x4 walk grid inside this sheet: the risen bald zombie, maroon/rust tattered shirt, sallow skin, arms held forward zombie-style. Rows read down / left / right / up (row 3 is the back of the head).",
+      "heightM": 1.75,
+      "mobIdea": "Risen Zombie (post-emergence walk) — the mob body for the graveyard ambush"
+    },
+    {
+      "sheet": "mzombies_ground_a_1.png",
+      "layout": "char8",
+      "charCell": "2,1",
+      "who": "VALID 3x4 walk grid: the risen white-shirt zombie (blood at the chest, pale shoes), same four directions.",
+      "heightM": 1.75,
+      "mobIdea": "Risen Zombie B — second graveyard skin"
+    },
+
+    {
+      "sheet": "vamps_8_1.png",
+      "layout": "char8",
+      "px": "312x288",
+      "frame": "26x36",
+      "charCell": "0,0",
+      "who": "Vampire in dark blue-black spiked plate armor: horned/spiked helm and huge spiked pauldrons, crimson chest trim and belt, pale face with red eyes barely visible under the helm. Row 3 (up) shows a large blood-RED cape.",
+      "heightM": 1.9,
+      "mobIdea": "Blood Knight — armored vampire elite, lifesteal melee"
+    },
+    {
+      "sheet": "vamps_8_1.png",
+      "layout": "char8",
+      "charCell": "1,0",
+      "who": "Vampire lord: long silver-white hair, chalk-pale face with red eyes, dark navy longcoat with GOLD frogging/buttons, high standing collar with red inner lining, gold-hemmed skirt. Row 3 shows a huge red cape with gold border.",
+      "heightM": 1.8,
+      "mobIdea": "Vampire Lord — caster/melee hybrid boss, blood drain + bat swarm"
+    },
+    {
+      "sheet": "vamps_8_1.png",
+      "layout": "char8",
+      "charCell": "2,0",
+      "who": "Lesser vampire / thrall: shaggy dark blue-black hair, pale face, plain dark tunic and trousers with a brown belt, pale boots. No cape, no ornament.",
+      "heightM": 1.75,
+      "mobIdea": "Vampire Thrall — fast melee trash that swarms"
+    },
+    {
+      "sheet": "vamps_8_1.png",
+      "layout": "char8",
+      "charCell": "3,0",
+      "who": "Ornate vampire (reads female): long silver-white hair, red eyes, a tall red/crimson crested collar framing the head, purple and crimson layered robe/gown with gold accents; row 3 shows a purple-and-red cloak.",
+      "heightM": 1.75,
+      "mobIdea": "Crimson Countess — blood magic caster boss"
+    },
+    {
+      "sheet": "vamps_8_1.png",
+      "layout": "char8",
+      "charCell": "0,1 / 1,1 / 2,1 / 3,1",
+      "who": "The SAME four vampires again with WARM (living/human) skin tone instead of the chalk-pale undead tone — otherwise identical armor/coat/gown/hair. Bottom row = 'not-yet-turned' or 'freshly fed' palette swap.",
+      "heightM": 1.8,
+      "mobIdea": "Use as the human/disguised form of each vampire (NPC in town by day, monster by night)"
+    },
+
+    {
+      "sheet": "ghost1.png",
+      "layout": "single",
+      "px": "78x144",
+      "frame": "26x36",
+      "charCell": "-",
+      "who": "Classic sheet ghost: rounded pale blue-white blob body, two small dark oval eyes and one open dark oval mouth, tattered wavy scalloped hem at the bottom, floating just above a small dark shadow ellipse. No arms, no face detail beyond the three holes.",
+      "heightM": 1.0,
+      "mobIdea": "Wandering Spirit — floating, ignores gravity, phases through blocks, weak magic touch"
+    },
+
+    {
+      "sheet": "mummy_1.png",
+      "layout": "single",
+      "px": "78x144",
+      "frame": "26x36",
+      "charCell": "-",
+      "who": "Humanoid entirely wrapped head-to-toe in dirty off-white/grey bandage strips; NO visible face (bandages cross the head, only a dark seam where eyes would be); mitt-like wrapped hands hang out to the sides, loose bandage tails at the wrists and shins; stiff shuffling stance.",
+      "heightM": 1.75,
+      "mobIdea": "Bandaged Mummy — slow, high armor, applies a rot/curse DoT; desert tomb spawner"
+    },
+
+    {
+      "sheet": "mghoulA_1.png",
+      "layout": "single",
+      "px": "78x144",
+      "frame": "26x36",
+      "charCell": "-",
+      "who": "Emaciated hunched ghoul: sickly pale grey-tan skin with visible ribs, wild grey-lavender hair hanging over the face, deep-set glowing yellow eyes, long arms ending in big pale claws, barefoot with clawed toes; wears only a torn rust-red/brown loincloth.",
+      "heightM": 1.6,
+      "mobIdea": "Crypt Ghoul — fast lunging clawer, low hp, spawns in packs"
+    },
+    {
+      "sheet": "mghoulB_1.png",
+      "layout": "single",
+      "px": "78x144",
+      "frame": "26x36",
+      "charCell": "-",
+      "who": "Same emaciated hunched ghoul body as mghoulA, recolored: brown/olive hair instead of grey-lavender, torn GREEN loincloth instead of rust-red. Same glowing yellow eyes and clawed hands/feet.",
+      "heightM": 1.6,
+      "mobIdea": "Bog Ghoul — Gloomfen palette swap of the crypt ghoul"
+    },
+
+    {
+      "sheet": "reaper_1.png",
+      "layout": "single",
+      "px": "78x144",
+      "frame": "26x36",
+      "charCell": "-",
+      "who": "Hooded reaper: pale sage-green/grey hood and robe with a purple-black rim; a bone-WHITE skull face with two large black eye sockets and a wide toothy grin fills the hood; two blocky grey mitt hands; NO legs — the robe tapers to a rounded base that floats over a shadow. Empty-handed.",
+      "heightM": 1.9,
+      "mobIdea": "Soul Reaper — floating undead caster, drains life; empty-handed 'unarmed' state"
+    },
+    {
+      "sheet": "reaper_blade_1.png",
+      "layout": "single",
+      "px": "96x144",
+      "frame": "32x36",
+      "charCell": "-",
+      "who": "Identical hooded skull reaper to reaper_1, but WIELDING A SCYTHE: a long rust-brown/orange studded haft crosses the body diagonally from the lower left, with a big curved bone-white blade arcing up over the right shoulder. Wider frame (32 px) to fit the weapon.",
+      "heightM": 1.9,
+      "mobIdea": "Death's Harvester — scythe boss; swap to reaper_1 frames for a disarmed/phase-2 state"
+    },
+
+    {
+      "sheet": "bigskullA_1.png",
+      "layout": "single",
+      "px": "96x192",
+      "frame": "32x48",
+      "charCell": "-",
+      "who": "A large disembodied floating SKULL, bone-white/ivory with warm shading: angular angry eye sockets (black with a faint highlight), a small nose triangle, and only a short row of fang stubs (NO lower jaw). Hovers above a small oval shadow. Full valid 3x4 grid: front, both profiles, and a back view showing the smooth cranium.",
+      "heightM": 0.8,
+      "mobIdea": "Floating Skull — hovering swarm mob, ignores terrain, bite/charge attack"
+    },
+    {
+      "sheet": "bigskullB_1.png",
+      "layout": "single",
+      "px": "96x192",
+      "frame": "32x48",
+      "charCell": "-",
+      "who": "Same floating ivory skull as bigskullA but WITH A FULL LOWER JAW — a hinged mandible with a complete row of square teeth hanging below the cranium (it opens/chatters slightly across the frames).",
+      "heightM": 0.8,
+      "mobIdea": "Gnashing Skull — jawed variant, bite DoT / chatter telegraph"
+    },
+    {
+      "sheet": "bigskullC_1.png",
+      "layout": "single",
+      "px": "96x192",
+      "frame": "32x48",
+      "charCell": "-",
+      "who": "The same jawless skull ENGULFED IN FIRE: bright orange/yellow flames stream up and back off the cranium (with drifting ember pixels above), the bone itself glows white-hot, sockets are black with orange rims, fang stubs only.",
+      "heightM": 0.8,
+      "mobIdea": "Cinder Skull — Cinderrift flying mob, emissive/glow pass, ignite on contact"
+    },
+    {
+      "sheet": "bigskullD_1.png",
+      "layout": "single",
+      "px": "96x192",
+      "frame": "32x48",
+      "charCell": "-",
+      "who": "Flaming skull as bigskullC but WITH THE FULL LOWER JAW (orange-lit mandible and teeth beneath the burning cranium).",
+      "heightM": 0.8,
+      "mobIdea": "Infernal Skull — elite flaming skull, fire-breath cone"
+    },
+
+    {
+      "sheet": "spookyscarecrow_1.png",
+      "layout": "unknown",
+      "px": "84x144",
+      "frame": "28x36 nominal (sprite is OFF-GRID vertically)",
+      "charCell": "-",
+      "who": "Scarecrow: a stitched tan burlap-sack head with dark carved eye slits and a jagged grin, tilted to one side; a thin brown wooden-frame body with bright orange/yellow STRAW bursting out at the neck collar, the waist, the cuffs and the ankles; long spindly arms ending in splayed straw claw-fingers; dark purple rag shadows behind the straw. Front-facing only.",
+      "heightM": 1.9,
+      "mobIdea": "Spooky Scarecrow — field/graveyard ambusher that stands motionless until you walk past (only a front pose exists, so give it a static billboard + a rise animation)"
+    }
+  ],
+  "warnings": [
+    "spookyscarecrow_1.png (84x144) does NOT decompose into a 3x4 walk grid at 28x36. Alpha row-scan: content bands at y 22-33 (head/hat crown only), y 39-69 (full body), y 75-107 (full body, slightly different pose), and y 108-143 is COMPLETELY EMPTY. So it is a 3-column x ~3-row front-facing sequence (reads like an emergence/rise: head-only -> full body -> full body), with a blank 4th row. There is no left/right/up view. Treat as a single front-facing sprite (+3-frame idle); it is NOT usable as a 4-direction walker.",
+    "mzombies_ground_a_1.png is rendered as char8 but is NOT eight characters. Six of the eight blocks are ground/emergence FX (dirt mound swelling; zombie torso clawing out of a dirt ring; open grave hole with a bony hand reaching up). Only blocks 2,0 and 2,1 are true 3x4 four-direction walk grids (the risen maroon-shirt zombie and the risen white-shirt zombie). Do not map the other six as characters.",
+    "skeletonarmy_down.png is rendered as char8 and does decompose into 8 blocks of 3x4, but every frame is a PRONE/collapsed corpse (top-down sprawled bones), not a directional walk. All 12 frames per block are near-identical. Use as a dormant/corpse state paired with skeletonarmy.png, not as a walker.",
+    "vamps_8_1.png bottom row (cy=1) is a palette variant, not four new characters: same four vampires with warm living skin instead of chalk-pale. Same for mzombies_1.png bottom row (bloodied versions of the same four zombies).",
+    "reaper_blade_1.png uses a WIDER 32x36 frame (96x144 sheet) than reaper_1.png's 26x36 (78x144) — do not reuse the same frame width for both.",
+    "No off-grid/garbled halves were found in lich.png, skeletonarmy.png, mzombies_1.png or vamps_8_1.png — all four are clean 8-character sheets with 3x4 walk grids in BOTH halves (unlike the historical wizard.png/elemental.png trap).",
+    "bigskullA/B/C/D_1.png are single-character 32x48 sheets with clean 3x4 grids; the pairs are (A jawless bone / B jawed bone) and (C jawless flaming / D jawed flaming)."
+  ]
+}

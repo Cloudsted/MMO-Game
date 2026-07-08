@@ -1,0 +1,144 @@
+{
+  "file": "assets/time-fantasy/Time Fantasy/TILESETS/ruindungeons_sheet_full.png",
+  "sheet": { "tile": 16, "cols": 49, "rows": 52, "pixels": "784x832" },
+  "columnHalf": "c0-23",
+  "contactSheets": [
+    "tools/out/sheets/ruindungeons-r0-7-c0-23.png",
+    "tools/out/sheets/ruindungeons-r8-15-c0-23.png",
+    "tools/out/sheets/ruindungeons-r16-23-c0-23.png",
+    "tools/out/sheets/ruindungeons-r24-31-c0-23.png",
+    "tools/out/sheets/ruindungeons-r32-39-c0-23.png",
+    "tools/out/sheets/ruindungeons-r40-47-c0-23.png",
+    "tools/out/sheets/ruindungeons-r48-51-c0-23.png"
+  ],
+  "zoomsUsed": [
+    "tools/out/zoom/A-wall.png", "tools/out/zoom/A-floorblob.png", "tools/out/zoom/A-purplewall.png",
+    "tools/out/zoom/A-roofonly.png", "tools/out/zoom/A-shingle.png", "tools/out/zoom/A-wallrun.png",
+    "tools/out/zoom/A-door.png", "tools/out/zoom/A-crack.png", "tools/out/zoom/B-wall.png",
+    "tools/out/zoom/B-hiero.png", "tools/out/zoom/C-wall.png", "tools/out/zoom/C-decoL.png",
+    "tools/out/zoom/C-decoR2.png"
+  ],
+
+  "structure": {
+    "summary": "In columns 0-23 this is NOT a dungeon-prop sheet. It is an RPG-Maker BUILDING sheet (flat-roof blob, gabled shingle roof, two-material floor blob, 2-tile-tall wall elevation strip with doorway/stairs/altar/collapse pieces) repeated THREE TIMES in three palettes. Verified by a per-cell alpha scan: rows 1-10, 16-25 and 35-44 have byte-identical opacity masks.",
+    "variants": [
+      { "id": "A", "name": "pale blue ruined temple / crypt", "rowOffset": 0, "rows": "1-10", "primary": "pale sage-grey hatched masonry (#b5baae)", "secondary": "blue-grey slate floor tiles (#97b0b2)", "accent": "cobalt-blue frieze + balustrade" },
+      { "id": "B", "name": "gold Egyptian sandstone temple", "rowOffset": 15, "rows": "16-25", "primary": "brown sandstone brick (#ba8b4c)", "secondary": "rippled gold sand (#eabe3f)", "accent": "hieroglyph panels, idol statue" },
+      { "id": "C", "name": "red terracotta overgrown ruin (Aztec/Maya meander)", "rowOffset": 34, "rows": "35-44", "primary": "rounded red-brown cobble (#956453)", "secondary": "dense green moss (#2c8e66)", "accent": "greek-key/meander relief + gold stripe, hanging vines" }
+    ],
+    "emptyRows": "rows 0, 8, 11-15, 26-34, 45-51 are fully transparent across c0-23",
+    "voidColor": "#362e3f flat dark purple. It is OPAQUE, not transparent. It is the artist's 'interior/void' fill behind doorways, under roofs and inside collapsed walls. Do NOT mistake it for alpha."
+  },
+
+  "blockCandidates": [
+    { "c": 17, "r": 2, "name": "pale_ruin_stone", "why": "Pale sage-grey masonry with fine diagonal crack hatching; fully opaque, uniform, no border. Identical variants at c16-c22 r2. The best generic 'ruined temple / catacomb' wall we lack." },
+    { "c": 17, "r": 3, "name": "crypt_slate_tile", "why": "Blue-grey square floor tiles with dark grout and an occasional darker slab; fully opaque, reads as a cold crypt/ossuary floor. Variants (15,3)(16,3)(18,3)(19,3)." },
+    { "c": 17, "r": 5, "name": "crypt_slate_tile_center", "why": "AUTOTILE-BLOB CENTRE. The blue-tile blob demo occupies c16-c18 x r4-r6 with an 8px-offset dark rim; (17,5) is the ONLY interior cell with no rim on any edge. Safe fill if you want the bordered variant." },
+    { "c": 20, "r": 4, "name": "rune_plate_arrow_up", "why": "Framed pale-stone floor plate engraved with an up arrow. Fully opaque, self-contained. Puzzle/pressure-plate mood for catacombs." },
+    { "c": 21, "r": 4, "name": "rune_plate_arrow_right", "why": "Same plate family, right arrow. Fully opaque." },
+    { "c": 22, "r": 4, "name": "rune_plate_ring", "why": "Pale plate with a chunky blue-grey ring/torus glyph. Fully opaque; eldritch seal mood." },
+    { "c": 20, "r": 5, "name": "rune_plate_arrow_left", "why": "Plate, left arrow. Fully opaque." },
+    { "c": 21, "r": 5, "name": "rune_plate_arrow_down", "why": "Plate, down arrow. Fully opaque." },
+    { "c": 22, "r": 5, "name": "rune_plate_square", "why": "Plate with a solid blue square inset. Fully opaque." },
+    { "c": 20, "r": 6, "name": "rune_plate_raised", "why": "Plate with a bright raised square boss (reads as a pushed/pressed button). Fully opaque." },
+    { "c": 21, "r": 6, "name": "rune_plate_recessed", "why": "Plate with a recessed square frame — the 'unpressed' twin of (20,6). Fully opaque." },
+    { "c": 22, "r": 6, "name": "rune_plate_triangle", "why": "Plate with an outlined triangle glyph. Fully opaque; completes the 3x3 plate set at c20-c22 x r4-r6." },
+    { "c": 5, "r": 9, "name": "temple_wall_frieze", "why": "TOP half of a 2-tall wall: cobalt dentil frieze band over cream ashlar. Fully opaque and horizontally tileable. PAIR ONLY — stack it above (5,10), never above itself." },
+    { "c": 5, "r": 10, "name": "temple_wall_base", "why": "BOTTOM half of the same wall: cream ashlar over a cobalt striped balustrade skirt. Fully opaque, horizontally tileable. There is NO pure-ashlar 16px cell anywhere in the strip — the frieze/skirt bands eat it." },
+    { "c": 6, "r": 6, "name": "temple_shingle_blue", "why": "Cream slat shingles with cobalt accents running one diagonal direction; fully opaque. CAVEAT: it is a hip-roof piece, so tiling it will show a repeating diagonal seam — good as a slanted roof face, mediocre as a flat block face." },
+    { "c": 17, "r": 17, "name": "sandstone_brick", "why": "Brown sandstone ashlar blocks with dark mortar; fully opaque, uniform. Variants c16-c22 r17. A warmer, chunkier brick than our existing dark_bricks." },
+    { "c": 17, "r": 18, "name": "rippled_sand", "why": "Bright gold sand with wind-ripple striations; fully opaque, uniform across (15,18)-(19,18). Nicer than a flat sand tile for Cinderrift/desert floors." },
+    { "c": 20, "r": 18, "name": "sand_with_slab", "why": "Rippled sand with a half-buried brown stone slab. Fully opaque; scatter tile for buried-ruin floors. Cousins (21,18) two small slabs, (22,18) one wide slab." },
+    { "c": 5, "r": 24, "name": "gold_temple_wall_top", "why": "TOP half of the Egyptian wall: gold cornice bands over a plain recessed gold panel. Fully opaque; pair with (5,25)." },
+    { "c": 5, "r": 25, "name": "gold_temple_wall_base", "why": "BOTTOM half: gold panel over cornice + pale sill band. Fully opaque; pair with (5,24)." },
+    { "c": 10, "r": 24, "name": "hieroglyph_wall", "why": "Gold wall panel carved with figure hieroglyphs (standing figures / ankh-like signs). Fully opaque. Variants (11,24) and (12,24) with different figures; (8,24) is a two-line glyph tablet, (7,24) a zigzag glyph." },
+    { "c": 17, "r": 36, "name": "ruin_cobble_red", "why": "Rounded red-brown boulders/cobbles; fully opaque, uniform. Variants c16-c22 r36. Great 'ancient overgrown ruin' base stone." },
+    { "c": 17, "r": 37, "name": "moss_carpet", "why": "Dense bright-green leafy moss, fully opaque edge to edge across (15,37)-(19,37). Exactly the mossy-overgrown-ruin mood we lack." },
+    { "c": 20, "r": 37, "name": "mossy_cobble", "why": "Red cobble with a few small moss tufts growing on it — fully opaque, self-contained, the perfect transition block between ruin_cobble_red and moss_carpet. Variants (21,37) and (22,37) with different tuft placements." },
+    { "c": 20, "r": 38, "name": "cobble_plate_triangle", "why": "Terracotta version of the engraved plate set (triangle). Full 3x3 plate set lives at c20-c22 x r38-r40, matching the grey set at r4-r6." },
+    { "c": 5, "r": 43, "name": "meander_frieze_terracotta", "why": "Terracotta wall band carved with a greek-key/meander relief above a gold inlay stripe. Fully opaque, horizontally tileable. TOP half of a 2-tall wall; pair with (5,44)." },
+    { "c": 5, "r": 44, "name": "meander_relief_terracotta", "why": "BOTTOM half: broad terracotta relief course over a second meander band. Fully opaque. Together with (5,43) this is the strongest 'ancient eldritch temple' wall on the sheet." },
+    { "c": 6, "r": 21, "name": "shingle_gold", "why": "Gold-palette twin of (6,6) at the +15 row offset — same diagonal slat shingle, same caveat about the chevron seam." },
+    { "c": 6, "r": 40, "name": "shingle_terracotta", "why": "Terracotta+gold-accent twin of (6,6) at the +34 row offset. (6,41) is the same shingle heavily overgrown with moss along its lower edge — a lovely 'collapsed roof' block." },
+    { "c": 21, "r": 3, "name": "pale_stone_inlay_pair", "why": "Pale ruin stone with two small blue slate insets. Fully opaque; decorative floor variation. Cousin (22,3) has one wide blue inset." }
+  ],
+
+  "autotileRegions": [
+    {
+      "rect": "c2-c4 x r1-r6 (and +15 → r16-r21, +34 → r35-r40)",
+      "kind": "flat parapet roof / building footprint blob",
+      "detail": "A pale stone rim drawn around a field of the flat #362e3f void colour, laid out with 8px (half-tile) offsets. (2,2) is a tiny closed square rim; (2,3)-(4,5) is the large open rectangle. EVERY cell here is either a rim corner/edge or a featureless dark-purple interior. NOTHING in this rect is a usable standalone block.",
+      "danger": "high — the rim pieces look like plain wall in a thumbnail"
+    },
+    {
+      "rect": "c6-c13 x r1 and r3-r7 (and +15, +34)",
+      "kind": "gabled hip roof composite",
+      "detail": "A full pitched roof drawn as one picture. The ridge apex sits between c9 and c10 (row 3 has the peak notch), shingle chevrons converge on it from both sides, and r7 is where the roof meets the wall below (blue-tile wall visible under the eaves). Row 1 holds the transparent gable/eave-edge caps. Only the outermost columns (c6, c13) read as a plain one-direction shingle field.",
+      "danger": "high — grabbing c9/c10 gets you the ridge chevron"
+    },
+    {
+      "rect": "c15-c19 x r2-r6 (and +15, +34)",
+      "kind": "two-material floor blob demo",
+      "detail": "The variant's SECONDARY material (blue slate / gold sand / green moss) is painted as an irregular blob over its PRIMARY material (pale stone / sandstone brick / red cobble). Clean pure cells: r2 c16-c19 = pure primary; r3 c15-c19 = pure secondary. Everything in r4-r6 x c15-c19 straddles the blob boundary EXCEPT (17,5), which is blob interior. Note (15,2) / (15,17) / (15,36) are transparent.",
+      "danger": "medium — r4-r6 cells ship with a blob notch"
+    },
+    {
+      "rect": "c1-c2 x r9-r10 (and +15, +34)",
+      "kind": "wall elevation END CAP",
+      "detail": "A 2x2 wall panel with dark pilaster borders baked onto its LEFT (c1) and RIGHT (c2) edges. Never use as fill."
+    },
+    {
+      "rect": "c4-c12 x r9-r10 (and +15, +34)",
+      "kind": "2-tile-tall wall elevation run",
+      "detail": "Strictly a top row (r9) + bottom row (r10) pair. Horizontally it is a repeating run of frieze/ashlar/balustrade with ornaments dropped in: (6,9)/(6,10) hanging lamp-box + pedestal, (7,9)/(7,10) framed plaques, (8,9) blue 'I' emblem tablet, (9,9)/(9,10) tall pilaster column with a blue vertical inlay, (10,9)-(12,9)/(10,10)-(12,10) a big blue-framed studded inset panel. Gold twin: (7,24) zigzag glyph, (8,24) glyph tablet, (9,24)/(9,25) a standing IDOL STATUE, (10,24)-(12,24) figure hieroglyphs. Red twin: (6,43)-(9,44) hanging vines, (9,44)-(12,44) recessed niche panel.",
+      "danger": "medium — ornament cells are not tileable; only (4,9)/(5,9)+(4,10)/(5,10) are plain"
+    },
+    {
+      "rect": "c14-c18 x r9-r10 (and +15, +34)",
+      "kind": "doorway + stair + altar composite",
+      "detail": "(14,*) wall with a right-hand column, (15,*) the dark doorway void under a lintel, (16,*) a left-hand column + wall, (17,*) a dark opening under a triangle frieze containing a descending stone STAIRCASE, (18,*) a dark void containing a stepped altar/pedestal with a shelf ledge. All opaque (the openings are painted #362e3f, not alpha)."
+    },
+    {
+      "rect": "c20-c23 x r9-r10 (and +15, +34)",
+      "kind": "collapsed / cracked wall break",
+      "detail": "(20,*) wall with a jagged crack down its right edge, (21,*) shattered wall fragment, (22,*) wall with a jagged crack down its left edge, (23,*) SOLID FLAT #362e3f void (no texture at all). These are a scenic composite, not blocks."
+    },
+    {
+      "rect": "c20-c22 x r3 and c20-c22 x r4-r6 (and +15, +34)",
+      "kind": "NOT an autotile — discrete tiles",
+      "detail": "Called out so nobody skips them. r3 = inlay floor variants; r4-r6 = a 3x3 set of engraved floor plates (arrow up/right/ring, arrow left/down/square, raised boss/recessed frame/triangle). All fully opaque and independently usable."
+    }
+  ],
+
+  "decorations": {
+    "verdict": "Columns 0-23 contain almost NO transparent prop decorations. A per-cell alpha scan (256 px/cell) found every cell in this half is either 100% opaque or 100% transparent, with exactly four partial cells per palette variant — and those four are roof edges, not props. There are no chains, bars, skulls, urns or braziers in this column half; if they exist on this sheet they must live in c24-c48.",
+    "partiallyTransparentCells": [
+      { "cells": "(8,1), (9,1)", "what": "Roof EAVE caps: dark-purple roof body cut by a pale diagonal edge running down-right at (8,1) and down-left at (9,1) — the two halves of a shallow V. ~50-90% opaque.", "use": "cross-quad / cutout roof trim only" },
+      { "cells": "(11,1), (12,1)", "what": "Roof GABLE caps: pale-and-blue shingle slopes rising to the right at (11,1) and to the left at (12,1), transparent above the slope line.", "use": "cutout roof trim only" },
+      { "cells": "(8,16), (9,16), (11,16), (12,16)", "what": "Gold-palette twins of the four above (identical alpha mask; (11,16)/(12,16) are thinner, <50% opaque)." },
+      { "cells": "(8,35), (9,35), (11,35), (12,35)", "what": "Terracotta-palette twins of the four above (I looked: (11,35)/(12,35) are terracotta slopes with a gold accent line)." }
+    ],
+    "opaqueDetailWorthPrefabbing": [
+      { "cell": "(9,24) + (9,25)", "what": "A standing IDOL STATUE carved into the gold wall — rounded head, shoulders, and a plinth that runs into the base course. Best used as a prefab wall inlay, not a block." },
+      { "cell": "(9,9) + (9,10)", "what": "Pale PILASTER COLUMN with a full-height cobalt inlay strip. Terracotta twin at (9,43)/(9,44) has gold caps top and bottom." },
+      { "cell": "(6,9) + (6,10)", "what": "Hanging blue LAMP/SCONCE box under the frieze with a matching pedestal below." },
+      { "cell": "(7,9) + (7,10)", "what": "Framed wall PLAQUES (top and bottom)." },
+      { "cell": "(8,9)", "what": "Cobalt 'I' / hourglass EMBLEM tablet set into the ashlar." },
+      { "cell": "(17,9) + (17,10)", "what": "Descending stone STAIRCASE inside a dark opening (terracotta version at (17,43)/(17,44), gold at (17,24)/(17,25))." },
+      { "cell": "(18,9) + (18,10)", "what": "Stepped stone ALTAR / pedestal in a dark void with a shelf ledge above — a ready-made shrine centrepiece." },
+      { "cells": "(6,43),(7,43),(9,43),(6,44),(7,44),(9,44)", "what": "Green VINES trailing down the terracotta meander wall. IMPORTANT: they are painted directly onto the opaque wall, NOT drawn on alpha — you cannot lift them out as a cross-quad without repainting the backdrop." },
+      { "cells": "(19,38)", "what": "A single moss tuft on red cobble (opaque background)." },
+      { "cells": "(20,9)-(22,9), (20,10)-(22,10)", "what": "Jagged wall COLLAPSE / crack pieces. Opaque, with #362e3f void showing through the breach — usable as prefab detail if the block behind is also dark." }
+    ]
+  },
+
+  "notes": [
+    "DISCIPLINE: every coordinate here was read off a magnified, gridded render of the source PNG (tools/out/zoom/*, regenerated in-session) plus the labelled contact sheets. Where I could not resolve a cell I said so rather than guessing.",
+    "The three palette variants are the same layout at row offsets 0 / +15 / +34. Verified by a per-cell alpha mask that is byte-identical for rows 1-10, 16-25, 35-44. So any coordinate (c,r) in the grey set has a gold twin at (c,r+15) and a terracotta twin at (c,r+34).",
+    "#362e3f (flat dark purple) is OPAQUE. It is the sheet's painted 'void'. If you alpha-key a tile against transparency you will still ship a purple hole. Any tile touching a doorway, roof underside or wall breach carries it.",
+    "There is no pure-ashlar 16x16 cell in the wall elevation strips: the frieze band (top ~5px of r9) and the balustrade skirt (bottom ~6px of r10) always intrude. Wall blocks from this sheet must be built as a 2-block vertical pair, or the bands must be repainted in-pipeline (we already paint web/ash/charred_log, so this is precedent-following).",
+    "Moods this half actually delivers, ranked: (1) mossy overgrown ruin — moss_carpet + mossy_cobble + ruin_cobble_red + vine wall, (2) ancient/eldritch temple — terracotta meander relief + engraved rune plates + stepped altar, (3) crypt/catacomb — pale_ruin_stone + crypt_slate_tile + cobalt frieze wall. It delivers NO sewer, NO prison bars, NO ossuary bone.",
+    "Rows 0, 8, 11-15, 26-34 and 45-51 are completely empty across c0-23 — do not waste an extraction pass on them.",
+    "(23,9) / (23,24) / (23,43) are a single flat untextured #362e3f square. Technically a fully-opaque tile, but featureless; if a pitch-black block is wanted, author it, don't extract it."
+  ]
+}

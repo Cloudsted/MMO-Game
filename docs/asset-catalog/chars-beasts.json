@@ -1,0 +1,478 @@
+{
+  "group": "beasts",
+  "generated": "2026-07-08",
+  "method": "Every entry below was read off the pre-rendered contact sheets in tools/out/sheets/ (Read tool, actual pixels looked at). Ambiguous cells were re-cropped from the raw PNG and zoomed 14-18x before labelling. Coordinates are quoted exactly as printed under each cell.",
+  "sheetCount": 23,
+  "characterCount": 51,
+  "warnings": [
+    "nightmare_run_1.png — index.json guesses layout 'single+char8'. The char8 reading is WRONG: the contact sheet nightmare_run_1-chars.png slices every horse in half across char-cell boundaries. The coherent reading is SINGLE: 192x192 = 3 cols x 4 rows of 64x48 frames (one character, wide frames because of the flame trail). Use the single reading.",
+    "BAKED DROP SHADOWS: lion_1, lioness_1, tiger_1, unicorn1, sasquatch_1, cerberus_1 and nightmare_run_1 all have a dark blue-gray oval shadow painted INTO the sprite. Our renderer already casts real sprite shadows — these will double up. Erase/alpha-key the oval in the extraction pipeline or accept a visible dark disc under the billboard.",
+    "horses.png — the BOTTOM char row (0,1 / 1,1 / 2,1 / 3,1) is NOT four extra breeds. It is the SAME four coat colours in a HEAD-DOWN GRAZING pose (verified by zooming frame (0,128) at 18x: a palomino with its muzzle on the ground). Directions are still present. Use the top row for walking mobs, the bottom row for idle/grazing ambience.",
+    "animals1/2/3 + horses are 32x32 quadruped cells and DO decompose cleanly as char8 (4x2 chars, each 3 cols x 4 rows). No off-grid halves found on any of the four.",
+    "animals2 char (0,1) and (1,1) read as 'doubled/overlapping cows' at contact-sheet scale. Zoomed to 18x on raw frame (0,128..) they are clean single cows/bulls — a scale artefact, NOT a grid bug. They are simply darker-toned recolours of the (0,0)/(1,0) cow and bull.",
+    "Quadruped row order on the 32x32 sheets is the standard 4-row walk grid, but the artist drew the 'down' row as a near-profile view too, so all four rows look side-on. Direction picking will need eyeballing per animal rather than assuming down=front.",
+    "chameleon / platypus / badger / bushbaby / butterflyA / butterflyB / gorilla_1 all share the 42x36 frame (126x144 sheet) = single character, 3x4. All four rows are on-grid and legible.",
+    "No sheet in this group is a humanoid walk sheet except the two werewolves and sasquatch — heightM for the quadrupeds is estimated from body proportions against the existing wolf=1.2 convention."
+  ],
+  "entries": [
+    {
+      "sheet": "animals1.png",
+      "layout": "char8",
+      "charCell": "0,0",
+      "frame": "32x32",
+      "who": "Beagle-type dog: white body with chocolate-brown saddle patch and brown floppy ears, black nose, white-tipped tail, walking on all fours",
+      "heightM": 0.5,
+      "mobIdea": "Village hound / farmer's dog — harmless ambient NPC in the hub, or a hostile 'stray dog' L1 trash mob"
+    },
+    {
+      "sheet": "animals1.png",
+      "layout": "char8",
+      "charCell": "1,0",
+      "frame": "32x32",
+      "who": "Golden-yellow retriever-type dog, floppy ears, plain coat, upturned tail",
+      "heightM": 0.5,
+      "mobIdea": "Friendly hub dog that follows NPCs around; or a hunter's hound escort"
+    },
+    {
+      "sheet": "animals1.png",
+      "layout": "char8",
+      "charCell": "2,0",
+      "frame": "32x32",
+      "who": "Slate-gray dog with a pink tongue/nose visible in the front frames, floppy ears",
+      "heightM": 0.5,
+      "mobIdea": "Gloomfen 'mangy cur' — a weak scavenger that flees at low hp"
+    },
+    {
+      "sheet": "animals1.png",
+      "layout": "char8",
+      "charCell": "3,0",
+      "frame": "32x32",
+      "who": "Tan/rust-brown dog, floppy ears, slightly leaner build than the others",
+      "heightM": 0.5,
+      "mobIdea": "Bandit camp guard dog — spawns as a pack add with the marauders"
+    },
+    {
+      "sheet": "animals1.png",
+      "layout": "char8",
+      "charCell": "0,1",
+      "frame": "32x32",
+      "who": "White cat, pointed upright ears, long thin tail carried high",
+      "heightM": 0.35,
+      "mobIdea": "Hub city stray cat, pure ambience (no combat); sits near the market stalls"
+    },
+    {
+      "sheet": "animals1.png",
+      "layout": "char8",
+      "charCell": "1,1",
+      "frame": "32x32",
+      "who": "Gray cat with pink nose, pointed ears, long tail",
+      "heightM": 0.35,
+      "mobIdea": "Witch's familiar accompanying an NPC caster"
+    },
+    {
+      "sheet": "animals1.png",
+      "layout": "char8",
+      "charCell": "2,1",
+      "frame": "32x32",
+      "who": "Orange tabby cat with darker orange stripes along the back and tail",
+      "heightM": 0.35,
+      "mobIdea": "Tavern cat; or a tiny 'feral cat' L1 mob for a starter quest"
+    },
+    {
+      "sheet": "animals1.png",
+      "layout": "char8",
+      "charCell": "3,1",
+      "frame": "32x32",
+      "who": "Tan/fawn cat with dark brown ear tips and muzzle (Siamese-like point colouring)",
+      "heightM": 0.35,
+      "mobIdea": "Enchanter's familiar sitting beside Selvara in the hub"
+    },
+    {
+      "sheet": "animals2.png",
+      "layout": "char8",
+      "charCell": "0,0",
+      "frame": "32x32",
+      "who": "Dairy cow: white body with chocolate-brown patches, tan muzzle, two short pale horns, visible udder, black hooves (verified at 18x on frame 0,0)",
+      "heightM": 1.4,
+      "mobIdea": "Livestock for a farm prefab — passive, drops raw meat/hide when killed"
+    },
+    {
+      "sheet": "animals2.png",
+      "layout": "char8",
+      "charCell": "1,0",
+      "frame": "32x32",
+      "who": "Brown bull/ox, solid russet coat, prominent curved white horns, heavy shoulders",
+      "heightM": 1.5,
+      "mobIdea": "Enraged bull — a neutral mob that only aggros when struck, high charge damage"
+    },
+    {
+      "sheet": "animals2.png",
+      "layout": "char8",
+      "charCell": "2,0",
+      "frame": "32x32",
+      "who": "Pink pig, curly tail, small pointed ears, snout",
+      "heightM": 0.8,
+      "mobIdea": "Farm pig; ties in with the existing roast_boar_leg food economy"
+    },
+    {
+      "sheet": "animals2.png",
+      "layout": "char8",
+      "charCell": "3,0",
+      "frame": "32x32",
+      "who": "White goat with black backswept horns, dark hooves and a dark beard",
+      "heightM": 0.9,
+      "mobIdea": "Mountain/hillside goat; passive, skittish (flee brain)"
+    },
+    {
+      "sheet": "animals2.png",
+      "layout": "char8",
+      "charCell": "0,1",
+      "frame": "32x32",
+      "who": "Second dairy cow — same silhouette as (0,0) but with a darker, more brown-dominant hide (brown body, white patches inverted)",
+      "heightM": 1.4,
+      "mobIdea": "Coat variant so a herd doesn't read as clones"
+    },
+    {
+      "sheet": "animals2.png",
+      "layout": "char8",
+      "charCell": "1,1",
+      "frame": "32x32",
+      "who": "Second brown bull — darker/duller russet than (1,0), same white horns",
+      "heightM": 1.5,
+      "mobIdea": "Herd variant / a slightly tougher bull elite"
+    },
+    {
+      "sheet": "animals2.png",
+      "layout": "char8",
+      "charCell": "2,1",
+      "frame": "32x32",
+      "who": "Piglet — the same pink pig at roughly half scale within the cell",
+      "heightM": 0.45,
+      "mobIdea": "Piglets that scatter around the sow; pure flavour"
+    },
+    {
+      "sheet": "animals2.png",
+      "layout": "char8",
+      "charCell": "3,1",
+      "frame": "32x32",
+      "who": "Gray goat with black horns, beard and hooves — recolour of (3,0)",
+      "heightM": 0.9,
+      "mobIdea": "Herd variant; or a Cinderrift ash-goat recolour target"
+    },
+    {
+      "sheet": "animals3.png",
+      "layout": "char8",
+      "charCell": "0,0",
+      "frame": "32x32",
+      "who": "Lamb / shorn sheep: small, thin, smooth white coat (no fleece volume), pink ears, black legs",
+      "heightM": 0.7,
+      "mobIdea": "Lamb in a pasture prefab; follows the sheep"
+    },
+    {
+      "sheet": "animals3.png",
+      "layout": "char8",
+      "charCell": "1,0",
+      "frame": "32x32",
+      "who": "White sheep with a thick fluffy dithered fleece, small dark face, stubby legs",
+      "heightM": 0.9,
+      "mobIdea": "Pasture livestock; drops wool (a new cloth crafting item)"
+    },
+    {
+      "sheet": "animals3.png",
+      "layout": "char8",
+      "charCell": "2,0",
+      "frame": "32x32",
+      "who": "Black/dark-gray sheep, same fluffy fleece silhouette, dark face and legs",
+      "heightM": 0.9,
+      "mobIdea": "Black sheep — rare spawn that drops a better wool"
+    },
+    {
+      "sheet": "animals3.png",
+      "layout": "char8",
+      "charCell": "3,0",
+      "frame": "32x32",
+      "who": "Cream/off-white sheep, fluffy fleece, slightly cleaner and larger than (1,0)",
+      "heightM": 0.9,
+      "mobIdea": "Herd variant"
+    },
+    {
+      "sheet": "animals3.png",
+      "layout": "char8",
+      "charCell": "0,1",
+      "frame": "32x32",
+      "who": "Tiny yellow chick — a fluffy yellow blob with a dot eye and small beak, occupies maybe a quarter of the cell",
+      "heightM": 0.2,
+      "mobIdea": "Chicks trailing the hen; ambient farmyard life"
+    },
+    {
+      "sheet": "animals3.png",
+      "layout": "char8",
+      "charCell": "1,1",
+      "frame": "32x32",
+      "who": "Brown hen: rust-brown body, red comb and wattle, yellow beak",
+      "heightM": 0.5,
+      "mobIdea": "Hub chicken — the classic 'don't hit the chicken' ambient mob"
+    },
+    {
+      "sheet": "animals3.png",
+      "layout": "char8",
+      "charCell": "2,1",
+      "frame": "32x32",
+      "who": "White hen, red comb and wattle, yellow beak",
+      "heightM": 0.5,
+      "mobIdea": "Chicken variant; drops feather + egg"
+    },
+    {
+      "sheet": "animals3.png",
+      "layout": "char8",
+      "charCell": "3,1",
+      "frame": "32x32",
+      "who": "Turkey: bulky mottled brown body with a fanned tail, a small blue head with a red wattle",
+      "heightM": 0.7,
+      "mobIdea": "Wild turkey in the forest; low-level hunting target, drops poultry"
+    },
+    {
+      "sheet": "horses.png",
+      "layout": "char8",
+      "charCell": "0,0",
+      "frame": "32x32",
+      "who": "Palomino horse: tan/sand body, dark chocolate mane and tail, gray hooves and muzzle, standing/walking with head up",
+      "heightM": 1.7,
+      "mobIdea": "Stabled horse in the hub (ambience) and the base for a future mount"
+    },
+    {
+      "sheet": "horses.png",
+      "layout": "char8",
+      "charCell": "1,0",
+      "frame": "32x32",
+      "who": "Chestnut horse: rich red-brown body, near-black mane and tail, head up",
+      "heightM": 1.7,
+      "mobIdea": "Bandit fort's tethered horse; a marauder outrider mount"
+    },
+    {
+      "sheet": "horses.png",
+      "layout": "char8",
+      "charCell": "2,0",
+      "frame": "32x32",
+      "who": "White horse with a gray mane and tail and dark hooves, head up",
+      "heightM": 1.7,
+      "mobIdea": "Knightly/parade horse for a Valdrenn ghost patrol"
+    },
+    {
+      "sheet": "horses.png",
+      "layout": "char8",
+      "charCell": "3,0",
+      "frame": "32x32",
+      "who": "Dapple-gray horse, darker gray mane and tail, head up",
+      "heightM": 1.7,
+      "mobIdea": "Wild horse herd on the forest plains — flees on sight"
+    },
+    {
+      "sheet": "horses.png",
+      "layout": "char8",
+      "charCell": "0,1",
+      "frame": "32x32",
+      "who": "The SAME palomino, head lowered to the ground grazing (verified at 18x: muzzle touching the floor, mane over the neck)",
+      "heightM": 1.5,
+      "mobIdea": "Idle/graze pose — swap to this sheet when a horse mob's brain state is idle"
+    },
+    {
+      "sheet": "horses.png",
+      "layout": "char8",
+      "charCell": "1,1",
+      "frame": "32x32",
+      "who": "Chestnut horse, grazing pose (head down)",
+      "heightM": 1.5,
+      "mobIdea": "Idle/graze pose variant"
+    },
+    {
+      "sheet": "horses.png",
+      "layout": "char8",
+      "charCell": "2,1",
+      "frame": "32x32",
+      "who": "White horse, grazing pose (head down)",
+      "heightM": 1.5,
+      "mobIdea": "Idle/graze pose variant"
+    },
+    {
+      "sheet": "horses.png",
+      "layout": "char8",
+      "charCell": "3,1",
+      "frame": "32x32",
+      "who": "Dapple-gray horse, grazing pose (head down)",
+      "heightM": 1.5,
+      "mobIdea": "Idle/graze pose variant"
+    },
+    {
+      "sheet": "badger.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "42x36",
+      "who": "European badger: low, wedge-shaped body, dark slate-blue/charcoal fur, a white-and-black striped face mask, pale head crown, small white paws/claws. Front row shows the striped face head-on; side rows show the long low body; back row shows a broad rump with the stripes over the shoulders.",
+      "heightM": 0.5,
+      "mobIdea": "Forest 'burrow badger' L3 — a low, fast biter that spawns from a sett prefab hole and defends it aggressively"
+    },
+    {
+      "sheet": "bushbaby.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "42x36",
+      "who": "Bushbaby/galago: small gray-blue furred primate with HUGE round orange saucer eyes, oversized translucent pink ears, pink paws and nose, and a long thin tail dragging behind. Front frame is dominated by the two orange eyes; side frames show the long tail; back frame shows the tail lifted between the ears.",
+      "heightM": 0.4,
+      "mobIdea": "Nocturnal Gloomfen critter — only spawns at night, harmless, its glowing eyes make it a lovely torch-lit ambient sprite"
+    },
+    {
+      "sheet": "butterflyA.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "42x36",
+      "who": "Golden-orange butterfly: four scalloped wings in warm yellow/amber with dark maroon wing-tips and edging, a dark navy segmented body with two tiny pale-blue eye dots, faint antennae. Side rows show the wings angled mid-flap; the 'up' row shows the full open-wing spread.",
+      "heightM": 0.3,
+      "mobIdea": "Forest/meadow ambience — a drifting butterfly entity, or a golden 'wisp' familiar. Pairs with the existing ParticleField for pollen"
+    },
+    {
+      "sheet": "butterflyB.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "42x36",
+      "who": "Cyan-blue butterfly, identical silhouette to butterflyA: four scalloped wings in bright sky-blue/cyan with darker teal edging, dark body, faint glow. Reads as a morpho or an arcane spirit-moth.",
+      "heightM": 0.3,
+      "mobIdea": "Arcane mana-moth in the Atelier / around Selvara; or a Gloomfen wisp-lure that leads players to a loot cache"
+    },
+    {
+      "sheet": "chameleon.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "42x36",
+      "who": "Bright lime-green chameleon with teal-blue shading: a serrated crest running along the spine, a bulging turret eye with a yellow iris, a tightly curled tail, and splayed grasping feet. Front frame shows it face-on with both eyes and splayed legs; side frames show the coil of the tail clearly.",
+      "heightM": 0.35,
+      "mobIdea": "Cloaking chameleon — a jungle/swamp mob that goes semi-transparent (alpha) when idle and only becomes fully visible when it attacks"
+    },
+    {
+      "sheet": "platypus.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "42x36",
+      "who": "Platypus: rusty-brown furred low body, a broad flat gray duck bill with two dark nostril dots, a wide flat paddle tail, splayed webbed gray feet, and a bluish tint of water splash under the belly. Front frame is bill-first; side frames show bill-to-paddle-tail profile; back frame shows the paddle tail broadside.",
+      "heightM": 0.35,
+      "mobIdea": "Pond/river critter for the forest pond and the Gloomfen shallows — passive but its venomous spur could make it a nasty low-level poison DoT applier"
+    },
+    {
+      "sheet": "gorilla_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "42x36",
+      "who": "Silverback gorilla: hulking dark slate-blue/charcoal ape, huge sloping shoulders and a domed crested skull, knuckle-walking posture with long forelimbs, pale gray muzzle with visible white teeth and white eyes, pale knuckles and feet. Back frame is an almost featureless dark dome of shoulders.",
+      "heightM": 1.6,
+      "mobIdea": "Jungle silverback L10 — knockback slam attack, enrages (speed + damage) below 40% hp, guards a fruit-grove loot cache. Also the natural 'lesser' cousin of the sasquatch"
+    },
+    {
+      "sheet": "lion_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "50x46",
+      "who": "Male lion: golden-yellow big cat with a large shaggy amber mane framing a small dark-eyed face, a tufted tail, heavy chest. A dark blue-gray oval shadow is PAINTED INTO the sprite. Front frame is mane-dominated; side frames show the full profile with the tail tuft; back frame shows the rump with the tail hanging straight down.",
+      "heightM": 1.2,
+      "mobIdea": "Savanna/desert pride leader L12 — pounce opener + roar that fears (short movement lock). Pairs with lioness spawn packs"
+    },
+    {
+      "sheet": "lioness_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "50x46",
+      "who": "Lioness: the same golden big cat with NO mane, small rounded ears, a slimmer head, a long tail with a dark tuft. Same painted blue-gray oval shadow. Front frame reads as a compact cat face with two round ears.",
+      "heightM": 1.1,
+      "mobIdea": "Pack hunter L10 — spawns 3-4 to the lion's 1; flanking/separation already handled by MOB_SEPARATION"
+    },
+    {
+      "sheet": "tiger_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "50x46",
+      "who": "Tiger: bright orange big cat with bold black stripes across the body, tail and rear, a cream/white muzzle, chest and inner legs, pale eyes. Same painted blue-gray oval shadow. The back frame is a striking symmetrical column of stripes down the spine.",
+      "heightM": 1.2,
+      "mobIdea": "Solo apex ambush predator L13 — high burst, low hp, stealth approach; a forest/jungle rare elite worth a trophy (tiger_pelt)"
+    },
+    {
+      "sheet": "cerberus_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "who": "Three-headed hound: slate teal-blue fur with a darker ridged spine, THREE wolf heads (the two outer heads have glowing pink-red eyes, the centre head has glowing orange-yellow eyes), tall pointed ears on each head, and glowing orange claws on all four paws. Front frame shows all three heads fanned side by side; side frames show the heads overlapping in profile; back frame shows three sets of ears above a broad rump.",
+      "heightM": 1.6,
+      "mobIdea": "Cerberus, Warden of the Vaults — a crypt_depths mini-boss guarding the lich's dais. Three heads = a natural 3-attack kit (bite / triple-bite cleave / hellfire breath projectile) and a summon-free way to justify high threat"
+    },
+    {
+      "sheet": "kitsune_walking_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "who": "Kitsune: a small cream-white fox with rose-pink ear interiors and pink-red shading on the ear tips and tail tips, dark slit eyes, and a huge FAN OF MULTIPLE BUSHY TAILS (I count 5-7 splayed behind it). Front frame shows the tail fan spreading behind the head like a halo; side frames show the fan trailing; back frame shows the tails radiating outward like a peacock.",
+      "heightM": 0.9,
+      "mobIdea": "Kitsune spirit — a caster fox mob that teleport-blinks (short-range self reposition) and throws foxfire bolts. Or a neutral shrine NPC at a wayshrine prefab who grants a buff. The tail count could scale with level"
+    },
+    {
+      "sheet": "unicorn1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "who": "Unicorn: a tall pale white/ivory horse with a long straight white spiral horn, a flowing golden-orange mane running down the neck and a matching golden-orange tail, gray hooves. Painted blue-gray oval shadow beneath. Front frame shows the horn foreshortened to a stub between the ears with the orange forelock over the face.",
+      "heightM": 1.9,
+      "mobIdea": "Sacred unicorn — a neutral forest-glade rare that only turns hostile if attacked, hits with a piercing horn charge and self-heals. Killing it should carry a real cost (curse debuff); sparing it grants a blessing buff"
+    },
+    {
+      "sheet": "nightmare_run_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "64x48",
+      "who": "Nightmare (demon horse): a steel-blue/slate horse with glowing pale-white slit eyes, whose MANE AND TAIL ARE LIVE ORANGE-RED FIRE and whose four hooves each trail a burst of flame. No horn. The frames are 64 px wide because the flame trail streams behind. Faint painted shadow under the hooves.",
+      "heightM": 1.9,
+      "mobIdea": "Cinderrift Nightmare L14 — a fast charging mount-beast that leaves a burning ground trail (reuse the `pillars` hazard machinery for the trail). The obvious dark mirror of the unicorn, and the natural steed for a Valdrenn ghost-knight"
+    },
+    {
+      "sheet": "werewolf_single_brown_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "who": "Werewolf: an upright bipedal wolf-man with tall pointed ears, a long snarling muzzle, a muscular chest with a lighter tan belly, digitigrade hind legs, and glowing pale-yellow claws on both hands and both feet. Coat is red-brown/auburn with tan highlights. Side frames show a hunched, forward-leaning stalk; back frame shows a broad shaggy back with the ears silhouetted.",
+      "heightM": 2.0,
+      "mobIdea": "Werewolf L15 — a night-only forest/Gloomfen elite. Frenzy: attack speed ramps as its hp drops. Perfect fit for the existing nightLight/day-cycle system (only spawns after dusk, flees/despawns at dawn)"
+    },
+    {
+      "sheet": "werewolf_single_gray_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x53",
+      "who": "Identical werewolf silhouette in a cold slate-gray/blue-gray coat with a pale gray muzzle and chest; the claws still glow pale yellow. Reads as a frost/moonlit variant of the brown one.",
+      "heightM": 2.0,
+      "mobIdea": "Alpha werewolf (pack leader) or a frozen-vaults variant; recolour pairs make an easy elite/normal tier split with zero new art"
+    },
+    {
+      "sheet": "giantsquirrel_single_brown_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "27x36",
+      "who": "Giant squirrel: rich chestnut-brown fur with cream ear tufts, cream cheeks and cream chest, dark eyes, and an enormous bushy tail arched up over its back. Front frame shows it sitting upright with paws held to the chest; side frames are dominated by the great arched tail; back frame is mostly tail.",
+      "heightM": 1.0,
+      "mobIdea": "Giant squirrel L4 — a forest-canopy mob that leaps between tree tops (needs the maxDrop path) and pelts you with acorns (a cheap ranged projectile). Comic but genuinely annoying, which is the point"
+    },
+    {
+      "sheet": "giantsquirrel_single_gray_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "27x36",
+      "who": "The same giant squirrel in slate-gray/sage-green fur with white ear tufts and a white chest; the huge arched tail is gray with a paler underside.",
+      "heightM": 1.0,
+      "mobIdea": "Recolour variant for a second forest zone; or an 'ashen squirrel' for the Cinderrift approach"
+    },
+    {
+      "sheet": "sasquatch_1.png",
+      "layout": "single",
+      "charCell": "-",
+      "frame": "52x72",
+      "who": "Sasquatch: a very tall shaggy bipedal ape covered in dithered auburn/red-brown fur, with a pale cream face bearing dark sunken eye sockets and a dark snarling mouth, long arms ending in big pale cream fists, and large pale feet. A blue-gray oval shadow is painted in. The 52x72 frame is the tallest in this group — clearly a boss-scale silhouette.",
+      "heightM": 2.6,
+      "mobIdea": "Sasquatch, the Hollow Giant — a forest open-world boss on a long respawn (cf. the Furnace Golem). Ground-pound knockback, boulder throw (predictive projectile + aoeRadius), enrage rally at 50%. The gorilla is its natural add"
+    }
+  ]
+}

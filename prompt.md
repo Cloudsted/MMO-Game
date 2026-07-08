@@ -479,7 +479,7 @@ partially-transparent edge tiles. Select fully-opaque tiles programmatically (sc
 for 100%-opaque regions), don't eyeball. Known-good solid tiles: water at (32,64),
 lava at (528,64) in `Time Fantasy/TILESETS/water.png`.
 
-**IconSet**: `IconSet/tf_icon_16.png` is a 16-column grid of 16 px icons, addressed
+**IconSet**: `IconSet/tficons_limited_16.png` is a 16-column grid of 16 px icons, addressed
 `(col, row)` — the source for item/UI icons.
 
 **Asset gaps to design around**: most sprites have ONLY 3-frame walk cycles — no

@@ -15,6 +15,14 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = resolve(ROOT, "assets", "time-fantasy");
 const OUT = resolve(ROOT, "client", "assets");
 
+// The one icon sheet: 16 cols x 64 rows of 16x16 cells. It replaced the old
+// tf_icon_16 (same line art, revamped palette, ~3x the content). Every
+// shared/items.json `icon: [col,row]` addresses THIS sheet, and the block-item
+// icons are appended one row past its bottom (row 64). Coordinates below were
+// each confirmed against a rendered contact sheet — see tools/contact-sheet.mjs
+// and LESSONS.md ("never trust a coordinate you haven't seen").
+const ICON_SHEET = "tficons_limited_16.png";
+
 function loadPng(path) {
   return PNG.sync.read(readFileSync(path));
 }
@@ -101,21 +109,6 @@ function grabComponent(png, seedX, seedY) {
   return out;
 }
 
-/** Pack sprites into one atlas (single row, 2px padding) + region metadata. */
-function buildAtlas(sprites) {
-  const pad = 2;
-  const width = sprites.reduce((acc, s) => acc + s.png.width + pad, pad);
-  const height = sprites.reduce((acc, s) => Math.max(acc, s.png.height), 0) + pad * 2;
-  const atlas = new PNG({ width, height });
-  const regions = {};
-  let x = pad;
-  for (const s of sprites) {
-    PNG.bitblt(s.png, atlas, 0, 0, s.png.width, s.png.height, x, pad);
-    regions[s.name] = { x, y: pad, w: s.png.width, h: s.png.height };
-    x += s.png.width + pad;
-  }
-  return { atlas, regions };
-}
 
 // ---------- character/mob/NPC walk sheets (RPG-Maker 3x4 layout) ----------
 // Multi-character sheets hold 8 characters (4 across x 2 down); char: [cx,cy]
@@ -233,7 +226,7 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
   const waterSheet = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "water.png"));
   const ff = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "farm and fort.png"));
   const outsideSheet = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "outside.png"));
-  const icons16 = loadPng(resolve(SRC, "IconSet", "tf_icon_16.png"));
+  const icons16 = loadPng(resolve(SRC, "IconSet", ICON_SHEET));
   // worldgen-overhaul sheets (blocks 26-50)
   const darkDim = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "dark dimension.png"));
   const insideSheet = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "inside.png"));
@@ -551,12 +544,12 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
     roof: () => t16(house, 475, 156),
     path: () => t16(terrain, 16, 128),
     bedrock: () => t16(dungeonSheet, 432, 224),
-    torch: () => t16(icons16, 6 * 16, 12 * 16),
+    torch: () => t16(icons16, 12 * 16, 24 * 16), // lit wooden torch
     tall_grass: () => chromaKey(t16(terrain, 96, 160), SAND_KEY),
     flower_red: () => chromaKey(t16(terrain, 176, 160), SAND_KEY),
     flower_yellow: () => chromaKey(t16(terrain, 144, 160), SAND_KEY),
-    mushroom_red: () => tint(t16(icons16, 12 * 16, 15 * 16), [225, 70, 60], 0.55),
-    mushroom_brown: () => tint(t16(icons16, 13 * 16, 15 * 16), [195, 145, 85], 0.5),
+    mushroom_red: () => tint(t16(icons16, 11 * 16, 55 * 16), [225, 70, 60], 0.55), // pale cap: takes the red tint cleanly
+    mushroom_brown: () => tint(t16(icons16, 1 * 16, 21 * 16), [195, 145, 85], 0.5), // a second, distinct mushroom silhouette
     crystal: () => crystalTile,
     glass: () => glass,
     // ---- worldgen overhaul (blocks 26-50; every grab probed by alpha-scan/zoom) ----
@@ -568,7 +561,7 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
     dead_leaves: () => t16(outsideSheet, 448, 128), // autumn-orange canopy interior
     reeds: () => stripBlue(t16(outsideSheet, 240, 224)), // cattail tuft, water splash keyed out
     vines: () => tint(flipV(chromaKey(t16(terrain, 96, 160), SAND_KEY)), [88, 150, 92], 0.45),
-    glow_shroom: () => tint(t16(icons16, 12 * 16, 15 * 16), [70, 225, 195], 0.6),
+    glow_shroom: () => tint(t16(icons16, 11 * 16, 55 * 16), [70, 225, 195], 0.6),
     web: () => web,
     dark_stone: () => t16(dungeonSheet, 16, 176), // dark blue-gray pebbled rock band
     dark_bricks: () => t16(darkDim, 160, 80), // fortress masonry wall face
@@ -586,7 +579,7 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
     hay: () => hayBlock,
     palisade: () => t16(ff, 416, 192), // vertical sharpened-log wall body
     iron_bars: () => t16(ff, 608, 544), // cage grid (cutout: gaps stay transparent)
-    lantern: () => t16(icons16, 5 * 16, 12 * 16), // lit lantern icon
+    lantern: () => t16(icons16, 11 * 16, 24 * 16), // the LIT lantern ([10,24] is the dark one)
     banner: () => t16(castle, 224, 224), // small shield pennant
     // ---- Sundered City (blocks 51-55) ----
     cracked_bricks: () => crackedBricks,
@@ -623,11 +616,11 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
 
 // ---------- item icons (whole 16px IconSet; client addresses (col,row)) ----------
 {
-  const icons = loadPng(resolve(SRC, "IconSet", "tf_icon_16.png"));
+  const icons = loadPng(resolve(SRC, "IconSet", ICON_SHEET));
   // append one extra row of icons for block items: their icon IS their tile.
-  // items.json references these as (col, <original rows>) — currently row 21.
+  // items.json references these as (col, <rows of the sheet>) — currently row 64.
   // Order is LOAD-BEARING: col i = position i (block_dark_bricks..block_bookshelf
-  // are cols 7-13). Append only.
+  // are cols 7-13). Append only. tools/verify-icons.mjs enforces both.
   const BLOCK_ITEM_TILES = [
     "planks", "log", "cobblestone", "stone_bricks", "thatch", "glass", "torch",
     "dark_bricks", "marble", "lantern", "palisade", "hay", "iron_bars", "bookshelf",
@@ -643,35 +636,24 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
   savePng(extended, "ui/icons.png");
   saveJson({ cell: 16, cols: Math.floor(extended.width / 16), rows: baseRows + 1 }, "ui/icons.json");
 
-  // 32px icon variants for world/viewmodel use (same grid, 32px cells)
-  const icons32 = loadPng(resolve(SRC, "IconSet", "tf_icon_32.png"));
-  // loot bag billboard: the brown sack at (13,12)
-  savePng(trim(grab(icons32, 13 * 32, 12 * 32, 32, 32)), "sprites/loot_bag.png");
-  // first-person held-item viewmodels: EVERY item gets one, extracted at the
-  // same grid cell as its inventory icon — the hand always matches the bag
-  // (weapons, potions, bread, building pieces alike)
-  const itemsJson = JSON.parse(
-    readFileSync(resolve(ROOT, "shared", "items.json"), "utf8").replace(/^﻿/, "")
-  );
-  for (const [id, def] of Object.entries(itemsJson.items)) {
-    if (def.block) {
-      // block items: the hand shows the block tile (2x nearest-neighbour)
-      const tile = TILE_PNGS[def.block];
-      if (!tile) throw new Error(`held sprite: no tile for block ${def.block}`);
-      const big = new PNG({ width: 32, height: 32 });
-      for (let y = 0; y < 32; y++) {
-        for (let x = 0; x < 32; x++) {
-          const s = ((y >> 1) * 16 + (x >> 1)) * 4;
-          const d = (y * 32 + x) * 4;
-          for (let k = 0; k < 4; k++) big.data[d + k] = tile.data[s + k];
-        }
-      }
-      savePng(big, `ui/held_${id}.png`);
-      continue;
+  // Dropped-loot billboard: the brown drawstring sack at [1,16]. There is no 32px
+  // companion sheet any more, so it is doubled with nearest-neighbour — the same
+  // trick the block held-items used, and correct for pixel art.
+  const sack = grab(icons, 1 * 16, 16 * 16, 16, 16);
+  const bag = new PNG({ width: 32, height: 32 });
+  for (let y = 0; y < 32; y++) {
+    for (let x = 0; x < 32; x++) {
+      const s = ((y >> 1) * 16 + (x >> 1)) * 4;
+      const d = (y * 32 + x) * 4;
+      for (let k = 0; k < 4; k++) bag.data[d + k] = sack.data[s + k];
     }
-    const [c, r] = def.icon;
-    savePng(trim(grab(icons32, c * 32, r * 32, 32, 32)), `ui/held_${id}.png`);
   }
+  savePng(trim(bag), "sprites/loot_bag.png");
+
+  // NOTE: ui/held_<item>.png used to be generated here from a 32px icon sheet.
+  // The 3D viewmodel (world/ItemMeshes.java) extrudes ui/icons.png directly, so
+  // those overlays have been dead since the 3D item layer landed — and the 32px
+  // sheet no longer ships. Both are gone.
 }
 
 // ---------- FX flipbooks (pixel animation pack, 64x64 frames -> strips) ----------
@@ -717,120 +699,10 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
   saveJson(manifest, "fx/fx.json");
 }
 
-// ---------- ground tiles (known-good coords from the PoC pipeline) ----------
-{
-  const terrain = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "terrain.png"));
-  const dungeon = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "dungeon.png"));
-  const water = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "water.png"));
-  savePng(grab(terrain, 80, 16), "tiles/grass.png");
-  savePng(grab(terrain, 32, 96), "tiles/dirt.png");
-  savePng(grab(dungeon, 96, 16), "tiles/stone.png");
-  savePng(grab(terrain, 32, 144), "tiles/sand.png");
-  // autotile trap: (32,64) is the known fully-opaque water tile
-  savePng(grab(water, 32, 64), "tiles/water.png");
-}
-
-// ---------- wall panels (tile horizontally along wall runs) ----------
-{
-  const castle = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "castle.png"));
-  savePng(grab(castle, 160, 145, 90, 60), "props/wall.png");
-
-  // wood building panel: tiled planks (player-built walls)
-  const ff = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "farm and fort.png"));
-  const plank = grab(ff, 528, 624, 16, 16);
-  savePng(plank, "tiles/planks.png");
-  const woodPanel = new PNG({ width: 64, height: 48 });
-  for (let ty = 0; ty < 3; ty++)
-    for (let tx = 0; tx < 4; tx++) PNG.bitblt(plank, woodPanel, 0, 0, 16, 16, tx * 16, ty * 16);
-  savePng(woodPanel, "props/wood_wall.png");
-}
-
-// ---------- prop atlas (trees, rocks, buildings, market, arch) ----------
-{
-  const outside = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "outside.png"));
-  const castle = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "castle.png"));
-  const farmfort = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "farm and fort.png"));
-  const desert = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "desert.png"));
-  const icons16 = loadPng(resolve(SRC, "IconSet", "tf_icon_16.png"));
-  const defs = [
-    // standing torch (icon torch, proven in the PoC); flame + light are client-side
-    { sheet: icons16, name: "torch", x: 6 * 16, y: 12 * 16, w: 16, h: 16 },
-    // ---- phase 5: desert / dungeon / pvp dressing ----
-    { sheet: desert, name: "dead_tree_big", seed: [60, 240] }, // big gray skeleton tree
-    { sheet: desert, name: "dead_tree", seed: [28, 275] }, // small gray tree
-    // cacti + bones sit on opaque sand tiles: rect + erase the sand band
-    { sheet: desert, name: "cactus", x: 110, y: 196, w: 34, h: 28, eraseSand: true },
-    { sheet: desert, name: "bone_pile", x: 110, y: 163, w: 36, h: 15 },
-    { sheet: desert, name: "desert_rock", seed: [148, 73] }, // rock cluster
-    { sheet: castle, name: "banner_purple", seed: [166, 235], flat: true },
-    { sheet: castle, name: "banner_red", seed: [200, 235], flat: true },
-    { sheet: outside, name: "tree1", x: 528, y: 12, w: 82, h: 100 }, // big landmark tree (sheet has a tile band at y123+)
-    { sheet: outside, name: "tree2", x: 312, y: 114, w: 40, h: 66 }, // pine
-    { sheet: outside, name: "tree3", x: 272, y: 114, w: 36, h: 66 }, // round green
-    { sheet: outside, name: "tree4", x: 430, y: 114, w: 48, h: 66 }, // orange autumn
-    { sheet: outside, name: "rock1", x: 124, y: 144, w: 20, h: 22 }, // brown rock
-    { sheet: outside, name: "rock2", x: 124, y: 165, w: 20, h: 21 }, // gray rock (full body; blue crystals start ~y188)
-    // buildings + market (farm and fort) — flat billboard fronts. The sheet
-    // packs kit pieces tightly; erase rects (sprite-local) cut attached clutter.
-    { sheet: farmfort, name: "hut", x: 352, y: 222, w: 101, h: 100, flat: true,
-      erase: [[0, 0, 15, 42], [0, 42, 14, 58], [87, 42, 14, 58]] },
-    { sheet: farmfort, name: "tent1", seed: [380, 430], flat: true },
-    { sheet: farmfort, name: "tent2", seed: [465, 425], flat: true },
-    { sheet: farmfort, name: "cart", x: 585, y: 208, w: 60, h: 31, flat: true, erase: [[33, 0, 27, 31]] },
-    // stone portal archway (castle) — flat, placed at every portal
-    { sheet: castle, name: "arch", seed: [456, 140], flat: true },
-  ];
-  const sprites = defs.map((d) => {
-    let png;
-    if (d.seed) {
-      png = grabComponent(d.sheet, d.seed[0], d.seed[1]);
-    } else {
-      png = trim(grab(d.sheet, d.x, d.y, d.w, d.h));
-      // a sprite filling its whole window usually means the window swallowed
-      // neighbouring sheet content (this bit us with tree1)
-      if (!d.erase && png.width === d.w && png.height === d.h) {
-        console.warn(`WARN: ${d.name} fills its whole window — check for neighbour bleed`);
-      }
-    }
-    if (d.erase) {
-      for (const [ex, ey, ew, eh] of d.erase) {
-        for (let y = ey; y < Math.min(ey + eh, png.height); y++) {
-          for (let x = ex; x < Math.min(ex + ew, png.width); x++) {
-            const i = (y * png.width + x) * 4;
-            png.data[i] = png.data[i + 1] = png.data[i + 2] = png.data[i + 3] = 0;
-          }
-        }
-      }
-      png = trim(png); // retighten after erasing
-    }
-    if (d.eraseSand) {
-      // sprites drawn over an opaque sand tile: key out sandy pixels
-      for (let i = 0; i < png.data.length; i += 4) {
-        const r = png.data[i], g = png.data[i + 1], b = png.data[i + 2];
-        if (r > 190 && g > 150 && b > 100 && r > b + 40 && g > b + 20) {
-          png.data[i + 3] = 0;
-        }
-      }
-      png = trim(png);
-    }
-    console.log(`  ${d.name}: ${png.width}x${png.height}`);
-    return { name: d.name, png, flat: d.flat ?? false };
-  });
-  const { atlas, regions } = buildAtlas(sprites);
-  savePng(atlas, "props/props.png");
-  // worldHeight: metres tall in-world (width follows aspect)
-  const worldHeights = {
-    tree1: 5.2, tree2: 4.2, tree3: 3.6, tree4: 3.8, rock1: 0.85, rock2: 0.7,
-    hut: 4.4, tent1: 3.2, tent2: 3.4, cart: 1.5, arch: 5.4,
-    dead_tree_big: 5.0, dead_tree: 2.6, cactus: 1.3, bone_pile: 0.5,
-    desert_rock: 0.9, banner_purple: 2.3, banner_red: 2.3, torch: 1.1,
-  };
-  saveJson(
-    Object.fromEntries(
-      sprites.map((s) => [s.name, { ...regions[s.name], worldHeight: worldHeights[s.name], flat: s.flat }])
-    ),
-    "props/props.json"
-  );
-}
+// The heightmap-era outputs (ground tiles, wall panels, the prop atlas) were
+// removed with the block-world pivot's last consumers: nothing under client/src
+// reads assets/tiles/, assets/props/ or wood_wall.png any more. Their extraction
+// also pinned the old tf_icon_16 sheet, which no longer ships. Blocks are the
+// world now (see the block tile atlas above).
 
 console.log("asset build complete");
