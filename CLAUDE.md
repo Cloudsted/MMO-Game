@@ -913,6 +913,81 @@ show their block tile).
     120 tuning, enchant prices, status-bar readability at scale 1, RMB/
     drag equip flow.
 
+- 2026-07-08 **NEW ASSET DROP: icon sheet swap + asset tooling** (owner:
+  "entirely new revamped items tileset in tficons_limited_16... remap all
+  existing items... then delete tf_icon_16").
+  - **`IconSet/tficons_limited_16.png` is now THE icon sheet** (16×64 cells,
+    vs the old 16×21). Same art family, repainted, ~3× the content — and it
+    has a real armour section (rows 40–47) the old sheet never had. Rows 0–7
+    are UI icons, so the old coords silently pointed at cursors/weather.
+    All 52 non-block items remapped; block items append at **row 64**.
+    Royal-tier weapons now look royal; `sundered_crown` is an actual gold crown.
+  - **How the mapping was derived** (LESSONS.md has the full story): the two
+    sheets compare as 0% identical but their **alpha masks are byte-identical**
+    — it's a palette repaint. Matching on mask IoU recovered 30/52 exactly;
+    the other 22 (armour, most trophies, bows) were genuinely redrawn and were
+    chosen from a written catalog of all 1023 cells, each confirmed by eye.
+  - **build-assets.mjs was already BROKEN** before this (the asset re-init
+    dropped `tf_icon_32.png`, which the held-sprite loop loaded). Fixed by
+    deleting that loop: `ui/held_*.png` has been dead since the 3D viewmodel
+    started extruding `ui/icons.png` directly. Also deleted the heightmap-era
+    ground tiles / wall panels / prop atlas (~120 lines): nothing under
+    `client/src` has read `assets/tiles/` or `assets/props/` since the block
+    pivot, and the prop atlas was the last thing pinning `tf_icon_16`.
+    Block tiles sourced from the icon sheet (torch, lantern, 2 mushrooms,
+    glow_shroom) were repointed; `loot_bag` now doubles the 16px sack [1,16].
+  - **New tools** (all in `tools/`, all Layer-4 discipline):
+    `contact-sheet.mjs` (any sheet → magnified, grid-lined, every cell
+    captioned "col,row"; `--mode chars` for RPG-Maker walk grids, `--char c,r`
+    to zoom one), `render-sheets.mjs` (bulk-render every source sheet +
+    index.json; ambiguous char8-vs-single layouts are rendered BOTH ways
+    rather than guessed), `sprite-proof.mjs` (every extracted entity sheet in
+    one labelled grid — catches wrong char cells and baked-in drop shadows),
+    `icon-proof.mjs` (the shipped item mapping, for human review),
+    `verify-icons.mjs` (**machine** checks: bounds, empty cells, duplicate
+    cells, progression-ladder collisions, catalog category agreement, and the
+    load-bearing block-item column order), `merge-char-catalog.mjs`.
+    **Run `verify-icons.mjs` + `icon-proof.mjs` after ANY icon change.**
+  - **`docs/asset-catalog/`** — agent-written catalogs: all 1023 icon cells,
+    the ruindungeons tileset (48 block candidates), and 492 character-sheet
+    entries with a `warnings` array that is worth more than the entries
+    (transparent bottom rows, baked drop shadows, one-creature-eight-animations
+    sheets). `characters.json.reliability` records the measured error rate:
+    an adversarial pass found **9/41 sampled claims wrong (~22%), all of them
+    DESCRIPTIVE (colours, names), none of them wrong coordinates.**
+    Treat it as a search index — go look before you ship a description.
+
+- 2026-07-08 **LEVEL-SCALED MOB PROGRESSION + PACK HEALERS** (owner: "for the
+  world generated mobs lets build a system where they gain more abilities the
+  higher the level they are... easily to customize and set values").
+  - `resolveMob(def, level, scaling)` in `server/common/src/registry.ts`
+    evaluates a MobDef at a concrete spawn level. Stats **compound**:
+    `base * (1 + k) ** delta`, delta = `spawnLevel - def.level` **floored at 0**
+    (a def is never scaled DOWN below what was authored) and capped by
+    `constants.mobs.scaling.maxLevelBonus` (a spawn-table typo can't mint a
+    10,000 hp slime). **The tuning knobs live in `shared/constants.json`
+    `mobs.scaling` — never scatter them through mobs.json.**
+  - `MobDef.ranks: [{atLevel, add[], remove[], hpMult, damageMult,
+    moveSpeedMult, titleSuffix}]` — every rank at or below the spawn level
+    applies in ascending `atLevel` order, **remove before add** (so a rank can
+    swap an ability for a better one at the same level). Spawn-table entries
+    gained `level`. This is how one bandit def is a pushover in the forest and
+    a real fight in the Gloomfen.
+  - Registry cross-check validates the **whole reachable kit**
+    (`mobAllAbilityIds`) — a rank's ability only surfaces at its spawn level,
+    so a typo would otherwise lie dormant until some deep room spawned it.
+  - `Entity.brain.spawnLevel` carries the level everything derives from: hp,
+    damage, **xp** (a mob reused higher is worth proportionally more),
+    move speed, and the attack kit.
+  - **`AbilityDef.allyHeal {amount, radius, castIfAllyBelowPct, includeSelf,
+    text}`** — a `self`-kind cast that mends every living mob in radius on
+    release. It only enters the kit while an eligible ally is actually hurt:
+    `chooseAttack` treats every `self` ability as always-in-range, so without
+    that gate a healer stands at full health casting into the void. Rides the
+    existing `heal` wire event → zero protocol/client changes.
+  - Caveat kept: summoned minions still spawn at their own def level, not the
+    summoner's. Revisit if a scaled summoner ever needs scaled adds.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
