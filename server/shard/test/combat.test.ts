@@ -758,13 +758,22 @@ describe("RoomSim gameplay", () => {
     sim.handleBuy(a.session, smith.id, "iron_sword", 1); // 0 gold
     expect(a.last("chat")?.text).toContain("gold");
     a.session.gold = 100;
+
+    // handleBuy MINTS the sword, and minting rolls the modifier lottery. A common
+    // item takes a mod 4% of the time and that mod is a curse 15% of the time — and
+    // a curse cuts the sell price by 15% (16 -> 13). That is a ~0.6% chance for this
+    // assertion to fail on correct code, which it duly did. Pin the roll instead of
+    // widening the assertion: the sell FORMULA is what this test is about.
+    const rand = vi.spyOn(Math, "random").mockReturnValue(0.99); // above every mod chance
     sim.handleBuy(a.session, smith.id, "iron_sword", 1);
+    rand.mockRestore();
     expect(a.session.gold).toBe(60);
-    expect(a.session.slots.some((s) => s?.item === "iron_sword")).toBe(true);
+    const bought = a.session.slots.find((s) => s?.item === "iron_sword")!;
+    expect(bought.mods, "the pinned roll must produce an unmodified sword").toBeUndefined();
 
     const slot = a.session.slots.findIndex((s) => s?.item === "iron_sword");
     sim.handleSell(a.session, smith.id, slot, 1);
-    expect(a.session.gold).toBe(76); // 60 + floor(40*0.4)
+    expect(a.session.gold).toBe(76); // 60 + floor(40 * 0.4)
     expect(a.session.slots.some((s) => s?.item === "iron_sword")).toBe(false);
   });
 

@@ -118,8 +118,9 @@ public final class ChunkMesher {
                             skyL[i] = s;
                             blkL[i] = k;
                         }
-                        // plants bend in the wind; torches/crystals (glow) don't
-                        boolean sway = !b.glow;
+                        // plants bend in the wind; torches/crystals don't, and neither
+                        // do chains, roots or a pile of skulls (blocks.json: sway)
+                        boolean sway = b.sway;
                         crossQuad(target, CROSS_A, sway, b.tileSide, reg.atlasCols, wx, y, wz, br, skyL, blkL);
                         crossQuad(target, CROSS_A2, sway, b.tileSide, reg.atlasCols, wx, y, wz, br, skyL, blkL);
                         crossQuad(target, CROSS_B, sway, b.tileSide, reg.atlasCols, wx, y, wz, br, skyL, blkL);

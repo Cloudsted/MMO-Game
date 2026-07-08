@@ -20,6 +20,8 @@ public final class BlockRegistry {
         public boolean solid;
         public boolean cross;
         public boolean glow;
+        /** cross blocks bend in the wind (voxel.vert). Bones and chains do not. */
+        public boolean sway;
         public int cull;
         public int light;
         public int tileTop, tileBottom, tileSide;
@@ -53,6 +55,8 @@ public final class BlockRegistry {
             b.solid = o.get("solid").getAsBoolean();
             b.cross = "cross".equals(o.get("kind").getAsString());
             b.glow = o.has("glow") && o.get("glow").getAsBoolean();
+            // default: a plant sways, a light source does not. blocks.json may override.
+            b.sway = o.has("sway") ? o.get("sway").getAsBoolean() : (b.cross && !b.glow);
             b.light = o.has("light") ? o.get("light").getAsInt() : 0;
             b.cull = switch (o.get("cull").getAsString()) {
                 case "opaque" -> CULL_OPAQUE;

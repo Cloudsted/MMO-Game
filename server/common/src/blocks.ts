@@ -21,6 +21,10 @@ const BlockDefSchema = z.object({
   kind: z.enum(["cube", "cross"]),
   cull: z.enum(["opaque", "cutout", "liquid", "none"]),
   glow: z.boolean().optional(),
+  /** cross blocks bend in the wind. Default: true for a non-glow cross block
+   *  (grass, flowers, vines). A hanging chain or a pile of skulls does not
+   *  sway, and neither does a torch — set false. */
+  sway: z.boolean().optional(),
   light: z.number().int().min(0).max(15).optional(),
   tex: z.record(z.string(), z.string()).optional(),
   /** client sound-group suffixes (manifest names step_X/break_X/place_X) */

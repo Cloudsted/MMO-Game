@@ -345,15 +345,16 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
   // Scale it by the same multiplier, or a rank-added ability would hit for its
   // literal authored number while the base attack scaled past it, making every
   // mob's *new* trick its *weakest* one. At delta 0 this is a no-op.
-  const scaled = attacks.map((a) =>
-    a.damage === undefined ? a : { ...a, damage: Math.max(1, Math.round(a.damage * dmgMult)) }
-  );
+  // A zero stays zero: a harmless critter authored at damage 0 must not be clamped
+  // up to 1 by scaling. Anything positive floors at 1 so rounding can't erase it.
+  const scaleDamage = (d: number): number => (d === 0 ? 0 : Math.max(1, Math.round(d * dmgMult)));
+  const scaled = attacks.map((a) => (a.damage === undefined ? a : { ...a, damage: scaleDamage(a.damage) }));
 
   return {
     level: lvl,
     name,
     hp: Math.max(1, Math.round(def.hp * hpMult)),
-    damage: Math.max(1, Math.round(def.damage * dmgMult)),
+    damage: scaleDamage(def.damage),
     moveSpeed: def.moveSpeed * speedMult,
     xp: Math.max(1, Math.round(def.xp * xpMult)),
     attacks: scaled,
