@@ -246,6 +246,10 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
   const darkDim = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "dark dimension.png"));
   const insideSheet = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "inside.png"));
   const winter = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "Winter", "tf_winter_terrain.png"));
+  // ruin/dungeon set (blocks 56-77). AUTOTILE SHEET: only blob-CENTRE cells and
+  // the discrete (non-autotile) plate/decoration rows are safe. Every cell used
+  // below was eyeballed on tools/out/sheets/ruindungeons-r<band>-c<half>.png.
+  const ruin = loadPng(resolve(SRC, "Time Fantasy", "TILESETS", "ruindungeons_sheet_full.png"));
 
   const t16 = (sheet, x, y) => grab(sheet, x, y, 16, 16);
   // remove background pixels close to a set of key colors (sand behind plants)
@@ -537,6 +541,127 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
     return out;
   })();
 
+  // ---- ruin/dungeon set (blocks 56-77) ----
+  // helper: overlay src's opaque pixels onto a copy of dst at an offset, keeping
+  // dst's transparent background transparent (skull heap). Pixels that fall off
+  // the tile are dropped.
+  const overlayAt = (dst, src, dx, dy) => {
+    const out = new PNG({ width: 16, height: 16 });
+    dst.data.copy(out.data);
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) {
+        const sx = x - dx, sy = y - dy;
+        if (sx < 0 || sy < 0 || sx > 15 || sy > 15) continue;
+        const s = (sy * 16 + sx) * 4, d = (y * 16 + x) * 4;
+        if (src.data[s + 3] <= 8) continue;
+        out.data[d] = src.data[s];
+        out.data[d + 1] = src.data[s + 1];
+        out.data[d + 2] = src.data[s + 2];
+        out.data[d + 3] = 255;
+      }
+    }
+    return out;
+  };
+  // helper (E7): repaint every opaque pixel matching a predicate on the ORIGINAL
+  // pixel. The mask must be read before any darkening pass, or a global tint
+  // shifts the whole tile into the predicate. `to` is an [r,g,b] or a
+  // (r,g,b)->[r,g,b] map (keeping a ramp's shading instead of flattening it).
+  const recolorIf = (png, pred, to) => {
+    const out = new PNG({ width: png.width, height: png.height });
+    png.data.copy(out.data);
+    for (let i = 0; i < png.data.length; i += 4) {
+      if (png.data[i + 3] === 0) continue;
+      const [r, g, b] = [png.data[i], png.data[i + 1], png.data[i + 2]];
+      if (!pred(r, g, b)) continue;
+      const [rr, rg, rb] = typeof to === "function" ? to(r, g, b) : to;
+      out.data[i] = rr; out.data[i + 1] = rg; out.data[i + 2] = rb; out.data[i + 3] = 255;
+    }
+    return out;
+  };
+
+  // rune plate: engraved-ring floor plate. Its inlay is the only blue-grey in the
+  // cell (149,168,170 — probed: b > r+20 selects exactly the 36 ring pixels).
+  const runePlate = t16(ruin, 22 * 16, 4 * 16);
+  const runeGlyph = (r, g, b) => b > r + 20;
+  // burning ward: DARKEN THE STONE FIRST (glow:true full-brights the whole cube,
+  // so a full-bright pale plate just washes out), then set only the glyph alight.
+  const runePlateLit = (() => {
+    const mask = [];
+    for (let i = 0; i < runePlate.data.length; i += 4)
+      mask.push(runeGlyph(runePlate.data[i], runePlate.data[i + 1], runePlate.data[i + 2]));
+    const out = tint(runePlate, [38, 42, 58], 0.85);
+    for (let i = 0, k = 0; i < out.data.length; i += 4, k++) {
+      if (!mask[k]) continue;
+      out.data[i] = 120; out.data[i + 1] = 240; out.data[i + 2] = 255; out.data[i + 3] = 255;
+    }
+    return out;
+  })();
+
+  // skull heap: (34,14) and (35,14) are each a single mossy skull that fills ~65%
+  // of its cell, so a small offset just mushes them together. Pushed apart on the
+  // diagonal (and clipped at the tile edge) they read as two skulls in a heap.
+  const skullPile = overlayAt(
+    overlayAt(new PNG({ width: 16, height: 16 }), t16(ruin, 35 * 16, 14 * 16), 3, -3),
+    t16(ruin, 34 * 16, 14 * 16), -2, 3,
+  );
+
+  // PAINTED chain — there is NO chain tile anywhere on the ruindungeons sheet
+  // (both column-half catalogs say so). Hand-authored like the glass/web tiles.
+  // One period is 8 rows: an oval link on the 8s and an edge-on link threaded
+  // through it on the 4s, so a stack of chain blocks is continuous across the
+  // tile seam. Kept LIGHT — a dark outline on a dark cave wall reads as nothing.
+  const chain = (() => {
+    const out = new PNG({ width: 16, height: 16 });
+    const STEEL = [150, 154, 162], DARK = [86, 90, 100], LIT = [206, 212, 220];
+    const put = (x, y, [r, g, b]) => {
+      const yy = ((y % 16) + 16) % 16;
+      if (x < 0 || x > 15) return;
+      const i = (yy * 16 + x) * 4;
+      out.data[i] = r; out.data[i + 1] = g; out.data[i + 2] = b; out.data[i + 3] = 255;
+    };
+    for (const cy of [0, 8]) {
+      // oval link: rows cy+0..cy+4, 6 px wide (x5..x10), hollow centre
+      for (const x of [6, 7, 8, 9]) { put(x, cy + 0, STEEL); put(x, cy + 4, DARK); }
+      for (let dy = 1; dy <= 3; dy++) { put(5, cy + dy, dy === 2 ? LIT : STEEL); put(10, cy + dy, DARK); }
+      // edge-on link: rows cy+3..cy+8, threaded through the oval above and below
+      for (let dy = 3; dy <= 8; dy++) { put(7, cy + dy, STEEL); put(8, cy + dy, DARK); }
+      put(7, cy + 3, LIT);
+    }
+    return out;
+  })();
+
+  // sickly corpse-light candle: keep the torch's wooden handle, recolour ONLY the
+  // three fire ramp colours (the handle's tan/brown also passes a naive r>b test)
+  // and map the ramp instead of flattening it, so the flame keeps its shading.
+  const torchTile = t16(icons16, 12 * 16, 24 * 16);
+  const bogCandle = recolorIf(torchTile, (r) => r >= 240, (r, g) =>
+    g > 200 ? [216, 255, 222] : g > 120 ? [118, 232, 152] : [46, 148, 96],
+  );
+
+  // rotting planks: darkened/greened lumber + deterministic rot speckle, so the
+  // causeway can decay MATERIALLY next to the planks it abuts
+  // Speckle SPARSELY: a dense noise pass erases the plank grain and the tile stops
+  // reading as boards at all (it reads as mossy dirt). ~4% pits, ~4% bloom.
+  const rottingPlanks = (() => {
+    const out = tint(planks, [150, 132, 96], 0.55);
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) {
+        const i = (y * 16 + x) * 4;
+        const n = (x * 13 + y * 29 + x * y) % 23;
+        if (n === 0) { // rot pit
+          out.data[i] = Math.round(out.data[i] * 0.5);
+          out.data[i + 1] = Math.round(out.data[i + 1] * 0.52);
+          out.data[i + 2] = Math.round(out.data[i + 2] * 0.45);
+        } else if (n === 7) { // green bloom
+          out.data[i] = Math.round(out.data[i] * 0.72);
+          out.data[i + 1] = Math.min(255, Math.round(out.data[i + 1] * 1.05));
+          out.data[i + 2] = Math.round(out.data[i + 2] * 0.6);
+        }
+      }
+    }
+    return out;
+  })();
+
   const recipes = {
     grass_top: () => grassTop,
     grass_side: () => topStrip(dirt, grassTop),
@@ -602,6 +727,33 @@ const TILE_PNGS = {}; // name -> 16x16 PNG (also consumed by the icon section)
     red_carpet: () => redCarpet,
     gold_block: () => goldBlock,
     stained_glass: () => stainedGlass,
+    // ---- ruin/dungeon set (blocks 56-77). Cell coords are (col,row) on
+    // ruindungeons_sheet_full.png (49x52 cells). Every one verified by eye on the
+    // contact sheets; the autotile blobs' EDGE cells carry bevels/notches and are
+    // avoided — see docs/asset-catalog/ruindungeons-c*.json autotileRegions.
+    pale_ruin_stone: () => t16(ruin, 17 * 16, 2 * 16), // blob interior, pure primary (r2 c16-c22)
+    pale_temple_brick: () => t16(ruin, 41 * 16, 15 * 16), // pale elevation's plain wall row (r16 = basecourse)
+    crypt_slate: () => t16(ruin, 17 * 16, 3 * 16), // blob interior, pure secondary (r3 = blue slate)
+    pale_fluted_column: () => t16(ruin, 40 * 16, 11 * 16), // pilaster; one dark edge seam by design
+    rune_plate: () => runePlate, // discrete engraved plate (NOT an autotile: c20-c22 x r4-r6)
+    rune_plate_lit: () => runePlateLit,
+    moss_carpet: () => t16(ruin, 17 * 16, 37 * 16), // blob interior, pure secondary (r37 = moss)
+    hanging_moss: () => t16(ruin, 34 * 16, 11 * 16), // full-height alpha strand, anchored at the top edge
+    // full-strength tint: at 0.7 the source vine's green survives and roots read olive
+    roots: () => tint(flipV(t16(ruin, 34 * 16, 12 * 16)), [214, 162, 104], 1),
+    skull_pile: () => skullPile,
+    chain: () => chain, // painted — no chain exists on the sheet
+    brazier: () => t16(ruin, 38 * 16, 50 * 16), // the symmetric 16px window over the fire-bowl
+    temple_boards: () => t16(ruin, 45 * 16, 12 * 16), // c44/c46 carry a trim post; only c45 is clean
+    rotting_planks: () => rottingPlanks,
+    sewer_brick: () => t16(ruin, 41 * 16, 49 * 16), // clay elevation's plain wall row (r50 = basecourse)
+    dungeon_masonry: () => t16(ruin, 45 * 16, 32 * 16), // gold panel's masonry half, clean centre column
+    sewer_sludge: () => tint(t16(waterSheet, 400, 64), [86, 116, 52], 0.75),
+    bog_candle: () => bogCandle,
+    sandstone_tomb_brick: () => t16(ruin, 41 * 16, 32 * 16), // r31 = pediment diagonal, r33 = basecourse
+    hieroglyph_wall: () => grab(ruin, 160, 389, 16, 16), // OFF-GRID: the aligned [10,24] cell holds a cornice band
+    sandstone_bricks: () => t16(ruin, 17 * 16, 17 * 16), // blob interior, pure primary (gold theme)
+    sand_with_slab: () => t16(ruin, 20 * 16, 18 * 16), // discrete inlay-floor row, not the blob
   };
 
   const names = Object.keys(recipes);
