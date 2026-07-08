@@ -12,6 +12,17 @@
 import { BLOCK, WORLD_HEIGHT, type RoomDef } from "@fantasy-mmo/common";
 import { hash2, MIN_DIG_FLOOR, type VoxelWorld } from "./voxel.js";
 import { scatterPrefabs, stampPrefab, type Rect, type ScatterResult } from "./prefabs.js";
+import {
+  buildDrownbell,
+  buildLamplightersRoad,
+  buildTidewardenTemple,
+  DROWNBELL_EXCLUSION,
+  GLOOMFEN_SETPIECE_CACHES,
+  GLOOMFEN_SETPIECE_SPAWNS,
+  LAMPLIGHTERS_ROAD_EXCLUSIONS,
+  TEMPLE_EXCLUSION,
+  TEMPLE_GUARD_RECENTER,
+} from "./setpieces_gloomfen.js";
 
 const id = (name: string): number => {
   const def = BLOCK[name];
@@ -45,14 +56,12 @@ function authoredExclusions(def: RoomDef): Rect[] {
     out.push({ x0: DESERT_OASIS.x - 10, z0: DESERT_OASIS.z - 10, x1: DESERT_OASIS.x + 10, z1: DESERT_OASIS.z + 10 });
   }
   if (def.id === "gloomfen") {
-    // sunken temple + the causeway line (same constants as buildGloomfen)
-    out.push({
-      x0: GLOOMFEN_TEMPLE.ox - 2,
-      z0: GLOOMFEN_TEMPLE.oz - 2,
-      x1: GLOOMFEN_TEMPLE.ox + GLOOMFEN_TEMPLE.w + 1,
-      z1: GLOOMFEN_TEMPLE.oz + GLOOMFEN_TEMPLE.d + 1,
-    });
-    out.push({ x0: GLOOMFEN_CAUSEWAY.x - 3, z0: GLOOMFEN_CAUSEWAY.z0 - 2, x1: GLOOMFEN_CAUSEWAY.x + 3, z1: GLOOMFEN_CAUSEWAY.z1 + 2 });
+    // three authored setpieces (S1/S2/S3) — the Drownbell, the Temple, and the
+    // Lamplighters' Road (+ its spur, ward and beached barge). Rects handed back
+    // by the setpiece module so the constants can't drift from the geometry.
+    out.push(DROWNBELL_EXCLUSION);
+    out.push(TEMPLE_EXCLUSION);
+    out.push(...LAMPLIGHTERS_ROAD_EXCLUSIONS);
   }
   if (def.id === "cinderrift") {
     // forge ruin arena + the bone road (same constants as buildCinderrift)
@@ -698,45 +707,52 @@ function buildGroundsPavilion(b: Builder, def: RoomDef): void {
 // collapsing deeper in (decay gradient); every ~7th plank is gone.
 // Constants shared with authoredExclusions so scatter stays off the line.
 // ---------------------------------------------------------------------------
-const GLOOMFEN_TEMPLE = { ox: 150, oz: 40, w: 20, d: 16 }; // center (160,48) = temple-guard table
-const GLOOMFEN_CAUSEWAY = { x: 160, z0: 58, z1: 304 }; // portal apron → temple approach
-
+// Gloomfen setpieces (S1/S2/S3) live in setpieces_gloomfen.ts; buildGloomfen is
+// now their integrator. The old missing-plank causeway loop and the stamped
+// sunken_temple prefab are GONE — the Lamplighters' Road replaces the first and
+// the authored Temple of the Tidewardens replaces the second (the sunken_temple
+// prefab stays in the catalog for reuse elsewhere; the fen's own temple
+// graduated, the way the Sundered City's keep did).
 function buildGloomfen(b: Builder, def: RoomDef, features: ScatterResult): void {
-  const seed = def.terrain.seed;
-  const wl = def.terrain.waterLevel ?? 11;
-  const deckY = wl + 1;
-  for (let z = GLOOMFEN_CAUSEWAY.z0; z <= GLOOMFEN_CAUSEWAY.z1; z++) {
-    // decay gradient: intact near the gate (south), rotting toward the temple
-    const missChance = z > 230 ? 0.05 : z > 140 ? 0.12 : 0.2;
-    const missing = hash2(seed ^ 0xca53, 1, z) < missChance;
-    for (const x of [GLOOMFEN_CAUSEWAY.x - 1, GLOOMFEN_CAUSEWAY.x, GLOOMFEN_CAUSEWAY.x + 1]) {
-      const g = b.g(x, z);
-      if (g >= deckY) {
-        // dry hummock: the old road runs on the ground
-        b.clearAbove(x, z, x, z, g, 8);
-        b.set(x, g, z, "path");
-      } else {
-        // shallows: plank deck one block over the murk — mind the gaps
-        b.clearAbove(x, z, x, z, deckY - 1, 8);
-        if (!missing) b.set(x, deckY, z, "planks");
-      }
+  // S1 the Drownbell (independent, in open water east of the causeway) and
+  // S2 the Temple (z ≤ 64, north end). S3 the road (z ≥ 65) ties them together;
+  // it fixed-stamps the lamps/tollhouses/spur furniture through stampPrefab, and
+  // those prefabs carry their own hooks (lamplighter spawn anchors, the ward's
+  // guard table + cache) which we push into features exactly as the old code did.
+  buildDrownbell(b, def);
+  buildTidewardenTemple(b, def);
+  buildLamplightersRoad(b, def, (id, ox, oz, rot, ruin) => {
+    const hooks = stampPrefab(b, id, ox, oz, rot, ruin);
+    if (hooks.lootCache) features.caches.push(hooks.lootCache);
+    if (hooks.spawnRegion?.table) {
+      features.extraTables.push({
+        id: `${id}-${ox}-${oz}`,
+        region: { kind: "circle", x: hooks.spawnRegion.x, z: hooks.spawnRegion.z, r: hooks.spawnRegion.r },
+        mobs: hooks.spawnRegion.table.mobs,
+        maxAlive: hooks.spawnRegion.table.maxAlive,
+        packSize: hooks.spawnRegion.table.packSize,
+        respawnSec: hooks.spawnRegion.table.respawnSec,
+      });
     }
-    // pale log posts carry the deck over the flooded runs
-    if (z % 4 === 0) {
-      for (const x of [GLOOMFEN_CAUSEWAY.x - 1, GLOOMFEN_CAUSEWAY.x + 1]) {
-        const g = b.g(x, z);
-        if (g + 1 <= deckY - 1) b.fill(x, g + 1, z, x, deckY - 1, z, "pale_log");
-      }
-    }
+  });
+
+  // caches + spawn anchors the setpiece functions can't push themselves
+  for (const c of GLOOMFEN_SETPIECE_CACHES) {
+    features.caches.push({ x: c.x, y: c.y, z: c.z, table: c.table, respawnSec: c.respawnSec });
   }
-  // Sunken Temple at (160,48): the temple-guard table's ground; its cache
-  // resolves "auto" → cache_gloomfen, and the spawnRegion hook re-centers
-  // the def table onto the stamped site (a no-op today — kept locked).
-  const hooks = stampPrefab(b, "sunken_temple", GLOOMFEN_TEMPLE.ox, GLOOMFEN_TEMPLE.oz, 0, 1);
-  if (hooks.lootCache) features.caches.push(hooks.lootCache);
-  if (hooks.spawnRegion) {
-    features.bindings.push({ tableId: "temple-guard", x: hooks.spawnRegion.x, z: hooks.spawnRegion.z });
+  for (const s of GLOOMFEN_SETPIECE_SPAWNS) {
+    features.extraTables.push({
+      id: `setpiece-${s.x}-${s.z}`,
+      region: { kind: "circle", x: s.x, z: s.z, r: s.r },
+      mobs: s.mobs,
+      maxAlive: s.maxAlive,
+      packSize: s.packSize,
+      respawnSec: s.respawnSec,
+    });
   }
+  // the lizardmen are the fen's river-folk and the Temple is their church, not
+  // an invasion: re-centre the existing temple-guard table onto the nave.
+  features.bindings.push({ tableId: TEMPLE_GUARD_RECENTER.tableId, x: TEMPLE_GUARD_RECENTER.x, z: TEMPLE_GUARD_RECENTER.z });
 }
 
 // ---------------------------------------------------------------------------

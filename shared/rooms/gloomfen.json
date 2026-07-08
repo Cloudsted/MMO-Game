@@ -156,8 +156,8 @@
       "id": "lizard-ruin",
       "region": {
         "kind": "circle",
-        "x": 103,
-        "z": 156,
+        "x": 140,
+        "z": 75,
         "r": 18
       },
       "mobs": [
@@ -250,8 +250,8 @@
       "region": {
         "kind": "circle",
         "x": 150,
-        "z": 220,
-        "r": 30
+        "z": 196,
+        "r": 18
       },
       "mobs": [
         {
@@ -270,8 +270,8 @@
       "id": "mire-nave",
       "region": {
         "kind": "circle",
-        "x": 136,
-        "z": 48,
+        "x": 181,
+        "z": 57,
         "r": 10
       },
       "mobs": [
