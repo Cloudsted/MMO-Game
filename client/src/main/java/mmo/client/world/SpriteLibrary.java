@@ -56,6 +56,12 @@ public class SpriteLibrary {
         heights.put("wraith", 1.8f);
         heights.put("cinder_golem", 2.4f);
         heights.put("lich", 2.0f);
+        // bandits_1 roster (4 archetypes; "bandit" replaced the old npc5 burglar)
+        heights.put("bandit", 1.75f);
+        heights.put("bandit_enforcer", 1.8f);
+        heights.put("bandit_bombardier", 1.8f); // the lit fuse adds a pixel row
+        heights.put("bandit_mystic", 1.8f);
+        heights.put("bandit_chief", 1.85f);
         // Sundered City roster
         heights.put("marauder", 1.8f);
         heights.put("gravehound", 1.35f);

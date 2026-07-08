@@ -119,6 +119,7 @@ function grabComponent(png, seedX, seedY) {
 {
   const MOBS = resolve(SRC, "Characters", "TimeFantasy_Monsters", "1x");
   const CHARS = resolve(SRC, "Characters", "timefantasy_characters", "sheets");
+  const UNSORTED = resolve(SRC, "Unsorted");
   const SHEETS = {
     // the player sheet goes through the same trim as everyone else — the raw
     // 26x36 cell carries 7 px of empty headroom that made players render
@@ -126,7 +127,16 @@ function grabComponent(png, seedX, seedY) {
     player: { file: resolve(SRC, "Characters", "Player.png"), single: true },
     slime: { file: resolve(MOBS, "monster1.png"), char: [0, 0] },
     wolf: { file: resolve(MOBS, "monster_wolf1.png"), single: true },
-    bandit: { file: resolve(MOBS, "npc5.png"), char: [2, 1] }, // flat-cap burglar
+    // ---- bandits_1.png (2026-07-08 asset drop): 4 archetypes x 2 palettes.
+    // Row 0 = brown/rust hat + pale face-scarf; row 1 = the same four recoloured
+    // green with bare faces. Every cell below was read off
+    // tools/out/sheets/bandits-chars.png and its per-char zooms. The old
+    // npc5 [2,1] "flat-cap burglar" is retired — this sheet IS the bandits.
+    bandit: { file: resolve(UNSORTED, "bandits_1.png"), char: [0, 0] }, // floppy hat, scarf over the nose, longcoat — the plain highwayman
+    bandit_enforcer: { file: resolve(UNSORTED, "bandits_1.png"), char: [1, 0] }, // same, plus a grey steel brigandine + studded belt
+    bandit_bombardier: { file: resolve(UNSORTED, "bandits_1.png"), char: [2, 0] }, // lit fuse at the hat brim, bandolier of orange flasks, blue flask at the hip
+    bandit_mystic: { file: resolve(UNSORTED, "bandits_1.png"), char: [3, 0] }, // fully cloaked, hood drawn, NO face, bone-white clasps
+    bandit_chief: { file: resolve(UNSORTED, "bandits_1.png"), char: [1, 1] }, // the green-palette enforcer — the camp's boss
     npc_smith: { file: resolve(CHARS, "npc3.png"), char: [1, 1] }, // red-haired smith
     npc_provisioner: { file: resolve(CHARS, "npc2.png"), char: [0, 0] }, // red-dress woman
     // wizard.png trap: walk grids ONLY in the top half; [0,0] is safe
