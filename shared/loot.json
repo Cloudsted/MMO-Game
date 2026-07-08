@@ -1640,5 +1640,280 @@
         "minRarity": "uncommon"
       }
     ]
+  },
+  "cache_desert": {
+    "gold": [
+      12,
+      28
+    ],
+    "rolls": [
+      1,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 28,
+        "table": "weapons_fine"
+      },
+      {
+        "weight": 10,
+        "table": "weapons_fine",
+        "minRarity": "rare"
+      },
+      {
+        "weight": 14,
+        "table": "armor_fine"
+      },
+      {
+        "weight": 22,
+        "item": "health_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 20,
+        "item": "ancient_coin",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 12,
+        "item": "bone_charm",
+        "qty": [
+          1,
+          1
+        ]
+      }
+    ],
+    "guaranteed": []
+  },
+  "cache_desert_poor": {
+    "gold": [
+      3,
+      9
+    ],
+    "rolls": [
+      1,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 34,
+        "item": "bread",
+        "qty": [
+          1,
+          3
+        ]
+      },
+      {
+        "weight": 20,
+        "item": "health_potion",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 18,
+        "table": "weapons_basic"
+      },
+      {
+        "weight": 8,
+        "item": "mana_potion",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 20
+      }
+    ],
+    "guaranteed": []
+  },
+  "cache_dungeon": {
+    "gold": [
+      20,
+      42
+    ],
+    "rolls": [
+      1,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 26,
+        "table": "weapons_fine"
+      },
+      {
+        "weight": 10,
+        "table": "weapons_fine",
+        "minRarity": "rare"
+      },
+      {
+        "weight": 14,
+        "table": "armor_fine"
+      },
+      {
+        "weight": 22,
+        "item": "bone_charm",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 20,
+        "item": "health_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 18,
+        "item": "mana_potion",
+        "qty": [
+          1,
+          2
+        ]
+      }
+    ],
+    "guaranteed": []
+  },
+  "critter_drops": {
+    "gold": [
+      0,
+      1
+    ],
+    "rolls": [
+      1,
+      1
+    ],
+    "entries": [
+      {
+        "weight": 1
+      }
+    ],
+    "guaranteed": []
+  },
+  "grelmoss_drops": {
+    "gold": [
+      220,
+      360
+    ],
+    "rolls": [
+      2,
+      3
+    ],
+    "entries": [
+      {
+        "weight": 35,
+        "table": "weapons_steel",
+        "minRarity": "rare"
+      },
+      {
+        "weight": 25,
+        "item": "greater_health_potion",
+        "qty": [
+          2,
+          3
+        ]
+      },
+      {
+        "weight": 22,
+        "item": "ancient_coin",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 18,
+        "item": "greater_mana_potion",
+        "qty": [
+          2,
+          3
+        ]
+      }
+    ],
+    "guaranteed": [
+      {
+        "weight": 1,
+        "table": "weapons_steel",
+        "minRarity": "rare"
+      },
+      {
+        "weight": 1,
+        "item": "royal_seal",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 1,
+        "item": "ancient_coin",
+        "qty": [
+          2,
+          4
+        ]
+      }
+    ]
+  },
+  "unmarred_drops": {
+    "gold": [
+      0,
+      0
+    ],
+    "rolls": [
+      1,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 30,
+        "item": "greater_health_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 30,
+        "item": "greater_mana_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 25,
+        "table": "weapons_steel",
+        "minRarity": "rare"
+      },
+      {
+        "weight": 15,
+        "item": "spirit_essence",
+        "qty": [
+          1,
+          1
+        ]
+      }
+    ],
+    "guaranteed": [
+      {
+        "weight": 1,
+        "item": "spiral_horn",
+        "qty": [
+          1,
+          1
+        ]
+      }
+    ]
   }
 }

@@ -163,7 +163,8 @@
       "mobs": [
         {
           "mob": "slime",
-          "weight": 1
+          "weight": 1,
+          "level": 5
         }
       ],
       "maxAlive": 8,
@@ -172,6 +173,115 @@
         2
       ],
       "respawnSec": 25
+    },
+    {
+      "id": "pride-dunes",
+      "region": {
+        "kind": "circle",
+        "x": 300,
+        "z": 150,
+        "r": 24
+      },
+      "mobs": [
+        {
+          "mob": "duneshadow_lioness",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 8,
+      "packSize": [
+        3,
+        4
+      ],
+      "respawnSec": 70
+    },
+    {
+      "id": "red-mane",
+      "region": {
+        "kind": "circle",
+        "x": 324,
+        "z": 354,
+        "r": 12
+      },
+      "mobs": [
+        {
+          "mob": "kaharat",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 600
+    },
+    {
+      "id": "sandpicker-diggings",
+      "region": {
+        "kind": "circle",
+        "x": 190,
+        "z": 240,
+        "r": 18
+      },
+      "mobs": [
+        {
+          "mob": "sandpicker",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 9,
+      "packSize": [
+        3,
+        5
+      ],
+      "respawnSec": 50
+    },
+    {
+      "id": "courtiers-necropolis",
+      "region": {
+        "kind": "circle",
+        "x": 114,
+        "z": 186,
+        "r": 16
+      },
+      "mobs": [
+        {
+          "mob": "withered_courtier",
+          "weight": 2
+        },
+        {
+          "mob": "skeleton",
+          "weight": 3
+        }
+      ],
+      "maxAlive": 10,
+      "packSize": [
+        1,
+        2
+      ],
+      "respawnSec": 60
+    },
+    {
+      "id": "sekhat-tomb",
+      "region": {
+        "kind": "circle",
+        "x": 238,
+        "z": 246,
+        "r": 6
+      },
+      "mobs": [
+        {
+          "mob": "sekhat",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 900
     }
   ],
   "prefabs": [
@@ -202,6 +312,21 @@
       "count": 3,
       "minSpacing": 60,
       "ruinBias": 2
+    }
+  ],
+  "events": [
+    {
+      "id": "sekhat-dig",
+      "on": { "kind": "bossHpBelowPct", "mob": "sekhat", "pct": 0.5 },
+      "actions": [
+        { "kind": "announce", "text": "Sekhat rasps: The water is close. DIG." },
+        { "kind": "spawnMobs", "mob": "skeleton", "count": 3, "radius": 6 }
+      ]
+    },
+    {
+      "id": "sekhat-fall",
+      "on": { "kind": "bossDeath", "mob": "sekhat" },
+      "actions": [{ "kind": "announce", "text": "The wellhead cracks. Far below, nothing moves." }]
     }
   ],
   "npcs": []

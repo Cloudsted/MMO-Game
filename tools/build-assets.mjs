@@ -153,7 +153,12 @@ function grabComponent(png, seedX, seedY) {
     // silver-haired woman in purple robes + white apron (cell verified 2026-07-07)
     npc_enchanter: { file: resolve(CHARS, "npc4.png"), char: [1, 1] },
     // phase 5: desert + dungeon roster
-    skeleton: { file: resolve(MOBS, "monster4.png"), char: [3, 0] }, // armored skeleton
+    // RE-SPRITED 2026-07-08: monster4 [3,0] read as a generic monster. skeletonarmy
+    // [1,1] is a SOLDIER — crested domed steel helm, brown leather kilt, pale
+    // blue-white straight sword. The four-rank skeleton ladder only lands if the
+    // base mob already looks drilled. Sprite KEY unchanged (AudioEngine keys mob
+    // vocals off it). Verified on tools/out/sheets/Z_skelarmy-char11.png.
+    skeleton: { file: resolve(UNSORTED, "skeletonarmy.png"), char: [1, 1] },
     cacto: { file: resolve(MOBS, "monster_cacto.png"), single: true },
     raptor: { file: resolve(MOBS, "monster_raptor1.png"), single: true },
     minotaur: { file: resolve(MOBS, "monster_minotaur.png"), single: true },
@@ -171,9 +176,52 @@ function grabComponent(png, seedX, seedY) {
     marsh_wisp: { file: resolve(MOBS, "elemental.png"), char: [0, 0] }, // blue water elemental
     fire_elemental: { file: resolve(MOBS, "elemental.png"), char: [1, 0] }, // flame elemental
     ash_husk: { file: resolve(MOBS, "monster4.png"), char: [2, 0] }, // tan shirtless zombie
-    wraith: { file: resolve(MOBS, "monster4.png"), char: [0, 0] }, // white bearded ghost
+    // RE-SPRITED 2026-07-08: the hooded sage-green skull reaper, WITHOUT a scythe.
+    // reaper_blade_1 is the identical creature holding one — that is the Grave
+    // Harrower. Two sprites, one sheet, and Morvane's hierarchy draws itself.
+    wraith: { file: resolve(UNSORTED, "reaper_1.png"), single: true },
     cinder_golem: { file: resolve(MOBS, "monster_golem1.png"), single: true }, // stone golem
-    lich: { file: resolve(MOBS, "monster_lich.png"), single: true }, // crowned skeletal king
+    // RE-SPRITED 2026-07-08: lich.png [0,1] — dark blue-grey robe, tall gold crown,
+    // red eyes/mouth, gold ribcage over the robe. Makes lich.png [3,1] (crownless,
+    // bare white skull = the Ossuary Stitcher) read on sight as HIS staff.
+    lich: { file: resolve(UNSORTED, "lich.png"), char: [0, 1] },
+    // ---- roster-2 undead: Vaults of Morvane / crypt_depths ----
+    // (every cell below eyeballed on tools/out/sheets/{C_,S_,Z_}*.png first)
+    restless_bones: { file: resolve(UNSORTED, "skeletonarmy.png"), char: [0, 0] }, // plain bone-white skeleton, unarmed, unarmoured
+    ossuary_stitcher: { file: resolve(UNSORTED, "lich.png"), char: [3, 1] }, // crownless robed lich, bare white skull, orange seams
+    bone_warden: { file: resolve(UNSORTED, "warden_walk_bone_1.png"), single: true }, // slate colossus, bone horns + ribs, green moss glow
+    grave_harrower: { file: resolve(UNSORTED, "reaper_blade_1.png"), single: true }, // the wraith's reaper, WITH a scythe (32x36 frame, wider than reaper_1)
+    crypt_ghoul: { file: resolve(UNSORTED, "mghoulA_1.png"), single: true }, // hunched pale ghoul, wild grey hair, bloodied rags
+    // ghost1 has an opaque drop-shadow ellipse baked into every frame. KEPT on
+    // purpose — see LESSONS.md "The baked shadow ellipse is DELIBERATE".
+    pallid_mourner: { file: resolve(UNSORTED, "ghost1.png"), single: true }, // classic sheet ghost, two dark eyes
+    // ---- roster-2 constructs: Cinderrift forge ----
+    ember_warplate: { file: resolve(UNSORTED, "warelementals_1.png"), char: [0, 0] }, // red crystalline living armour
+    frostplate_revenant: { file: resolve(UNSORTED, "warelementals_1.png"), char: [1, 0] }, // the same suit in blue ice, gold bands
+    forge_prototype: { file: resolve(UNSORTED, "warelementals_1.png"), char: [2, 1] }, // dark steel, gold winged helm, glowing vents
+    forge_tender: { file: resolve(UNSORTED, "warelementals_f_1.png"), char: [1, 0] }, // molten smoke-body with gold flame arcs
+    slagback_troll: { file: resolve(UNSORTED, "troll1b_1.png"), single: true }, // teal hulk with rust-orange slag plates
+    forge_ward: { file: resolve(UNSORTED, "gargoyle_1.png"), single: true }, // winged stone gargoyle
+    // ---- roster-2 desert: The Sunscour ----
+    sandpicker: { file: resolve(UNSORTED, "goblinos_1.png"), char: [0, 0] }, // bare red goblino, orange flame-shaped mohawk
+    withered_courtier: { file: resolve(UNSORTED, "mummy_1.png"), single: true }, // bandaged mummy
+    duneshadow_lioness: { file: resolve(UNSORTED, "lioness_1.png"), single: true }, // golden maneless lion (baked shadow, kept)
+    kaharat: { file: resolve(UNSORTED, "lion_1.png"), single: true }, // golden maned lion (baked shadow, kept)
+    sekhat: { file: resolve(UNSORTED, "lich.png"), char: [1, 0] }, // crowned skeletal king in teal-white ornate plate
+    // ---- roster-2 gloomfen ----
+    glimmereye: { file: resolve(UNSORTED, "bushbaby.png"), single: true }, // grey-blue galago, huge orange saucer eyes
+    // slimevariants_1: ONLY the top row of character blocks holds art (the bottom
+    // four cells are fully transparent). char [1,0] lands inside the top row, so
+    // the standard char8 math is correct here — a [x,1] cell would extract nothing.
+    // All four direction rows are the same bounce cycle; correct for a blob.
+    fen_slime: { file: resolve(UNSORTED, "slimevariants_1.png"), char: [1, 0] }, // blue blob with a white highlight
+    bloatslime: { file: resolve(UNSORTED, "slime_big_single.png"), single: true }, // fat green slime
+    grelmoss: { file: resolve(UNSORTED, "slime_king_single.png"), single: true }, // gold slime wearing a dark crown
+    aelthir: { file: resolve(UNSORTED, "unicorn1.png"), single: true }, // white unicorn, gold-flame mane (baked shadow, kept)
+    // nightmare_run_1.png is 192x192 = 3 cols x 4 rows of 64x48. NON-SQUARE and the
+    // only wide frame in the roster (the flame trail). The index.json "char8" guess
+    // slices every horse in half — verified: the single reading is clean.
+    cinder_nightmare: { file: resolve(UNSORTED, "nightmare_run_1.png"), single: true }, // slate demon horse, mane/tail/hooves of live fire
     // Sundered City roster (cells eyeballed on the sheets 2026-07-07; the
     // dknight sheets are single-character like the lich)
     marauder: { file: resolve(MOBS, "orc1.png"), char: [3, 1] }, // red-armored orc warlord

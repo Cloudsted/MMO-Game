@@ -88,6 +88,14 @@
         {
           "mob": "skeleton",
           "weight": 1
+        },
+        {
+          "mob": "restless_bones",
+          "weight": 3
+        },
+        {
+          "mob": "ossuary_stitcher",
+          "weight": 1
         }
       ],
       "maxAlive": 6,
@@ -108,6 +116,14 @@
       "mobs": [
         {
           "mob": "skeleton",
+          "weight": 1
+        },
+        {
+          "mob": "restless_bones",
+          "weight": 3
+        },
+        {
+          "mob": "ossuary_stitcher",
           "weight": 1
         }
       ],
@@ -138,6 +154,69 @@
         1
       ],
       "respawnSec": 99999
+    },
+    {
+      "id": "side-galleries",
+      "region": {
+        "kind": "circle",
+        "x": 50,
+        "z": 51,
+        "r": 6
+      },
+      "mobs": [
+        {
+          "mob": "crypt_ghoul",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [
+        3,
+        4
+      ],
+      "respawnSec": 45
+    },
+    {
+      "id": "mourner-drift",
+      "region": {
+        "kind": "circle",
+        "x": 32,
+        "z": 30,
+        "r": 18
+      },
+      "mobs": [
+        {
+          "mob": "pallid_mourner",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 60
+    },
+    {
+      "id": "warden-door",
+      "region": {
+        "kind": "circle",
+        "x": 46,
+        "z": 20,
+        "r": 4
+      },
+      "mobs": [
+        {
+          "mob": "bone_warden",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 300
     }
   ],
   "events": [

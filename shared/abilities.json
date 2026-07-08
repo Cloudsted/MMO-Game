@@ -667,5 +667,474 @@
     "cooldownMs": 25000,
     "manaCost": 0,
     "fx": "frost"
+  },
+  "harvest_muster": {
+    "kind": "self",
+    "castTimeMs": 1700,
+    "recoverMs": 500,
+    "summon": {
+      "mob": "skeleton",
+      "count": 3,
+      "radius": 6,
+      "cap": 6,
+      "grantsXp": false,
+      "grantsLoot": false,
+      "text": "The Harrower reaps: 'FORM RANKS.'"
+    },
+    "canMoveWhile": false,
+    "interruptible": true,
+    "cooldownMs": 22000,
+    "manaCost": 0,
+    "fx": "frost"
+  },
+  "scythe_hook": {
+    "kind": "melee",
+    "windupMs": 850,
+    "activeMs": 180,
+    "recoverMs": 500,
+    "range": 3,
+    "arcDeg": 60,
+    "debuff": {
+      "slowPct": 0.45,
+      "durMs": 2500
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 3500,
+    "manaCost": 0,
+    "fx": "slash"
+  },
+  "bone_shrapnel": {
+    "kind": "projectile",
+    "dmgClass": "ranged",
+    "castTimeMs": 1000,
+    "recoverMs": 350,
+    "projSpeed": 16,
+    "maxRange": 22,
+    "aoeRadius": 3,
+    "impactFx": "explosion",
+    "projScale": 1.5,
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 4500,
+    "manaCost": 0,
+    "fx": "frost"
+  },
+  "ember_cleave": {
+    "kind": "melee",
+    "windupMs": 400,
+    "activeMs": 150,
+    "recoverMs": 460,
+    "range": 2.5,
+    "arcDeg": 110,
+    "debuff": {
+      "dotTotal": 14,
+      "durMs": 4000
+    },
+    "canMoveWhile": true,
+    "interruptible": false,
+    "cooldownMs": 400,
+    "manaCost": 0,
+    "fx": "slash"
+  },
+  "forge_mend": {
+    "kind": "self",
+    "castTimeMs": 1600,
+    "recoverMs": 400,
+    "allyHeal": {
+      "amount": 90,
+      "radius": 9,
+      "castIfAllyBelowPct": 0.8,
+      "includeSelf": true,
+      "text": "The Forge-Tender raises her tongs — the plate glows and knits."
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 6000,
+    "manaCost": 0,
+    "fx": "heal"
+  },
+  "magma_vents": {
+    "kind": "pillars",
+    "castTimeMs": 1000,
+    "recoverMs": 450,
+    "pillars": {
+      "count": 4,
+      "spacing": 2.4,
+      "radius": 2.2,
+      "staggerMs": 170,
+      "burnMs": 1400
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 8000,
+    "manaCost": 0,
+    "fx": "firebolt"
+  },
+  "rime_cleave": {
+    "kind": "melee",
+    "windupMs": 480,
+    "activeMs": 150,
+    "recoverMs": 500,
+    "range": 2.5,
+    "arcDeg": 100,
+    "debuff": {
+      "slowPct": 0.45,
+      "durMs": 2500
+    },
+    "canMoveWhile": true,
+    "interruptible": false,
+    "cooldownMs": 600,
+    "manaCost": 0,
+    "fx": "frost"
+  },
+  "rime_shard": {
+    "kind": "projectile",
+    "dmgClass": "ranged",
+    "castTimeMs": 750,
+    "recoverMs": 280,
+    "projSpeed": 24,
+    "maxRange": 24,
+    "debuff": {
+      "slowPct": 0.5,
+      "durMs": 3000
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 3000,
+    "manaCost": 0,
+    "fx": "frost"
+  },
+  "slag_gorge": {
+    "kind": "self",
+    "castTimeMs": 1500,
+    "recoverMs": 500,
+    "allyHeal": {
+      "amount": 120,
+      "radius": 2.5,
+      "castIfAllyBelowPct": 0.55,
+      "includeSelf": true,
+      "text": "The Slagback gulps molten slag; its wounds seal."
+    },
+    "canMoveWhile": false,
+    "interruptible": true,
+    "cooldownMs": 9000,
+    "manaCost": 0,
+    "fx": "heal"
+  },
+  "pounce": {
+    "kind": "melee",
+    "windupMs": 380,
+    "activeMs": 130,
+    "recoverMs": 420,
+    "range": 3.6,
+    "arcDeg": 45,
+    "canMoveWhile": true,
+    "interruptible": false,
+    "cooldownMs": 2600,
+    "manaCost": 0,
+    "fx": "slash"
+  },
+  "stone_shard": {
+    "kind": "projectile",
+    "dmgClass": "ranged",
+    "windupMs": 500,
+    "activeMs": 80,
+    "recoverMs": 340,
+    "projSpeed": 28,
+    "maxRange": 20,
+    "predictive": true,
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 2600,
+    "manaCost": 0,
+    "fx": "arrow"
+  },
+  "slag_lob": {
+    "kind": "projectile",
+    "dmgClass": "magic",
+    "castTimeMs": 950,
+    "recoverMs": 340,
+    "projSpeed": 26,
+    "maxRange": 28,
+    "predictive": true,
+    "aoeRadius": 2.6,
+    "impactFx": "explosion",
+    "projScale": 1.5,
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 3600,
+    "manaCost": 0,
+    "fx": "firebolt"
+  },
+  "grave_rot": {
+    "kind": "melee",
+    "windupMs": 640,
+    "activeMs": 170,
+    "recoverMs": 720,
+    "range": 2.2,
+    "arcDeg": 140,
+    "debuff": {
+      "dotTotal": 22,
+      "durMs": 5000
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 500,
+    "manaCost": 0,
+    "fx": "hit"
+  },
+  "binding_wrap": {
+    "kind": "projectile",
+    "dmgClass": "magic",
+    "castTimeMs": 800,
+    "recoverMs": 300,
+    "projSpeed": 14,
+    "maxRange": 16,
+    "debuff": {
+      "slowPct": 0.55,
+      "durMs": 3000
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 6000,
+    "manaCost": 0,
+    "fx": "frost"
+  },
+  "courtiers_grief": {
+    "kind": "self",
+    "castTimeMs": 1300,
+    "recoverMs": 400,
+    "summon": {
+      "mob": "skeleton",
+      "count": 2,
+      "radius": 5,
+      "cap": 4,
+      "grantsXp": false,
+      "grantsLoot": false,
+      "text": "The Herald unwinds its jaw, and the skulls of its servants come loose."
+    },
+    "canMoveWhile": false,
+    "interruptible": true,
+    "cooldownMs": 22000,
+    "manaCost": 0,
+    "fx": "heal"
+  },
+  "lion_maul": {
+    "kind": "melee",
+    "windupMs": 950,
+    "activeMs": 200,
+    "recoverMs": 650,
+    "range": 3,
+    "arcDeg": 140,
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 1600,
+    "manaCost": 0,
+    "fx": "slash"
+  },
+  "mire_cling": {
+    "kind": "melee",
+    "windupMs": 480,
+    "activeMs": 150,
+    "recoverMs": 620,
+    "range": 1.8,
+    "arcDeg": 120,
+    "debuff": {
+      "slowPct": 0.35,
+      "durMs": 2500
+    },
+    "canMoveWhile": true,
+    "interruptible": false,
+    "cooldownMs": 400,
+    "manaCost": 0,
+    "fx": "hit"
+  },
+  "caustic_gob": {
+    "kind": "projectile",
+    "dmgClass": "magic",
+    "castTimeMs": 700,
+    "recoverMs": 260,
+    "projSpeed": 15,
+    "maxRange": 26,
+    "aoeRadius": 2.2,
+    "impactFx": "explosion",
+    "debuff": {
+      "dotTotal": 16,
+      "durMs": 4000
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 2600,
+    "manaCost": 0,
+    "fx": "frost"
+  },
+  "royal_engulf": {
+    "kind": "melee",
+    "windupMs": 1100,
+    "activeMs": 220,
+    "recoverMs": 800,
+    "range": 3.2,
+    "arcDeg": 170,
+    "debuff": {
+      "slowPct": 0.5,
+      "durMs": 2500
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 1600,
+    "manaCost": 0,
+    "fx": "hit"
+  },
+  "sovereign_gob": {
+    "kind": "projectile",
+    "dmgClass": "magic",
+    "castTimeMs": 900,
+    "recoverMs": 320,
+    "projSpeed": 22,
+    "maxRange": 32,
+    "predictive": true,
+    "aoeRadius": 3,
+    "impactFx": "explosion",
+    "projScale": 1.7,
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 3000,
+    "manaCost": 0,
+    "fx": "frost"
+  },
+  "horn_charge": {
+    "kind": "melee",
+    "windupMs": 800,
+    "activeMs": 170,
+    "recoverMs": 520,
+    "range": 3.8,
+    "arcDeg": 35,
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 1200,
+    "manaCost": 0,
+    "fx": "slash"
+  },
+  "radiant_mend": {
+    "kind": "self",
+    "castTimeMs": 1500,
+    "recoverMs": 300,
+    "heal": 180,
+    "canMoveWhile": false,
+    "interruptible": true,
+    "cooldownMs": 8000,
+    "manaCost": 0,
+    "fx": "heal"
+  },
+  "nightmare_charge": {
+    "kind": "melee",
+    "windupMs": 420,
+    "activeMs": 130,
+    "recoverMs": 380,
+    "range": 3.6,
+    "arcDeg": 40,
+    "debuff": {
+      "dotTotal": 12,
+      "durMs": 3000
+    },
+    "canMoveWhile": true,
+    "interruptible": false,
+    "cooldownMs": 900,
+    "manaCost": 0,
+    "fx": "hit"
+  },
+  "ember_trail": {
+    "kind": "pillars",
+    "castTimeMs": 700,
+    "recoverMs": 400,
+    "pillars": {
+      "count": 6,
+      "spacing": 2.4,
+      "radius": 2,
+      "staggerMs": 120,
+      "burnMs": 1500
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 7000,
+    "manaCost": 0,
+    "fx": "firebolt"
+  },
+  "raise_bones": {
+    "kind": "self",
+    "castTimeMs": 1500,
+    "recoverMs": 500,
+    "summon": {
+      "mob": "restless_bones",
+      "count": 2,
+      "radius": 5,
+      "cap": 4,
+      "grantsXp": false,
+      "grantsLoot": false,
+      "text": "The Stitcher rasps: 'Back to your feet. The work is not done.'"
+    },
+    "canMoveWhile": false,
+    "interruptible": true,
+    "cooldownMs": 20000,
+    "manaCost": 0,
+    "fx": "frost"
+  },
+  "pride_roar": {
+    "kind": "self",
+    "castTimeMs": 1300,
+    "recoverMs": 500,
+    "summon": {
+      "mob": "duneshadow_lioness",
+      "count": 2,
+      "radius": 6,
+      "cap": 4,
+      "grantsXp": false,
+      "grantsLoot": false,
+      "text": "Kaharat's roar rolls across the dunes — the pride answers."
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 22000,
+    "manaCost": 0,
+    "fx": "heal"
+  },
+  "slime_split": {
+    "kind": "self",
+    "castTimeMs": 1200,
+    "recoverMs": 400,
+    "summon": {
+      "mob": "fen_slimeling",
+      "count": 2,
+      "radius": 3,
+      "cap": 3,
+      "grantsXp": false,
+      "grantsLoot": false,
+      "text": "The bloatslime sloughs off a piece of itself."
+    },
+    "canMoveWhile": false,
+    "interruptible": true,
+    "cooldownMs": 12000,
+    "manaCost": 0,
+    "fx": "heal"
+  },
+  "mire_spawn": {
+    "kind": "self",
+    "castTimeMs": 1400,
+    "recoverMs": 500,
+    "summon": {
+      "mob": "fen_slime",
+      "count": 3,
+      "radius": 6,
+      "cap": 6,
+      "grantsXp": false,
+      "grantsLoot": false,
+      "text": "Grelmoss shudders, and the mire stands up."
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 18000,
+    "manaCost": 0,
+    "fx": "heal"
   }
 }

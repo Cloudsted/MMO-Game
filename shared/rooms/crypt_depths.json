@@ -152,6 +152,126 @@
         1
       ],
       "respawnSec": 99999
+    },
+    {
+      "id": "drill-field",
+      "region": {
+        "kind": "circle",
+        "x": 48,
+        "z": 70,
+        "r": 14
+      },
+      "mobs": [
+        {
+          "mob": "skeleton",
+          "weight": 3,
+          "level": 14
+        },
+        {
+          "mob": "restless_bones",
+          "weight": 2,
+          "level": 13
+        }
+      ],
+      "maxAlive": 10,
+      "packSize": [
+        2,
+        3
+      ],
+      "respawnSec": 55
+    },
+    {
+      "id": "workshop",
+      "region": {
+        "kind": "circle",
+        "x": 30,
+        "z": 48,
+        "r": 8
+      },
+      "mobs": [
+        {
+          "mob": "grave_harrower",
+          "weight": 1,
+          "level": 15
+        },
+        {
+          "mob": "ossuary_stitcher",
+          "weight": 2,
+          "level": 14
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [
+        1,
+        2
+      ],
+      "respawnSec": 90
+    },
+    {
+      "id": "ossuary-feasters",
+      "region": {
+        "kind": "circle",
+        "x": 74,
+        "z": 37,
+        "r": 7
+      },
+      "mobs": [
+        {
+          "mob": "crypt_ghoul",
+          "weight": 1,
+          "level": 14
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [
+        3,
+        4
+      ],
+      "respawnSec": 50
+    },
+    {
+      "id": "wrung-shades",
+      "region": {
+        "kind": "circle",
+        "x": 48,
+        "z": 40,
+        "r": 20
+      },
+      "mobs": [
+        {
+          "mob": "pallid_mourner",
+          "weight": 1,
+          "level": 13
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 70
+    },
+    {
+      "id": "workshop-threshold",
+      "region": {
+        "kind": "circle",
+        "x": 48,
+        "z": 28,
+        "r": 4
+      },
+      "mobs": [
+        {
+          "mob": "bone_warden",
+          "weight": 1,
+          "level": 14
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 400
     }
   ],
   "events": [

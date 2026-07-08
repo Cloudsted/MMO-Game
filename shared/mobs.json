@@ -111,6 +111,45 @@
         "minRange": 3.5
       }
     ],
+    "ranks": [
+      {
+        "atLevel": 9,
+        "add": [
+          {
+            "ability": "cleave",
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.05,
+        "titleSuffix": "Soldier"
+      },
+      {
+        "atLevel": 12,
+        "remove": [
+          "skeleton_slash"
+        ],
+        "add": [
+          {
+            "ability": "thrust",
+            "weight": 3
+          }
+        ],
+        "moveSpeedMult": 1.08,
+        "titleSuffix": "Legionary"
+      },
+      {
+        "atLevel": 14,
+        "add": [
+          {
+            "ability": "reap",
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.15,
+        "damageMult": 1.05,
+        "titleSuffix": "Deathless Legionary"
+      }
+    ],
     "aggroRadius": 10,
     "attackRange": 11,
     "leashRadius": 34,
@@ -960,5 +999,1140 @@
     "fleeAtHpPct": 1,
     "xp": 3,
     "loot": "slime_drops"
+  },
+  "restless_bones": {
+    "name": "Restless Bones",
+    "sprite": "restless_bones",
+    "level": 6,
+    "hp": 40,
+    "damage": 7,
+    "moveSpeed": 2.2,
+    "attacks": [
+      {
+        "ability": "punch",
+        "damage": 7,
+        "weight": 1
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 13,
+        "add": [
+          {
+            "ability": "quick_stab",
+            "damage": 12,
+            "weight": 1
+          }
+        ],
+        "hpMult": 1.4,
+        "damageMult": 1.5,
+        "titleSuffix": "Culled"
+      }
+    ],
+    "aggroRadius": 8,
+    "attackRange": 1.6,
+    "leashRadius": 20,
+    "fleeAtHpPct": 0,
+    "xp": 22,
+    "loot": "skeleton_drops",
+    "sounds": {
+      "idle": "skeleton_idle",
+      "attack": "skeleton_attack",
+      "hurt": "skeleton_hurt",
+      "die": "skeleton_die"
+    }
+  },
+  "ossuary_stitcher": {
+    "name": "Ossuary Stitcher",
+    "sprite": "ossuary_stitcher",
+    "level": 9,
+    "hp": 160,
+    "damage": 18,
+    "moveSpeed": 2.3,
+    "attacks": [
+      {
+        "ability": "shadow_lance",
+        "damage": 18,
+        "weight": 3
+      },
+      {
+        "ability": "mend_kin",
+        "weight": 10
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 12,
+        "add": [
+          {
+            "ability": "raise_bones",
+            "weight": 4
+          }
+        ],
+        "titleSuffix": "Reanimator"
+      },
+      {
+        "atLevel": 14,
+        "remove": [
+          "mend_kin"
+        ],
+        "add": [
+          {
+            "ability": "mend_kin_greater",
+            "weight": 12
+          }
+        ],
+        "hpMult": 1.15,
+        "titleSuffix": "Bonewright"
+      }
+    ],
+    "aggroRadius": 13,
+    "attackRange": 12,
+    "leashRadius": 24,
+    "fleeAtHpPct": 0,
+    "xp": 190,
+    "loot": "wraith_drops",
+    "sounds": {
+      "idle": "wraith_idle",
+      "attack": "wraith_attack",
+      "hurt": "wraith_hurt",
+      "die": "wraith_die"
+    }
+  },
+  "bone_warden": {
+    "name": "Bone Warden",
+    "sprite": "bone_warden",
+    "level": 10,
+    "hp": 420,
+    "damage": 24,
+    "moveSpeed": 1.9,
+    "attacks": [
+      {
+        "ability": "boss_slam",
+        "weight": 3
+      },
+      {
+        "ability": "bone_shrapnel",
+        "minRange": 5,
+        "weight": 2
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 14,
+        "add": [
+          {
+            "ability": "cleave",
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.1,
+        "moveSpeedMult": 1.05,
+        "attackRange": 22,
+        "leashRadius": 46,
+        "titleSuffix": "Ossuary Warden"
+      }
+    ],
+    "aggroRadius": 9,
+    "attackRange": 20,
+    "leashRadius": 30,
+    "fleeAtHpPct": 0,
+    "xp": 620,
+    "loot": "wraith_drops",
+    "sounds": {
+      "idle": "cinder_golem_boss_idle",
+      "attack": "cinder_golem_boss_attack",
+      "hurt": "cinder_golem_boss_hurt",
+      "die": "cinder_golem_boss_die"
+    }
+  },
+  "grave_harrower": {
+    "name": "Grave Harrower",
+    "sprite": "grave_harrower",
+    "level": 12,
+    "hp": 340,
+    "damage": 28,
+    "moveSpeed": 2.4,
+    "attacks": [
+      {
+        "ability": "reap",
+        "weight": 3
+      },
+      {
+        "ability": "scythe_hook",
+        "weight": 2
+      },
+      {
+        "ability": "raise_bones",
+        "weight": 4
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 15,
+        "remove": [
+          "raise_bones"
+        ],
+        "add": [
+          {
+            "ability": "harvest_muster",
+            "weight": 5
+          },
+          {
+            "ability": "shadow_lance",
+            "damage": 30,
+            "minRange": 4,
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.15,
+        "titleSuffix": "Deathless Harrower"
+      }
+    ],
+    "aggroRadius": 12,
+    "attackRange": 14,
+    "leashRadius": 30,
+    "fleeAtHpPct": 0,
+    "xp": 880,
+    "loot": "wraith_drops",
+    "sounds": {
+      "idle": "wraith_idle",
+      "attack": "wraith_attack",
+      "hurt": "wraith_hurt",
+      "die": "wraith_die"
+    }
+  },
+  "crypt_ghoul": {
+    "name": "Crypt Ghoul",
+    "sprite": "crypt_ghoul",
+    "level": 7,
+    "hp": 85,
+    "damage": 14,
+    "moveSpeed": 4.4,
+    "attacks": [
+      {
+        "ability": "spider_bite",
+        "damage": 14,
+        "weight": 1
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 11,
+        "add": [
+          {
+            "ability": "quick_stab",
+            "weight": 1
+          }
+        ],
+        "damageMult": 1.1,
+        "moveSpeedMult": 1.05,
+        "titleSuffix": "Feaster"
+      },
+      {
+        "atLevel": 14,
+        "hpMult": 1.1,
+        "damageMult": 1.05,
+        "aggroRadius": 13,
+        "titleSuffix": "Charnel Feaster"
+      }
+    ],
+    "aggroRadius": 8,
+    "attackRange": 2,
+    "leashRadius": 22,
+    "fleeAtHpPct": 0,
+    "xp": 78,
+    "loot": "bone_bat_drops",
+    "sounds": {
+      "idle": "gravehound_idle",
+      "attack": "gravehound_attack",
+      "hurt": "gravehound_hurt",
+      "die": "gravehound_die"
+    }
+  },
+  "pallid_mourner": {
+    "name": "Pallid Mourner",
+    "sprite": "pallid_mourner",
+    "level": 6,
+    "hp": 25,
+    "damage": 1,
+    "moveSpeed": 1.6,
+    "attacks": [
+      {
+        "ability": "punch",
+        "damage": 1,
+        "weight": 1
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 13,
+        "remove": [
+          "punch"
+        ],
+        "add": [
+          {
+            "ability": "wraith_touch",
+            "weight": 3
+          }
+        ],
+        "hpMult": 2.5,
+        "damageMult": 6,
+        "moveSpeedMult": 1.4,
+        "aggroRadius": 12,
+        "fleeAtHpPct": 0,
+        "titleSuffix": "Wrung Shade"
+      }
+    ],
+    "aggroRadius": 0,
+    "attackRange": 1.4,
+    "leashRadius": 14,
+    "fleeAtHpPct": 1,
+    "xp": 3,
+    "loot": "slime_drops",
+    "sounds": {
+      "idle": "wraith_idle",
+      "attack": "wraith_attack",
+      "hurt": "wraith_hurt",
+      "die": "wraith_die"
+    }
+  },
+  "ember_warplate": {
+    "name": "Ember Warplate",
+    "sprite": "ember_warplate",
+    "level": 12,
+    "hp": 265,
+    "damage": 26,
+    "moveSpeed": 2.9,
+    "attacks": [
+      {
+        "ability": "ember_cleave",
+        "weight": 1
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 14,
+        "add": [
+          {
+            "ability": "ember_burst",
+            "damage": 22,
+            "minRange": 4,
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.1,
+        "titleSuffix": "of the Watch"
+      },
+      {
+        "atLevel": 16,
+        "remove": [
+          "ember_cleave"
+        ],
+        "add": [
+          {
+            "ability": "kings_cleave",
+            "weight": 3
+          }
+        ],
+        "damageMult": 1.15,
+        "titleSuffix": "Foundry Captain"
+      }
+    ],
+    "aggroRadius": 11,
+    "attackRange": 16,
+    "leashRadius": 38,
+    "fleeAtHpPct": 0,
+    "xp": 380,
+    "loot": "husk_drops",
+    "sounds": {
+      "idle": "cinder_golem_boss_idle",
+      "attack": "cinder_golem_boss_attack",
+      "hurt": "cinder_golem_boss_hurt",
+      "die": "cinder_golem_boss_die"
+    }
+  },
+  "forge_tender": {
+    "name": "Forge-Tender",
+    "sprite": "forge_tender",
+    "level": 12,
+    "hp": 175,
+    "damage": 18,
+    "moveSpeed": 2.5,
+    "attacks": [
+      {
+        "ability": "elemental_bolt",
+        "damage": 18,
+        "weight": 2
+      },
+      {
+        "ability": "forge_mend",
+        "weight": 6
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 14,
+        "add": [
+          {
+            "ability": "magma_vents",
+            "minRange": 3,
+            "weight": 3
+          }
+        ],
+        "hpMult": 1.15,
+        "titleSuffix": "Overseer"
+      },
+      {
+        "atLevel": 16,
+        "hpMult": 1.2,
+        "damageMult": 1.1,
+        "attackRange": 16,
+        "titleSuffix": "Foundry Overseer"
+      }
+    ],
+    "aggroRadius": 13,
+    "attackRange": 12,
+    "leashRadius": 40,
+    "fleeAtHpPct": 0,
+    "xp": 470,
+    "loot": "fire_elemental_drops",
+    "sounds": {
+      "idle": "fire_elemental_idle",
+      "attack": "fire_elemental_attack",
+      "hurt": "fire_elemental_hurt",
+      "die": "fire_elemental_die"
+    }
+  },
+  "frostplate_revenant": {
+    "name": "Frostplate Revenant",
+    "sprite": "frostplate_revenant",
+    "level": 13,
+    "hp": 330,
+    "damage": 30,
+    "moveSpeed": 3.1,
+    "attacks": [
+      {
+        "ability": "rime_cleave",
+        "weight": 3
+      },
+      {
+        "ability": "rime_shard",
+        "damage": 24,
+        "minRange": 5,
+        "weight": 2
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 15,
+        "hpMult": 1.3,
+        "damageMult": 1.15,
+        "moveSpeedMult": 1.08,
+        "aggroRadius": 18,
+        "leashRadius": 80,
+        "titleSuffix": "Unbound"
+      }
+    ],
+    "aggroRadius": 14,
+    "attackRange": 16,
+    "leashRadius": 60,
+    "fleeAtHpPct": 0,
+    "xp": 620,
+    "loot": "sentinel_drops",
+    "sounds": {
+      "idle": "cinder_golem_boss_idle",
+      "attack": "cinder_golem_boss_attack",
+      "hurt": "cinder_golem_boss_hurt",
+      "die": "cinder_golem_boss_die"
+    }
+  },
+  "slagback_troll": {
+    "name": "Slagback Troll",
+    "sprite": "slagback_troll",
+    "level": 13,
+    "hp": 380,
+    "damage": 31,
+    "moveSpeed": 2.7,
+    "attacks": [
+      {
+        "ability": "cleave",
+        "damage": 31,
+        "weight": 3
+      },
+      {
+        "ability": "slag_gorge",
+        "weight": 4
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 15,
+        "add": [
+          {
+            "ability": "ember_burst",
+            "damage": 26,
+            "minRange": 6,
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.25,
+        "titleSuffix": "Cinderhide"
+      }
+    ],
+    "aggroRadius": 10,
+    "attackRange": 16,
+    "leashRadius": 30,
+    "fleeAtHpPct": 0,
+    "xp": 640,
+    "loot": "golem_boss_drops",
+    "sounds": {
+      "idle": "cinder_golem_boss_idle",
+      "attack": "cinder_golem_boss_attack",
+      "hurt": "cinder_golem_boss_hurt",
+      "die": "cinder_golem_boss_die"
+    }
+  },
+  "forge_ward": {
+    "name": "Forge-Ward",
+    "sprite": "forge_ward",
+    "level": 13,
+    "hp": 400,
+    "damage": 33,
+    "moveSpeed": 1.6,
+    "attacks": [
+      {
+        "ability": "pounce",
+        "weight": 3
+      },
+      {
+        "ability": "stone_shard",
+        "damage": 24,
+        "minRange": 5,
+        "weight": 2
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 15,
+        "add": [
+          {
+            "ability": "boss_slam",
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.3,
+        "moveSpeedMult": 1.5,
+        "leashRadius": 34,
+        "titleSuffix": "Awakened"
+      }
+    ],
+    "aggroRadius": 4,
+    "attackRange": 18,
+    "leashRadius": 12,
+    "fleeAtHpPct": 0,
+    "xp": 700,
+    "loot": "sentinel_drops",
+    "sounds": {
+      "idle": "cinder_golem_boss_idle",
+      "attack": "cinder_golem_boss_attack",
+      "hurt": "cinder_golem_boss_hurt",
+      "die": "cinder_golem_boss_die"
+    }
+  },
+  "forge_prototype": {
+    "name": "Forge Prototype",
+    "sprite": "forge_prototype",
+    "level": 14,
+    "hp": 520,
+    "damage": 34,
+    "moveSpeed": 2.2,
+    "attacks": [
+      {
+        "ability": "golem_slam",
+        "weight": 3
+      },
+      {
+        "ability": "magma_vents",
+        "damage": 26,
+        "minRange": 3,
+        "weight": 3
+      },
+      {
+        "ability": "slag_lob",
+        "damage": 30,
+        "minRange": 6,
+        "weight": 3
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 16,
+        "remove": [
+          "magma_vents"
+        ],
+        "add": [
+          {
+            "ability": "throne_flames",
+            "weight": 3
+          }
+        ],
+        "hpMult": 1.3,
+        "damageMult": 1.1,
+        "titleSuffix": "Rekindled"
+      }
+    ],
+    "aggroRadius": 12,
+    "attackRange": 15,
+    "leashRadius": 26,
+    "fleeAtHpPct": 0,
+    "xp": 820,
+    "loot": "golem_boss_drops",
+    "sounds": {
+      "idle": "cinder_golem_boss_idle",
+      "attack": "cinder_golem_boss_attack",
+      "hurt": "cinder_golem_boss_hurt",
+      "die": "cinder_golem_boss_die"
+    }
+  },
+  "sandpicker": {
+    "name": "Sandpicker",
+    "sprite": "sandpicker",
+    "level": 5,
+    "hp": 68,
+    "damage": 10,
+    "moveSpeed": 3.7,
+    "attacks": [
+      {
+        "ability": "quick_stab",
+        "weight": 3
+      },
+      {
+        "ability": "bone_bow",
+        "damage": 7,
+        "minRange": 4,
+        "weight": 2
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 8,
+        "add": [
+          {
+            "ability": "cleave",
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.1,
+        "titleSuffix": "Tomb-Breaker"
+      },
+      {
+        "atLevel": 12,
+        "remove": [
+          "bone_bow"
+        ],
+        "add": [
+          {
+            "ability": "bolt_shot",
+            "damage": 14,
+            "minRange": 5,
+            "weight": 2
+          }
+        ],
+        "damageMult": 1.15,
+        "moveSpeedMult": 1.05,
+        "titleSuffix": "Warlord"
+      }
+    ],
+    "aggroRadius": 10,
+    "attackRange": 14,
+    "leashRadius": 26,
+    "fleeAtHpPct": 0.3,
+    "xp": 44,
+    "loot": "bandit_drops",
+    "sounds": {
+      "idle": "bandit_idle",
+      "attack": "bandit_attack",
+      "hurt": "bandit_hurt",
+      "die": "bandit_die"
+    }
+  },
+  "withered_courtier": {
+    "name": "Withered Courtier",
+    "sprite": "withered_courtier",
+    "level": 6,
+    "hp": 190,
+    "damage": 15,
+    "moveSpeed": 1.2,
+    "attacks": [
+      {
+        "ability": "grave_rot",
+        "weight": 1
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 9,
+        "add": [
+          {
+            "ability": "binding_wrap",
+            "minRange": 3.5,
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.15,
+        "titleSuffix": "Embalmed"
+      },
+      {
+        "atLevel": 12,
+        "add": [
+          {
+            "ability": "courtiers_grief",
+            "weight": 4
+          },
+          {
+            "ability": "reap",
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.15,
+        "titleSuffix": "Tomb-Herald"
+      },
+      {
+        "atLevel": 16,
+        "damageMult": 1.25,
+        "moveSpeedMult": 1.15,
+        "titleSuffix": "Sekhat's Own"
+      }
+    ],
+    "aggroRadius": 7,
+    "attackRange": 12,
+    "leashRadius": 22,
+    "fleeAtHpPct": 0,
+    "xp": 130,
+    "loot": "skeleton_drops",
+    "sounds": {
+      "idle": "wraith_idle",
+      "attack": "wraith_attack",
+      "hurt": "wraith_hurt",
+      "die": "wraith_die"
+    }
+  },
+  "duneshadow_lioness": {
+    "name": "Duneshadow Lioness",
+    "sprite": "duneshadow_lioness",
+    "level": 8,
+    "hp": 145,
+    "damage": 18,
+    "moveSpeed": 4.4,
+    "attacks": [
+      {
+        "ability": "pounce",
+        "weight": 2
+      },
+      {
+        "ability": "wolf_bite",
+        "damage": 15,
+        "weight": 3
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 11,
+        "add": [
+          {
+            "ability": "quick_stab",
+            "weight": 2
+          }
+        ],
+        "damageMult": 1.05,
+        "titleSuffix": "Bloodmarked"
+      },
+      {
+        "atLevel": 14,
+        "remove": [
+          "wolf_bite"
+        ],
+        "add": [
+          {
+            "ability": "cleave",
+            "weight": 3
+          }
+        ],
+        "hpMult": 1.1,
+        "moveSpeedMult": 1.05,
+        "titleSuffix": "of the Warpride"
+      }
+    ],
+    "aggroRadius": 14,
+    "attackRange": 3.6,
+    "leashRadius": 44,
+    "fleeAtHpPct": 0,
+    "xp": 200,
+    "loot": "wolf_drops",
+    "sounds": {
+      "idle": "wolf_idle",
+      "attack": "wolf_attack",
+      "hurt": "wolf_hurt",
+      "die": "wolf_die"
+    }
+  },
+  "kaharat": {
+    "name": "Kaharat, the Red Mane",
+    "sprite": "kaharat",
+    "level": 9,
+    "hp": 520,
+    "damage": 26,
+    "moveSpeed": 3.3,
+    "attacks": [
+      {
+        "ability": "lion_maul",
+        "weight": 3
+      },
+      {
+        "ability": "pounce",
+        "damage": 22,
+        "weight": 2
+      },
+      {
+        "ability": "pride_roar",
+        "weight": 5
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 13,
+        "add": [
+          {
+            "ability": "reap",
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.15,
+        "titleSuffix": "the Starving"
+      }
+    ],
+    "aggroRadius": 16,
+    "attackRange": 3.6,
+    "leashRadius": 40,
+    "fleeAtHpPct": 0,
+    "xp": 700,
+    "loot": "boss_drops",
+    "sounds": {
+      "idle": "wolf_idle",
+      "attack": "wolf_attack",
+      "hurt": "wolf_hurt",
+      "die": "wolf_die"
+    }
+  },
+  "sekhat": {
+    "name": "Sekhat the Ninth",
+    "sprite": "sekhat",
+    "level": 10,
+    "hp": 900,
+    "damage": 30,
+    "moveSpeed": 2.4,
+    "attacks": [
+      {
+        "ability": "grave_rot",
+        "damage": 30,
+        "weight": 3
+      },
+      {
+        "ability": "boss_slam",
+        "weight": 2
+      },
+      {
+        "ability": "binding_wrap",
+        "minRange": 4,
+        "weight": 2
+      },
+      {
+        "ability": "courtiers_grief",
+        "weight": 5
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 16,
+    "attackRange": 12,
+    "leashRadius": 26,
+    "fleeAtHpPct": 0,
+    "xp": 1400,
+    "loot": "boss_drops",
+    "sounds": {
+      "idle": "lich_boss_idle",
+      "attack": "lich_boss_attack",
+      "hurt": "lich_boss_hurt",
+      "die": "lich_boss_die"
+    }
+  },
+  "glimmereye": {
+    "name": "Glimmereye",
+    "sprite": "glimmereye",
+    "level": 1,
+    "hp": 8,
+    "damage": 0,
+    "moveSpeed": 3.6,
+    "attacks": [
+      {
+        "ability": "punch",
+        "damage": 0,
+        "weight": 1
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 7,
+    "attackRange": 1,
+    "leashRadius": 10,
+    "fleeAtHpPct": 1.05,
+    "xp": 1,
+    "loot": "critter_drops"
+  },
+  "fen_slime": {
+    "name": "Fen Slime",
+    "sprite": "fen_slime",
+    "level": 8,
+    "hp": 145,
+    "damage": 16,
+    "moveSpeed": 2,
+    "attacks": [
+      {
+        "ability": "mire_cling",
+        "weight": 1
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 11,
+        "add": [
+          {
+            "ability": "caustic_gob",
+            "damage": 14,
+            "minRange": 4,
+            "weight": 2
+          }
+        ],
+        "moveSpeedMult": 1.1,
+        "titleSuffix": "Bilious"
+      },
+      {
+        "atLevel": 14,
+        "add": [
+          {
+            "ability": "slime_split",
+            "weight": 3
+          }
+        ],
+        "hpMult": 1.2,
+        "titleSuffix": "Teeming"
+      }
+    ],
+    "aggroRadius": 9,
+    "attackRange": 12,
+    "leashRadius": 24,
+    "fleeAtHpPct": 0,
+    "xp": 165,
+    "loot": "slime_drops",
+    "sounds": {
+      "idle": "slime_idle",
+      "attack": "slime_attack",
+      "hurt": "slime_hurt",
+      "die": "slime_die"
+    }
+  },
+  "fen_slimeling": {
+    "name": "Fen Slimeling",
+    "sprite": "fen_slime",
+    "level": 6,
+    "hp": 45,
+    "damage": 8,
+    "moveSpeed": 2.2,
+    "attacks": [
+      {
+        "ability": "mire_cling",
+        "damage": 8,
+        "weight": 1
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 8,
+    "attackRange": 1.8,
+    "leashRadius": 16,
+    "fleeAtHpPct": 0,
+    "xp": 20,
+    "loot": "slime_drops",
+    "sounds": {
+      "idle": "slime_idle",
+      "attack": "slime_attack",
+      "hurt": "slime_hurt",
+      "die": "slime_die"
+    }
+  },
+  "bloatslime": {
+    "name": "Bloatslime",
+    "sprite": "bloatslime",
+    "level": 10,
+    "hp": 330,
+    "damage": 22,
+    "moveSpeed": 1.2,
+    "attacks": [
+      {
+        "ability": "wraith_touch",
+        "damage": 22,
+        "weight": 3
+      },
+      {
+        "ability": "slime_split",
+        "weight": 4
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 13,
+        "add": [
+          {
+            "ability": "caustic_gob",
+            "damage": 18,
+            "minRange": 5,
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.2,
+        "titleSuffix": "Swollen"
+      }
+    ],
+    "aggroRadius": 10,
+    "attackRange": 12,
+    "leashRadius": 20,
+    "fleeAtHpPct": 0,
+    "xp": 340,
+    "loot": "slime_drops",
+    "sounds": {
+      "idle": "slime_idle",
+      "attack": "slime_attack",
+      "hurt": "slime_hurt",
+      "die": "slime_die"
+    }
+  },
+  "grelmoss": {
+    "name": "Grelmoss, the Crowned Mire",
+    "sprite": "grelmoss",
+    "level": 12,
+    "hp": 820,
+    "damage": 34,
+    "moveSpeed": 1.6,
+    "attacks": [
+      {
+        "ability": "royal_engulf",
+        "weight": 3
+      },
+      {
+        "ability": "sovereign_gob",
+        "minRange": 4,
+        "weight": 3
+      },
+      {
+        "ability": "mire_spawn",
+        "weight": 5
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 15,
+    "attackRange": 14,
+    "leashRadius": 40,
+    "fleeAtHpPct": 0,
+    "xp": 850,
+    "loot": "grelmoss_drops",
+    "sounds": {
+      "idle": "slime_idle",
+      "attack": "slime_attack",
+      "hurt": "slime_hurt",
+      "die": "slime_die"
+    }
+  },
+  "aelthir": {
+    "name": "Aelthir, the Unmarred",
+    "sprite": "aelthir",
+    "level": 12,
+    "hp": 900,
+    "damage": 44,
+    "moveSpeed": 4.6,
+    "attacks": [
+      {
+        "ability": "horn_charge",
+        "weight": 3
+      },
+      {
+        "ability": "radiant_mend",
+        "weight": 4
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 16,
+        "add": [
+          {
+            "ability": "reap",
+            "weight": 2
+          }
+        ],
+        "hpMult": 1.2,
+        "damageMult": 1.1,
+        "titleSuffix": "the Wrath"
+      }
+    ],
+    "aggroRadius": 0,
+    "attackRange": 3.8,
+    "leashRadius": 60,
+    "fleeAtHpPct": 0,
+    "xp": 1100,
+    "loot": "unmarred_drops"
+  },
+  "cinder_nightmare": {
+    "name": "Cinder Nightmare",
+    "sprite": "cinder_nightmare",
+    "level": 14,
+    "hp": 330,
+    "damage": 32,
+    "moveSpeed": 5,
+    "attacks": [
+      {
+        "ability": "nightmare_charge",
+        "weight": 3
+      },
+      {
+        "ability": "ember_trail",
+        "minRange": 3,
+        "weight": 4
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 17,
+        "add": [
+          {
+            "ability": "sundering_wave",
+            "damage": 30,
+            "minRange": 5,
+            "weight": 3
+          }
+        ],
+        "hpMult": 1.25,
+        "damageMult": 1.05,
+        "titleSuffix": "the Riderless"
+      }
+    ],
+    "aggroRadius": 15,
+    "attackRange": 14,
+    "leashRadius": 50,
+    "fleeAtHpPct": 0,
+    "xp": 640,
+    "loot": "fire_elemental_drops",
+    "sounds": {
+      "idle": "cinder_golem_boss_idle",
+      "attack": "cinder_golem_boss_attack",
+      "hurt": "cinder_golem_boss_hurt",
+      "die": "cinder_golem_boss_die"
+    }
   }
 }

@@ -53,15 +53,51 @@ public class SpriteLibrary {
         heights.put("ash_husk", 1.75f);
         heights.put("fire_elemental", 1.7f);
         heights.put("bone_bat", 0.9f);
-        heights.put("wraith", 1.8f);
         heights.put("cinder_golem", 2.4f);
-        heights.put("lich", 2.0f);
+        // re-sprited 2026-07-08 (same keys, new source cells — see build-assets.mjs)
+        heights.put("skeleton", 1.75f);
+        heights.put("wraith", 1.9f);
+        heights.put("lich", 1.9f);
+        // roster-2: Vaults of Morvane / crypt_depths undead
+        heights.put("restless_bones", 1.75f);
+        heights.put("ossuary_stitcher", 1.9f);
+        heights.put("bone_warden", 2.6f);
+        heights.put("grave_harrower", 1.9f);
+        heights.put("crypt_ghoul", 1.6f);
+        heights.put("pallid_mourner", 1.0f);
+        // roster-2: Cinderrift forge constructs
+        heights.put("ember_warplate", 1.9f);
+        heights.put("forge_tender", 1.8f);
+        heights.put("frostplate_revenant", 1.9f);
+        heights.put("slagback_troll", 2.4f);
+        heights.put("forge_ward", 2.0f);
+        heights.put("forge_prototype", 2.1f);
+        // roster-2: The Sunscour
+        heights.put("sandpicker", 1.4f);
+        heights.put("withered_courtier", 1.75f);
+        heights.put("duneshadow_lioness", 1.1f);
+        heights.put("kaharat", 1.2f);
+        heights.put("sekhat", 2.1f);
+        // roster-2: Gloomfen. fen_slimeling shares this sprite key (the server sends
+        // only `sprite`), so it renders at the parent's height — its spec heightM of
+        // 0.5 is not expressible until MobDef carries a height.
+        heights.put("glimmereye", 0.4f);
+        heights.put("fen_slime", 0.8f);
+        heights.put("bloatslime", 1.3f);
+        heights.put("grelmoss", 1.5f);
+        heights.put("aelthir", 1.9f);
+        heights.put("cinder_nightmare", 1.9f);
         // bandits_1 roster (4 archetypes; "bandit" replaced the old npc5 burglar)
         heights.put("bandit", 1.75f);
         heights.put("bandit_enforcer", 1.8f);
         heights.put("bandit_bombardier", 1.8f); // the lit fuse adds a pixel row
         heights.put("bandit_mystic", 1.8f);
         heights.put("bandit_chief", 1.85f);
+        heights.put("bandit_poacher", 1.75f);
+        // camp livestock. These shipped with no entry and were falling back to the
+        // 1.75 humanoid default — a dog and a goat as tall as a man.
+        heights.put("camp_cur", 0.75f);
+        heights.put("stolen_goat", 0.95f);
         // Sundered City roster
         heights.put("marauder", 1.8f);
         heights.put("gravehound", 1.35f);

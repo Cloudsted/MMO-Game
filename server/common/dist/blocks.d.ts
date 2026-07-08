@@ -16,6 +16,10 @@ declare const BlockDefSchema: z.ZodObject<{
     kind: z.ZodEnum<["cube", "cross"]>;
     cull: z.ZodEnum<["opaque", "cutout", "liquid", "none"]>;
     glow: z.ZodOptional<z.ZodBoolean>;
+    /** cross blocks bend in the wind. Default: true for a non-glow cross block
+     *  (grass, flowers, vines). A hanging chain or a pile of skulls does not
+     *  sway, and neither does a torch — set false. */
+    sway: z.ZodOptional<z.ZodBoolean>;
     light: z.ZodOptional<z.ZodNumber>;
     tex: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodString>>;
     /** client sound-group suffixes (manifest names step_X/break_X/place_X) */
@@ -40,6 +44,7 @@ declare const BlockDefSchema: z.ZodObject<{
     kind: "cube" | "cross";
     cull: "opaque" | "cutout" | "liquid" | "none";
     glow?: boolean | undefined;
+    sway?: boolean | undefined;
     light?: number | undefined;
     tex?: Record<string, string> | undefined;
     sounds?: {
@@ -55,6 +60,7 @@ declare const BlockDefSchema: z.ZodObject<{
     kind: "cube" | "cross";
     cull: "opaque" | "cutout" | "liquid" | "none";
     glow?: boolean | undefined;
+    sway?: boolean | undefined;
     light?: number | undefined;
     tex?: Record<string, string> | undefined;
     sounds?: {

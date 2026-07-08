@@ -64,14 +64,14 @@ function tablesInBounds(def: RoomDef): void {
 describe("gloomfen (L8-12, behind forest)", () => {
   const def = loadRoomDef("gloomfen");
 
-  it("loads per design: swamp, murk_water, perpetual dusk, 7 tables in bounds", () => {
+  it("loads per design: swamp, murk_water, perpetual dusk, 10 tables in bounds", () => {
     expect(def.biome).toBe("swamp");
     expect(def.wind).toBeCloseTo(0.45);
     expect(def.fixedTime).toBeCloseTo(0.86);
     expect(def.size).toEqual({ w: 320, h: 320 });
     expect(def.terrain.liquid).toBe("murk_water");
     expect(def.terrain.seed).toBe(91177);
-    expect(def.spawnTables).toHaveLength(7); // +drowned-company (the Thornhollow Company, reused at L11-12)
+    expect(def.spawnTables).toHaveLength(10); // +drowned-company, +glimmer-thicket, +mire-nave, +crowned-mire
     tablesInBounds(def);
   });
 
@@ -99,14 +99,15 @@ describe("gloomfen (L8-12, behind forest)", () => {
 describe("cinderrift (L11-14, behind desert)", () => {
   const def = loadRoomDef("cinderrift");
 
-  it("loads per design: volcanic, lava, canyon amplitude, 5 tables in bounds", () => {
+  it("loads per design: volcanic, lava, canyon amplitude, 12 tables in bounds", () => {
     expect(def.biome).toBe("volcanic");
     expect(def.wind).toBeCloseTo(0.3);
     expect(def.fixedTime).toBeUndefined(); // live sky — the lava glow carries the night
     expect(def.size).toEqual({ w: 288, h: 288 });
     expect(def.terrain.liquid).toBe("lava");
     expect(def.terrain.amplitude).toBe(9);
-    expect(def.spawnTables).toHaveLength(5);
+    // +slag-adits, +forge-gate, +proto-yard-{w,e,s}, +the-unbound, +riderless
+    expect(def.spawnTables).toHaveLength(12);
     tablesInBounds(def);
     const boss = def.spawnTables.find((t) => t.id === "furnace-arena")!;
     expect(boss.mobs[0]!.mob).toBe("cinder_golem_boss");
@@ -144,7 +145,8 @@ describe("crypt_depths / Vaults of Morvane (L12-15, ephemeral)", () => {
     expect(def.terrain.seed).toBe(50533);
     // exact lifecycle field shapes, copied from dungeon.json
     expect(def.lifecycle).toEqual({ lifetimeSec: 3000, downtimeSec: 240, warnAtSecLeft: [300, 60, 10] });
-    expect(def.spawnTables).toHaveLength(5);
+    // +drill-field, +workshop, +ossuary-feasters, +wrung-shades, +workshop-threshold
+    expect(def.spawnTables).toHaveLength(10);
     tablesInBounds(def);
     const lich = def.spawnTables.find((t) => t.id === "lich-vault")!;
     expect(lich.mobs[0]!.mob).toBe("lich_boss");

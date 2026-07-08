@@ -53,6 +53,14 @@
         {
           "mob": "ash_husk",
           "weight": 1
+        },
+        {
+          "mob": "ember_warplate",
+          "weight": 2
+        },
+        {
+          "mob": "forge_tender",
+          "weight": 1
         }
       ],
       "maxAlive": 7,
@@ -73,6 +81,14 @@
       "mobs": [
         {
           "mob": "ash_husk",
+          "weight": 1
+        },
+        {
+          "mob": "ember_warplate",
+          "weight": 2
+        },
+        {
+          "mob": "forge_tender",
           "weight": 1
         }
       ],
@@ -149,6 +165,153 @@
         1
       ],
       "respawnSec": 900
+    },
+    {
+      "id": "slag-adits",
+      "region": {
+        "kind": "circle",
+        "x": 161,
+        "z": 201,
+        "r": 10
+      },
+      "mobs": [
+        {
+          "mob": "slagback_troll",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 3,
+      "packSize": [
+        1,
+        2
+      ],
+      "respawnSec": 120
+    },
+    {
+      "id": "forge-gate",
+      "region": {
+        "kind": "circle",
+        "x": 144,
+        "z": 66,
+        "r": 6
+      },
+      "mobs": [
+        {
+          "mob": "forge_ward",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 2,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 300
+    },
+    {
+      "id": "proto-yard-w",
+      "region": {
+        "kind": "circle",
+        "x": 130,
+        "z": 78,
+        "r": 5
+      },
+      "mobs": [
+        {
+          "mob": "forge_prototype",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 600
+    },
+    {
+      "id": "proto-yard-e",
+      "region": {
+        "kind": "circle",
+        "x": 158,
+        "z": 78,
+        "r": 5
+      },
+      "mobs": [
+        {
+          "mob": "forge_prototype",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 600
+    },
+    {
+      "id": "proto-yard-s",
+      "region": {
+        "kind": "circle",
+        "x": 144,
+        "z": 90,
+        "r": 5
+      },
+      "mobs": [
+        {
+          "mob": "forge_prototype",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 600
+    },
+    {
+      "id": "the-unbound",
+      "region": {
+        "kind": "circle",
+        "x": 144,
+        "z": 144,
+        "r": 90
+      },
+      "mobs": [
+        {
+          "mob": "frostplate_revenant",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 420
+    },
+    {
+      "id": "riderless",
+      "region": {
+        "kind": "circle",
+        "x": 144,
+        "z": 150,
+        "r": 80
+      },
+      "mobs": [
+        {
+          "mob": "cinder_nightmare",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 500
     }
   ],
   "prefabs": [

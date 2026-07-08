@@ -153,6 +153,14 @@
       "maxAlive": 1,
       "packSize": [1, 1],
       "respawnSec": 99999
+    },
+    {
+      "id": "burned-market-riderless",
+      "region": { "kind": "circle", "x": 84, "z": 170, "r": 12 },
+      "mobs": [{ "mob": "cinder_nightmare", "weight": 1, "level": 17 }],
+      "maxAlive": 1,
+      "packSize": [1, 1],
+      "respawnSec": 600
     }
   ],
   "events": [

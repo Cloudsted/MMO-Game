@@ -811,6 +811,16 @@
         13,
         45
       ]
+    },
+    "spiral_horn": {
+      "name": "Aelthir's Spiral Horn",
+      "kind": "trophy",
+      "value": 600,
+      "stack": 1,
+      "icon": [
+        7,
+        55
+      ]
     }
   }
 }

@@ -8,9 +8,15 @@
  * constants.mobs.scaling can't silently change what a spawn table means.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { CharacterSnapshot, ServerToClient } from "@fantasy-mmo/common";
-import { gameConstants, loadRoomDef, resolveMob, mobAllAbilityIds, RegistryService, type MobDef } from "@fantasy-mmo/common";
+import { gameConstants, loadRoomDef, resolveMob, mobAllAbilityIds, mobAttacks, RegistryService, type MobDef } from "@fantasy-mmo/common";
 import { RoomSim } from "../src/sim/room.js";
+
+/** The shipped audio manifest — mob `sounds` must name groups that exist in it. */
+const AUDIO_MANIFEST = resolve(dirname(fileURLToPath(import.meta.url)), "../../../client/assets/audio/manifest.json");
 
 const consts = gameConstants();
 const SCALING = consts.mobs.scaling;
@@ -447,8 +453,13 @@ describe("registry guards against latent mob traps", () => {
         if (!spec) continue;
         expect(spec.mob, `mob ${id}: ${abilityId} summons itself`).not.toBe(id);
         const child = reg.mobs[spec.mob]!;
-        for (const childAbility of mobAllAbilityIds(child)) {
-          expect(reg.abilities[childAbility]?.summon, `${id} -> ${spec.mob} -> ${childAbility}`).toBeFalsy();
+        // The child is judged on its BASE kit, exactly as registry.ts does:
+        // summonWave() spawns minions with no level override, so a summon
+        // sitting behind a rank the minion can never reach is not a chain.
+        // (Grelmoss's mire_spawn raises L8 fen_slimes; slime_split is their
+        // L14 rank, and nothing in the mire ever spawns one at 14.)
+        for (const childAttack of mobAttacks(child)) {
+          expect(reg.abilities[childAttack.ability]?.summon, `${id} -> ${spec.mob} -> ${childAttack.ability}`).toBeFalsy();
         }
       }
     }
@@ -534,5 +545,327 @@ describe("summon xp/loot hygiene", () => {
         for (const a of baseKit) expect(reg.abilities[a.ability]?.summon, `${id} -> ${spec.mob}`).toBeFalsy();
       }
     }
+  });
+});
+
+/**
+ * The roster-2 bestiary: the crypt assembly line, the Cinderrift foundry, the
+ * tomb court, the mire, and the two wanderers. Every mob here is a level-scaled
+ * def that a spawn table is expected to REUSE deeper — these pin the ladders the
+ * design promised (docs/content-design-2.md, docs/asset-catalog/roster-2.json)
+ * so a tuning pass cannot quietly turn a rank into a no-op.
+ */
+describe("the roster-2 bestiary ladders", () => {
+  const reg = new RegistryService();
+  const kit = (id: string, level?: number) => resolveMob(reg.mobs[id]!, level, SCALING).attacks.map((a) => a.ability).sort();
+  const at = (id: string, level?: number) => resolveMob(reg.mobs[id]!, level, SCALING);
+
+  /** Every mob roster-2 added, plus `skeleton` (re-ranked, not re-authored). */
+  const ROSTER = [
+    "skeleton", "restless_bones", "ossuary_stitcher", "bone_warden", "grave_harrower", "crypt_ghoul",
+    "pallid_mourner", "ember_warplate", "forge_tender", "frostplate_revenant", "slagback_troll",
+    "forge_ward", "forge_prototype", "sandpicker", "withered_courtier", "duneshadow_lioness",
+    "kaharat", "sekhat", "glimmereye", "fen_slime", "fen_slimeling", "bloatslime", "grelmoss",
+    "aelthir", "cinder_nightmare",
+  ];
+
+  it("every roster mob exists", () => {
+    for (const id of ROSTER) expect(reg.mobs[id], id).toBeTruthy();
+  });
+
+  // ---- THE HEADLINE: skeleton's four-rank ladder, zero new abilities ----
+
+  it("the skeleton ladder resolves to the right kit at 6 / 9 / 12 / 14", () => {
+    // L6 conscript: a chipped sword he sometimes remembers to swap for a bow
+    expect(kit("skeleton", 6)).toEqual(["bone_bow", "skeleton_slash"]);
+    expect(at("skeleton", 6).name).toBe("Skeleton");
+    // L9 Soldier: he stops flailing and starts sweeping
+    expect(kit("skeleton", 9)).toEqual(["bone_bow", "cleave", "skeleton_slash"]);
+    expect(at("skeleton", 9).name).toBe("Skeleton Soldier");
+    // L12 Legionary: the slash is GONE — a 3.4 m pike jabs from the second rank
+    expect(kit("skeleton", 12)).toEqual(["bone_bow", "cleave", "thrust"]);
+    expect(at("skeleton", 12).name).toBe("Skeleton Legionary");
+    expect(reg.abilities["thrust"]!.range!).toBeGreaterThan(reg.abilities["skeleton_slash"]!.range!);
+    // L14 Deathless Legionary: pike + volley + a full sweep. Kiting into the pack punishes.
+    expect(kit("skeleton", 14)).toEqual(["bone_bow", "cleave", "reap", "thrust"]);
+    expect(at("skeleton", 14).name).toBe("Skeleton Deathless Legionary");
+  });
+
+  it("the L14 Legionary is a different fight, not a bigger number (~327 hp / 27 dmg)", () => {
+    const base = at("skeleton", 6);
+    const deep = at("skeleton", 14);
+    expect(deep.hp).toBe(327);
+    expect(deep.damage).toBe(27);
+    expect(deep.hp).toBeGreaterThan(base.hp * 3);
+    expect(deep.moveSpeed).toBeCloseTo(base.moveSpeed * 1.08, 6);
+  });
+
+  // ---- the crypt: an assembly line the player walks ----
+
+  it("the Stitcher learns to reanimate at 12 and swaps its mend for a bigger one at 14", () => {
+    expect(kit("ossuary_stitcher", 9)).toEqual(["mend_kin", "shadow_lance"]);
+    expect(kit("ossuary_stitcher", 12)).toEqual(["mend_kin", "raise_bones", "shadow_lance"]);
+    expect(kit("ossuary_stitcher", 14)).toEqual(["mend_kin_greater", "raise_bones", "shadow_lance"]);
+    // the fight's counterplay: you can interrupt the mend, and DoT bites cannot
+    expect(reg.abilities["mend_kin"]!.interruptible).toBe(true);
+    expect(reg.abilities["mend_kin_greater"]!.interruptible).toBe(true);
+    expect(reg.abilities["raise_bones"]!.summon!.mob).toBe("restless_bones");
+  });
+
+  it("the Harrower trades its raise for a muster at 15, and gains reach", () => {
+    expect(kit("grave_harrower", 12)).toEqual(["raise_bones", "reap", "scythe_hook"]);
+    expect(kit("grave_harrower", 15)).toEqual(["harvest_muster", "reap", "scythe_hook", "shadow_lance"]);
+    // raise_bones conjures the worthless thing; harvest_muster forms ranks of armed ones
+    expect(reg.abilities["harvest_muster"]!.summon!.mob).toBe("skeleton");
+  });
+
+  it("the Bone Warden's rank widens its own leash and reach — the anti-kite gets worse", () => {
+    const base = at("bone_warden", 10);
+    const deep = at("bone_warden", 14);
+    expect(base.attackRange).toBe(20);
+    expect(deep.attackRange).toBe(22); // absolute override, not a multiplier
+    expect(deep.leashRadius).toBe(46);
+    expect(kit("bone_warden", 14)).toEqual(["bone_shrapnel", "boss_slam", "cleave"]);
+    // the mixed melee+ranged kit is what makes chooseAttack CLOSE between shots
+    expect(reg.abilities["boss_slam"]!.kind).toBe("melee");
+    expect(reg.abilities["bone_shrapnel"]!.kind).toBe("projectile");
+  });
+
+  it("THE HARMLESS ONE stops being harmless: pallid_mourner at L13 has aggroRadius 12", () => {
+    const base = at("pallid_mourner", 6);
+    expect(base.aggroRadius).toBe(0); // it cannot initiate
+    expect(base.fleeAtHpPct).toBe(1); // and it runs the instant you touch it
+    expect(kit("pallid_mourner", 6)).toEqual(["punch"]);
+
+    const shade = at("pallid_mourner", 13);
+    expect(shade.aggroRadius).toBe(12); // it sees you
+    expect(shade.fleeAtHpPct).toBe(0); // and it does not run
+    expect(kit("pallid_mourner", 13)).toEqual(["wraith_touch"]); // the punch is gone
+    expect(shade.name).toBe("Pallid Mourner Wrung Shade");
+    expect(shade.damage).toBeGreaterThan(base.damage * 6);
+  });
+
+  it("the crypt ghoul's second rank sharpens its nerve, not its buttons", () => {
+    expect(kit("crypt_ghoul", 7)).toEqual(["spider_bite"]);
+    expect(kit("crypt_ghoul", 11)).toEqual(["quick_stab", "spider_bite"]);
+    expect(at("crypt_ghoul", 11).aggroRadius).toBe(8);
+    expect(at("crypt_ghoul", 14).aggroRadius).toBe(13); // it smells you from further off
+    expect(reg.abilities["spider_bite"]!.debuff!.dotTotal!).toBeGreaterThan(0); // it leaves you bleeding
+  });
+
+  // ---- the Cinderrift foundry: a product line, and the woman who repairs it ----
+
+  it("the warplate line ends as a Foundry Captain wielding a king's cleave", () => {
+    expect(kit("ember_warplate", 12)).toEqual(["ember_cleave"]);
+    expect(kit("ember_warplate", 14)).toEqual(["ember_burst", "ember_cleave"]);
+    expect(kit("ember_warplate", 16)).toEqual(["ember_burst", "kings_cleave"]); // cleave swapped out
+    expect(at("ember_warplate", 16).name).toBe("Ember Warplate Foundry Captain");
+  });
+
+  it("the Forge-Tender is a healer you CANNOT interrupt, and she out-ranges you at 16", () => {
+    const mend = reg.abilities["forge_mend"]!;
+    expect(mend.kind).toBe("self");
+    expect(mend.allyHeal).toBeTruthy();
+    // the crypt's Stitcher can be staggered mid-cast; the Forge-Tender cannot.
+    // The only counterplay is to kill her, and that is the point of the mob.
+    expect(mend.interruptible).toBe(false);
+    expect(reg.abilities["mend_kin"]!.interruptible).toBe(true); // the contrast is deliberate
+    expect(reg.abilities["slag_gorge"]!.allyHeal!.includeSelf).toBe(true); // the troll heals itself
+
+    expect(kit("forge_tender", 12)).toEqual(["elemental_bolt", "forge_mend"]);
+    expect(kit("forge_tender", 14)).toEqual(["elemental_bolt", "forge_mend", "magma_vents"]);
+    expect(at("forge_tender", 12).attackRange).toBe(12);
+    expect(at("forge_tender", 16).attackRange).toBe(16); // the L16 rank is purely disposition + stats
+  });
+
+  it("the roaming Revenant's rank is pure nerve: it sees further and it never lets go", () => {
+    expect(kit("frostplate_revenant", 13)).toEqual(kit("frostplate_revenant", 15)); // no new buttons
+    expect(at("frostplate_revenant", 15).aggroRadius).toBe(18);
+    expect(at("frostplate_revenant", 15).leashRadius).toBe(80); // you do not outwalk it
+    expect(at("frostplate_revenant", 15).hp).toBeGreaterThan(at("frostplate_revenant", 13).hp * 1.3);
+  });
+
+  it("the Prototype trades a vent line for the throne's flames", () => {
+    expect(kit("forge_prototype", 14)).toEqual(["golem_slam", "magma_vents", "slag_lob"]);
+    expect(kit("forge_prototype", 16)).toEqual(["golem_slam", "slag_lob", "throne_flames"]);
+    expect(reg.abilities["magma_vents"]!.kind).toBe("pillars");
+    expect(reg.abilities["throne_flames"]!.kind).toBe("pillars");
+  });
+
+  it("the Forge-Ward is a statue until it isn't (aggro 4, speed 1.6 -> 2.4)", () => {
+    const statue = at("forge_ward", 13);
+    expect(statue.aggroRadius).toBe(4); // walk around it and it never wakes
+    expect(statue.leashRadius).toBe(12);
+    const awake = at("forge_ward", 15);
+    expect(awake.leashRadius).toBe(34);
+    expect(awake.moveSpeed).toBeCloseTo(1.6 * 1.5, 6);
+    expect(kit("forge_ward", 15)).toEqual(["boss_slam", "pounce", "stone_shard"]);
+  });
+
+  // ---- the tomb court ----
+
+  it("the sandpicker graduates from a bone bow to a crossbow, and never keeps both", () => {
+    expect(kit("sandpicker", 5)).toEqual(["bone_bow", "quick_stab"]);
+    expect(kit("sandpicker", 8)).toEqual(["bone_bow", "cleave", "quick_stab"]);
+    expect(kit("sandpicker", 12)).toEqual(["bolt_shot", "cleave", "quick_stab"]);
+    expect(at("sandpicker", 5).fleeAtHpPct).toBe(0.3); // he still runs
+  });
+
+  it("the Courtier becomes a Tomb-Herald who raises the dead", () => {
+    expect(kit("withered_courtier", 6)).toEqual(["grave_rot"]);
+    expect(kit("withered_courtier", 9)).toEqual(["binding_wrap", "grave_rot"]);
+    expect(kit("withered_courtier", 12)).toEqual(["binding_wrap", "courtiers_grief", "grave_rot", "reap"]);
+    expect(at("withered_courtier", 16).name).toBe("Withered Courtier Sekhat's Own");
+    expect(reg.abilities["courtiers_grief"]!.summon!.mob).toBe("skeleton");
+  });
+
+  it("Kaharat calls the pride he leads — and the pride is a real mob, not an add", () => {
+    expect(kit("kaharat")).toEqual(["lion_maul", "pounce", "pride_roar"]);
+    expect(reg.abilities["pride_roar"]!.summon!.mob).toBe("duneshadow_lioness");
+    expect(reg.mobs["duneshadow_lioness"]).toBeTruthy();
+    // the fight teaches "kill the caller": at cap the roar drops out of the kit
+    expect(reg.abilities["pride_roar"]!.summon!.cap).toBeGreaterThan(0);
+  });
+
+  it("Sekhat is a terminus: no ranks, and the biggest kit in the tomb", () => {
+    expect(reg.mobs["sekhat"]!.ranks).toEqual([]);
+    expect(kit("sekhat")).toEqual(["binding_wrap", "boss_slam", "courtiers_grief", "grave_rot"]);
+    expect(at("sekhat").hp).toBeGreaterThan(at("withered_courtier").hp * 4);
+  });
+
+  // ---- the mire ----
+
+  it("the fen slime is the cheapest demonstration of ranks in the game", () => {
+    expect(kit("fen_slime", 8)).toEqual(["mire_cling"]); // a puddle that hugs you
+    expect(kit("fen_slime", 11)).toEqual(["caustic_gob", "mire_cling"]); // it spits
+    expect(kit("fen_slime", 14)).toEqual(["caustic_gob", "mire_cling", "slime_split"]); // it multiplies
+    expect(at("fen_slime", 14).name).toBe("Fen Slime Teeming");
+  });
+
+  it("Grelmoss's mire_spawn raises BASE-level fen slimes, which cannot split (no summon chain)", () => {
+    const spec = reg.abilities["mire_spawn"]!.summon!;
+    expect(spec.mob).toBe("fen_slime");
+    // summonWave passes no level override, so the wave resolves at the def's own level
+    expect(kit(spec.mob)).not.toContain("slime_split");
+    // and the registry's own chain guard agrees
+    for (const a of reg.mobs[spec.mob]!.attacks!) expect(reg.abilities[a.ability]!.summon).toBeFalsy();
+  });
+
+  it("the splitters summon a DISTINCT terminal mob (fen_slimeling has no ranks and no summon)", () => {
+    const spec = reg.abilities["slime_split"]!.summon!;
+    expect(spec.mob).toBe("fen_slimeling");
+    expect(spec.mob).not.toBe("fen_slime"); // a self-summon would be an infinite mire
+    expect(reg.mobs["fen_slimeling"]!.ranks).toEqual([]);
+    expect(mobAllAbilityIds(reg.mobs["fen_slimeling"]!).every((a) => !reg.abilities[a]!.summon)).toBe(true);
+  });
+
+  it("EVERY splitter's summon grants no xp and no loot (waiting next to one is not a job)", () => {
+    // raise_bones/pride_roar/slime_split/mire_spawn conjure ordinary spawnable mobs.
+    // If their halves paid full xp+loot, standing next to a Bloatslime would be a farm.
+    for (const id of ["raise_bones", "pride_roar", "slime_split", "mire_spawn", "harvest_muster", "courtiers_grief"]) {
+      const spec = reg.abilities[id]!.summon!;
+      expect(spec.grantsXp, `${id}.grantsXp`).toBe(false);
+      expect(spec.grantsLoot, `${id}.grantsLoot`).toBe(false);
+    }
+    // and the two authored boss adds still pay out, by design
+    for (const id of ["lich_summon", "oath_summon"]) {
+      expect(reg.abilities[id]!.summon!.grantsXp, id).toBe(true);
+    }
+  });
+
+  it("the Bloatslime is a DPS check: it splits from the base kit, and it is slow", () => {
+    expect(kit("bloatslime", 10)).toEqual(["slime_split", "wraith_touch"]);
+    expect(kit("bloatslime", 13)).toEqual(["caustic_gob", "slime_split", "wraith_touch"]); // it spits now
+    expect(at("bloatslime").moveSpeed).toBeLessThan(2); // slow enough to walk away from...
+  });
+
+  // ---- the two wanderers ----
+
+  it("Aelthir cannot initiate — you have to swing first", () => {
+    const a = at("aelthir");
+    expect(a.aggroRadius).toBe(0);
+    expect(a.leashRadius).toBe(60); // and once you do, it follows
+    expect(kit("aelthir")).toEqual(["horn_charge", "radiant_mend"]);
+    expect(reg.abilities["radiant_mend"]!.kind).toBe("self");
+    expect(reg.mobs["aelthir"]!.loot).toBe("unmarred_drops");
+  });
+
+  it("the Cinder Nightmare punishes standing still AND kiting, at every rank", () => {
+    expect(kit("cinder_nightmare", 14)).toEqual(["ember_trail", "nightmare_charge"]);
+    expect(kit("cinder_nightmare", 17)).toEqual(["ember_trail", "nightmare_charge", "sundering_wave"]);
+    expect(reg.abilities["ember_trail"]!.kind).toBe("pillars"); // anti-kite ground hazard
+    expect(reg.abilities["nightmare_charge"]!.kind).toBe("melee");
+    expect(at("cinder_nightmare").moveSpeed).toBeGreaterThan(4.5); // you do not outrun it
+  });
+
+  // ---- invariants across the whole roster ----
+
+  it("every roster mob's whole reachable kit is manaCost 0 (mobs have no mana)", () => {
+    // startAbility() refuses a mana ability BEFORE setting a cooldown: the mob
+    // would re-pick it every tick and whiff-loop forever.
+    for (const id of ROSTER) {
+      for (const abilityId of mobAllAbilityIds(reg.mobs[id]!)) {
+        expect(reg.abilities[abilityId]!.manaCost, `${id}: ${abilityId}`).toBe(0);
+      }
+    }
+  });
+
+  it("every projectile a roster mob can ever carry outranges its attackRange, at EVERY rank level", () => {
+    // A wide attackRange is what makes a rank-unlocked projectile fire the day it
+    // unlocks (a melee-only kit standing outside its reach just closes). If a
+    // projectile's maxRange were shorter, the mob would fire into the ground.
+    for (const id of ROSTER) {
+      const def = reg.mobs[id]!;
+      for (let lvl = def.level; lvl <= def.level + SCALING.maxLevelBonus; lvl++) {
+        const r = resolveMob(def, lvl, SCALING);
+        for (const a of r.attacks) {
+          const ab = reg.abilities[a.ability]!;
+          if (ab.kind !== "projectile") continue;
+          expect(ab.maxRange ?? 0, `${id} @L${lvl}: ${a.ability} vs attackRange ${r.attackRange}`).toBeGreaterThanOrEqual(
+            r.attackRange
+          );
+        }
+      }
+    }
+  });
+
+  it("no rank is a no-op: every rank changes a kit, a stat, or a disposition", () => {
+    // A rank that unlocks nothing at a level a spawn table uses is a silent lie.
+    for (const id of ROSTER) {
+      const def = reg.mobs[id]!;
+      for (const rank of def.ranks) {
+        const changesKit = rank.add.length > 0 || rank.remove.length > 0;
+        const changesStats = rank.hpMult !== 1 || rank.damageMult !== 1 || rank.moveSpeedMult !== 1;
+        const changesNerve =
+          rank.aggroRadius !== undefined ||
+          rank.fleeAtHpPct !== undefined ||
+          rank.attackRange !== undefined ||
+          rank.leashRadius !== undefined;
+        expect(changesKit || changesStats || changesNerve, `${id} rank atLevel ${rank.atLevel} does nothing`).toBe(true);
+        // and no rank fires at or below the def's own level (it would be free stats)
+        expect(rank.atLevel, `${id} rank`).toBeGreaterThan(def.level);
+      }
+    }
+  });
+
+  it("every roster mob's sound groups exist in the shipped audio manifest", () => {
+    const manifest = JSON.parse(readFileSync(AUDIO_MANIFEST, "utf8")) as { sfx: Record<string, unknown> };
+    for (const id of ROSTER) {
+      const sounds = reg.mobs[id]!.sounds;
+      if (!sounds) continue; // silent by design (glimmereye, aelthir)
+      for (const [slot, group] of Object.entries(sounds)) {
+        expect(manifest.sfx[group as string], `${id}.${slot} -> ${group}`).toBeTruthy();
+      }
+    }
+  });
+
+  it("every roster mob names a real loot table and a real sprite key", () => {
+    for (const id of ROSTER) {
+      const def = reg.mobs[id]!;
+      expect(reg.loot[def.loot], `${id}: loot ${def.loot}`).toBeTruthy();
+      expect(def.sprite.length, id).toBeGreaterThan(0);
+    }
+    // the summoned slimeling deliberately re-uses its parent's sprite key
+    expect(reg.mobs["fen_slimeling"]!.sprite).toBe("fen_slime");
   });
 });

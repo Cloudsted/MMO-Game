@@ -269,19 +269,19 @@ describe("watchtower climb path", () => {
 });
 
 describe("480² retune", () => {
-  it("forest: size, spawn, arena, and all 11 spawn tables in bounds with known mobs", () => {
+  it("forest: size, spawn, arena, and all 12 spawn tables in bounds with known mobs", () => {
     const def = loadRoomDef("forest");
     expect(def.size).toEqual({ w: 480, h: 480 });
     expect(def.spawn.x).toBe(240);
     expect(def.spawn.z).toBe(466);
     expect(def.regions[0]).toMatchObject({ x: 84, z: 354, r: 12, pvp: true });
     expect(def.portals[0]).toMatchObject({ x: 240, z: 472 });
-    expect(def.spawnTables).toHaveLength(11); // +redcap-hall, +camp-livestock (Thornhollow Company)
+    expect(def.spawnTables).toHaveLength(12); // +redcap-hall, +camp-livestock (Thornhollow Company), +aelthir-range
     const ids = def.spawnTables.map((t) => t.id);
     expect(ids).toEqual(
       expect.arrayContaining([
         "boar-meadow-s", "boar-meadow-e", "wolf-den-n", "fen-approach-spiders",
-        "bandit-camp", "redcap-hall", "camp-livestock",
+        "bandit-camp", "redcap-hall", "camp-livestock", "aelthir-range",
       ])
     );
     for (const t of def.spawnTables) {
@@ -293,12 +293,13 @@ describe("480² retune", () => {
     }
   });
 
-  it("desert: size, spawn, and 6 tables in bounds with known mobs", () => {
+  it("desert: size, spawn, and 11 tables in bounds with known mobs", () => {
     const def = loadRoomDef("desert");
     expect(def.size).toEqual({ w: 480, h: 480 });
     expect(def.spawn.x).toBe(240);
     expect(def.spawn.z).toBe(466);
-    expect(def.spawnTables).toHaveLength(6);
+    // +pride-dunes, +red-mane, +sandpicker-diggings, +courtiers-necropolis, +sekhat-tomb
+    expect(def.spawnTables).toHaveLength(11);
     for (const t of def.spawnTables) {
       expect(t.region.x - t.region.r, t.id).toBeGreaterThanOrEqual(0);
       expect(t.region.x + t.region.r, t.id).toBeLessThanOrEqual(480);

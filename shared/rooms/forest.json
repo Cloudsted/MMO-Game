@@ -188,6 +188,10 @@
           "weight": 2
         },
         {
+          "mob": "hollow_cowl",
+          "weight": 2
+        },
+        {
           "mob": "camp_cur",
           "weight": 2
         }
@@ -303,6 +307,27 @@
         1
       ],
       "respawnSec": 240
+    },
+    {
+      "id": "aelthir-range",
+      "region": {
+        "kind": "circle",
+        "x": 240,
+        "z": 240,
+        "r": 180
+      },
+      "mobs": [
+        {
+          "mob": "aelthir",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 1800
     }
   ],
   "prefabs": [
@@ -373,6 +398,16 @@
         "id": "mine_adit",
         "within": 60
       }
+    }
+  ],
+  "events": [
+    {
+      "id": "unmarred-answer",
+      "on": { "kind": "bossDeath", "mob": "aelthir" },
+      "actions": [
+        { "kind": "announce", "text": "Somewhere far off, something answers." },
+        { "kind": "spawnMobs", "mob": "gravehound", "count": 4, "radius": 8 }
+      ]
     }
   ],
   "npcs": []

@@ -118,6 +118,10 @@
         {
           "mob": "marsh_wisp",
           "weight": 2
+        },
+        {
+          "mob": "fen_slime",
+          "weight": 2
         }
       ],
       "maxAlive": 6,
@@ -240,6 +244,74 @@
         3
       ],
       "respawnSec": 75
+    },
+    {
+      "id": "glimmer-thicket",
+      "region": {
+        "kind": "circle",
+        "x": 150,
+        "z": 220,
+        "r": 30
+      },
+      "mobs": [
+        {
+          "mob": "glimmereye",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 40
+    },
+    {
+      "id": "mire-nave",
+      "region": {
+        "kind": "circle",
+        "x": 136,
+        "z": 48,
+        "r": 10
+      },
+      "mobs": [
+        {
+          "mob": "bloatslime",
+          "weight": 1
+        },
+        {
+          "mob": "fen_slime",
+          "weight": 3,
+          "level": 12
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [
+        1,
+        2
+      ],
+      "respawnSec": 60
+    },
+    {
+      "id": "crowned-mire",
+      "region": {
+        "kind": "circle",
+        "x": 150,
+        "z": 160,
+        "r": 10
+      },
+      "mobs": [
+        {
+          "mob": "grelmoss",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [
+        1,
+        1
+      ],
+      "respawnSec": 900
     }
   ],
   "prefabs": [
@@ -306,6 +378,16 @@
       "count": 2,
       "minSpacing": 25,
       "nearPortals": true
+    }
+  ],
+  "events": [
+    {
+      "id": "grelmoss-rally",
+      "on": { "kind": "bossHpBelowPct", "mob": "grelmoss", "pct": 0.5 },
+      "actions": [
+        { "kind": "announce", "text": "Grelmoss shudders — the mire boils, and the fat ones rise." },
+        { "kind": "spawnMobs", "mob": "bloatslime", "count": 2, "radius": 6 }
+      ]
     }
   ],
   "npcs": []
