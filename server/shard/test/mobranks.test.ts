@@ -784,7 +784,10 @@ describe("the roster-2 bestiary ladders", () => {
   it("Aelthir cannot initiate — you have to swing first", () => {
     const a = at("aelthir");
     expect(a.aggroRadius).toBe(0);
-    expect(a.leashRadius).toBe(60); // and once you do, it follows
+    // and once you do it follows — but it MUST give up. At 4.6 m/s vs the player's
+    // 4.5 there is no outrunning it, so the leash is the only escape hatch (see the
+    // "anything that outruns the player must eventually give up" invariant).
+    expect(a.leashRadius).toBe(40);
     expect(kit("aelthir")).toEqual(["horn_charge", "radiant_mend"]);
     expect(reg.abilities["radiant_mend"]!.kind).toBe("self");
     expect(reg.mobs["aelthir"]!.loot).toBe("unmarred_drops");
@@ -867,5 +870,93 @@ describe("the roster-2 bestiary ladders", () => {
     }
     // the summoned slimeling deliberately re-uses its parent's sprite key
     expect(reg.mobs["fen_slimeling"]!.sprite).toBe("fen_slime");
+  });
+});
+
+/**
+ * Economy invariants. The R&D verifiers found seven blockers here, all of the same
+ * shape: a mob handed a table or an xp value from a tier it does not belong to.
+ * These are cheap to check and expensive to miss — a 120-second respawn on a boss
+ * loot table is a vending machine, and nobody notices until the economy is gone.
+ */
+describe("economy invariants", () => {
+  const reg = new RegistryService();
+  const SCALE = gameConstants().mobs.scaling;
+
+  /** A table with a `guaranteed` slot is a BOSS table. */
+  const isBossTable = (id: string) => (reg.loot[id]?.guaranteed?.length ?? 0) > 0;
+
+  /** Every mob a spawn table can produce, with the level it produces it at. */
+  function shippedSpawns(): Array<{ room: string; table: string; mob: string; level: number; maxAlive: number; respawnSec: number }> {
+    const out: Array<{ room: string; table: string; mob: string; level: number; maxAlive: number; respawnSec: number }> = [];
+    for (const roomId of ["hub", "forest", "desert", "dungeon", "gloomfen", "cinderrift", "crypt_depths", "sundered_city", "grounds", "atelier"]) {
+      const def = loadRoomDef(roomId);
+      for (const t of def.spawnTables) {
+        for (const m of t.mobs) {
+          out.push({ room: roomId, table: t.id, mob: m.mob, level: m.level ?? reg.mobs[m.mob]!.level, maxAlive: t.maxAlive, respawnSec: t.respawnSec });
+        }
+      }
+    }
+    return out;
+  }
+
+  it("no mob on a fast respawn or a crowded table drops from a boss table", () => {
+    for (const s of shippedSpawns()) {
+      const loot = reg.mobs[s.mob]!.loot;
+      if (!isBossTable(loot)) continue;
+      // a boss table is only allowed on a solitary, slow-respawning mob
+      expect(s.maxAlive, `${s.room}/${s.table}: ${s.mob} has boss loot (${loot})`).toBe(1);
+      expect(s.respawnSec, `${s.room}/${s.table}: ${s.mob} has boss loot (${loot})`).toBeGreaterThanOrEqual(600);
+    }
+  });
+
+  it("no non-boss mob out-earns the boss of its own room", () => {
+    const bossXp: Record<string, number> = {
+      dungeon: resolveMob(reg.mobs["minotaur_boss"]!, undefined, SCALE).xp,
+      crypt_depths: resolveMob(reg.mobs["lich_boss"]!, undefined, SCALE).xp,
+      cinderrift: resolveMob(reg.mobs["cinder_golem_boss"]!, undefined, SCALE).xp,
+      sundered_city: resolveMob(reg.mobs["sundered_king"]!, undefined, SCALE).xp,
+    };
+    const bosses = new Set(["minotaur_boss", "lich_boss", "cinder_golem_boss", "sundered_king", "thrace_redcap", "sekhat", "grelmoss", "aelthir"]);
+    for (const s of shippedSpawns()) {
+      const cap = bossXp[s.room];
+      if (cap === undefined || bosses.has(s.mob)) continue;
+      const xp = resolveMob(reg.mobs[s.mob]!, s.level, SCALE).xp;
+      expect(xp, `${s.room}/${s.table}: ${s.mob}@L${s.level} is worth ${xp} xp; the room's boss is worth ${cap}`).toBeLessThan(cap);
+    }
+  });
+
+  it("anything that outruns the player must eventually give up", () => {
+    // There is no sprint, so a mob faster than walkSpeed is an unbreakable chase —
+    // until it exceeds its leash from home and resets. That is the escape hatch, and
+    // it is why bone_bat (4.6 m/s) has always been fine. A fast mob with a huge leash
+    // is a death sentence you cannot decline; cap the leash instead of the speed.
+    const walk = gameConstants().movement.walkSpeed;
+    const MAX_LEASH_FOR_A_FAST_MOB = 44;
+    for (const [id, def] of Object.entries(reg.mobs)) {
+      for (let lvl = def.level; lvl <= def.level + SCALE.maxLevelBonus; lvl++) {
+        const r = resolveMob(def, lvl, SCALE);
+        if (r.moveSpeed <= walk) continue;
+        expect(r.leashRadius, `${id}@L${lvl} runs at ${r.moveSpeed} vs the player's ${walk} and leashes at ${r.leashRadius}`)
+          .toBeLessThanOrEqual(MAX_LEASH_FOR_A_FAST_MOB);
+      }
+    }
+  });
+
+  it("a mob's self-heal is gated (a raw `heal` self ability would be cast at full health forever)", () => {
+    for (const [, def] of Object.entries(reg.mobs)) {
+      for (const abilityId of mobAllAbilityIds(def)) {
+        const ab = reg.abilities[abilityId]!;
+        if (ab.kind !== "self") continue;
+        // chooseAttack treats every self ability as always-in-range. Only allyHeal
+        // and summon carry their own gate (a hurt ally / a minion cap).
+        expect(ab.heal, `mob ability ${abilityId} uses raw heal; use allyHeal(radius 2.5, includeSelf) instead`).toBeUndefined();
+      }
+    }
+  });
+
+  it("the trophy ladder is not inverted", () => {
+    const v = (id: string) => reg.items[id]!.value;
+    expect(v("sundered_crown"), "the game's prize trophy must be its most valuable").toBeGreaterThanOrEqual(v("spiral_horn"));
   });
 });

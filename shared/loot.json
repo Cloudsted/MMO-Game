@@ -1915,5 +1915,95 @@
         ]
       }
     ]
+  },
+  "forge_construct_drops": {
+    "gold": [
+      30,
+      62
+    ],
+    "rolls": [
+      1,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 26,
+        "table": "weapons_rift"
+      },
+      {
+        "weight": 20,
+        "table": "armor_fine"
+      },
+      {
+        "weight": 20,
+        "item": "greater_health_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 18,
+        "item": "ember_core",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 16
+      }
+    ]
+  },
+  "sekhat_drops": {
+    "gold": [
+      90,
+      165
+    ],
+    "rolls": [
+      2,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 40,
+        "table": "weapons_fine"
+      },
+      {
+        "weight": 25,
+        "table": "armor_fine"
+      },
+      {
+        "weight": 20,
+        "item": "greater_health_potion",
+        "qty": [
+          2,
+          3
+        ]
+      },
+      {
+        "weight": 15,
+        "item": "ancient_coin",
+        "qty": [
+          1,
+          3
+        ]
+      }
+    ],
+    "guaranteed": [
+      {
+        "weight": 1,
+        "table": "weapons_fine",
+        "minRarity": "rare"
+      },
+      {
+        "weight": 1,
+        "item": "ancient_coin",
+        "qty": [
+          2,
+          3
+        ]
+      }
+    ]
   }
 }

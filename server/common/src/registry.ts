@@ -217,6 +217,10 @@ export const MobRankSchema = z.object({
   hpMult: z.number().positive().default(1),
   damageMult: z.number().positive().default(1),
   moveSpeedMult: z.number().positive().default(1),
+  /** A rank that turns a harmless critter into a monster must also change what
+   *  it is WORTH. Level alone scales xp by xpPerLevel, which is nowhere near
+   *  enough when the rank multiplies hp by 2.5 and damage by 12. */
+  xpMult: z.number().positive().default(1),
   /**
    * DISPOSITION overrides — a rank may change the mob's NERVE, not just its
    * numbers and its buttons. This is what lets the harmless thing stop running,
@@ -313,7 +317,7 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
   let hpMult = Math.pow(1 + scaling.hpPerLevel, delta);
   let dmgMult = Math.pow(1 + scaling.damagePerLevel, delta);
   let speedMult = 1;
-  const xpMult = Math.pow(1 + scaling.xpPerLevel, delta);
+  let xpMult = Math.pow(1 + scaling.xpPerLevel, delta);
 
   let attacks = mobAttacks(def).slice();
   let name = def.name;
@@ -332,6 +336,7 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
     hpMult *= rank.hpMult;
     dmgMult *= rank.damageMult;
     speedMult *= rank.moveSpeedMult;
+    xpMult *= rank.xpMult;
     // disposition: absolute, last applicable rank wins
     if (rank.aggroRadius !== undefined) aggroRadius = rank.aggroRadius;
     if (rank.attackRange !== undefined) attackRange = rank.attackRange;

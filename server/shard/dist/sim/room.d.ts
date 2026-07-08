@@ -239,7 +239,14 @@ export declare class RoomSim {
     /** A mob's attack kit resolved against the ability registry, at the level it
      *  spawned with (level-gated ranks may have added or swapped options). */
     private attackOptionsOf;
-    /** Living mobs an allyHeal from `caster` would touch (caster included per spec). */
+    /** Is `e` a packmate of `caster`? Same spawner (the same camp / den / spawn
+     *  table), or one summoned the other. Without this an allyHeal mends whatever
+     *  happens to be standing nearby — a Forge-Tender healing the ash husks that
+     *  wandered past her is not a pack healer, it is two spawn tables becoming one
+     *  fight. Command-spawned mobs all share spawnerId "" and so heal each other,
+     *  which is what staging scripts want. */
+    private samePack;
+    /** Living packmates an allyHeal from `caster` would touch (caster included per spec). */
     private healableAllies;
     /** Mob brain wants to attack: pick a usable option from the mob's kit
      *  (range windows, cooldowns, melee vertical gate — weighted when several

@@ -1310,12 +1310,28 @@ export class RoomSim {
     return out;
   }
 
-  /** Living mobs an allyHeal from `caster` would touch (caster included per spec). */
+  /** Is `e` a packmate of `caster`? Same spawner (the same camp / den / spawn
+   *  table), or one summoned the other. Without this an allyHeal mends whatever
+   *  happens to be standing nearby — a Forge-Tender healing the ash husks that
+   *  wandered past her is not a pack healer, it is two spawn tables becoming one
+   *  fight. Command-spawned mobs all share spawnerId "" and so heal each other,
+   *  which is what staging scripts want. */
+  private samePack(caster: Entity, e: Entity): boolean {
+    const a = caster.brain, b = e.brain;
+    if (!a || !b) return false;
+    if (e.id === caster.id) return true;
+    if (b.summonerId === caster.id || a.summonerId === e.id) return true;
+    if (a.summonerId !== undefined && a.summonerId === b.summonerId) return true;
+    return a.spawnerId === b.spawnerId;
+  }
+
+  /** Living packmates an allyHeal from `caster` would touch (caster included per spec). */
   private healableAllies(caster: Entity, spec: NonNullable<AbilityDef["allyHeal"]>): Entity[] {
     const out: Entity[] = [];
     for (const e of this.entities.values()) {
       if (e.kind !== "mob" || !e.health || e.combat?.act === "dead") continue;
       if (e.id === caster.id && !spec.includeSelf) continue;
+      if (!this.samePack(caster, e)) continue;
       if (Math.hypot(e.pos.x - caster.pos.x, e.pos.z - caster.pos.z) > spec.radius) continue;
       out.push(e);
     }

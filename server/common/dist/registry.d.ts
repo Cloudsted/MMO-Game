@@ -455,6 +455,10 @@ export declare const MobRankSchema: z.ZodObject<{
     hpMult: z.ZodDefault<z.ZodNumber>;
     damageMult: z.ZodDefault<z.ZodNumber>;
     moveSpeedMult: z.ZodDefault<z.ZodNumber>;
+    /** A rank that turns a harmless critter into a monster must also change what
+     *  it is WORTH. Level alone scales xp by xpPerLevel, which is nowhere near
+     *  enough when the rank multiplies hp by 2.5 and damage by 12. */
+    xpMult: z.ZodDefault<z.ZodNumber>;
     /**
      * DISPOSITION overrides — a rank may change the mob's NERVE, not just its
      * numbers and its buttons. This is what lets the harmless thing stop running,
@@ -479,6 +483,7 @@ export declare const MobRankSchema: z.ZodObject<{
     hpMult: number;
     damageMult: number;
     moveSpeedMult: number;
+    xpMult: number;
     aggroRadius?: number | undefined;
     fleeAtHpPct?: number | undefined;
     attackRange?: number | undefined;
@@ -496,6 +501,7 @@ export declare const MobRankSchema: z.ZodObject<{
     hpMult?: number | undefined;
     damageMult?: number | undefined;
     moveSpeedMult?: number | undefined;
+    xpMult?: number | undefined;
     aggroRadius?: number | undefined;
     fleeAtHpPct?: number | undefined;
     attackRange?: number | undefined;
@@ -561,6 +567,10 @@ export declare const MobDefSchema: z.ZodObject<{
         hpMult: z.ZodDefault<z.ZodNumber>;
         damageMult: z.ZodDefault<z.ZodNumber>;
         moveSpeedMult: z.ZodDefault<z.ZodNumber>;
+        /** A rank that turns a harmless critter into a monster must also change what
+         *  it is WORTH. Level alone scales xp by xpPerLevel, which is nowhere near
+         *  enough when the rank multiplies hp by 2.5 and damage by 12. */
+        xpMult: z.ZodDefault<z.ZodNumber>;
         /**
          * DISPOSITION overrides — a rank may change the mob's NERVE, not just its
          * numbers and its buttons. This is what lets the harmless thing stop running,
@@ -585,6 +595,7 @@ export declare const MobDefSchema: z.ZodObject<{
         hpMult: number;
         damageMult: number;
         moveSpeedMult: number;
+        xpMult: number;
         aggroRadius?: number | undefined;
         fleeAtHpPct?: number | undefined;
         attackRange?: number | undefined;
@@ -602,6 +613,7 @@ export declare const MobDefSchema: z.ZodObject<{
         hpMult?: number | undefined;
         damageMult?: number | undefined;
         moveSpeedMult?: number | undefined;
+        xpMult?: number | undefined;
         aggroRadius?: number | undefined;
         fleeAtHpPct?: number | undefined;
         attackRange?: number | undefined;
@@ -654,6 +666,7 @@ export declare const MobDefSchema: z.ZodObject<{
         hpMult: number;
         damageMult: number;
         moveSpeedMult: number;
+        xpMult: number;
         aggroRadius?: number | undefined;
         fleeAtHpPct?: number | undefined;
         attackRange?: number | undefined;
@@ -707,6 +720,7 @@ export declare const MobDefSchema: z.ZodObject<{
         hpMult?: number | undefined;
         damageMult?: number | undefined;
         moveSpeedMult?: number | undefined;
+        xpMult?: number | undefined;
         aggroRadius?: number | undefined;
         fleeAtHpPct?: number | undefined;
         attackRange?: number | undefined;

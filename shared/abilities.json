@@ -1020,7 +1020,12 @@
     "kind": "self",
     "castTimeMs": 1500,
     "recoverMs": 300,
-    "heal": 180,
+    "allyHeal": {
+      "amount": 180,
+      "radius": 2.5,
+      "castIfAllyBelowPct": 0.6,
+      "includeSelf": true
+    },
     "canMoveWhile": false,
     "interruptible": true,
     "cooldownMs": 8000,

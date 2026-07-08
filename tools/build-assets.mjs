@@ -158,7 +158,9 @@ function grabComponent(png, seedX, seedY) {
     // blue-white straight sword. The four-rank skeleton ladder only lands if the
     // base mob already looks drilled. Sprite KEY unchanged (AudioEngine keys mob
     // vocals off it). Verified on tools/out/sheets/Z_skelarmy-char11.png.
-    skeleton: { file: resolve(UNSORTED, "skeletonarmy.png"), char: [1, 1] },
+    // skeletonarmy.png [1,1] was tried and reverted: its sword crosses the frame
+    // boundary, leaving detached blade fragments after the union-bbox trim.
+    skeleton: { file: resolve(MOBS, "monster4.png"), char: [3, 0] }, // armored skeleton
     cacto: { file: resolve(MOBS, "monster_cacto.png"), single: true },
     raptor: { file: resolve(MOBS, "monster_raptor1.png"), single: true },
     minotaur: { file: resolve(MOBS, "monster_minotaur.png"), single: true },

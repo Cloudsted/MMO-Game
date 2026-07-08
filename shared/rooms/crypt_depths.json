@@ -205,7 +205,7 @@
         1,
         2
       ],
-      "respawnSec": 90
+      "respawnSec": 180
     },
     {
       "id": "ossuary-feasters",
@@ -277,10 +277,19 @@
   "events": [
     {
       "id": "morvane-collapse",
-      "on": { "kind": "bossDeath", "mob": "lich_boss" },
+      "on": {
+        "kind": "bossDeath",
+        "mob": "lich_boss"
+      },
       "actions": [
-        { "kind": "announce", "text": "Morvane is destroyed! The vaults begin to crumble — take your spoils and RUN!" },
-        { "kind": "setRoomTimer", "sec": 60 }
+        {
+          "kind": "announce",
+          "text": "Morvane is destroyed! The vaults begin to crumble — take your spoils and RUN!"
+        },
+        {
+          "kind": "setRoomTimer",
+          "sec": 60
+        }
       ]
     }
   ],

@@ -1137,7 +1137,7 @@
     "attackRange": 20,
     "leashRadius": 30,
     "fleeAtHpPct": 0,
-    "xp": 620,
+    "xp": 360,
     "loot": "wraith_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
@@ -1193,7 +1193,7 @@
     "attackRange": 14,
     "leashRadius": 30,
     "fleeAtHpPct": 0,
-    "xp": 880,
+    "xp": 420,
     "loot": "wraith_drops",
     "sounds": {
       "idle": "wraith_idle",
@@ -1281,7 +1281,8 @@
         "moveSpeedMult": 1.4,
         "aggroRadius": 12,
         "fleeAtHpPct": 0,
-        "titleSuffix": "Wrung Shade"
+        "titleSuffix": "Wrung Shade",
+        "xpMult": 26
       }
     ],
     "aggroRadius": 0,
@@ -1439,7 +1440,7 @@
     "leashRadius": 60,
     "fleeAtHpPct": 0,
     "xp": 620,
-    "loot": "sentinel_drops",
+    "loot": "forge_construct_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
       "attack": "cinder_golem_boss_attack",
@@ -1485,7 +1486,7 @@
     "leashRadius": 30,
     "fleeAtHpPct": 0,
     "xp": 640,
-    "loot": "golem_boss_drops",
+    "loot": "husk_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
       "attack": "cinder_golem_boss_attack",
@@ -1532,7 +1533,7 @@
     "leashRadius": 12,
     "fleeAtHpPct": 0,
     "xp": 700,
-    "loot": "sentinel_drops",
+    "loot": "forge_construct_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
       "attack": "cinder_golem_boss_attack",
@@ -1587,7 +1588,7 @@
     "leashRadius": 26,
     "fleeAtHpPct": 0,
     "xp": 820,
-    "loot": "golem_boss_drops",
+    "loot": "forge_construct_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
       "attack": "cinder_golem_boss_attack",
@@ -1817,7 +1818,7 @@
     "leashRadius": 40,
     "fleeAtHpPct": 0,
     "xp": 700,
-    "loot": "boss_drops",
+    "loot": "bandit_boss_drops",
     "sounds": {
       "idle": "wolf_idle",
       "attack": "wolf_attack",
@@ -1858,7 +1859,7 @@
     "leashRadius": 26,
     "fleeAtHpPct": 0,
     "xp": 1400,
-    "loot": "boss_drops",
+    "loot": "sekhat_drops",
     "sounds": {
       "idle": "lich_boss_idle",
       "attack": "lich_boss_attack",
@@ -2083,7 +2084,7 @@
     ],
     "aggroRadius": 0,
     "attackRange": 3.8,
-    "leashRadius": 60,
+    "leashRadius": 40,
     "fleeAtHpPct": 0,
     "xp": 1100,
     "loot": "unmarred_drops"
@@ -2124,7 +2125,7 @@
     ],
     "aggroRadius": 15,
     "attackRange": 14,
-    "leashRadius": 50,
+    "leashRadius": 30,
     "fleeAtHpPct": 0,
     "xp": 640,
     "loot": "fire_elemental_drops",
