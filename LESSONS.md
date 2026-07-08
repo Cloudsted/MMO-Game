@@ -231,6 +231,29 @@ locked-but-existing files with a warning and carry on.
 
 ## Art pipeline (Time Fantasy sheets)
 
+### The baked shadow ellipse is DELIBERATE — do not "fix" it
+Every extracted sprite — the **player**, every NPC, every mob shipped since phase 2
+— carries a flat opaque ellipse in its bottom rows (`rgb(53,64,72)`; the bandits'
+sheet uses `48,64,72`). It is a Time Fantasy convention that predates our real
+directional shadows. An R&D agent found it on `bandits_1.png`, correctly proved it
+(the bottom 3 rows are pixel-identical across all 8 character cells while the
+silhouettes above differ) and wrongly concluded it was a new bandit bug worth an
+engine batch. It is not new and it is not bandit-specific: a survey of all 40
+extracted sprites found it on 36 of them.
+**The owner was asked and chose to keep it (2026-07-08).** Stripping it is a
+game-wide aesthetic change, not a bug fix, and stripping it for *new* sprites only
+would leave the bandits floating next to the townsfolk beside them. If you find
+yourself writing `stripBakedShadow()`, stop and re-read this.
+
+### The working tree is CRLF; multi-line string patches must normalise first
+`.gitattributes`/autocrlf checks these files out with `\r\n`. A patch script that
+searches for a multi-line literal written with `\n` silently matches nothing, and a
+`bash` heredoc will happily mangle `\\r\\n` inside a JS regex into a real newline
+(producing `Unterminated group`). **Rule:** read with
+`readFileSync(f,"utf8").split("\r\n").join("\n")`, patch against LF, write LF back —
+git re-normalises on commit. Verify a "MISS" before assuming your string is wrong:
+`node -e "console.log(s.includes('\r'))"`.
+
 ### A "revamped" sheet is usually a repaint — match by SHAPE, not by pixels
 `tficons_limited_16` replaced `tf_icon_16`. Comparing the two cell-by-cell gave
 **zero exact matches**, which reads as "everything was redrawn, remap all 52
@@ -633,3 +656,17 @@ Three test cycles died staging the equipment paper-doll screenshot
   death). Stage fights AWAY from spawns/roads (`/tp 200 200` first) and
   clear contamination with admin restart-room (stateful rooms resume
   from snapshot minus the stray mobs).
+  **A probe that spawns mobs must restart its room BEFORE and AFTER itself.**
+  `bandit-probe.mjs` v1 failed at its very first assertion because eight mobs and
+  a boss left by the previous run beat the bot to death before it could wound
+  anything — the symptom was "the victim has full hp", which reads like a broken
+  attack, not a contaminated room. Same rule for screenshots: `stage-bandits.mjs`
+  must place its line **beyond aggro range**, or `camp_cur` (aggroRadius 20, nearly
+  double any other mob) drags the whole camp into the camera.
+
+- **Verify a heal with the heal EVENT, never with "hp went up."** A leash reset
+  heals a mob to FULL, so `hp > before` passes for entirely the wrong reason. The
+  wire has `{t:"evt", e:{kind:"heal", tgt, amount}}` and it is only ever emitted by
+  an ability release. Same shape of trap for xp (level-up full-heals) and for
+  regen (the player creeps up 2 hp/s off the post-damage gate — an assertion of
+  `hp === 10` after a two-second wait fails, and the code was fine).
