@@ -23,7 +23,10 @@ import {
   type RoomDef,
   type SpawnTable,
 } from "@fantasy-mmo/common";
-import { hash2, type VoxelWorld } from "./voxel.js";
+import { hash2, MIN_DIG_FLOOR, type VoxelWorld } from "./voxel.js";
+import { TIER1 } from "./prefabs.tier1.js";
+import { TIER2 } from "./prefabs.tier2.js";
+import { TIER3 } from "./prefabs.tier3.js";
 import type { BlockGrid, Builder } from "./voxelstructures.js";
 
 const log = makeLogger("prefabs");
@@ -67,6 +70,22 @@ export interface PrefabCtx {
   set(lx: number, y: number, lz: number, block: string | number): void;
   setIfAir(lx: number, y: number, lz: number, block: string | number): void;
   fill(lx0: number, y0: number, lz0: number, lx1: number, y1: number, lz1: number, block: string | number): void;
+  /**
+   * Rotation-aware `Builder.plate`: stamp a 2-D character grid in LOCAL space,
+   * so a prefab's source reads like the thing it builds and still rotates.
+   * `rows[0]` is always the top row as written.
+   *   axis "x" — wall in the local x/y plane: columns +lx, rows DOWN from y.
+   *   axis "z" — wall in the local z/y plane: columns +lz, rows DOWN from y.
+   *   axis "y" — floor plan at constant y: columns +lx, rows +lz.
+   * ' ' leaves whatever is there; '.' is air; everything else needs a legend.
+   *
+   * (Never call `ctx.b.plate` from a prefab — Builder.plate is world-space and
+   * would ignore the placement rotation.)
+   */
+  plate(lx: number, y: number, lz: number, axis: "x" | "y" | "z", rows: string[], legend: Record<string, string | number>): void;
+  /** Floor y for a chamber dug `depth` below this prefab's ground, clamped off
+   *  bedrock (see Builder.digFloorY). A shaft in low ground gets shallower. */
+  digFloorY(depth: number): number;
   /** deterministic [0,1) — hash2 over room seed ^ prefab salt ^ salt */
   rand(salt: number): number;
 }
@@ -255,6 +274,25 @@ export function stampPrefab(b: Builder, prefabId: string, ox: number, oz: number
         }
       }
     },
+    plate: (lx, y, lz, axis, rows, legend) => {
+      for (let r = 0; r < rows.length; r++) {
+        const row = rows[r]!;
+        for (let c = 0; c < row.length; c++) {
+          const ch = row[c]!;
+          if (ch === " ") continue;
+          let block: string | number;
+          if (ch === ".") block = 0;
+          else {
+            const named = legend[ch];
+            if (named === undefined) throw new Error(`${prefabId}: plate char '${ch}' is not in the legend`);
+            block = named;
+          }
+          const [wx, wz] = axis === "x" ? p(lx + c, lz) : axis === "z" ? p(lx, lz + c) : p(lx + c, lz + r);
+          b.set(wx, axis === "y" ? y : y - r, wz, block);
+        }
+      }
+    },
+    digFloorY: (depth) => Math.max(MIN_DIG_FLOOR, groundY - depth),
     rand: (salt) => hash2(seed ^ psalt ^ Math.imul(salt | 0, 0x85ebca6b), ox, oz),
   };
   pdef.build(ctx);
@@ -1100,3 +1138,11 @@ register({
     spawnRegion: { local: [4, 4], r: 7 },
   },
 });
+
+// --- the three catalog tiers (design doc §7) --------------------------------
+// Registered last so a tier module can never shadow an engine-era prefab by
+// accident: a duplicate id throws instead of silently winning.
+for (const def of [...TIER1, ...TIER2, ...TIER3]) {
+  if (PREFABS[def.id]) throw new Error(`prefabs: duplicate id '${def.id}'`);
+  register(def);
+}

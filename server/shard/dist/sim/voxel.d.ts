@@ -1,5 +1,10 @@
 import { type RoomDef } from "@fantasy-mmo/common";
 import type { ScatterResult } from "./prefabs.js";
+/** The lowest y a dug chamber's FLOOR may occupy. y0 is bedrock and every
+ *  Builder.set refuses y<1, so leaving y1 solid means no excavation can ever
+ *  open onto the void under the world. Lives here — not in voxelstructures —
+ *  so prefabs.ts can import it without closing a module cycle. */
+export declare const MIN_DIG_FLOOR = 2;
 export declare function hash2(seed: number, x: number, y: number): number;
 export interface BlockEdit {
     x: number;

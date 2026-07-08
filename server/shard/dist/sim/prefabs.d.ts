@@ -39,6 +39,22 @@ export interface PrefabCtx {
     set(lx: number, y: number, lz: number, block: string | number): void;
     setIfAir(lx: number, y: number, lz: number, block: string | number): void;
     fill(lx0: number, y0: number, lz0: number, lx1: number, y1: number, lz1: number, block: string | number): void;
+    /**
+     * Rotation-aware `Builder.plate`: stamp a 2-D character grid in LOCAL space,
+     * so a prefab's source reads like the thing it builds and still rotates.
+     * `rows[0]` is always the top row as written.
+     *   axis "x" — wall in the local x/y plane: columns +lx, rows DOWN from y.
+     *   axis "z" — wall in the local z/y plane: columns +lz, rows DOWN from y.
+     *   axis "y" — floor plan at constant y: columns +lx, rows +lz.
+     * ' ' leaves whatever is there; '.' is air; everything else needs a legend.
+     *
+     * (Never call `ctx.b.plate` from a prefab — Builder.plate is world-space and
+     * would ignore the placement rotation.)
+     */
+    plate(lx: number, y: number, lz: number, axis: "x" | "y" | "z", rows: string[], legend: Record<string, string | number>): void;
+    /** Floor y for a chamber dug `depth` below this prefab's ground, clamped off
+     *  bedrock (see Builder.digFloorY). A shaft in low ground gets shallower. */
+    digFloorY(depth: number): number;
     /** deterministic [0,1) — hash2 over room seed ^ prefab salt ^ salt */
     rand(salt: number): number;
 }

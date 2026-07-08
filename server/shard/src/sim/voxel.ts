@@ -108,6 +108,12 @@ const MAP_COLORS: Record<string, [number, number, number]> = {
 
 // ---------- deterministic noise (shared style with the old heightmap gen) ----------
 
+/** The lowest y a dug chamber's FLOOR may occupy. y0 is bedrock and every
+ *  Builder.set refuses y<1, so leaving y1 solid means no excavation can ever
+ *  open onto the void under the world. Lives here — not in voxelstructures —
+ *  so prefabs.ts can import it without closing a module cycle. */
+export const MIN_DIG_FLOOR = 2;
+
 export function hash2(seed: number, x: number, y: number): number {
   let h = (seed | 0) ^ (x * 374761393) ^ (y * 668265263);
   h = Math.imul(h ^ (h >>> 13), 1274126177);

@@ -742,19 +742,25 @@ public class WorldScreen extends ScreenAdapter {
         return t;
     }
 
-    /** Flame flipbooks sit on every torch block in the world. */
+    /** Flame flipbooks sit on every open-fire block in the world. A brazier is a
+     *  bowl of burning coals, so it burns exactly like a torch does — the same
+     *  flipbook, seated a little higher in the block because the bowl is. */
     private void rebuildFlames() {
         if (world == null || !world.ready()) return;
-        int torchId = -1;
+        int torchId = -1, brazierId = -1;
         for (BlockRegistry.Block b : game.blocks.blocks) {
-            if (b != null && "torch".equals(b.name)) torchId = b.id;
+            if (b == null) continue;
+            if ("torch".equals(b.name)) torchId = b.id;
+            else if ("brazier".equals(b.name)) brazierId = b.id;
         }
-        if (torchId < 0) return;
+        if (torchId < 0 && brazierId < 0) return;
         List<Vector3> flames = new ArrayList<>();
         for (int y = 0; y < world.height; y++) {
             for (int z = 0; z < world.h; z++) {
                 for (int x = 0; x < world.w; x++) {
-                    if (world.get(x, y, z) == torchId) flames.add(new Vector3(x + 0.5f, y + 0.7f, z + 0.5f));
+                    int id = world.get(x, y, z);
+                    if (id == torchId) flames.add(new Vector3(x + 0.5f, y + 0.7f, z + 0.5f));
+                    else if (id == brazierId) flames.add(new Vector3(x + 0.5f, y + 0.85f, z + 0.5f));
                 }
             }
         }

@@ -10,7 +10,7 @@
  * (bedrock).
  */
 import { BLOCK, WORLD_HEIGHT, type RoomDef } from "@fantasy-mmo/common";
-import { hash2, type VoxelWorld } from "./voxel.js";
+import { hash2, MIN_DIG_FLOOR, type VoxelWorld } from "./voxel.js";
 import { scatterPrefabs, stampPrefab, type Rect, type ScatterResult } from "./prefabs.js";
 
 const id = (name: string): number => {
@@ -134,6 +134,52 @@ export class Builder {
   /** Remove everything above the ground plane (vegetation, tree canopies). */
   clearAbove(x0: number, z0: number, x1: number, z1: number, groundY: number, height = 14): void {
     this.fill(x0, groundY + 1, z0, x1, Math.min(WORLD_HEIGHT - 1, groundY + height), z1, 0);
+  }
+
+  /**
+   * Floor level for a chamber dug `depth` below the surface, clamped off the
+   * bottom of the world. y0 is bedrock and `set` refuses y<1, so a floor never
+   * sits below MIN_DIG_FLOOR — a shaft cut into low desert ground gets
+   * SHALLOWER rather than punching a hole through the underside of the map.
+   * (The cut `tomb_of_the_dune_king` prefab dug to a fixed -6 with no clamp in
+   * a room whose groundY runs 7..19. This is that bug, made unwritable.)
+   */
+  digFloorY(groundY: number, depth: number): number {
+    return Math.max(MIN_DIG_FLOOR, groundY - depth);
+  }
+
+  /**
+   * Stamp a 2-D character grid of blocks, so a structure's source reads like
+   * the thing it builds. `rows[0]` is always the TOP row as written:
+   *
+   *   axis "x" — a wall in the x/y plane at constant z. Columns run +x from
+   *              `x`; rows run DOWN from `y`.
+   *   axis "z" — a wall in the z/y plane at constant x. Columns run +z from
+   *              `z`; rows run DOWN from `y`.
+   *   axis "y" — a floor plan at constant y. Columns run +x from `x`; rows run
+   *              +z from `z` (so the literal is a map you read north-up).
+   *
+   * A space in `rows` means "leave whatever is there"; '.' means air. Every
+   * other character must appear in `legend`.
+   */
+  plate(x: number, y: number, z: number, axis: "x" | "y" | "z", rows: string[], legend: Record<string, string | number>): void {
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[r]!;
+      for (let c = 0; c < row.length; c++) {
+        const ch = row[c]!;
+        if (ch === " ") continue;
+        let block: string | number;
+        if (ch === ".") block = 0;
+        else {
+          const named = legend[ch];
+          if (named === undefined) throw new Error(`Builder.plate: '${ch}' is not in the legend`);
+          block = named;
+        }
+        if (axis === "x") this.set(x + c, y - r, z, block);
+        else if (axis === "z") this.set(x, y - r, z + c, block);
+        else this.set(x + c, y, z + r, block);
+      }
+    }
   }
 
   /** Level a rect: terrain columns forced to groundY (dirt under, surface on top). */

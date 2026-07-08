@@ -32,6 +32,30 @@ export declare class Builder {
     fill(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, block: string | number): void;
     /** Remove everything above the ground plane (vegetation, tree canopies). */
     clearAbove(x0: number, z0: number, x1: number, z1: number, groundY: number, height?: number): void;
+    /**
+     * Floor level for a chamber dug `depth` below the surface, clamped off the
+     * bottom of the world. y0 is bedrock and `set` refuses y<1, so a floor never
+     * sits below MIN_DIG_FLOOR — a shaft cut into low desert ground gets
+     * SHALLOWER rather than punching a hole through the underside of the map.
+     * (The cut `tomb_of_the_dune_king` prefab dug to a fixed -6 with no clamp in
+     * a room whose groundY runs 7..19. This is that bug, made unwritable.)
+     */
+    digFloorY(groundY: number, depth: number): number;
+    /**
+     * Stamp a 2-D character grid of blocks, so a structure's source reads like
+     * the thing it builds. `rows[0]` is always the TOP row as written:
+     *
+     *   axis "x" — a wall in the x/y plane at constant z. Columns run +x from
+     *              `x`; rows run DOWN from `y`.
+     *   axis "z" — a wall in the z/y plane at constant x. Columns run +z from
+     *              `z`; rows run DOWN from `y`.
+     *   axis "y" — a floor plan at constant y. Columns run +x from `x`; rows run
+     *              +z from `z` (so the literal is a map you read north-up).
+     *
+     * A space in `rows` means "leave whatever is there"; '.' means air. Every
+     * other character must appear in `legend`.
+     */
+    plate(x: number, y: number, z: number, axis: "x" | "y" | "z", rows: string[], legend: Record<string, string | number>): void;
     /** Level a rect: terrain columns forced to groundY (dirt under, surface on top). */
     flatten(x0: number, z0: number, x1: number, z1: number, groundY: number, surface: string): void;
     /** Paint the surface block of existing terrain (roads, plazas). */
