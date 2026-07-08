@@ -1074,6 +1074,49 @@ show their block tile).
   - Atlas is now 82/256 slots. Every `voxel.ts` baked `avgColor` literal is
     copied numerically from `client/assets/blocks/tiles.json`, never guessed
     (an unmapped block renders magenta on the admin map).
+  - **`sway`** on BlockDef (blocks.ts → BlockRegistry → ChunkMesher). The mesher
+    used to hardcode `sway = !glow`, so every non-glow cross block bent in the
+    wind. `chain`, `skull_pile` and `roots` set it false.
+
+- 2026-07-08 **THE ROSTER** — 24 mobs, 24 abilities, 25 spawn tables, 3
+  re-sprites, implemented from `roster-2.json` by a 4-agent pipeline then torn
+  apart by 3 adversarial verifiers. The crypt gets an undead ladder
+  (restless_bones / ossuary_stitcher / bone_warden / grave_harrower /
+  crypt_ghoul / pallid_mourner), the Cinderrift its forge constructs, the
+  Sunscour Ashkaal's dead court, the Gloomfen its slimes + Grelmoss, plus two
+  wandering encounters (Aelthir the Unmarred, the Cinder Nightmare).
+  - Re-sprited keeping the sprite KEYS (so no mob def changed): `wraith` →
+    reaper_1, `lich` → lich.png. **`skeleton` was reverted**: skeletonarmy
+    [1,1]'s sword crosses the frame boundary and the union-bbox trim leaves
+    detached blade fragments.
+  - **Ordering constraint discovered the hard way**: an ability whose `summon`
+    names a mob cannot be added before that mob exists — the registry validates
+    EVERY ability's summon target globally, not just mob-reachable kits.
+  - **Seven economy blockers**, all the same shape (a mob carrying a loot table
+    or an xp value from a tier it doesn't belong to). See LESSONS.md. Now
+    guarded by five invariant tests: a boss table (one with a `guaranteed` slot)
+    may only sit on a solitary slow-respawning mob; nothing out-earns its
+    room's boss; anything faster than the player must leash; no raw `heal` self
+    ability on a mob; the trophy ladder isn't inverted.
+  - **`MobRankSchema.xpMult`** — a rank that turns a critter into a monster
+    (pallid_mourner: hp ×2.5, damage ×12) must also change what it's WORTH.
+  - **`allyHeal` now gates on `samePack()`** (shared spawnerId or a summon
+    link). It used to mend every mob in radius, silently welding two spawn
+    tables into one fight. Command-spawned mobs share spawnerId "" so staging
+    scripts still work.
+  - **`chooseAttack` treats every `self` ability as always-in-range.** Only
+    `allyHeal` and `summon` carry their own gate. A raw `heal` on a mob is cast
+    at full health forever — use `allyHeal {radius: 2.5, includeSelf: true}` as
+    a gated self-heal.
+  - **`npx tsx tools/rank-coverage.mts`** reports which ranks any spawn table
+    actually reaches: **15 of 28** today. The rest are hooks for deeper rooms
+    (thrace_redcap's L12 waits for the Gloomfen) or oversights — nothing warns
+    you which. Run it after adding ranks.
+  - Known gaps, deliberately: `fen_slimeling` shares its parent's sprite key so
+    it renders at the parent's size (MobDef carries no height); `caustic_gob` /
+    `sovereign_gob` ship as blue `frost` because no green projectile strip
+    exists; room-event `spawnMobs` has no `level` field, so event waves spawn at
+    the def's base level.
 
 ## Conventions
 
@@ -1161,6 +1204,25 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-08 **NEW ASSET DROP absorbed end to end.** Icons migrated to
+  `tficons_limited_16` (old sheet deleted); 22 blocks (56–77) from
+  `ruindungeons_sheet_full`; the Thornhollow Company (bandits, from the real
+  `bandits_1` sheet); the level-scaled **rank system** with disposition +
+  xp overrides and pack healers; and the 24-mob Content Design 2 roster across
+  every biome. **11 rooms, 78 blocks, 55 mobs, 75 abilities, 100 spawn tables.**
+  Verified: typecheck, **352 vitest**, client compiles, all 10 rooms boot with
+  zero registry errors, `scripts/bandit-probe.mjs` ALL CHECKS PASSED live, and
+  screenshots (tools/out/bandits3-1.png, icons-inv-3.png).
+  **STILL TO DO from `docs/content-design-2.md`'s batch plan:** batches 8–12 —
+  21 prefabs (3 tiers), 5 authored setpieces (the Lamplighters' Road and the
+  Drownbell in the Gloomfen; the Colossus of Sekhat and the Great Aqueduct in the
+  Sunscour), and the `authoredExclusions()` update they need. The blocks those
+  structures are built from all exist now. Two of the tier-3 prefabs
+  (`sunken_gaol`, `sewer_outfall`) need their geometry rewritten before coding —
+  both proposals argue with themselves mid-spec.
+  Owner feel-checks pending: bandit fight difficulty, the Cowl's 1.5 s interrupt
+  window, Cinderrift/crypt pack density, and whether the new loot tiers land right.
 
 - **Phase 1 (skeleton) complete and verified** (2026-07-02):
   - `npm run dev` boots mongod (portable 7.0.28) + master (4000) + shard1,
