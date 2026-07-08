@@ -503,3 +503,45 @@ swept the OTHER interaction ranges when that fix landed.
 - The client mirrored the same 2D check in its [E] prompt (`nearestOfKind`)
   — range checks live in BOTH runtimes here; fixing only the server leaves
   a lying prompt.
+
+## standY means "the roof" the moment a building gets a ceiling
+
+The Sundered City's keep is the game's first fully-roofed interior — and
+three separate systems put people on top of it instead of inside
+(2026-07-07). Login snapped a character who logged out in the great hall
+onto the CEILING (addPlayer ground-snapped via standY when the persisted y
+differed by >2.5); `/tp` into the keep landed on the roof for the same
+reason; and the bot-lib `goTo`/`heightAt` grid paths across rooftops, so a
+probe's chase loop was useless indoors.
+
+- **standY answers "top of the column", not "where can feet be"**: any
+  column under a roof has SEVERAL walkable gaps. `VoxelWorld.walkYNear(x,
+  z, refY)` (nearest gap to a reference y) is the join-snap now; floorY is
+  the lowest gap. When new content adds the first X (here: roofed rooms),
+  grep every standY caller and ask which gap it really wants.
+- Screenshot staging inside interiors: set the DB y to the interior floor
+  (y=0 means "ground-snap", which is the roof) — and kill the client FIRST,
+  then wait ~5s for the disconnect report before editing, then READ BACK
+  the row; the report races manual edits and silently reverts them.
+- Probe fight loops must survive the target leaving the interest set: a
+  missing boss entity meant "sleep forever at full hp 20 m away" (a 300 s
+  no-op run). Walk toward the last-known position to re-acquire instead.
+- `bossHpBelowPct` events are once per boss LIFE: a failed attempt burns
+  the rally arc until the boss respawns — restart an ephemeral room
+  between probe attempts or the second run asserts on spent events.
+
+## The day/night "golden hour" is ~0.005 of fixedTime wide
+
+Tuning the Sundered City's perpetual-sunset mood (2026-07-07): 0.84, 0.79
+and 0.755 all render as full NIGHT (stars out), 0.73 as flat neutral day —
+the sky flips across the sunset boundary at ~0.745 with no wide dusk band
+in between. 0.74 holds the sun visibly ON the horizon; 0.745 is deep
+twilight.
+
+- **Don't binary-search dusk by feel-words ("0.86 is dusk" was true for
+  gloomfen's overcast swamp look, not for a lit sunset)** — screenshot at
+  0.005 steps around 0.74/0.75 and pick by eye; each check is a room-def
+  edit + admin restart-room + MMO_SHOT run (~2 min).
+- Readability beats mood for combat spaces: the room ships at 0.74 (last
+  light) + nightLight 1.6, and the drama comes from emissive blocks
+  (stained glass, braziers, lanterns) that survive any clock setting.

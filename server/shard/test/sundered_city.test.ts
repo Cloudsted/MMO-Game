@@ -132,6 +132,40 @@ describe("sundered_city preset gen", () => {
   });
 });
 
+describe("the Sundered King — hardest fight yet", () => {
+  it("out-stats every other boss and anchors the throne room", () => {
+    const king = reg.mobs["sundered_king"]!;
+    const lich = reg.mobs["lich_boss"]!;
+    expect(king.level).toBeGreaterThan(lich.level);
+    expect(king.hp).toBeGreaterThan(lich.hp);
+    expect(king.xp).toBeGreaterThan(lich.xp);
+    const throne = def.spawnTables.find((t) => t.id === "throne-king")!;
+    expect(throne.mobs[0]!.mob).toBe("sundered_king");
+    expect(throne.maxAlive).toBe(1);
+  });
+
+  it("wires the cinematic event arc: rallies at 66/33%, 60s collapse on death", () => {
+    const kinds = def.events.map((e) => e.on.kind);
+    expect(kinds.filter((k) => k === "bossHpBelowPct").length).toBe(2);
+    const death = def.events.find((e) => e.on.kind === "bossDeath")!;
+    expect(death.on.mob).toBe("sundered_king");
+    const timer = death.actions.find((a) => a.kind === "setRoomTimer");
+    expect(timer && timer.kind === "setRoomTimer" ? timer.sec : 0).toBe(60); // "closes in one minute"
+    for (const e of def.events) {
+      for (const a of e.actions) {
+        if (a.kind === "spawnMobs") expect(reg.mobs[a.mob], a.mob).toBeDefined();
+      }
+    }
+  });
+
+  it("summons his Oathbound (registered mob, capped)", () => {
+    const summon = reg.abilities["oath_summon"]!;
+    expect(summon.summon).toBeDefined();
+    expect(reg.mobs[summon.summon!.mob]).toBeDefined();
+    expect(summon.summon!.cap).toBeLessThanOrEqual(4);
+  });
+});
+
 describe("gloomfen ⇄ sundered_city portal pairing (authored exitPortalId)", () => {
   it("routes each gloomfen road to its own city gate", () => {
     const north = gloomfen.portals.find((p) => p.id === "gloomfen-city-north")!;

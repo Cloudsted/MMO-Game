@@ -509,6 +509,67 @@
       "value": 10,
       "stack": 50,
       "icon": [13, 21]
+    },
+    "kingsrend_greataxe": {
+      "name": "Kingsrend Greataxe",
+      "kind": "weapon",
+      "ability": "cleave",
+      "damage": 36,
+      "durability": 950,
+      "value": 560,
+      "stack": 1,
+      "icon": [10, 6]
+    },
+    "oathbreaker_pike": {
+      "name": "Oathbreaker Pike",
+      "kind": "weapon",
+      "ability": "thrust",
+      "damage": 33,
+      "durability": 900,
+      "value": 520,
+      "stack": 1,
+      "icon": [12, 6]
+    },
+    "sovereign_scythe": {
+      "name": "Sovereign Scythe",
+      "kind": "weapon",
+      "ability": "reap",
+      "damage": 35,
+      "durability": 900,
+      "value": 560,
+      "stack": 1,
+      "icon": [15, 6]
+    },
+    "scepter_of_ruin": {
+      "name": "Scepter of Ruin",
+      "kind": "weapon",
+      "ability": "greater_frost",
+      "damage": 32,
+      "durability": 750,
+      "value": 540,
+      "stack": 1,
+      "icon": [0, 7]
+    },
+    "war_medal": {
+      "name": "War Medal",
+      "kind": "trophy",
+      "value": 28,
+      "stack": 10,
+      "icon": [7, 13]
+    },
+    "royal_seal": {
+      "name": "Royal Seal of Valdrenn",
+      "kind": "trophy",
+      "value": 45,
+      "stack": 10,
+      "icon": [9, 12]
+    },
+    "sundered_crown": {
+      "name": "The Sundered Crown",
+      "kind": "trophy",
+      "value": 400,
+      "stack": 1,
+      "icon": [6, 10]
     }
   }
 }

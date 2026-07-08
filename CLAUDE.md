@@ -758,6 +758,75 @@ show their block tile).
     caster (caps live-minion counts), corpse cleanup as normal. They grant
     normal XP/loot — an intentional risk/reward, revisit if farmed.
 
+- 2026-07-07 **THE SUNDERED CITY** (owner directive: a room branching from
+  the room after the forest via two portals in separate spots; a war-
+  destroyed city, mobs everywhere; a huge enterable castle at the very
+  back; a throne-room finale — the hardest boss yet, dramatic/cinematic/
+  meaningful; closes 60 s after the kill, resets X minutes later, always
+  open otherwise; **preset world, no random gen**). Design research +
+  layout doc: docs/worldgen-design.md §7 (distilled Minecraft medieval
+  city/castle build practice — curtain-wall proportions, gatehouse killing
+  grounds, keep sizing; a real .schematic conversion was investigated and
+  dropped: paywalled sources + WORLD_HEIGHT 48 + the billboard boss arena
+  mean gameplay-authored wins).
+  - **Room** `sundered_city` "Valdrenn, the Sundered City": 256² ephemeral
+    dungeon, biome **`ruin`** (NEW additive gen branch: uniform flat
+    stone-under-dirt slab, zero trees/decorations — `buildSunderedCity` in
+    voxelstructures.ts authors every visible block; hash2 used only for
+    decay texture, byte-identical every boot — test-locked). fixedTime
+    **0.74** (the sun pinned on the horizon — see LESSONS.md on the ~0.005
+    sunset cliff), nightLight 1.6, wind 0.5.
+  - **World**: aged curtain wall (cracked_bricks/mossy bites) with 3
+    breaches + jammed half-raised portcullis gatehouses (murder-hole
+    ceilings, killing corridors); 7-wide processional avenue with
+    half-dead lantern posts; burned west market + palisade marauder camp;
+    roofless residential rows; marble chapel + 2 graveyard prefabs (NE);
+    craters (ash + ember_crystal), charred snags, strewn rubble; castle on
+    a +4 terraced plinth — taller curtain, 6 towers, second gatehouse —
+    and the marble keep: colonnade w/ banners+lanterns, red-carpet
+    processional, 3-step dais, GOLD THRONE, glowing stained-glass rose
+    window, ember braziers, treasury (gold + cache_royal) + barracks
+    wings. Blocks 51-55 added (cracked_bricks, rubble, red_carpet,
+    gold_block, stained_glass glow-7) — tiles painted in-pipeline.
+  - **Portals**: first authored `exitPortalId` use — gloomfen (160,30)
+    "Old North Road" ⇄ city south gate (128,226); gloomfen (52,92)
+    "Drowned West Road" ⇄ city east breach (244,128, authored exitX/Z).
+  - **Lifecycle**: LifecycleSchema.lifetimeSec now OPTIONAL — absent = no
+    natural expiry (roomhost arms nothing); the city stands until the
+    `bossDeath` event fires `setRoomTimer 60` (the owner's one minute),
+    then master downtime 300 s (`downtimeSec` = the reset knob) → fresh.
+  - **Mobs** (sprites eyeballed per LESSONS rule; military2 = kepi
+    officers, wrong era — military1 [3,0] is the faceless plate soldier):
+    marauder L13 (orc1 [3,1] warlord), gravehound L13 (wolf2 horned
+    beast), fallen_soldier L14 (sword+bow kit), oathbound_sentinel L16
+    (dknight2), + existing wraith/bone_bat in the chapel quarter.
+    **Vaelric, the Sundered King** L18 (dknight1 crimson plate, height
+    2.6): 2200 hp, kit = kings_cleave (1.2 s telegraph) / crown_strike /
+    sundering_wave (minRange 4, anti-kite) / oath_summon (2 sentinels,
+    cap 3, 30 s cd) + room events: rallies at 66%/33% (announce + 2/3
+    sentinels) and the death collapse announce. Deliberately GROUP
+    content: three maxed probe bots win in ~1-2 min; solo max-level
+    cannot out-heal the add pile (potion 100/s vs pile dps) by design.
+  - **Loot**: T4 `weapons_royal` ≈3× iron (kingsrend_greataxe,
+    oathbreaker_pike, sovereign_scythe, scepter_of_ruin — icons from
+    verified-free cells) + trophies war_medal/royal_seal/sundered_crown
+    (value 400, guaranteed on the King with an epic royal weapon);
+    cache_royal ×2 (treasury + chapel). Sounds: 20 vocal groups from
+    proven pools w/ pitch knobs + wind_storm bed (AudioEngine case).
+  - **walkYNear fix**: addPlayer now snaps to the walkable gap NEAREST the
+    persisted y — the keep is the first roofed interior, and standY put
+    hall logouts back on the CEILING (also documented for /tp + bot
+    heightAt in LESSONS.md).
+  - Verified: 187 vitest (14 new — preset determinism, floor-walk BFS
+    spawn→throne/treasury/chapel/breach, pairing both ways, king-tops-
+    lich guard, event arc shape, walkYNear); `scripts/city-probe.mjs`
+    live: paired arrivals, preset blocks over the wire (gold throne id 54,
+    rose window id 55), Maera NPC, district populations, 3-bot raid kill
+    w/ both rallies + summons, crown loot, T-30 warning, evict ~60 s,
+    master downtime + fresh reopen. Screenshots tools/out/: city-gate3,
+    city-avenue3 (avenue→castle vista), throne-room4 (rose window + gold
+    throne + braziers), city-market (camp at sundown).
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes

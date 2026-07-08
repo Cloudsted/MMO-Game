@@ -394,8 +394,9 @@ Research base (Minecraft medieval build practice, distilled):
 - 256×256, `type:"dungeon"`, biome **`ruin`** (NEW additive gen branch:
   flat stone-under-dirt columns, ZERO trees/decorations/noise surface —
   amplitude 0, the authored builder owns every visible block).
-- `persistence:"ephemeral"`, `fixedTime` 0.83 (ember dusk), `wind` 0.5
-  (banners stir), nightLight default.
+- `persistence:"ephemeral"`, `fixedTime` **0.74** (shipped: the sun pinned
+  on the horizon; 0.75+ flips to night — LESSONS.md), `wind` 0.5,
+  nightLight 1.6.
 - **Lifecycle**: `lifetimeSec` ABSENT (schema change: optional → no natural
   expiry — the city stands until the King falls), `downtimeSec` 300 (the
   "X minutes" reset knob), `warnAtSecLeft` [30, 10].
@@ -452,15 +453,18 @@ Research base (Minecraft medieval build practice, distilled):
 | + existing wraith (L13) / bone_bat (L12) | — | — | chapel + graveyard quarter |
 | **sundered_king** | **monster_dknight1** (crimson plate) | **18** | throne-room finale |
 
-**Sundered King** — hardest fight yet (lich: L15/1150hp/1400xp):
-~2600 hp, dmg ~52, moveSpeed 2.7, aggro 18, attackRange 13, leash 30
-(anchored to the hall). Kit: `kings_cleave` (big telegraphed melee arc),
-`sundering_wave` projectile (minRange 4 — anti-kiting), `oath_summon`
-(raises 2 oathbound from the floor, cap 4, weight ~6). Phases ride the
-hp events (7a): rally announcements make it read as a staged, cinematic
-duel; xp ~3200; loot `king_drops` = guaranteed epic from `weapons_royal`
-(T4 ≈ 2.8× iron: kings_greatsword / dawnbreaker_maul / veilpiercer_bow /
-scepter_of_ruin) + `sundered_crown` trophy (high value) + gold [400,650].
+**Sundered King** — hardest fight yet (lich: L15/1150hp/1400xp). SHIPPED
+tuning after live 3-bot raid iteration: 2200 hp, dmg 46, moveSpeed 2.8,
+aggro 16, attackRange 13, leash 30 (anchored to the hall). Kit:
+`kings_cleave` (1.2 s telegraphed arc) / `crown_strike` (fast punish) /
+`sundering_wave` projectile (minRange 4 — anti-kiting) / `oath_summon`
+(2 oathbound, cap 3, 30 s cd — the first 2600 hp/cap-4/18 s version
+out-summoned three MAXED probe bots' total dps; group content must be
+brutal, not unkillable). Phases ride the hp events (7a); xp 3400; loot
+`king_drops` = guaranteed epic from `weapons_royal` (T4 ≈ 3× iron:
+kingsrend_greataxe / oathbreaker_pike / sovereign_scythe /
+scepter_of_ruin — icons picked from verified-free cells) +
+`sundered_crown` (value 400) + gold [400,650].
 City trophies: `war_medal`, `royal_seal` (mob tables narrate the fall).
 
 ## 7e. Sounds

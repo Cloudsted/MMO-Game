@@ -260,6 +260,10 @@ public class AudioEngine {
                 bed = "wind_storm";
                 playlist = "dungeon";
             }
+            case "sundered_city" -> {
+                bed = "wind_storm"; // desolate ruin wind under the dead city
+                playlist = "dungeon";
+            }
             case "desert" -> {
                 bed = "wind_desert";
                 playlist = "wild";

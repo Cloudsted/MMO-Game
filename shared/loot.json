@@ -317,15 +317,87 @@
       { "weight": 16, "item": "bone_charm", "qty": [1, 1] }
     ]
   },
+  "weapons_royal": {
+    "gold": [0, 0],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 26, "item": "kingsrend_greataxe" },
+      { "weight": 24, "item": "sovereign_scythe" },
+      { "weight": 24, "item": "oathbreaker_pike" },
+      { "weight": 26, "item": "scepter_of_ruin" }
+    ]
+  },
+  "marauder_drops": {
+    "gold": [14, 30],
+    "rolls": [1, 2],
+    "entries": [
+      { "weight": 28 },
+      { "weight": 18, "table": "weapons_rift" },
+      { "weight": 5, "table": "weapons_royal" },
+      { "weight": 17, "item": "ancient_coin", "qty": [1, 2] },
+      { "weight": 17, "item": "greater_health_potion", "qty": [1, 1] },
+      { "weight": 15, "item": "war_medal", "qty": [1, 1] }
+    ]
+  },
+  "gravehound_drops": {
+    "gold": [8, 18],
+    "rolls": [1, 1],
+    "entries": [
+      { "weight": 34 },
+      { "weight": 30, "item": "war_medal", "qty": [1, 1] },
+      { "weight": 14, "item": "greater_health_potion", "qty": [1, 1] },
+      { "weight": 12, "table": "weapons_rift" },
+      { "weight": 10, "item": "roast_boar_leg", "qty": [1, 2] }
+    ]
+  },
+  "soldier_drops": {
+    "gold": [14, 28],
+    "rolls": [1, 2],
+    "entries": [
+      { "weight": 26 },
+      { "weight": 22, "item": "war_medal", "qty": [1, 1] },
+      { "weight": 16, "table": "weapons_rift" },
+      { "weight": 6, "table": "weapons_royal" },
+      { "weight": 15, "item": "greater_health_potion", "qty": [1, 1] },
+      { "weight": 15, "item": "greater_mana_potion", "qty": [1, 1] }
+    ]
+  },
+  "sentinel_drops": {
+    "gold": [24, 45],
+    "rolls": [1, 2],
+    "entries": [
+      { "weight": 22 },
+      { "weight": 24, "item": "royal_seal", "qty": [1, 1] },
+      { "weight": 16, "table": "weapons_royal" },
+      { "weight": 6, "table": "weapons_royal", "minRarity": "rare" },
+      { "weight": 16, "item": "greater_health_potion", "qty": [1, 2] },
+      { "weight": 16, "item": "greater_mana_potion", "qty": [1, 2] }
+    ]
+  },
+  "king_drops": {
+    "gold": [400, 650],
+    "rolls": [2, 3],
+    "entries": [
+      { "weight": 35, "table": "weapons_royal", "minRarity": "rare" },
+      { "weight": 25, "item": "royal_seal", "qty": [1, 2] },
+      { "weight": 20, "item": "greater_health_potion", "qty": [2, 3] },
+      { "weight": 20, "item": "greater_mana_potion", "qty": [2, 3] }
+    ],
+    "guaranteed": [
+      { "weight": 1, "table": "weapons_royal", "minRarity": "epic" },
+      { "weight": 1, "item": "sundered_crown", "qty": [1, 1] }
+    ]
+  },
   "cache_royal": {
     "gold": [60, 110],
     "rolls": [1, 2],
     "entries": [
-      { "weight": 26, "table": "weapons_rift" },
-      { "weight": 14, "table": "weapons_rift", "minRarity": "rare" },
-      { "weight": 24, "item": "greater_health_potion", "qty": [1, 2] },
+      { "weight": 22, "table": "weapons_rift" },
+      { "weight": 12, "table": "weapons_royal" },
+      { "weight": 6, "table": "weapons_royal", "minRarity": "rare" },
+      { "weight": 22, "item": "greater_health_potion", "qty": [1, 2] },
       { "weight": 20, "item": "greater_mana_potion", "qty": [1, 2] },
-      { "weight": 16, "item": "ancient_coin", "qty": [1, 2] }
+      { "weight": 18, "item": "royal_seal", "qty": [1, 1] }
     ]
   }
 }

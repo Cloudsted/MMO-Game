@@ -148,5 +148,50 @@
     "aggroRadius": 16, "attackRange": 12,
     "leashRadius": 48, "fleeAtHpPct": 0, "xp": 1400, "loot": "lich_boss_drops",
     "sounds": { "idle": "lich_boss_idle", "attack": "lich_boss_attack", "hurt": "lich_boss_hurt", "die": "lich_boss_die" }
+  },
+  "marauder": {
+    "name": "Warband Marauder", "sprite": "marauder", "level": 13,
+    "hp": 290, "damage": 30, "moveSpeed": 3.1,
+    "ability": "bandit_slash", "aggroRadius": 11, "attackRange": 2.1,
+    "leashRadius": 38, "fleeAtHpPct": 0.08, "xp": 430, "loot": "marauder_drops",
+    "sounds": { "idle": "marauder_idle", "attack": "marauder_attack", "hurt": "marauder_hurt", "die": "marauder_die" }
+  },
+  "gravehound": {
+    "name": "Gravehound", "sprite": "gravehound", "level": 13,
+    "hp": 240, "damage": 27, "moveSpeed": 4.2,
+    "ability": "wolf_bite", "aggroRadius": 13, "attackRange": 1.8,
+    "leashRadius": 42, "fleeAtHpPct": 0, "xp": 400, "loot": "gravehound_drops",
+    "sounds": { "idle": "gravehound_idle", "attack": "gravehound_attack", "hurt": "gravehound_hurt", "die": "gravehound_die" }
+  },
+  "fallen_soldier": {
+    "name": "Fallen Garrison Soldier", "sprite": "fallen_soldier", "level": 14,
+    "hp": 320, "damage": 32, "moveSpeed": 2.9,
+    "attacks": [
+      { "ability": "skeleton_slash" },
+      { "ability": "bone_bow", "damage": 26, "minRange": 3.5 }
+    ],
+    "aggroRadius": 11, "attackRange": 11,
+    "leashRadius": 40, "fleeAtHpPct": 0, "xp": 520, "loot": "soldier_drops",
+    "sounds": { "idle": "fallen_soldier_idle", "attack": "fallen_soldier_attack", "hurt": "fallen_soldier_hurt", "die": "fallen_soldier_die" }
+  },
+  "oathbound_sentinel": {
+    "name": "Oathbound Sentinel", "sprite": "oathbound_sentinel", "level": 16,
+    "hp": 400, "damage": 34, "moveSpeed": 3.0,
+    "ability": "sentinel_blade", "aggroRadius": 12, "attackRange": 2.4,
+    "leashRadius": 44, "fleeAtHpPct": 0, "xp": 750, "loot": "sentinel_drops",
+    "sounds": { "idle": "oathbound_sentinel_idle", "attack": "oathbound_sentinel_attack", "hurt": "oathbound_sentinel_hurt", "die": "oathbound_sentinel_die" }
+  },
+  "sundered_king": {
+    "name": "Vaelric, the Sundered King", "sprite": "sundered_king", "level": 18,
+    "hp": 2200, "damage": 46, "moveSpeed": 2.8,
+    "attacks": [
+      { "ability": "kings_cleave", "weight": 3 },
+      { "ability": "crown_strike", "damage": 32, "weight": 2 },
+      { "ability": "sundering_wave", "damage": 36, "minRange": 4, "weight": 2 },
+      { "ability": "oath_summon", "weight": 5 }
+    ],
+    "aggroRadius": 16, "attackRange": 13,
+    "leashRadius": 30, "fleeAtHpPct": 0, "xp": 3400, "loot": "king_drops",
+    "sounds": { "idle": "sundered_king_idle", "attack": "sundered_king_attack", "hurt": "sundered_king_hurt", "die": "sundered_king_die" }
   }
 }

@@ -276,6 +276,35 @@ const SFX = {
   lich_boss_attack: vocal([...num(`${MON}/large monster attack/large monster attack`, 1, 2), P(`${GHOST}/Ghost Attack_08.wav`)]),
   lich_boss_hurt: vocal(num(`${MON}/large monster Grunt (Gets hit)/large monster Grunt (Gets hit)`, 1, 2), { pitchVar: 0.08 }),
   lich_boss_die: vocal([P(`${MON}/large monster Death/large monster Death 1.wav`), P(`${GHOST}/Ghost Death_04.wav`)]),
+
+  // --- Sundered City roster (all sources proven above; pitch knobs keep the
+  // shared pools reading as distinct creatures) ---
+  // marauder: the goblin-fairy warband voice pitched DOWN into orc territory
+  marauder_idle: vocal(pad(`${VOICE}/Goblin Fairy/goblin_fairy_growl`, 1, 3), { pitch: 0.85, vol: 0.85 }),
+  marauder_attack: vocal(pad(`${VOICE}/Goblin Fairy/goblin_fairy_attack_low`, 1, 3), { pitch: 0.85 }),
+  marauder_hurt: vocal(pad(`${VOICE}/Goblin Fairy/goblin_fairy_hurt_pain`, 1, 3), { pitch: 0.85, pitchVar: 0.08 }),
+  marauder_die: vocal(pad(`${VOICE}/Goblin Fairy/goblin_fairy_death`, 1, 2), { pitch: 0.85 }),
+  // gravehound: the wolf voice dropped low for the horned dire beast
+  gravehound_idle: vocal([...num(`${ANIM}/Wolf/Wolf howls`, 1, 2), P(`${ANIM}/Wolf/Wolf barks 1.wav`)], { pitch: 0.85, vol: 0.85 }),
+  gravehound_attack: vocal(num(`${ANIM}/Dog Attacks/Dog Attacks`, 1, 3), { pitch: 0.85 }),
+  gravehound_hurt: vocal(num(`${ANIM}/Dog Cries/Dog Cries (High Pitched Cry)`, 1, 2), { pitch: 0.85, pitchVar: 0.08 }),
+  gravehound_die: vocal(num(`${ANIM}/Dog Cries/Dog Cries (High Pitched Cry)`, 3, 4), { pitch: 0.85 }),
+  // fallen soldier: dead men still drilling — zombie groans under a slight drop
+  fallen_soldier_idle: vocal(pad(`${ZOMBIE}/zombie_voice_groan`, 1, 3), { pitch: 0.9, vol: 0.8 }),
+  fallen_soldier_attack: vocal(pad(`${ZOMBIE}/zombie_voice_attack_grunt`, 1, 2), { pitch: 0.9 }),
+  fallen_soldier_hurt: vocal(pad(`${ZOMBIE}/zombie_voice_grunt`, 1, 2), { pitch: 0.9, pitchVar: 0.08 }),
+  fallen_soldier_die: vocal(pad(`${ZOMBIE}/zombie_voice_groan_croak`, 1, 2), { pitch: 0.9 }),
+  // oathbound sentinel: the huge-monster class tightened UP — armored discipline
+  oathbound_sentinel_idle: vocal([...num(`${MON}/Huge monster Growls/Huge monster Growls`, 1, 2), P(`${MON}/Huge monster Breathing/Huge monster Breathing 1.wav`)], { pitch: 1.12, vol: 0.85 }),
+  oathbound_sentinel_attack: vocal(num(`${MON}/Huge monster attack/Huge monster attack`, 1, 3), { pitch: 1.12 }),
+  oathbound_sentinel_hurt: vocal(num(`${MON}/Huge monster Grunt (Gets hit)/Huge monster Grunt (Gets hit)`, 1, 2), { pitch: 1.12, pitchVar: 0.08 }),
+  oathbound_sentinel_die: vocal(num(`${MON}/Huge monster Death/Huge monster Death`, 1, 2), { pitch: 1.12 }),
+  // the Sundered King: huge-monster mass + the large-monster laugh, dropped low;
+  // his death carries the ghost's dramatic exhale — the man under the armor
+  sundered_king_idle: vocal([P(`${MON}/Huge monster Breathing/Huge monster Breathing 1.wav`), ...num(`${MON}/large monster laugh/large monster laugh`, 1, 2)], { pitch: 0.92, vol: 0.95 }),
+  sundered_king_attack: vocal(num(`${MON}/Huge monster attack/Huge monster attack`, 1, 3), { pitch: 0.9 }),
+  sundered_king_hurt: vocal(num(`${MON}/large monster Grunt (Gets hit)/large monster Grunt (Gets hit)`, 1, 2), { pitch: 0.9, pitchVar: 0.08 }),
+  sundered_king_die: vocal([...num(`${MON}/Huge monster Death/Huge monster Death`, 1, 2), P(`${GHOST}/Ghost Death (Dramatic).wav`)], { pitch: 0.88 }),
 };
 
 const AMBIENT = {

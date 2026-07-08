@@ -56,6 +56,65 @@
   ],
   "spawnTables": [
     {
+      "id": "marauder-camp",
+      "region": { "kind": "circle", "x": 70, "z": 178, "r": 12 },
+      "mobs": [{ "mob": "marauder", "weight": 1 }],
+      "maxAlive": 5,
+      "packSize": [2, 3],
+      "respawnSec": 60
+    },
+    {
+      "id": "market-prowl",
+      "region": { "kind": "circle", "x": 84, "z": 186, "r": 10 },
+      "mobs": [
+        { "mob": "marauder", "weight": 2 },
+        { "mob": "gravehound", "weight": 1 }
+      ],
+      "maxAlive": 3,
+      "packSize": [1, 2],
+      "respawnSec": 70
+    },
+    {
+      "id": "hound-ruins",
+      "region": { "kind": "circle", "x": 75, "z": 124, "r": 16 },
+      "mobs": [{ "mob": "gravehound", "weight": 1 }],
+      "maxAlive": 5,
+      "packSize": [2, 3],
+      "respawnSec": 55
+    },
+    {
+      "id": "hound-east",
+      "region": { "kind": "circle", "x": 208, "z": 196, "r": 12 },
+      "mobs": [{ "mob": "gravehound", "weight": 1 }],
+      "maxAlive": 3,
+      "packSize": [2, 2],
+      "respawnSec": 65
+    },
+    {
+      "id": "soldier-avenue",
+      "region": { "kind": "circle", "x": 128, "z": 132, "r": 14 },
+      "mobs": [{ "mob": "fallen_soldier", "weight": 1 }],
+      "maxAlive": 4,
+      "packSize": [2, 2],
+      "respawnSec": 75
+    },
+    {
+      "id": "soldier-east",
+      "region": { "kind": "circle", "x": 176, "z": 160, "r": 14 },
+      "mobs": [{ "mob": "fallen_soldier", "weight": 1 }],
+      "maxAlive": 4,
+      "packSize": [2, 2],
+      "respawnSec": 75
+    },
+    {
+      "id": "soldier-gate",
+      "region": { "kind": "circle", "x": 128, "z": 196, "r": 10 },
+      "mobs": [{ "mob": "fallen_soldier", "weight": 1 }],
+      "maxAlive": 3,
+      "packSize": [1, 2],
+      "respawnSec": 80
+    },
+    {
       "id": "chapel-wraiths",
       "region": { "kind": "circle", "x": 179, "z": 114, "r": 8 },
       "mobs": [{ "mob": "wraith", "weight": 1 }],
@@ -70,7 +129,73 @@
       "maxAlive": 4,
       "packSize": [2, 3],
       "respawnSec": 60
+    },
+    {
+      "id": "courtyard-oathbound",
+      "region": { "kind": "circle", "x": 128, "z": 80, "r": 9 },
+      "mobs": [{ "mob": "oathbound_sentinel", "weight": 1 }],
+      "maxAlive": 3,
+      "packSize": [1, 2],
+      "respawnSec": 120
+    },
+    {
+      "id": "keep-oathbound",
+      "region": { "kind": "circle", "x": 150, "z": 44, "r": 6 },
+      "mobs": [{ "mob": "oathbound_sentinel", "weight": 1 }],
+      "maxAlive": 2,
+      "packSize": [1, 1],
+      "respawnSec": 140
+    },
+    {
+      "id": "throne-king",
+      "region": { "kind": "circle", "x": 128, "z": 42, "r": 4 },
+      "mobs": [{ "mob": "sundered_king", "weight": 1 }],
+      "maxAlive": 1,
+      "packSize": [1, 1],
+      "respawnSec": 99999
     }
   ],
-  "npcs": []
+  "events": [
+    {
+      "id": "king-rally-1",
+      "on": { "kind": "bossHpBelowPct", "mob": "sundered_king", "pct": 0.66 },
+      "actions": [
+        { "kind": "announce", "text": "The Sundered King slams his blade against the marble — 'OATHBOUND! Your king commands you — RISE!'" },
+        { "kind": "spawnMobs", "mob": "oathbound_sentinel", "count": 2, "radius": 7 }
+      ]
+    },
+    {
+      "id": "king-rally-2",
+      "on": { "kind": "bossHpBelowPct", "mob": "sundered_king", "pct": 0.33 },
+      "actions": [
+        { "kind": "announce", "text": "The throne cracks. The rose window blazes. 'I did not kneel to the grave — I will NOT kneel to YOU!'" },
+        { "kind": "spawnMobs", "mob": "oathbound_sentinel", "count": 3, "radius": 7 }
+      ]
+    },
+    {
+      "id": "king-falls",
+      "on": { "kind": "bossDeath", "mob": "sundered_king" },
+      "actions": [
+        { "kind": "announce", "text": "The crown slips from Vaelric's helm and rings against the dais. Valdrenn exhales its long-held grief — the city is COLLAPSING. RUN! One minute!" },
+        { "kind": "setRoomTimer", "sec": 60 }
+      ]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "chronicler",
+      "name": "Maera the Chronicler",
+      "sprite": "npc_arcanist",
+      "x": 134,
+      "z": 220,
+      "yaw": 0,
+      "wanderRadius": 0,
+      "dialog": [
+        "Valdrenn was the jewel of the north — until its king bargained with something older than crowns.",
+        "The war lasted nine days. On the tenth, the gates never opened again. He sits that throne still... what is left of him.",
+        "Marauders pick the bones. The garrison never stopped marching. And the castle burns its lanterns for a court of ghosts.",
+        "End the King and the city's grief collapses with him. When he falls, you will have ONE MINUTE to get out. Do not linger."
+      ]
+    }
+  ]
 }

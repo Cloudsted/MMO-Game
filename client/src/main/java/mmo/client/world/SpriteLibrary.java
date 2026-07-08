@@ -56,6 +56,12 @@ public class SpriteLibrary {
         heights.put("wraith", 1.8f);
         heights.put("cinder_golem", 2.4f);
         heights.put("lich", 2.0f);
+        // Sundered City roster
+        heights.put("marauder", 1.8f);
+        heights.put("gravehound", 1.35f);
+        heights.put("fallen_soldier", 1.75f);
+        heights.put("oathbound_sentinel", 2.2f);
+        heights.put("sundered_king", 2.6f);
     }
 
     public PlayerSheet sheet(String key) {

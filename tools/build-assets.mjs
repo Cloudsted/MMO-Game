@@ -164,6 +164,13 @@ function buildAtlas(sprites) {
     wraith: { file: resolve(MOBS, "monster4.png"), char: [0, 0] }, // white bearded ghost
     cinder_golem: { file: resolve(MOBS, "monster_golem1.png"), single: true }, // stone golem
     lich: { file: resolve(MOBS, "monster_lich.png"), single: true }, // crowned skeletal king
+    // Sundered City roster (cells eyeballed on the sheets 2026-07-07; the
+    // dknight sheets are single-character like the lich)
+    marauder: { file: resolve(MOBS, "orc1.png"), char: [3, 1] }, // red-armored orc warlord
+    gravehound: { file: resolve(MOBS, "monster_wolf2.png"), single: true }, // horned gray dire beast
+    fallen_soldier: { file: resolve(CHARS, "military1.png"), char: [3, 0] }, // faceless full-plate man-at-arms (military2 is all kepi officers — wrong era)
+    oathbound_sentinel: { file: resolve(MOBS, "monster_dknight2.png"), single: true }, // blue horned knight
+    sundered_king: { file: resolve(MOBS, "monster_dknight1.png"), single: true }, // crimson death knight
   };
   const manifest = {};
   for (const [key, spec] of Object.entries(SHEETS)) {

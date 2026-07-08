@@ -205,5 +205,35 @@
     "canMoveWhile": false, "interruptible": true, "cooldownMs": 2500, "manaCost": 14,
     "debuff": { "slowPct": 0.6, "durMs": 3000 },
     "fx": "frost"
+  },
+  "sentinel_blade": {
+    "kind": "melee", "windupMs": 700, "activeMs": 180, "recoverMs": 550,
+    "range": 2.4, "arcDeg": 110,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 900, "manaCost": 0,
+    "fx": "slash"
+  },
+  "kings_cleave": {
+    "kind": "melee", "windupMs": 1200, "activeMs": 220, "recoverMs": 700,
+    "range": 3.2, "arcDeg": 160,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 1400, "manaCost": 0,
+    "fx": "slash"
+  },
+  "crown_strike": {
+    "kind": "melee", "windupMs": 450, "activeMs": 150, "recoverMs": 450,
+    "range": 2.6, "arcDeg": 80,
+    "canMoveWhile": true, "interruptible": false, "cooldownMs": 3200, "manaCost": 0,
+    "fx": "hit"
+  },
+  "sundering_wave": {
+    "kind": "projectile", "castTimeMs": 1000, "recoverMs": 320,
+    "projSpeed": 20, "maxRange": 40,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 2800, "manaCost": 0,
+    "fx": "firebolt"
+  },
+  "oath_summon": {
+    "kind": "self", "castTimeMs": 1500, "recoverMs": 500,
+    "canMoveWhile": false, "interruptible": false, "cooldownMs": 30000, "manaCost": 0,
+    "summon": { "mob": "oathbound_sentinel", "count": 2, "radius": 5, "cap": 3, "text": "The Sundered King bellows: OATHBOUND — TO ME!" },
+    "fx": "frost"
   }
 }
