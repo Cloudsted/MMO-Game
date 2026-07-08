@@ -1118,6 +1118,64 @@ show their block tile).
     exists; room-event `spawnMobs` has no `level` field, so event waves spawn at
     the def's base level.
 
+- 2026-07-08 **PREFABS + SETPIECES — the world gets its structures**
+  (content-design-2 §7/§8, the "build out everything" half of the owner's asset
+  directive). Two new Builder/PrefabCtx primitives (`digFloorY`,
+  bedrock-clamped excavation; `plate`, rotation-aware character-grid stamps) and
+  a brazier flame flipbook (E5/E6/E8). The catalog lives in
+  `prefabs.tier{1,2,3}.ts` (type-only import of PrefabDef → no runtime cycle;
+  duplicate ids throw at load).
+  - **21 story prefabs** authored by a fan-out (one author per tier, then four
+    adversarial verifiers — geometry, reachability, economy, story — then a
+    repair pass). `sunken_gaol` + `sewer_outfall` had their geometry rewritten
+    from scratch (the doc flagged both original specs as self-contradictory).
+    Every cache is tier-correct (charnel_scaffold pins `cache_crypt`; "auto"
+    only where `cache_<room>` exists — else it silently falls to cache_forest);
+    every "no cache" (wayshrine/warding_ring/roadside_gibbet/lamplighter) stays
+    cacheless by design. `SpawnRegionPayload` gained a per-mob `level` so a
+    prefab's guards scale to a deep room. The four bind-only prefabs
+    (warding_ring/bone_orchard/sunken_gaol/sewer_outfall) carry their OWN guard
+    table instead of binding a room table (binding a boss table / double-binding
+    was the trap the verifiers caught).
+  - **5 authored setpieces** in `setpieces_gloomfen.ts` + `setpieces_desert.ts`,
+    wired into buildGloomfen/buildDesertRuins + `authoredExclusions()`:
+    - **The Drownbell** — a leaning campanile to y37 in its own murk moat, a
+      switchback stair (the lean undoes a spiral's jump), an iron-bars belfry
+      grate; the bell is a gold-block grave marker sunk 8 blocks NE.
+    - **The Temple of the Tidewardens** — a 40×30 complex: an underwater
+      processional, a toppled colonnade, a stained-glass Rose Wall, the cracked
+      ring-of-8 altar, and a flooded under-vault you DIVE into (lit blue from
+      below). Its north breach is the road to Valdrenn.
+    - **The Lamplighters' Road** — the causeway as three named material
+      stretches, lamps whose light state is a hard function of z
+      (warm→corpse-candle→dark), two tollhouses the road runs through, the
+      Drowned West Road spur. The one lit lamp at z=96 is the fen's single
+      unexplained light.
+    - **The Colossus of Sekhat** — a seated god-king (head y42) with two lantern
+      eyes (the desert's one unexplained light) over a five-room tomb (sekhat
+      spawns in the Vessel Chamber; a Robbers' Shaft surfaces on his lap).
+    - **The Great Aqueduct + the Throat** — a raised road connecting oasis →
+      Colossus → sinkhole in story order, three jumpable breaks, five deathwatch
+      posts; the Throat is a strata-walled lava sinkhole with a bone road to the
+      Cinderrift portal (the two rooms are the same wound).
+  - **The Gloomfen is flooded** (owner decision: wl 11→12, amp 2.5→4.5 — a
+    1%-water mud plate became a 49%-water marsh). Three spawn tables relocated
+    onto dry hummocks (mobs wade in — see LESSONS.md); the setpieces author
+    their own water so swimmability doesn't depend on the gen amplitude.
+  - **Scatter vs fixed anchor**: scatter is for footprints small enough that
+    random placement finds room; `dry_cistern`/`sunscour_caravanserai`/
+    `sunken_gaol` were too large and are fixed-anchored via `stampFixedPrefab`
+    (see LESSONS.md — diagnose footprint-vs-exclusions before tuning maxSlope).
+  - Verified: 428 vitest, all 10 RoomSims boot with zero registry errors,
+    determinism 0-diff on all three fleshed-out rooms, per-agent reachability
+    BFS (belfry climb, temple dive-and-out, tomb→lap, Throat spiral, every
+    cache). Placements: gloomfen 35 + 3 setpieces, desert 27 + 2 setpieces + 5
+    deathwatch + 2 fixed giants, forest +2. **STILL TO DO from the batch plan:**
+    the tier-3 `charnel_scaffold` is catalog-only (belongs in a T3 room; not yet
+    placed); crypt_depths/dungeon didn't get scatter (dense authored dungeons).
+    Owner feel-checks pending: fen flood readability, the Drownbell/Colossus
+    "shots", prefab density, whether the fixed-anchor giants sit well.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes

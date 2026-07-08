@@ -723,3 +723,54 @@ A rank only fires when something spawns the mob at or above its `atLevel`, and
 have ranks nothing in the world reaches. Some are deliberate hooks for future rooms
 (thrace_redcap's L12 waits for the Gloomfen); some are just missed. Nothing warns you.
 `npx tsx tools/rank-coverage.mts` prints the number. Run it after adding ranks.
+
+## Prefab scatter can't place a big footprint in a constrained room — fixed-anchor it
+
+The 21 story prefabs scattered fine until the giants: `dry_cistern` (25×25),
+`sunscour_caravanserai` (21×17) and `sunken_gaol` (13×17) placed **0 of 2** in
+the desert and the flooded Gloomfen. The instinct was "raise `maxSlope`" — and
+that was right for `digger_shaft` (a 9×9 that just needed rougher ground). But
+the giants stayed at 0 even at **maxSlope 30 with 300 candidates**. Slope was
+never their gate.
+
+A footprint's real enemy is the *product* of the hard rules: bounds, the
+spawn/portal exclusion, every authored-exclusion rect (the desert has ~10 once
+the Colossus, four aqueduct legs, the Throat and the bone road are excluded),
+the no-overlap-with-already-placed check (+3 pad), and `minSpacing`. A 25×25
+rect has to miss **all** of them at once, and in a room that's ~15% free ground
+after exclusions, a few hundred hash-driven candidates genuinely never land one.
+
+**Rule:** scatter is for things small enough that random placement finds room.
+Anything whose footprint is a meaningful fraction of the free space, or that
+*must* appear (a named landmark, not ambient dressing), gets a **fixed anchor** —
+a hand-surveyed `stampPrefab` call in the room builder, the way setpieces work.
+A `stampFixedPrefab` helper registers its cache + guard table exactly as the
+scatter loop would. Diagnose before tuning: crank maxSlope and the candidate
+budget to absurd values *once* — if it still won't place, the footprint is the
+problem and no amount of budget will fix it.
+
+Corollary — **maxSlope on a flatten prefab is not about the natural ground, it's
+about how big a cut you'll accept.** A dug cistern or a walled caravanserai
+flattens its own pad and hides the edge behind its own walls, so maxSlope 6–11
+is fine for them; it only looks wrong on a prefab that sits *on* the surface.
+
+## Flooding a room breaks every spawn table that assumed dry ground
+
+Raising the Gloomfen from a 1%-water mud plate to a real 49%-water marsh
+(waterLevel 11→12, amplitude 2.5→4.5) was the right call for atmosphere — and it
+silently invalidated the spawn layout. `findSpawnPoint` refuses liquid, so a
+table centred on what is now open murk can't spawn anything, and the
+roster-2 dryness test (≥60% dry-walkable per new table) started failing.
+
+Two non-obvious parts. (1) The **corners flood last** — the only 100%-dry ground
+left was the room edges, and a naive solver banishes all your content there.
+Resist it: put spawns on the *central* dry hummocks and let the mobs **wade** in
+to fight (the purposeful-wade behaviour already exists — a marsh where creatures
+gather on islands and cross the water at you is correct, not a bug). (2) Spawn
+placements interact: an independent per-table solve collides two tables that
+were each individually valid. Solve them **sequentially**, each avoiding the
+ones already fixed, and classify pack-vs-solitary with the *same* predicate the
+test uses (`resolveMob` damage/aggro), or you'll "fix" an overlap the test still
+sees. Authored water (the Drownbell's moat, the Temple's flooded vault) is
+independent of the gen amplitude — so "make it swimmable" survives even if you
+later dial the flood back for spawn viability.
