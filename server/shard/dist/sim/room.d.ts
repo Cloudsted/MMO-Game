@@ -6,6 +6,18 @@
 import { RegistryService, type EquipSlot, type CharacterSnapshot, type CombatEvent, type ItemStack, type PortalDef, type PortalWire, type RoomAdminInfo, type RoomDef, type RoomState, type ServerToClient, type SpawnTable } from "@fantasy-mmo/common";
 import { type Entity, type ReplicatedState } from "./entities.js";
 import { VoxelWorld } from "./voxel.js";
+/** Aggregated dynamic-modifier state for one player: per-stat capped sums
+ *  (enforcement) + per-modifier-id sums (the status bar), from the 6 live
+ *  sources — 5 equipment slots + the held hotbar stack iff it's a weapon. */
+export interface EffectAgg {
+    byStat: Record<string, number>;
+    modTotals: Record<string, number>;
+    /** total armor value (def.armor × rarity × roll) across worn pieces */
+    armor: number;
+    /** capped mods-only movement multiplier — the ONE value both handleMove
+     *  validation and the effects message use (client prediction mirrors it) */
+    speedMult: number;
+}
 export interface PlayerSession {
     entity: Entity;
     character: CharacterSnapshot;
@@ -28,6 +40,11 @@ export interface PlayerSession {
     held: number;
     /** worn gear, indexed by EQUIP_SLOTS order (head/chest/legs/feet/offhand) */
     equipment: Array<ItemStack | null>;
+    /** modifier aggregate — recomputed synchronously on every inv/equip change
+     *  (touchInv); handleMove reads speedMult on packet arrival */
+    agg: EffectAgg;
+    /** last effects-message signature — tick sends on change only */
+    lastEffectsSig: string;
     /** latest camera pitch from move packets — live aim for releases */
     lastPitch: number;
     xp: number;
@@ -211,6 +228,10 @@ export declare class RoomSim {
     /** Start the held item's ability. Returns false only for blocks worth
      *  buffering (body busy / cooldown / mana); no-op inputs return true. */
     private tryHeldAbility;
+    /** Every worn piece with durability loses 1 per physical hit taken; at
+     *  zero it shatters (destroyed, not dropped) and the aggregate updates
+     *  mid-fight. Trinkets carry no durability and never wear. */
+    private wearEquippedArmor;
     /** Durability tick: at zero the weapon breaks and the slot empties. */
     private wearHeldItem;
     /** A mob's attack kit resolved against the ability registry. */
@@ -233,8 +254,15 @@ export declare class RoomSim {
      *  inside a PvP zone (room flag or flagged region). */
     private targetsOf;
     private releaseAbility;
-    /** All damage funnels through here: crits, interrupts, threat, death. */
-    applyDamage(src: Entity, tgt: Entity, base: number): void;
+    /** All damage funnels through here: crits, defensive modifiers + armor
+     *  mitigation (players only), interrupts, threat, death, and on-hit hooks
+     *  (armor wear, thorns, lifesteal). cls routes the defenses: melee/ranged
+     *  are mitigated by armor, magic only by its taken-modifier, "true"
+     *  (thorns reflects, scripted damage) bypasses everything. DoT bites never
+     *  enter here (applyDotDamage is its own path — poison ignores armor). */
+    applyDamage(src: Entity, tgt: Entity, base: number, cls?: "melee" | "ranged" | "magic" | "true", opts?: {
+        noReflect?: boolean;
+    }): void;
     /** Apply an on-hit debuff: frost-style slow and/or poison-style DoT.
      *  DoT damage is attributed to src (threat/XP credit via applyDotDamage);
      *  reapplication refreshes rate + clock. Only slows go on the wire — DoT
@@ -261,9 +289,29 @@ export declare class RoomSim {
     xpNext(level: number): number;
     private sendStats;
     private sendInv;
+    /** Self status-effect sync: aggregated gear modifiers (persistent) +
+     *  timed slow/dot/hot with REMAINING durations. A signature comparison
+     *  makes this send-on-change only — a fresh session's "" signature always
+     *  differs, so the first tick after welcome ships the initial state.
+     *  Duration ends are bucketed (500 ms) so a refreshed debuff re-sends. */
+    private tickEffects;
     private markStatsDirty;
     system(session: PlayerSession, text: string): void;
     systemAll(text: string): void;
+    /** Every inventory/equipment mutation funnels through here: replicate,
+     *  re-aggregate modifiers, resize vitals. Synchronous on purpose —
+     *  handleMove validates against agg.speedMult on packet arrival, so the
+     *  aggregate can never lag an equip by a tick. */
+    private touchInv;
+    /** Rebuild the modifier aggregate from the 6 live sources: the 5 equipment
+     *  slots plus the held hotbar stack iff it's a weapon (a sword's perks work
+     *  only in hand; parked in the bags it's inert). Per-stat sums clamp
+     *  symmetrically to items.mods.caps. */
+    private recomputeAgg;
+    /** One home for the max-vital formula: progression base + gear. Shrinking
+     *  clamps current values (never kills); growing does NOT auto-fill, so
+     *  re-equip cycling grants no healing. Level-ups full-heal explicitly. */
+    private recomputeVitals;
     handleEquip(session: PlayerSession, slot: number): void;
     /** Which equipment slot index an item def occupies, or -1 if not wearable.
      *  Weapons are NEVER wearable — the offhand takes trinkets and shields

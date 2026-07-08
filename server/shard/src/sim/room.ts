@@ -4,6 +4,7 @@
  * Networking and IPC stay in roomhost.ts — this module never touches ws.
  */
 import {
+  abilityDmgClass,
   BLOCK,
   BLOCKS,
   ensureItemInstance,
@@ -17,6 +18,7 @@ import {
   RegistryService,
   WORLD_HEIGHT,
   type AbilityDef,
+  type EffectWire,
   type EquipSlot,
   type MobDef,
   type CharacterSnapshot,
@@ -53,6 +55,7 @@ import {
   isMovementLocked,
   makeProjectile,
   projectileHits,
+  slowMult,
   startAbility,
   type Projectile,
 } from "./combat.js";
@@ -81,6 +84,21 @@ const SPEED_GRACE = 1.6; // multiplier over walkSpeed before a move is rejected
 const CORPSE_LINGER_MS = 1500; // dead mob stays visible before despawn
 const PACK_AGGRO_RADIUS = 10;
 
+/** Aggregated dynamic-modifier state for one player: per-stat capped sums
+ *  (enforcement) + per-modifier-id sums (the status bar), from the 6 live
+ *  sources — 5 equipment slots + the held hotbar stack iff it's a weapon. */
+export interface EffectAgg {
+  byStat: Record<string, number>;
+  modTotals: Record<string, number>;
+  /** total armor value (def.armor × rarity × roll) across worn pieces */
+  armor: number;
+  /** capped mods-only movement multiplier — the ONE value both handleMove
+   *  validation and the effects message use (client prediction mirrors it) */
+  speedMult: number;
+}
+
+const EMPTY_AGG: EffectAgg = { byStat: {}, modTotals: {}, armor: 0, speedMult: 1 };
+
 export interface PlayerSession {
   entity: Entity;
   character: CharacterSnapshot;
@@ -100,6 +118,11 @@ export interface PlayerSession {
   held: number; // hotbar slot index
   /** worn gear, indexed by EQUIP_SLOTS order (head/chest/legs/feet/offhand) */
   equipment: Array<ItemStack | null>;
+  /** modifier aggregate — recomputed synchronously on every inv/equip change
+   *  (touchInv); handleMove reads speedMult on packet arrival */
+  agg: EffectAgg;
+  /** last effects-message signature — tick sends on change only */
+  lastEffectsSig: string;
   /** latest camera pitch from move packets — live aim for releases */
   lastPitch: number;
   xp: number;
@@ -683,7 +706,7 @@ export class RoomSim {
       }
     }
     removeFromSlot(session.slots, slot, 1);
-    session.dirtyInv = true;
+    this.touchInv(session);
     this.world.applyEdit(x, y, z, blockDef.id, session.character.id);
     this.broadcastBlockSet(x, y, z, blockDef.id);
   }
@@ -704,7 +727,7 @@ export class RoomSim {
         if (leftover > 0) {
           this.spawnLootBag(session.entity.pos.x, session.entity.pos.z, [{ item: itemId, qty: 1, rarity: "common" }], 0, session.character.id, Date.now() + 3000, Date.now() + this.consts.combat.mobLootExpireMs, this.dropY(session.entity.pos.x, session.entity.pos.z, session.entity.pos.y));
         }
-        session.dirtyInv = true;
+        this.touchInv(session);
       }
     }
     this.world.applyEdit(x, y, z, 0, session.character.id);
@@ -991,6 +1014,8 @@ export class RoomSim {
       slots,
       held: 0,
       equipment,
+      agg: EMPTY_AGG,
+      lastEffectsSig: "",
       lastPitch: 0,
       xp: character.xp,
       gold: character.gold,
@@ -1003,6 +1028,12 @@ export class RoomSim {
     this.entities.set(entity.id, entity);
     this.sessions.set(entity.id, session);
     this.byCharacterId.set(character.id, session);
+    // gear modifiers apply from the first packet: aggregate, size the vitals
+    // to the modded maxes, and admit at full (existing behavior)
+    this.recomputeAgg(session);
+    this.recomputeVitals(session);
+    entity.health!.hp = entity.health!.maxHp;
+    entity.mana!.mana = entity.mana!.maxMana;
 
     const now = Date.now();
     const ents: EntityFull[] = [];
@@ -1083,8 +1114,10 @@ export class RoomSim {
       return;
     }
 
-    let { walkSpeed } = this.consts.movement;
-    if (c.slowUntil > now) walkSpeed *= 1 - c.slowPct;
+    // slow (shared helper — mob tick uses the same one) × gear speed mods;
+    // agg.speedMult is the SAME capped value the effects message ships, so
+    // client prediction and this envelope can never disagree
+    let walkSpeed = this.consts.movement.walkSpeed * slowMult(c, now) * session.agg.speedMult;
     const tol = this.consts.net.moveToleranceM;
     const maxDist = walkSpeed * dt * SPEED_GRACE + tol;
 
@@ -1191,11 +1224,37 @@ export class RoomSim {
     const ability = this.reg.abilities[abilityId];
     if (!ability) return true;
     if (base === 0) base = ability.damage ?? 2;
+    // gear modifiers: outgoing damage (Ferocity — trinket dmgPct boosts even
+    // bare fists) and attack speed (leaden curses drag every FSM timing)
+    base *= 1 + (session.agg.byStat["dmgPct"] ?? 0);
+    speedMult *= Math.max(0.25, 1 + (session.agg.byStat["atkSpeedPct"] ?? 0));
     const levelMult = 1 + this.consts.progression.damagePerLevelPct * ((e.level ?? 1) - 1);
     const started = startAbility(e, abilityId, ability, base * levelMult, aimYaw, aimPitch, now, speedMult);
     // weapons wear one durability point per use (bare hands never do)
     if (started && held && heldDef && held.maxDur !== undefined) this.wearHeldItem(session, held, heldDef);
     return started;
+  }
+
+  /** Every worn piece with durability loses 1 per physical hit taken; at
+   *  zero it shatters (destroyed, not dropped) and the aggregate updates
+   *  mid-fight. Trinkets carry no durability and never wear. */
+  private wearEquippedArmor(session: PlayerSession): void {
+    let broke = false;
+    let changed = false;
+    for (let i = 0; i < session.equipment.length; i++) {
+      const s = session.equipment[i];
+      if (!s || s.maxDur === undefined) continue;
+      s.dur = (s.dur ?? s.maxDur) - 1;
+      changed = true;
+      if (s.dur <= 0) {
+        const def = this.reg.items[s.item];
+        session.equipment[i] = null;
+        this.system(session, `Your ${def?.name ?? s.item} shattered!`);
+        broke = true;
+      }
+    }
+    if (broke) this.touchInv(session);
+    else if (changed) session.dirtyInv = true;
   }
 
   /** Durability tick: at zero the weapon breaks and the slot empties. */
@@ -1205,7 +1264,7 @@ export class RoomSim {
       session.slots[session.held] = null;
       this.system(session, `Your ${def.name} broke!`);
     }
-    session.dirtyInv = true;
+    this.touchInv(session);
   }
 
   /** A mob's attack kit resolved against the ability registry. */
@@ -1291,7 +1350,7 @@ export class RoomSim {
     const arc = ability.arcDeg ?? 90;
     for (const target of this.targetsOf(attacker)) {
       if (inMeleeCone(attacker, target, range, arc, this.consts.combat.meleeRangeGrace, this.consts.combat.meleeVerticalReach)) {
-        this.applyDamage(attacker, target, attacker.combat!.pendingDamage);
+        this.applyDamage(attacker, target, attacker.combat!.pendingDamage, abilityDmgClass(ability) ?? "melee");
         // melee on-hit debuffs (spider venom, envenomed daggers)
         if (ability.debuff) this.applyDebuff(target, ability.debuff, attacker);
       }
@@ -1420,15 +1479,61 @@ export class RoomSim {
     }
   }
 
-  /** All damage funnels through here: crits, interrupts, threat, death. */
-  applyDamage(src: Entity, tgt: Entity, base: number): void {
+  /** All damage funnels through here: crits, defensive modifiers + armor
+   *  mitigation (players only), interrupts, threat, death, and on-hit hooks
+   *  (armor wear, thorns, lifesteal). cls routes the defenses: melee/ranged
+   *  are mitigated by armor, magic only by its taken-modifier, "true"
+   *  (thorns reflects, scripted damage) bypasses everything. DoT bites never
+   *  enter here (applyDotDamage is its own path — poison ignores armor). */
+  applyDamage(
+    src: Entity,
+    tgt: Entity,
+    base: number,
+    cls: "melee" | "ranged" | "magic" | "true" = "true",
+    opts?: { noReflect?: boolean }
+  ): void {
     if (!tgt.health || tgt.combat?.act === "dead") return;
     const now = Date.now();
     const crit = Math.random() < this.consts.combat.critChance;
-    const amount = Math.max(1, Math.round(base * (crit ? this.consts.combat.critMult : 1)));
+    let raw = base * (crit ? this.consts.combat.critMult : 1);
+    const tgtSession = tgt.kind === "player" ? this.sessions.get(tgt.id) : undefined;
+    if (tgtSession && cls !== "true") {
+      // taken-modifiers: per-class reduction + takenAll (brittle is negative
+      // takenAll = MORE damage). Combined clamp so two stacked stats can't
+      // reach immunity together.
+      const st = tgtSession.agg.byStat;
+      const cap = this.consts.items.mods.caps["takenAllPct"] ?? 0.6;
+      const taken = Math.max(-cap, Math.min(cap, (st[`${cls}TakenPct`] ?? 0) + (st["takenAllPct"] ?? 0)));
+      raw *= 1 - taken;
+      // armor value: diminishing physical mitigation; magic sails through
+      if ((cls === "melee" || cls === "ranged") && tgtSession.agg.armor > 0) {
+        const a = tgtSession.agg.armor;
+        raw *= 1 - a / (a + this.consts.combat.armorK);
+      }
+    }
+    const amount = Math.max(1, Math.round(raw));
     tgt.health.hp -= amount;
     tgt.combat!.lastDamagedAt = now;
     this.broadcastEvent({ kind: "dmg", src: src.id, tgt: tgt.id, amount, crit }, tgt.pos.x, tgt.pos.z);
+
+    // on-hit hooks: armor wears on physical hits taken; thorns reflects
+    // melee as "true" damage (noReflect stops recursion at depth 1);
+    // lifesteal feeds players on mob damage they deal
+    if (tgtSession && (cls === "melee" || cls === "ranged")) this.wearEquippedArmor(tgtSession);
+    if (tgtSession && cls === "melee" && !opts?.noReflect) {
+      const thorns = tgtSession.agg.byStat["thorns"] ?? 0;
+      if (thorns > 0 && src.health && src.combat?.act !== "dead") {
+        this.applyDamage(tgt, src, thorns, "true", { noReflect: true });
+      }
+    }
+    if (src.kind === "player" && tgt.kind === "mob" && cls !== "true") {
+      const srcSession = this.sessions.get(src.id);
+      const lifesteal = srcSession?.agg.byStat["lifesteal"] ?? 0;
+      if (srcSession && lifesteal > 0 && src.health && src.combat?.act !== "dead" && src.health.hp < src.health.maxHp) {
+        src.health.hp = Math.min(src.health.maxHp, src.health.hp + amount * lifesteal);
+        this.markStatsDirty(src);
+      }
+    }
 
     // interrupts break interruptible windups/casts into stagger
     const tgtAbility = tgt.combat!.ability ? (this.reg.abilities[tgt.combat!.ability] ?? null) : null;
@@ -1583,7 +1688,7 @@ export class RoomSim {
       );
     }
     session.slots = normalizeInventory([]);
-    session.dirtyInv = true;
+    this.touchInv(session);
     session.send({ t: "died", x: session.entity.pos.x, y: session.entity.pos.y, z: session.entity.pos.z });
     this.log.info(`${session.character.name} died (dropped ${items.length} stacks)`);
   }
@@ -1636,9 +1741,10 @@ export class RoomSim {
       session.xp -= this.xpNext(level);
       level++;
       e.level = level;
-      e.health!.maxHp = prog.baseHp + prog.hpPerLevel * (level - 1);
-      e.health!.hp = e.health!.maxHp; // level-up full heal
-      e.mana!.maxMana = prog.baseMana + prog.manaPerLevel * (level - 1);
+      // one formula home: base + level + gear mods, then the level-up
+      // full heal fills to the MODDED max
+      this.recomputeVitals(session);
+      e.health!.hp = e.health!.maxHp;
       e.mana!.mana = e.mana!.maxMana;
       this.broadcastEvent({ kind: "levelup", id: e.id, level }, e.pos.x, e.pos.z);
       this.log.info(`${session.character.name} reached level ${level}`);
@@ -1676,6 +1782,42 @@ export class RoomSim {
     session.dirtyInv = false;
   }
 
+  /** Self status-effect sync: aggregated gear modifiers (persistent) +
+   *  timed slow/dot/hot with REMAINING durations. A signature comparison
+   *  makes this send-on-change only — a fresh session's "" signature always
+   *  differs, so the first tick after welcome ships the initial state.
+   *  Duration ends are bucketed (500 ms) so a refreshed debuff re-sends. */
+  private tickEffects(session: PlayerSession, now: number): void {
+    const c = session.entity.combat!;
+    const list: EffectWire[] = [];
+    const parts: string[] = [];
+    for (const [id, mag] of Object.entries(session.agg.modTotals)) {
+      const def = this.reg.modifiers[id];
+      if (!def) continue;
+      const rounded = Math.round(mag * 1000) / 1000;
+      list.push({ kind: "mod", id, mag: rounded, curse: def.curse });
+      parts.push(`${id}:${rounded}`);
+    }
+    if (c.slowUntil > now && c.slowPct > 0) {
+      list.push({ kind: "slow", mag: c.slowPct, durMs: c.slowUntil - now });
+      parts.push(`slow:${c.slowPct}:${Math.ceil(c.slowUntil / 500)}`);
+    }
+    if (c.dotUntil > now) {
+      list.push({ kind: "dot", mag: c.dotPerSec, durMs: c.dotUntil - now });
+      parts.push(`dot:${c.dotPerSec}:${Math.ceil(c.dotUntil / 500)}`);
+    }
+    if (c.hotUntil > now) {
+      list.push({ kind: "hot", item: c.hotItemId ?? "bread", mag: c.hotPerSec, durMs: c.hotUntil - now });
+      parts.push(`hot:${c.hotItemId}:${Math.ceil(c.hotUntil / 500)}`);
+    }
+    const speedMult = Math.round(session.agg.speedMult * 1000) / 1000;
+    const sig = `${speedMult}|${parts.join(",")}`;
+    if (sig !== session.lastEffectsSig) {
+      session.lastEffectsSig = sig;
+      session.send({ t: "effects", speedMult, list });
+    }
+  }
+
   private markStatsDirty(e: Entity): void {
     const s = this.sessions.get(e.id);
     if (s) s.dirtyStats = true;
@@ -1689,10 +1831,73 @@ export class RoomSim {
     for (const s of this.sessions.values()) this.system(s, text);
   }
 
+  /** Every inventory/equipment mutation funnels through here: replicate,
+   *  re-aggregate modifiers, resize vitals. Synchronous on purpose —
+   *  handleMove validates against agg.speedMult on packet arrival, so the
+   *  aggregate can never lag an equip by a tick. */
+  private touchInv(session: PlayerSession): void {
+    session.dirtyInv = true;
+    this.recomputeAgg(session);
+    this.recomputeVitals(session);
+  }
+
+  /** Rebuild the modifier aggregate from the 6 live sources: the 5 equipment
+   *  slots plus the held hotbar stack iff it's a weapon (a sword's perks work
+   *  only in hand; parked in the bags it's inert). Per-stat sums clamp
+   *  symmetrically to items.mods.caps. */
+  private recomputeAgg(session: PlayerSession): void {
+    const byStat: Record<string, number> = {};
+    const modTotals: Record<string, number> = {};
+    let armor = 0;
+    const sources: Array<ItemStack | null> = [...session.equipment];
+    const held = session.slots[session.held];
+    if (held && this.reg.items[held.item]?.kind === "weapon") sources.push(held);
+    for (const s of sources) {
+      if (!s) continue;
+      const def = this.reg.items[s.item];
+      if (!def) continue;
+      if (def.kind === "armor" && def.armor !== undefined) {
+        armor += def.armor * (this.reg.rarities[s.rarity]?.mult ?? 1) * (s.stats?.["armor"] ?? 1);
+      }
+      if (s.mods) {
+        for (const [id, mag] of Object.entries(s.mods)) {
+          const mod = this.reg.modifiers[id];
+          if (!mod) continue; // retired modifier id: inert, not fatal
+          modTotals[id] = (modTotals[id] ?? 0) + mag;
+          byStat[mod.stat] = (byStat[mod.stat] ?? 0) + mag;
+        }
+      }
+    }
+    const caps = this.consts.items.mods.caps;
+    for (const [stat, v] of Object.entries(byStat)) {
+      const cap = caps[stat];
+      if (cap !== undefined) byStat[stat] = Math.max(-cap, Math.min(cap, v));
+    }
+    session.agg = { byStat, modTotals, armor, speedMult: 1 + (byStat["moveSpeedPct"] ?? 0) };
+  }
+
+  /** One home for the max-vital formula: progression base + gear. Shrinking
+   *  clamps current values (never kills); growing does NOT auto-fill, so
+   *  re-equip cycling grants no healing. Level-ups full-heal explicitly. */
+  private recomputeVitals(session: PlayerSession): void {
+    const e = session.entity;
+    const prog = this.consts.progression;
+    const level = e.level ?? 1;
+    const maxHp = prog.baseHp + prog.hpPerLevel * (level - 1) + Math.round(session.agg.byStat["maxHp"] ?? 0);
+    const maxMana = prog.baseMana + prog.manaPerLevel * (level - 1) + Math.round(session.agg.byStat["maxMana"] ?? 0);
+    if (maxHp !== e.health!.maxHp || maxMana !== e.mana!.maxMana) {
+      e.health!.maxHp = maxHp;
+      e.health!.hp = Math.min(e.health!.hp, maxHp);
+      e.mana!.maxMana = maxMana;
+      e.mana!.mana = Math.min(e.mana!.mana, maxMana);
+      session.dirtyStats = true;
+    }
+  }
+
   handleEquip(session: PlayerSession, slot: number): void {
     if (slot < 0 || slot >= HOTBAR_SIZE) return;
     session.held = slot;
-    session.dirtyInv = true;
+    this.touchInv(session); // held weapon's mods activate/deactivate
   }
 
   /** Which equipment slot index an item def occupies, or -1 if not wearable.
@@ -1721,7 +1926,7 @@ export class RoomSim {
       }
       session.slots[free] = worn;
       session.equipment[slotIdx] = null;
-      session.dirtyInv = true;
+      this.touchInv(session);
       return;
     }
     if (invIndex < 0 || invIndex >= INV_SIZE) return;
@@ -1731,7 +1936,7 @@ export class RoomSim {
     if (!def || this.slotIndexFor(def) !== slotIdx) return;
     session.slots[invIndex] = session.equipment[slotIdx] ?? null;
     session.equipment[slotIdx] = stack;
-    session.dirtyInv = true;
+    this.touchInv(session);
   }
 
   handleInvMove(session: PlayerSession, from: number, to: number): void {
@@ -1746,13 +1951,13 @@ export class RoomSim {
         b.qty += take;
         a.qty -= take;
         session.slots[from] = a.qty > 0 ? a : null;
-        session.dirtyInv = true;
+        this.touchInv(session);
         return;
       }
     }
     session.slots[from] = b;
     session.slots[to] = a;
-    session.dirtyInv = true;
+    this.touchInv(session);
   }
 
   handleConsume(session: PlayerSession, slot: number): void {
@@ -1772,6 +1977,7 @@ export class RoomSim {
     if (fx.hotTotal && fx.hotDurMs) {
       e.combat!.hotPerSec = fx.hotTotal / (fx.hotDurMs / 1000);
       e.combat!.hotUntil = Date.now() + fx.hotDurMs;
+      e.combat!.hotItemId = s.item; // the status bar shows the food's icon
     }
     if (fx.cureDot) {
       e.combat!.dotPerSec = 0;
@@ -1779,7 +1985,7 @@ export class RoomSim {
       e.combat!.dotAcc = 0;
     }
     removeFromSlot(session.slots, slot, 1);
-    session.dirtyInv = true;
+    this.touchInv(session);
     session.dirtyStats = true;
   }
 
@@ -1792,7 +1998,7 @@ export class RoomSim {
     const x = p.x + Math.sin(p.yaw) * 1.2;
     const z = p.z + Math.cos(p.yaw) * 1.2;
     this.spawnLootBag(x, z, [removed], 0, session.character.id, Date.now() + 3000, Date.now() + this.consts.combat.mobLootExpireMs, this.dropY(x, z, p.y));
-    session.dirtyInv = true;
+    this.touchInv(session);
   }
 
   handlePickup(session: PlayerSession, id: number): void {
@@ -1809,7 +2015,10 @@ export class RoomSim {
       return;
     }
     if (bag.loot.gold > 0) {
-      session.gold += bag.loot.gold;
+      // Fortune (goldFind) pays out at pickup — the bag itself holds the
+      // rolled amount, so partial-looting can't double-dip
+      const goldMult = 1 + Math.max(0, session.agg.byStat["goldFind"] ?? 0);
+      session.gold += Math.round(bag.loot.gold * goldMult);
       bag.loot.gold = 0;
       session.dirtyStats = true;
     }
@@ -1820,7 +2029,7 @@ export class RoomSim {
     }
     bag.loot.items = kept;
     bag.lootView = this.lootViewOf(kept);
-    session.dirtyInv = true;
+    this.touchInv(session);
     if (kept.length > 0) this.system(session, "Your bags are full — some items remain.");
     if (bag.loot.items.length === 0 && bag.loot.gold === 0) this.removeEntity(bag.id);
   }
@@ -1873,7 +2082,7 @@ export class RoomSim {
     const bought = qty - leftover;
     session.gold -= def.value * bought;
     session.dirtyStats = true;
-    session.dirtyInv = true;
+    this.touchInv(session);
   }
 
   handleSell(session: PlayerSession, npcEntityId: number, slot: number, qty: number): void {
@@ -1889,7 +2098,7 @@ export class RoomSim {
     const price = Math.max(1, Math.floor(def.value * rarityMult * this.modValueMult(removed) * this.consts.combat.sellFraction)) * removed.qty;
     session.gold += price;
     session.dirtyStats = true;
-    session.dirtyInv = true;
+    this.touchInv(session);
   }
 
   /** Sell-value multiplier from an instance's modifiers: perks add, curses
@@ -1949,7 +2158,7 @@ export class RoomSim {
         const qty = Math.max(1, parseInt(args[1] ?? "1", 10) || 1);
         const rarity = args[2] && this.reg.rarities[args[2]] ? args[2]! : "common";
         addItem(this.reg, session.slots, mintItem(this.reg, this.consts, itemId, qty, rarity));
-        session.dirtyInv = true;
+        this.touchInv(session);
         this.system(session, `Gave ${qty}x ${rarity} ${itemId}.`);
         break;
       }
@@ -2226,8 +2435,7 @@ export class RoomSim {
         ? Number.POSITIVE_INFINITY
         : this.consts.combat.meleeVerticalReach;
       const decision = tickBrain(e, def, players, now, reachY);
-      let speed = def.moveSpeed;
-      if (e.combat!.slowUntil > now) speed *= 1 - e.combat!.slowPct;
+      const speed = def.moveSpeed * slowMult(e.combat!, now);
       let moved = false;
       if (decision.move) {
         const b = e.brain;
@@ -2322,21 +2530,28 @@ export class RoomSim {
     this.tickProjectiles(now, dt);
     this.tickFirePillars(now);
 
-    // 5. player regen + food HoT
+    // 5. player regen + food HoT + gear regen modifiers + effects sync
     for (const s of this.sessions.values()) {
       const e = s.entity;
       const c = e.combat!;
+      // the status bar must clear on death too — sync before the dead skip
+      this.tickEffects(s, now);
       if (c.act === "dead") continue;
       if (e.mana && e.mana.mana < e.mana.maxMana) {
-        e.mana.mana = Math.min(e.mana.maxMana, e.mana.mana + this.consts.combat.manaRegenPerSec * dt);
+        // gear manaRegen adds (drained curses subtract); floor at 0 — a
+        // curse slows recovery to a halt but never drains the pool
+        const manaRate = Math.max(0, this.consts.combat.manaRegenPerSec + (s.agg.byStat["manaRegen"] ?? 0));
+        e.mana.mana = Math.min(e.mana.maxMana, e.mana.mana + manaRate * dt);
       }
       if (e.health && e.health.hp < e.health.maxHp) {
+        // base regen respects the post-damage delay; gear Regeneration works
+        // THROUGH combat (an enchant that stops when hit would be pointless)
+        let hpRate = Math.max(0, s.agg.byStat["hpRegen"] ?? 0);
         if (now - c.lastDamagedAt > this.consts.combat.regenDelayAfterDamageMs) {
-          e.health.hp = Math.min(e.health.maxHp, e.health.hp + this.consts.combat.hpRegenPerSec * dt);
+          hpRate += this.consts.combat.hpRegenPerSec;
         }
-        if (c.hotUntil > now) {
-          e.health.hp = Math.min(e.health.maxHp, e.health.hp + c.hotPerSec * dt);
-        }
+        if (c.hotUntil > now) hpRate += c.hotPerSec;
+        if (hpRate > 0) e.health.hp = Math.min(e.health.maxHp, e.health.hp + hpRate * dt);
       }
       // stats sync when the visible integers move
       if (Math.ceil(e.health!.hp) !== s.lastSentHp || Math.floor(e.mana!.mana) !== s.lastSentMana) s.dirtyStats = true;
@@ -2431,7 +2646,7 @@ export class RoomSim {
         if (d > f.radius) continue;
         if (tgt.pos.y - f.y > 2.5 || f.y - tgt.pos.y > 1.5) continue; // same floor
         f.hitIds.add(tgt.id);
-        this.applyDamage(owner, tgt, f.damage);
+        this.applyDamage(owner, tgt, f.damage, "magic");
       }
       return true;
     });
@@ -2445,7 +2660,7 @@ export class RoomSim {
     const owner = this.entities.get(p.ownerId);
     if (!owner) return;
     if (directHit) {
-      this.applyDamage(owner, directHit, p.damage);
+      this.applyDamage(owner, directHit, p.damage, p.dmgClass);
       if (p.debuff) this.applyDebuff(directHit, p.debuff, owner);
     }
     if (p.aoeRadius > 0) {
@@ -2455,7 +2670,7 @@ export class RoomSim {
         const d = Math.hypot(tgt.pos.x - p.x, tgt.pos.z - p.z);
         if (d > p.aoeRadius) continue;
         if (Math.abs(tgt.pos.y + 0.9 - p.y) > 3) continue; // roughly the same floor
-        this.applyDamage(owner, tgt, splash);
+        this.applyDamage(owner, tgt, splash, p.dmgClass);
         if (p.debuff) this.applyDebuff(tgt, p.debuff, owner);
       }
     }

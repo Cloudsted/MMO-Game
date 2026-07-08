@@ -6,10 +6,13 @@
  * The FSM (idle/move/windup/active/cast/recover/stagger/dead) is shared by
  * players and mobs — input and AI are just two intent producers.
  */
-import type { AbilityDef } from "@fantasy-mmo/common";
+import { type AbilityDef } from "@fantasy-mmo/common";
 import type { Combat, Entity } from "./entities.js";
 /** States from which a new ability may be started. */
 export declare function canAct(c: Combat): boolean;
+/** Movement multiplier from an active slow (1 = none). Shared by player
+ *  move validation and the mob tick so the two paths can never drift. */
+export declare function slowMult(c: Combat, now: number): number;
 /** True while the entity may not move (per-ability canMoveWhile flag). */
 export declare function isMovementLocked(c: Combat, ability: AbilityDef | null): boolean;
 /**
@@ -67,6 +70,9 @@ export interface Projectile {
     impactFx: string | null;
     /** render scale for the wire (big boss fireball) */
     scale: number;
+    /** damage class at impact (arrows=ranged, spells=magic) — taken-modifier
+     *  and armor-mitigation routing in applyDamage */
+    dmgClass: "melee" | "ranged" | "magic";
 }
 export declare function allocProjId(): number;
 export declare function makeProjectile(owner: Entity, ability: AbilityDef, damage: number, now: number): Projectile;

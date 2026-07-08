@@ -38,6 +38,8 @@ export interface Combat {
     /** heal-over-time from food: hpPerSec until hotUntil */
     hotPerSec: number;
     hotUntil: number;
+    /** item id of the food behind the active HoT — the status bar shows its icon */
+    hotItemId: string | null;
     /** damage-over-time (poison): hp/sec until dotUntil, mirror of the food
      *  HoT. Fractions accumulate in dotAcc and land as whole-point bites
      *  through the room's damage path, attributed to dotSrcId (the applier). */
