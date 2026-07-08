@@ -13,7 +13,19 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = resolve(ROOT, "docs/asset-catalog");
 const SRC = resolve(ROOT, "assets/time-fantasy/Unsorted");
 
-const out = { generated: new Date().toISOString().slice(0, 10), note: "Merged from chars-*.json. 'who' is what an agent SAW on a rendered contact sheet.", entries: [], warnings: [] };
+const out = {
+  generated: new Date().toISOString().slice(0, 10),
+  note: "Merged from chars-*.json. 'who' is what an agent SAW on a rendered contact sheet.",
+  reliability:
+    "SEARCH INDEX, NOT TRUTH. An adversarial verify pass re-read 41 sampled claims across " +
+    "this catalog and the icon catalog and found 9 wrong (~22%). Every error was DESCRIPTIVE " +
+    "(a colour, 'cluster' vs 'single chunk', an instrument misnamed) — zero were wrong " +
+    "coordinates. So: trust sheet+charCell enough to go look; never ship a description " +
+    "(colour, gear, silhouette) without reading the contact sheet yourself. " +
+    "Render one with: node tools/contact-sheet.mjs <sheet> --mode chars --scale 8 --char c,r",
+  entries: [],
+  warnings: [],
+};
 const missingSheets = new Set();
 
 for (const f of readdirSync(DIR).sort()) {
