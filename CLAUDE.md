@@ -1176,6 +1176,54 @@ show their block tile).
     Owner feel-checks pending: fen flood readability, the Drownbell/Colossus
     "shots", prefab density, whether the fixed-anchor giants sit well.
 
+- 2026-07-09 **DEEP MAGIC WEAVING** (owner directive; design dialogue →
+  `docs/enchanting-design.md`). The flat one-perk "tier-1 menu" enchanter is
+  now a tiered, slotted, quality-gated system. Owner decisions (8 forks):
+  authored gear tiers (not rarity) gate weaving; higher tier = bigger enchants
+  AND more slots; applies to ALL equippables; enchants can be REMOVED (not
+  upgraded); ~12 perks weavable; Selvara weaves I–II in the hub, a master
+  enchanter III deep; deterministic (no gambling); 3 strength tiers.
+  - **Data model, no per-instance schema change.** Per-def `tier` (1-5) on
+    `ItemDefSchema` (every equippable tagged; absent = 1) →
+    `constants.enchanting.tierCapacity` {slots, maxTier}: T1 1/I, T2 1/II,
+    T3 2/II, T4 2/III, T5 3/III. Each weavable modifier's `enchant` block went
+    `{mag,priceMult}` → `{tiers:[I,II,III], priceMult}` (12 perks; curses stay
+    drop-only). `ItemStack.mods` stays `Record<id,number>` — **capacity counts
+    ALL mods** (rolled + woven), so drop-rolled gear is now enchantable up to
+    its free slots (the old "modified = enchant-dead" trap is gone), and woven
+    tier is INFERRED for display by matching the magnitude to the ladder
+    (cosmetic; a drop-rolled integer mag can mislabel — documented caveat).
+  - **Server** (`room.ts`): `handleEnchant(…, tier)` gates on tier ≤ min(item
+    cap, weaver maxTier), a FREE slot, no duplicate mod (no in-place upgrade —
+    remove first), merges (not replaces); `handleUnenchant` strips one mod
+    (also lifts curses) for a fee; `enchantPrice` = value × rarity × priceMult
+    × `tierPriceMult` × `slotSurchargeMult^existing` × valueMult + base
+    (surcharge keeps multi-slot a gold sink; no-gold-mint holds). `weaveCapacity`
+    clamps unknown tiers to the nearest rung. New `NpcService` `maxTier`+`remove`.
+    Wire: `EnchantWire` offers carry `tiers[]`+`maxTier`+`remove`; `enchant`
+    msg += `tier`; new `unenchant` msg. `ItemStack` unchanged.
+  - **Client**: `ItemRegistry.Modifier.enchantTiers[]` + `inferTier`;
+    `GameConstants` mirrors the capacity/price tables (nearest-rung clamp);
+    the enchant tab is a taller "Weave" panel — 12 perk rows auto-showing the
+    applied tier + surcharged price + reason (won't take / already woven / no
+    slot / short), a target header with `used/cap slots`, and an "Unpick" list;
+    tooltips show woven-perk tier labels + a `Weaving used/cap` line.
+    Test hook `MMO_ENCHANT_TARGET=<slot>` pre-selects a target for screenshots.
+  - **Content**: 3 new trinkets (greater_amulet T3, master_amulet T4,
+    mythic_relic T5) into cache_gloomfen/desert, cache_cinderrift/crypt, and a
+    weighted King drop; Ysolde the Ember-Witch NPC (`npc_arcanist` sprite,
+    reused) at the Cinderrift arrival (maxTier 3). Selvara maxTier 2 + all 12.
+  - Verified: **441 vitest** (18 enchant + 2 invariants), typecheck, client
+    compiles, a 19-agent adversarial review (all findings low except one glyph;
+    fixed the user-visible + cheap-robustness ones), and a live client
+    screenshot of the Weave tab (tools/out/weave-5.png). **Owner feel-checks:**
+    Selvara offering all 12 perks day-one (owner-decision #5), armorK/price
+    tuning, whether the T3–T5 trinket sources land right. **Follow-ups (noted
+    in the design doc):** steel/rift/royal ARMOR sets (T3–5 armor unbuilt — high
+    tiers reachable via weapons+trinkets meanwhile); a cache-value economy
+    invariant; a bespoke Ysolde sprite; a golden-hash determinism baseline
+    before relocating any wild-room NPC.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -1262,6 +1310,16 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-09 **DEEP MAGIC WEAVING shipped** (see the decisions-log entry +
+  `docs/enchanting-design.md`). The enchanter is now tiered/slotted/quality-
+  gated: authored gear tiers (1-5) → weaving capacity (slots + max strength I/
+  II/III), 12 weavable perks, removable enchants, Selvara (hub, I–II) + Ysolde
+  the Ember-Witch (Cinderrift, III), 3 new trinkets. All equippables tagged
+  with a `tier`. Verified: **441 vitest**, typecheck, client compiles, all 11
+  rooms boot clean, a 19-agent adversarial review (fixes applied), and a live
+  Weave-tab screenshot (tools/out/weave-5.png). Owner feel-checks + follow-ups
+  in the decisions-log entry. Prior work (2026-07-08) below.
 
 - 2026-07-08 **NEW ASSET DROP absorbed end to end.** Icons migrated to
   `tficons_limited_16` (old sheet deleted); 22 blocks (56–77) from

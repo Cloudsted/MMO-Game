@@ -272,6 +272,18 @@ Never trust extraction coordinates without looking:
   mid-session (the HUD pos jumping is the tell). Don't fight it — their
   window is theirs; kill only clients you launched (`claude_test`'s), and
   prefer separate accounts so sessions can't evict each other.
+- **Force-killed clients leave a server-side GHOST session.** `Stop-Process
+  -Force` on a game JVM severs the socket without a clean disconnect, and the
+  RoomHost keeps that session ("1 online" lingers on `/api/status` with zero
+  game JVMs alive). Relaunch a client onto the same account and the two fight a
+  **duplicate-login reconnect loop** (the stack log spams `WARN duplicate login
+  … evicting old session / left / entered` every ~50 ms) — neither stays
+  connected long enough to render, so `MMO_SHOT` never writes. Cost a screenshot
+  cycle to diagnose. Fix: a **stack restart clears all ghosts** (DB staging
+  persists in Mongo); then confirm `players:0` before launching exactly one
+  client. `gradlew --no-daemon run` spawns TWO `--add-opens` JVMs (game +
+  gradle daemon) — only one connects, so two is normal; three-plus means a
+  leftover client is still alive.
 - After a verification round, leave the stack running and say so — the user
   usually wants to hop in and play with what just landed.
 - Update CLAUDE.md's "Current state" and traps after every session; update
