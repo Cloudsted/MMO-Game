@@ -130,14 +130,25 @@ public final class Protocol {
         return GSON.toJson(o);
     }
 
-    /** Buy a fixed tier-1 enchant from an enchanter NPC for the unmodified
-     *  equippable at inventory `slot`. */
-    public static String enchant(int npc, int slot, String enchantId) {
+    /** Weave an enchant from an enchanter NPC onto the equippable at inventory
+     *  `slot` at strength `tier`. */
+    public static String enchant(int npc, int slot, String enchantId, int tier) {
         JsonObject o = new JsonObject();
         o.addProperty("t", "enchant");
         o.addProperty("npc", npc);
         o.addProperty("slot", slot);
         o.addProperty("enchantId", enchantId);
+        o.addProperty("tier", tier);
+        return GSON.toJson(o);
+    }
+
+    /** Strip a woven modifier off the equippable at inventory `slot`. */
+    public static String unenchant(int npc, int slot, String modId) {
+        JsonObject o = new JsonObject();
+        o.addProperty("t", "unenchant");
+        o.addProperty("npc", npc);
+        o.addProperty("slot", slot);
+        o.addProperty("modId", modId);
         return GSON.toJson(o);
     }
 

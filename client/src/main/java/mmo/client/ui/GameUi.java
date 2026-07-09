@@ -13,6 +13,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
+import mmo.client.util.GameConstants;
 import mmo.client.util.ItemRegistry;
 import mmo.client.world.BlockRegistry;
 import mmo.client.world.VoxelWorld;
@@ -63,12 +64,20 @@ public class GameUi {
         public int price;
     }
 
-    /** One enchanter menu row (dialog `enchant` payload). */
+    /** One enchanter menu row (dialog `enchant` payload). `tiers` is the
+     *  strength ladder [I,II,III]; the client applies the highest the target
+     *  and weaver both allow. */
     public static final class EnchantOffer {
         public String id;
         public String name;
-        public float mag;
+        public float[] tiers = new float[0];
         public float priceMult;
+    }
+
+    /** enchant strength tier → roman numeral (index by tier). */
+    private static final String[] ROMAN = { "", "I", "II", "III", "IV", "V" };
+    private static String roman(int tier) {
+        return tier >= 0 && tier < ROMAN.length ? ROMAN[tier] : String.valueOf(tier);
     }
 
     public enum Window { NONE, INVENTORY, DIALOG, GOD }
@@ -107,12 +116,14 @@ public class GameUi {
     private boolean enchantOpen = false;
     /** inventory index picked as the enchant target (-1 = none yet) */
     private int enchantTarget = -1;
-    private float enchantPriceBase = 25, enchantPriceValueMult = 1.5f;
+    /** the current weaver's max enchant strength + whether it removes */
+    private int enchantMaxTier = 1;
+    private boolean enchantRemove = false;
+    private GameConstants consts;
 
-    /** Enchanter display pricing from shared constants (server recomputes). */
-    public void setEnchantPricing(float base, float valueMult) {
-        enchantPriceBase = base;
-        enchantPriceValueMult = valueMult;
+    /** Enchanter display pricing/capacity from shared constants (server recomputes). */
+    public void setEnchantPricing(GameConstants c) {
+        consts = c;
     }
 
     // chat
@@ -165,6 +176,9 @@ public class GameUi {
     private final Rectangle invPanel = new Rectangle();
     private final List<Rectangle> shopRowRects = new ArrayList<>();
     private final List<Rectangle> enchantRowRects = new ArrayList<>();
+    /** "unpick" rows (remove a woven mod) + the mod ids they strip, parallel */
+    private final List<Rectangle> enchantRemoveRects = new ArrayList<>();
+    private final List<String> enchantRemoveIds = new ArrayList<>();
     private final List<Runnable> godActions = new ArrayList<>();
     private final List<Rectangle> godRects = new ArrayList<>();
     private Rectangle shopToggleRect, enchantToggleRect, closeRect;
@@ -251,13 +265,27 @@ public class GameUi {
         effects.addAll(list);
     }
 
-    /** Eligible at the enchanter: an UNMODIFIED equippable. */
-    private boolean enchantEligible(Stack s) {
+    /** Is this stack an equippable (weapon/armor/trinket)? */
+    private boolean isEquippableStack(Stack s) {
         if (s == null) return false;
         ItemRegistry.Item def = reg.item(s.item);
-        if (def == null) return false;
-        boolean equippable = "weapon".equals(def.kind) || "armor".equals(def.kind) || "trinket".equals(def.kind);
-        return equippable && (s.mods == null || s.mods.isEmpty());
+        return def != null && ("weapon".equals(def.kind) || "armor".equals(def.kind) || "trinket".equals(def.kind));
+    }
+
+    /** Woven-or-rolled modifiers currently on the item (they all consume slots). */
+    private int usedSlots(Stack s) {
+        return s == null || s.mods == null ? 0 : s.mods.size();
+    }
+
+    /** Enchant slots this item's gear tier holds. */
+    private int capSlots(Stack s) {
+        ItemRegistry.Item def = reg.item(s.item);
+        return def == null ? 1 : consts.enchantSlots(def.tier);
+    }
+
+    /** A valid weave TARGET: an equippable with a free enchant slot. */
+    private boolean enchantEligible(Stack s) {
+        return isEquippableStack(s) && usedSlots(s) < capSlots(s);
     }
 
     /** Can this offer's modifier exist on the target's item kind? */
@@ -267,12 +295,30 @@ public class GameUi {
         return m != null && def != null && m.appliesTo.contains(def.kind);
     }
 
-    /** Display price — same formula as the server's authoritative one. */
-    private int enchantPrice(Stack s, float priceMult) {
+    /** The strength this weaver applies to this offer+target: the highest the
+     *  weaver and the item both allow (clamped to the offer's ladder). */
+    private int appliedTier(EnchantOffer o, Stack s) {
+        ItemRegistry.Item def = reg.item(s.item);
+        int itemMax = def == null ? 1 : consts.enchantItemMaxTier(def.tier);
+        return Math.max(1, Math.min(Math.min(enchantMaxTier, itemMax), o.tiers.length));
+    }
+
+    /** Display price — same formula as the server's authoritative enchantPrice. */
+    private int enchantPrice(Stack s, float priceMult, int tier, int existing) {
         ItemRegistry.Item def = reg.item(s.item);
         if (def == null) return 0;
         float rarity = reg.rarityMults.getOrDefault(s.rarity, 1f);
-        return (int) Math.ceil(def.value * rarity * priceMult * enchantPriceValueMult + enchantPriceBase);
+        float tierMult = consts.enchantTierPriceMult(tier);
+        float surcharge = (float) Math.pow(consts.enchantSlotSurcharge, existing);
+        return (int) Math.ceil(def.value * rarity * priceMult * tierMult * surcharge * consts.enchantPriceValueMult + consts.enchantPriceBase);
+    }
+
+    /** Display cost to strip one woven mod — mirrors server removeCost. */
+    private int removeCost(Stack s) {
+        ItemRegistry.Item def = reg.item(s.item);
+        if (def == null) return 0;
+        float rarity = reg.rarityMults.getOrDefault(s.rarity, 1f);
+        return (int) Math.ceil(consts.enchantRemoveBase + def.value * rarity * consts.enchantRemoveValueMult);
     }
 
     /** Which equipment slot index an item goes to, or -1 if not wearable. */
@@ -290,7 +336,8 @@ public class GameUi {
         chatFocus = false;
     }
 
-    public void openDialog(int npcEntityId, String name, List<String> lines, List<ShopEntry> shop, boolean buys, List<EnchantOffer> enchant) {
+    public void openDialog(int npcEntityId, String name, List<String> lines, List<ShopEntry> shop, boolean buys,
+                           List<EnchantOffer> enchant, int maxTier, boolean remove) {
         dialogNpc = npcEntityId;
         dialogName = name;
         dialogLines.clear();
@@ -300,6 +347,8 @@ public class GameUi {
         shopBuys = buys;
         enchantOffers.clear();
         if (enchant != null) enchantOffers.addAll(enchant);
+        enchantMaxTier = maxTier;
+        enchantRemove = remove;
         enchantOpen = autoOpenEnchant && !enchantOffers.isEmpty();
         autoOpenEnchant = false;
         enchantTarget = -1;
@@ -459,20 +508,34 @@ public class GameUi {
                 return true;
             }
             if (enchantOpen) {
-                // pick the target item first, then click a blessing
+                // pick a target (any equippable — so a FULL item can still be unpicked)
                 for (int i = 0; i < 24; i++) {
                     if (slotRects[i].contains(x, y)) {
-                        enchantTarget = enchantEligible(slots[i]) ? i : -1;
+                        enchantTarget = isEquippableStack(slots[i]) ? i : -1;
                         return true;
                     }
                 }
                 Stack target = enchantTarget >= 0 ? slots[enchantTarget] : null;
+                // weave: click an offer row
                 for (int i = 0; i < enchantRowRects.size() && i < enchantOffers.size(); i++) {
                     if (!enchantRowRects.get(i).contains(x, y)) continue;
                     EnchantOffer offer = enchantOffers.get(i);
-                    if (target != null && offerFits(offer, target) && gold >= enchantPrice(target, offer.priceMult)) {
-                        net.send(mmo.client.net.Protocol.enchant(dialogNpc, enchantTarget, offer.id));
-                        enchantTarget = -1; // server echo shows the result
+                    if (target != null) {
+                        boolean dup = target.mods != null && target.mods.containsKey(offer.id);
+                        boolean free = usedSlots(target) < capSlots(target);
+                        int tier = appliedTier(offer, target);
+                        int price = enchantPrice(target, offer.priceMult, tier, usedSlots(target));
+                        if (offerFits(offer, target) && !dup && free && gold >= price) {
+                            net.send(mmo.client.net.Protocol.enchant(dialogNpc, enchantTarget, offer.id, tier));
+                        }
+                    }
+                    return true;
+                }
+                // unpick: click a remove row
+                for (int i = 0; i < enchantRemoveRects.size() && i < enchantRemoveIds.size(); i++) {
+                    if (!enchantRemoveRects.get(i).contains(x, y)) continue;
+                    if (target != null && enchantRemove && gold >= removeCost(target)) {
+                        net.send(mmo.client.net.Protocol.unenchant(dialogNpc, enchantTarget, enchantRemoveIds.get(i)));
                     }
                     return true;
                 }
@@ -959,13 +1022,23 @@ public class GameUi {
                 tip.add(new TipLine("Durability  " + def.durability + " (base)", new Color(0.75f, 0.75f, 0.8f, 1f), 1f));
             }
         }
-        // dynamic modifiers: perks green, curses red — the item's magic
+        // enchant capacity (equippables): how many weavings it holds
+        if ("weapon".equals(def.kind) || "armor".equals(def.kind) || "trinket".equals(def.kind)) {
+            int cap = consts != null ? consts.enchantSlots(def.tier) : 1;
+            int used = s.mods == null ? 0 : s.mods.size();
+            if (cap > 1 || used > 0) {
+                tip.add(new TipLine("Weaving  " + used + " / " + cap, new Color(0.72f, 0.72f, 0.85f, 1f), 1f));
+            }
+        }
+        // dynamic modifiers: perks cyan (tier labelled), curses red — the item's magic
         if (s.mods != null) {
             for (var e : s.mods.entrySet()) {
                 ItemRegistry.Modifier m = reg.modifiers.get(e.getKey());
                 if (m == null) continue;
                 Color c = m.curse ? new Color(1f, 0.45f, 0.4f, 1f) : new Color(0.55f, 0.95f, 1f, 1f);
-                tip.add(new TipLine(m.fmtMag(e.getValue()) + "  —  " + m.name, c, 1f));
+                int t = m.inferTier(e.getValue());
+                String nm = m.name + (t > 0 ? " " + roman(t) : "");
+                tip.add(new TipLine(m.fmtMag(e.getValue()) + "  —  " + nm, c, 1f));
             }
         }
         if (def.effectHeal > 0) tip.add(new TipLine("Restores " + (int) def.effectHeal + " health", new Color(0.5f, 1f, 0.55f, 1f), 1f));
@@ -1171,12 +1244,13 @@ public class GameUi {
     }
 
     private void renderDialog(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, int w, int h) {
-        boolean wide = shopOpen || enchantOpen;
-        float pw = wide ? 560 : 460;
-        float ph = wide ? 420 : 200;
+        float pw = enchantOpen ? 600 : (shopOpen ? 560 : 460);
+        float ph = enchantOpen ? 540 : (shopOpen ? 420 : 200);
         float px = MathUtils.floor(w / 2f - pw / 2f), py = MathUtils.floor(h / 2f - ph / 2f);
         shopRowRects.clear();
         enchantRowRects.clear();
+        enchantRemoveRects.clear();
+        enchantRemoveIds.clear();
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         panel(shapes, px, py, pw, ph);
@@ -1201,28 +1275,44 @@ public class GameUi {
             enchantToggleRect = null;
         }
         if (enchantOpen) {
-            // left: her blessings; right: your items (pick one, then click)
+            Stack tgt = enchantTarget >= 0 ? slots[enchantTarget] : null;
+            float topY = py + ph - 88;
+            // left: the weaving menu (one row per perk)
             for (int i = 0; i < enchantOffers.size(); i++) {
-                Rectangle row = new Rectangle(px + 14, py + ph - 96 - i * 40, pw / 2f - 24, 34);
+                Rectangle row = new Rectangle(px + 14, topY - i * 34, pw / 2f - 26, 30);
                 enchantRowRects.add(row);
                 shapes.setColor(0.2f, 0.16f, 0.28f, 1f);
                 shapes.rect(row.x, row.y, row.width, row.height);
             }
+            // right: your gear (click one as the target)
             float cell = 40, gap = 4;
             for (int i = 0; i < 24; i++) {
                 int c = i % 4, r = i / 4;
                 float x = px + pw / 2f + 14 + c * (cell + gap);
-                float y = py + ph - 96 - r * (cell + gap);
+                float y = topY - r * (cell + gap);
                 slotRects[i].set(x, y, cell, cell);
                 boolean eligible = enchantEligible(slots[i]);
+                boolean equippable = isEquippableStack(slots[i]);
                 if (i == enchantTarget) shapes.setColor(0.45f, 0.35f, 0.6f, 1f);
-                else shapes.setColor(0.18f, 0.18f, eligible ? 0.22f : 0.18f, eligible ? 1f : 0.55f);
+                else shapes.setColor(0.18f, 0.18f, eligible ? 0.22f : 0.18f, equippable ? 1f : 0.5f);
                 shapes.rect(x, y, cell, cell);
                 Stack s = slots[i];
                 if (s != null) {
                     Color rc = reg.rarityColor(s.rarity);
-                    shapes.setColor(rc.r, rc.g, rc.b, eligible ? 0.85f : 0.3f);
+                    shapes.setColor(rc.r, rc.g, rc.b, equippable ? 0.85f : 0.3f);
                     shapes.rect(x, y, cell, 2);
+                }
+            }
+            // right, below the grid: unpick rows for the target's woven mods
+            if (enchantRemove && tgt != null && tgt.mods != null && !tgt.mods.isEmpty()) {
+                int k = 0;
+                for (String id : tgt.mods.keySet()) {
+                    Rectangle row = new Rectangle(px + pw / 2f + 14, py + 120 - k * 28, pw / 2f - 26, 24);
+                    enchantRemoveRects.add(row);
+                    enchantRemoveIds.add(id);
+                    shapes.setColor(0.32f, 0.16f, 0.18f, 1f);
+                    shapes.rect(row.x, row.y, row.width, row.height);
+                    k++;
                 }
             }
         }
@@ -1258,21 +1348,42 @@ public class GameUi {
         if (enchantOpen) {
             Stack target = enchantTarget >= 0 ? slots[enchantTarget] : null;
             font.setColor(0.85f, 0.75f, 1f, 1f);
-            font.draw(batch, "Blessings (click)", px + 14, py + ph - 44);
-            font.draw(batch, target == null ? "Pick an unmarked item" : "Enchanting: " + itemName(target), px + pw / 2f + 14, py + ph - 44);
+            font.draw(batch, "Weave  (to tier " + roman(enchantMaxTier) + ")", px + 14, py + ph - 44);
+            String rhead = target == null ? "Pick an item →"
+                : itemName(target) + "   " + usedSlots(target) + "/" + capSlots(target) + " slots";
+            font.draw(batch, rhead, px + pw / 2f + 14, py + ph - 44);
             for (int i = 0; i < enchantOffers.size() && i < enchantRowRects.size(); i++) {
                 EnchantOffer o = enchantOffers.get(i);
                 Rectangle row = enchantRowRects.get(i);
                 ItemRegistry.Modifier m = reg.modifiers.get(o.id);
-                if (m != null) drawIconCell(batch, m.iconCol, m.iconRow, row.x + 6, row.y + 9, 16);
-                boolean usable = target != null && offerFits(o, target);
-                int price = target != null ? enchantPrice(target, o.priceMult) : 0;
-                boolean affordable = target == null || gold >= price;
-                font.setColor(usable && affordable ? 0.95f : 0.55f, usable && affordable ? 0.9f : 0.5f, 1f, 1f);
-                String label = o.name + (m != null ? "  " + m.fmtMag(o.mag) : "");
+                if (m != null) drawIconCell(batch, m.iconCol, m.iconRow, row.x + 5, row.y + 7, 16);
                 font.getData().setScale(0.5f);
-                font.draw(batch, label, row.x + 30, row.y + 28);
-                font.draw(batch, target == null ? "—" : usable ? price + "g" : "won't take", row.x + 30, row.y + 13);
+                String label, sub;
+                boolean bright;
+                if (target == null) {
+                    label = o.name;
+                    sub = "select an item";
+                    bright = true;
+                } else if (!offerFits(o, target)) {
+                    label = o.name;
+                    sub = "won't take";
+                    bright = false;
+                } else {
+                    int tier = appliedTier(o, target);
+                    float mag = o.tiers.length > 0 ? o.tiers[tier - 1] : 0;
+                    boolean dup = target.mods != null && target.mods.containsKey(o.id);
+                    boolean free = usedSlots(target) < capSlots(target);
+                    int price = enchantPrice(target, o.priceMult, tier, usedSlots(target));
+                    label = o.name + " " + roman(tier) + "   " + (m != null ? m.fmtMag(mag) : "");
+                    if (dup) { sub = "already woven"; bright = false; }
+                    else if (!free) { sub = "no free slot"; bright = false; }
+                    else if (gold < price) { sub = price + "g  (short)"; bright = false; }
+                    else { sub = price + "g"; bright = true; }
+                }
+                font.setColor(bright ? 0.96f : 0.55f, bright ? 0.92f : 0.5f, bright ? 1f : 0.6f, 1f);
+                font.draw(batch, label, row.x + 26, row.y + 24);
+                font.setColor(bright ? 0.75f : 0.5f, bright ? 0.85f : 0.45f, bright ? 0.7f : 0.55f, 1f);
+                font.draw(batch, sub, row.x + 26, row.y + 11);
                 font.getData().setScale(1f);
             }
             for (int i = 0; i < 24; i++) {
@@ -1280,9 +1391,24 @@ public class GameUi {
                 if (s == null) continue;
                 drawIcon(batch, s.item, slotRects[i].x + 8, slotRects[i].y + 8, 24);
             }
+            if (!enchantRemoveRects.isEmpty() && target != null) {
+                font.getData().setScale(0.5f);
+                font.setColor(1f, 0.7f, 0.7f, 1f);
+                font.draw(batch, "Unpick  (" + removeCost(target) + "g each)", px + pw / 2f + 14, py + 140);
+                for (int i = 0; i < enchantRemoveRects.size() && i < enchantRemoveIds.size(); i++) {
+                    Rectangle row = enchantRemoveRects.get(i);
+                    String id = enchantRemoveIds.get(i);
+                    ItemRegistry.Modifier m = reg.modifiers.get(id);
+                    float mag = target.mods != null && target.mods.get(id) != null ? target.mods.get(id) : 0f;
+                    int t = m != null ? m.inferTier(mag) : 0;
+                    font.setColor(1f, 0.82f, 0.8f, 1f);
+                    font.draw(batch, (m != null ? m.name : id) + (t > 0 ? " " + roman(t) : ""), row.x + 8, row.y + 16);
+                }
+                font.getData().setScale(1f);
+            }
             font.getData().setScale(0.5f);
             font.setColor(0.7f, 0.65f, 0.8f, 1f);
-            font.draw(batch, "She refuses items that already bear an enchantment.", px + 14, py + 52);
+            font.draw(batch, "Finer gear holds more weavings, and holds them stronger.", px + 14, py + 50);
             font.getData().setScale(1f);
         } else if (!shopOpen) {
             font.setColor(0.92f, 0.92f, 0.92f, 1f);

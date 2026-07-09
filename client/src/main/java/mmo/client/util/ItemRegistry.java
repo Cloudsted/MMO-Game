@@ -18,6 +18,9 @@ public final class ItemRegistry {
         /** armor: equipment slot (head/chest/legs/feet/offhand); trinkets
          *  implicitly go offhand; null = not wearable */
         public final String slot;
+        /** authored quality tier (1-5) → weaving capacity (slots + max enchant
+         *  strength) via GameConstants; 1 = default. Non-equippables ignore it. */
+        public final int tier;
         public final int value, stack, iconCol, iconRow;
         /** weapons: base damage before rarity/rolls (0 = none) */
         public final float damage;
@@ -37,6 +40,7 @@ public final class ItemRegistry {
             ability = o.has("ability") ? o.get("ability").getAsString() : null;
             block = o.has("block") ? o.get("block").getAsString() : null;
             slot = o.has("slot") ? o.get("slot").getAsString() : ("trinket".equals(kind) ? "offhand" : null);
+            tier = o.has("tier") ? o.get("tier").getAsInt() : 1;
             value = o.get("value").getAsInt();
             stack = o.get("stack").getAsInt();
             damage = o.has("damage") ? o.get("damage").getAsFloat() : 0;
@@ -87,8 +91,10 @@ public final class ItemRegistry {
         public final boolean curse;
         /** kinds this modifier can exist on (enchant panel eligibility) */
         public final java.util.List<String> appliesTo = new java.util.ArrayList<>();
-        /** enchanter tier-1 offer (0 mag = not offered) */
-        public final float enchantMag, enchantPriceMult;
+        /** enchant strength ladder [I,II,III] in this mod's units (empty = not
+         *  weavable); and the base price multiplier. */
+        public final float[] enchantTiers;
+        public final float enchantPriceMult;
 
         Modifier(String id, JsonObject o) {
             this.id = id;
@@ -100,9 +106,42 @@ public final class ItemRegistry {
             iconCol = icon.get(0).getAsInt();
             iconRow = icon.get(1).getAsInt();
             for (var el : o.getAsJsonArray("appliesTo")) appliesTo.add(el.getAsString());
+            // enchant block: the tiers ladder [I,II,III] (tolerates a legacy
+            // single `mag`). A mod with no enchant block is drop-only.
             JsonObject en = o.has("enchant") ? o.getAsJsonObject("enchant") : null;
-            enchantMag = en != null ? en.get("mag").getAsFloat() : 0;
-            enchantPriceMult = en != null ? en.get("priceMult").getAsFloat() : 0;
+            float priceMult = 0f;
+            float[] tiers = new float[0];
+            if (en != null) {
+                if (en.has("tiers")) {
+                    JsonArray ta = en.getAsJsonArray("tiers");
+                    tiers = new float[ta.size()];
+                    for (int i = 0; i < ta.size(); i++) tiers[i] = ta.get(i).getAsFloat();
+                } else if (en.has("mag")) {
+                    tiers = new float[] { en.get("mag").getAsFloat() };
+                }
+                priceMult = en.has("priceMult") ? en.get("priceMult").getAsFloat() : 0f;
+            }
+            enchantTiers = tiers;
+            enchantPriceMult = priceMult;
+        }
+
+        public boolean weavable() { return enchantTiers.length > 0; }
+        public int maxWeaveTier() { return enchantTiers.length; }
+
+        /** magnitude at strength `tier` (1-based, clamped). */
+        public float weaveMag(int tier) {
+            if (enchantTiers.length == 0) return 0f;
+            int i = Math.max(1, Math.min(enchantTiers.length, tier)) - 1;
+            return enchantTiers[i];
+        }
+
+        /** 1-based tier whose ladder magnitude matches `mag` (a woven perk),
+         *  else 0 for a drop-rolled magnitude off the ladder. */
+        public int inferTier(float mag) {
+            for (int i = 0; i < enchantTiers.length; i++) {
+                if (Math.abs(enchantTiers[i] - mag) < 1e-3f) return i + 1;
+            }
+            return 0;
         }
 
         /** "+1.5 hp/s" / "+8% move speed" — sign carried by the magnitude. */

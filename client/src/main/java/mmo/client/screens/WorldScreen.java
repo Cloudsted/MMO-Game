@@ -22,6 +22,7 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.IntMap;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import mmo.client.MmoGame;
@@ -231,7 +232,7 @@ public class WorldScreen extends ScreenAdapter {
         viewmodel = new Viewmodel(game.items, itemMeshes);
         decalBatch = new DecalBatch(new CameraGroupStrategy(cam));
         ui = new GameUi(socket::sendSafe, game.items);
-        ui.setEnchantPricing(game.constants.enchantPriceBase, game.constants.enchantPriceValueMult);
+        ui.setEnchantPricing(game.constants);
         ui.admin = game.master.roles.contains("admin");
 
         // sun + moon: chunky pixel-art discs (generated; nearest-filtered)
@@ -554,19 +555,26 @@ public class WorldScreen extends ScreenAdapter {
                         }
                     }
                     List<GameUi.EnchantOffer> enchant = null;
+                    int enchantMaxTier = 1;
+                    boolean enchantRemove = false;
                     if (msg.has("enchant") && !msg.get("enchant").isJsonNull()) {
                         enchant = new ArrayList<>();
-                        for (JsonElement el : Protocol.arr(msg.getAsJsonObject("enchant"), "offers")) {
+                        JsonObject en = msg.getAsJsonObject("enchant");
+                        enchantMaxTier = en.has("maxTier") ? en.get("maxTier").getAsInt() : 1;
+                        enchantRemove = en.has("remove") && en.get("remove").getAsBoolean();
+                        for (JsonElement el : Protocol.arr(en, "offers")) {
                             JsonObject o = el.getAsJsonObject();
                             GameUi.EnchantOffer offer = new GameUi.EnchantOffer();
                             offer.id = o.get("id").getAsString();
                             offer.name = o.get("name").getAsString();
-                            offer.mag = o.get("mag").getAsFloat();
+                            JsonArray ta = o.getAsJsonArray("tiers");
+                            offer.tiers = new float[ta.size()];
+                            for (int i = 0; i < ta.size(); i++) offer.tiers[i] = ta.get(i).getAsFloat();
                             offer.priceMult = o.get("priceMult").getAsFloat();
                             enchant.add(offer);
                         }
                     }
-                    ui.openDialog(msg.get("id").getAsInt(), msg.get("name").getAsString(), lines, shop, buys, enchant);
+                    ui.openDialog(msg.get("id").getAsInt(), msg.get("name").getAsString(), lines, shop, buys, enchant, enchantMaxTier, enchantRemove);
                 }
                 case "transfer" -> {
                     game.audio.play("portal");
