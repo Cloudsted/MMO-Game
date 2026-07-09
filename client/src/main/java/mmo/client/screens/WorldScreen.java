@@ -1186,11 +1186,18 @@ public class WorldScreen extends ScreenAdapter {
         if (hitX) velX = 0;
         if (hitZ) velZ = 0;
 
-        // swim climb-out: pushing against a bank boosts you over the lip
+        // swim climb-out: pushing against a bank boosts you over the lip.
+        // Anchor the ledge scan to the FEET cell (floor(pos.y)), NOT feet+0.4:
+        // when you float at the surface of DEEP water your feet sit ~0.4 below
+        // the bank's lip, so the old +0.4 base scanned one cell too high and
+        // never saw the bank block whose top is at the water surface — you'd
+        // bob against it forever and never climb out. In shallow water your
+        // feet rest on the ground, so +0.4 happened to hit the right cell,
+        // which is why the bug only showed up in water two or more blocks deep.
         if (inWater && (hitX || hitZ) && movingNow) {
             float ax = pos.x + tx / speed * (game.constants.playerRadius + 0.45f);
             float az = pos.z + tz / speed * (game.constants.playerRadius + 0.45f);
-            int fy = (int) Math.floor(pos.y + 0.4f);
+            int fy = (int) Math.floor(pos.y);
             for (int dy = 0; dy <= 2; dy++) {
                 if (world.solidAt(ax, fy + dy, az)
                     && !world.solidAt(ax, fy + dy + 1, az)
