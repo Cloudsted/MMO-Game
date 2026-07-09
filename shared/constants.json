@@ -136,7 +136,7 @@
       "hpPerLevel": 0.14,
       "damagePerLevel": 0.11,
       "xpPerLevel": 0.17,
-      "maxLevelBonus": 12
+      "maxLevelBonus": 8
     }
   },
   "world": {

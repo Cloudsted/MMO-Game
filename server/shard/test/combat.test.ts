@@ -673,7 +673,7 @@ describe("RoomSim gameplay", () => {
   it("levels up with a full heal at the XP threshold", () => {
     const a = join("c1", "Alice");
     a.session.entity.health!.hp = 40;
-    // 5 slimes x 14 xp = 70 >= 60 (level 1 → 2)
+    // 5 slimes x 16 xp = 80 >= 60 (level 1 → 2)
     for (let i = 0; i < 5; i++) {
       const mob = sim.spawnMob("slime", 66, 64, "")!;
       sim.applyDamage(a.session.entity, mob, 500);

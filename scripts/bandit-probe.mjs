@@ -207,7 +207,7 @@ check(/Bloodletter/.test(e2), "L12 cutthroat is a Bloodletter", e2);
 check(/thrust/.test(e2) && !/bandit_slash/.test(e2), "L12 cutthroat swapped slash for thrust", e2);
 
 const blood = byName("Bloodletter")[0];
-const baseCut = byName("Thornhollow Cutthroat").find((m) => m.level === 4);
+const baseCut = byName("Thornhollow Cutthroat").find((m) => m.level === 3);
 check(blood?.level === 12, "scaled cutthroat replicates L12", `level=${blood?.level}`);
 check(!!baseCut && !!blood && blood.maxHp > baseCut.maxHp * 2,
   "scaled cutthroat has >2x base hp", `${baseCut?.maxHp} -> ${blood?.maxHp}`);

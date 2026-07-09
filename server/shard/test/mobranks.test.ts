@@ -227,17 +227,17 @@ describe("the Thornhollow Company ladder", () => {
 
   it("the fen crew (the levels gloomfen actually spawns) has learned things", () => {
     // levels here mirror shared/rooms/gloomfen.json's drowned-company table
-    expect(kit("bandit", 12)).toEqual(["quick_stab", "thrust"]); // slash removed: he lunges and you bleed
-    expect(kit("greenhood_poacher", 11)).toEqual(["bolt_shot", "quick_stab", "thrust"]); // bow removed
-    expect(kit("powder_brigand", 11)).toEqual(["fuse_line", "oil_flask"]); // powder_flask removed
-    expect(kit("bandit_enforcer", 12)).toEqual(["cleave", "crown_strike", "iron_bash"]);
-    expect(kit("camp_cur", 12)).toEqual(["raptor_bite", "spider_bite"]); // wolf_bite removed
+    expect(kit("bandit", 10)).toEqual(["quick_stab", "thrust"]); // slash removed: he lunges and you bleed
+    expect(kit("greenhood_poacher", 9)).toEqual(["bolt_shot", "quick_stab", "thrust"]); // bow removed
+    expect(kit("powder_brigand", 9)).toEqual(["fuse_line", "oil_flask"]); // powder_flask removed
+    expect(kit("bandit_enforcer", 10)).toEqual(["cleave", "crown_strike", "iron_bash"]);
+    expect(kit("camp_cur", 9)).toEqual(["raptor_bite", "spider_bite"]); // wolf_bite removed
   });
 
-  it("THE HEALER APPEARS at L10, not before, and it is interruptible", () => {
-    expect(kit("hollow_cowl", 9)).toEqual(["wisp_bolt"]);
-    expect(kit("hollow_cowl", 10)).toEqual(["mend_kin", "wisp_bolt"]);
-    expect(kit("hollow_cowl", 11)).toEqual(["mend_kin", "wisp_bolt"]); // what gloomfen spawns
+  it("THE HEALER APPEARS at L8, not before, and it is interruptible", () => {
+    expect(kit("hollow_cowl", 7)).toEqual(["wisp_bolt"]);
+    expect(kit("hollow_cowl", 8)).toEqual(["mend_kin", "wisp_bolt"]);
+    expect(kit("hollow_cowl", 9)).toEqual(["mend_kin", "wisp_bolt"]); // what gloomfen spawns
 
     const mend = reg.abilities["mend_kin"]!;
     expect(mend.kind).toBe("self");
@@ -255,11 +255,11 @@ describe("the Thornhollow Company ladder", () => {
 
   it("gives the fen crew real numbers, and names them", () => {
     const forest = resolveMob(reg.mobs["bandit"]!, undefined, SCALING);
-    const fen = resolveMob(reg.mobs["bandit"]!, 12, SCALING);
+    const fen = resolveMob(reg.mobs["bandit"]!, 10, SCALING);
     expect(fen.hp).toBeGreaterThan(forest.hp * 2);
     expect(fen.xp).toBeGreaterThan(forest.xp * 2);
     expect(fen.name).toBe("Thornhollow Cutthroat Bloodletter");
-    expect(resolveMob(reg.mobs["hollow_cowl"]!, 11, SCALING).name).toBe("Hollow Cowl Priest");
+    expect(resolveMob(reg.mobs["hollow_cowl"]!, 9, SCALING).name).toBe("Hollow Cowl Priest");
   });
 
   it("the goat never fights: it cannot initiate, and it flees the moment it is touched", () => {
@@ -319,9 +319,9 @@ describe("Hollow Cowl: the pack healer in a live room", () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  /** A Cowl at the level gloomfen spawns it (11): mend_kin unlocked. */
+  /** A Cowl at the level gloomfen spawns it (9): mend_kin unlocked. */
   function spawnCowl(x: number, z: number) {
-    const c = sim.spawnMob("hollow_cowl", x, z, "", 11)!;
+    const c = sim.spawnMob("hollow_cowl", x, z, "", 9)!;
     return c;
   }
 
@@ -411,7 +411,7 @@ describe("Hollow Cowl: the pack healer in a live room", () => {
     expect(mate.health!.hp).toBe(20); // the heal never landed
   });
 
-  it("a forest Cowl (L7) has no mend at all", () => {
+  it("a forest Cowl (L4, no override) has no mend at all", () => {
     const a = join("c1", "Alice");
     const p = a.session.entity.pos;
     const cowl = sim.spawnMob("hollow_cowl", p.x + 10, p.z, "")!; // no level override
@@ -912,12 +912,15 @@ describe("economy invariants", () => {
 
   it("no non-boss mob out-earns the boss of its own room", () => {
     const bossXp: Record<string, number> = {
+      forest: resolveMob(reg.mobs["thrace_redcap"]!, undefined, SCALE).xp,
+      desert: resolveMob(reg.mobs["kaharat"]!, undefined, SCALE).xp,
       dungeon: resolveMob(reg.mobs["minotaur_boss"]!, undefined, SCALE).xp,
+      gloomfen: resolveMob(reg.mobs["grelmoss"]!, undefined, SCALE).xp,
       crypt_depths: resolveMob(reg.mobs["lich_boss"]!, undefined, SCALE).xp,
       cinderrift: resolveMob(reg.mobs["cinder_golem_boss"]!, undefined, SCALE).xp,
       sundered_city: resolveMob(reg.mobs["sundered_king"]!, undefined, SCALE).xp,
     };
-    const bosses = new Set(["minotaur_boss", "lich_boss", "cinder_golem_boss", "sundered_king", "thrace_redcap", "sekhat", "grelmoss", "aelthir"]);
+    const bosses = new Set(["minotaur_boss", "lich_boss", "cinder_golem_boss", "sundered_king", "thrace_redcap", "kaharat", "sekhat", "grelmoss", "aelthir"]);
     for (const s of shippedSpawns()) {
       const cap = bossXp[s.room];
       if (cap === undefined || bosses.has(s.mob)) continue;

@@ -200,6 +200,30 @@ L19 solo-content peak; the White Waste is explicit group content above him).
   `npx tsx tools/rank-coverage.mts` after retuning — every rank reachable or
   deleted.
 
+> **IMPLEMENTED (Batch 1, data-only retune — 2026-07-09).** The one xp formula
+> is **`xp(L) = round(role × (14 + 2·L^2.1))`** with role multipliers
+> **trash ×1 · support-elite ×1.5 (healers: hollow_cowl, ossuary_stitcher,
+> forge_tender) · elite ×2 · miniboss ×4 (bone_warden, forge_prototype) ·
+> hidden/side boss ×5 (sekhat, aelthir) · room boss ×8 · finale ×12
+> (sundered_king)**. Fit chosen to minimize disruption against the pre-retune
+> anchors (wolf 34@3 → 34 · giant_spider 170@8 → 172 · fire_elemental 380@12
+> → 383; bandit 46@4 → 51; the old skeleton 58@6 was the outlier and now pays
+> curve). Ambient critters (glimmereye, stolen_goat, pallid_mourner base,
+> fen_slimeling, restless_bones) keep their tiny authored values by design.
+> Deep reuse of a low-based def underpays vs the curve (1.17^Δ grows slower
+> than L^2.1), so ranks that current spawn tables actually reach carry an
+> `xpMult` sized to re-anchor the mob to `role × curve(atLevel)` at the rank
+> threshold. Base levels re-authored per the node table (mobs never scale
+> down); rebased stats divide by 1.14^Δ hp / 1.11^Δ dmg so every surviving
+> deep-room override resolves within ~1 hp/dmg of its pre-retune values
+> (skeleton keeps 95/11 at L5 — its crypt_depths@14 resolve is capped at
+> Δ8 either way and stays byte-identical at 327 hp / 27 dmg).
+> `mobs.scaling.maxLevelBonus` 12 → 8; shard default capacity 12 → 24.
+> Bands live: forest 1–4 (Thrace L5, Aelthir L8 wanderer w/ rank to 16),
+> desert 4–7 (Kaharat L8, Sekhat L10 ☆), dungeon 6–8 (Gravelord L9),
+> gloomfen 8–10 (Grelmoss L11), cinderrift 11–13 (Furnace Golem L14),
+> crypt_depths 12–14 (Morvane L15), sundered_city 14–18 (untouched).
+
 # PART 4 — EXPLORATION REWARDS (ranked by cost)
 
 1. **Free — vista caches** (prefab hooks + respawn timers): treasure on hard

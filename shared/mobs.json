@@ -11,7 +11,7 @@
     "attackRange": 1.5,
     "leashRadius": 30,
     "fleeAtHpPct": 0,
-    "xp": 14,
+    "xp": 16,
     "loot": "slime_drops",
     "sounds": {
       "idle": "slime_idle",
@@ -44,9 +44,9 @@
   "bandit": {
     "name": "Thornhollow Cutthroat",
     "sprite": "bandit",
-    "level": 4,
-    "hp": 78,
-    "damage": 11,
+    "level": 3,
+    "hp": 68,
+    "damage": 10,
     "moveSpeed": 3.5,
     "attacks": [
       {
@@ -56,18 +56,19 @@
     ],
     "ranks": [
       {
-        "atLevel": 9,
+        "atLevel": 6,
         "add": [
           {
             "ability": "quick_stab",
-            "damage": 8,
+            "damage": 7,
             "weight": 3
           }
         ],
+        "xpMult": 1.84,
         "titleSuffix": "Cutter"
       },
       {
-        "atLevel": 12,
+        "atLevel": 10,
         "remove": [
           "bandit_slash"
         ],
@@ -78,6 +79,7 @@
           }
         ],
         "moveSpeedMult": 1.14,
+        "xpMult": 1.42,
         "titleSuffix": "Bloodletter"
       }
     ],
@@ -85,7 +87,7 @@
     "attackRange": 2.1,
     "leashRadius": 34,
     "fleeAtHpPct": 0.1,
-    "xp": 46,
+    "xp": 34,
     "loot": "bandit_drops",
     "sounds": {
       "idle": "bandit_idle",
@@ -97,7 +99,7 @@
   "skeleton": {
     "name": "Skeleton",
     "sprite": "skeleton",
-    "level": 6,
+    "level": 5,
     "hp": 95,
     "damage": 11,
     "moveSpeed": 2.8,
@@ -113,7 +115,7 @@
     ],
     "ranks": [
       {
-        "atLevel": 9,
+        "atLevel": 7,
         "add": [
           {
             "ability": "cleave",
@@ -121,6 +123,7 @@
           }
         ],
         "hpMult": 1.05,
+        "xpMult": 1.33,
         "titleSuffix": "Soldier"
       },
       {
@@ -135,6 +138,7 @@
           }
         ],
         "moveSpeedMult": 1.08,
+        "xpMult": 1.32,
         "titleSuffix": "Legionary"
       },
       {
@@ -147,6 +151,7 @@
         ],
         "hpMult": 1.15,
         "damageMult": 1.05,
+        "xpMult": 1.17,
         "titleSuffix": "Deathless Legionary"
       }
     ],
@@ -154,7 +159,7 @@
     "attackRange": 11,
     "leashRadius": 34,
     "fleeAtHpPct": 0,
-    "xp": 58,
+    "xp": 73,
     "loot": "skeleton_drops",
     "sounds": {
       "idle": "skeleton_idle",
@@ -175,7 +180,7 @@
     "attackRange": 1.7,
     "leashRadius": 22,
     "fleeAtHpPct": 0,
-    "xp": 62,
+    "xp": 73,
     "loot": "cacto_drops",
     "sounds": {
       "idle": "cacto_idle",
@@ -196,7 +201,7 @@
     "attackRange": 1.7,
     "leashRadius": 40,
     "fleeAtHpPct": 0.12,
-    "xp": 74,
+    "xp": 133,
     "loot": "raptor_drops",
     "sounds": {
       "idle": "raptor_idle",
@@ -208,9 +213,9 @@
   "minotaur_boss": {
     "name": "Gravelord Minotaur",
     "sprite": "minotaur",
-    "level": 10,
-    "hp": 680,
-    "damage": 27,
+    "level": 9,
+    "hp": 596,
+    "damage": 24,
     "moveSpeed": 3.1,
     "attacks": [
       {
@@ -218,7 +223,7 @@
       },
       {
         "ability": "minotaur_gore",
-        "damage": 18,
+        "damage": 16,
         "weight": 2
       }
     ],
@@ -226,7 +231,7 @@
     "attackRange": 3,
     "leashRadius": 44,
     "fleeAtHpPct": 0,
-    "xp": 520,
+    "xp": 1726,
     "loot": "boss_drops",
     "sounds": {
       "idle": "minotaur_boss_idle",
@@ -247,7 +252,7 @@
     "attackRange": 1.8,
     "leashRadius": 34,
     "fleeAtHpPct": 0.2,
-    "xp": 24,
+    "xp": 23,
     "loot": "boar_drops",
     "sounds": {
       "idle": "boar_idle",
@@ -259,16 +264,23 @@
   "giant_spider": {
     "name": "Fen Weaver",
     "sprite": "giant_spider",
-    "level": 8,
-    "hp": 150,
-    "damage": 17,
+    "level": 4,
+    "hp": 85,
+    "damage": 11,
     "moveSpeed": 3.4,
     "ability": "spider_bite",
+    "ranks": [
+      {
+        "atLevel": 8,
+        "hpMult": 1.05,
+        "xpMult": 1.8
+      }
+    ],
     "aggroRadius": 10,
     "attackRange": 1.9,
     "leashRadius": 36,
     "fleeAtHpPct": 0,
-    "xp": 170,
+    "xp": 51,
     "loot": "spider_drops",
     "sounds": {
       "idle": "giant_spider_idle",
@@ -289,7 +301,7 @@
     "attackRange": 1.8,
     "leashRadius": 34,
     "fleeAtHpPct": 0,
-    "xp": 220,
+    "xp": 216,
     "loot": "serpent_drops",
     "sounds": {
       "idle": "bog_serpent_idle",
@@ -310,7 +322,7 @@
     "attackRange": 2,
     "leashRadius": 12,
     "fleeAtHpPct": 0,
-    "xp": 240,
+    "xp": 216,
     "loot": "mantrap_drops",
     "sounds": {
       "idle": "mantrap_idle",
@@ -322,16 +334,16 @@
   "lizardman": {
     "name": "Fenblade Lizardman",
     "sprite": "lizardman",
-    "level": 11,
-    "hp": 240,
-    "damage": 26,
+    "level": 10,
+    "hp": 211,
+    "damage": 23,
     "moveSpeed": 3.2,
     "ability": "bandit_slash",
     "aggroRadius": 10,
     "attackRange": 2.1,
     "leashRadius": 36,
     "fleeAtHpPct": 0.1,
-    "xp": 330,
+    "xp": 266,
     "loot": "lizardman_drops",
     "sounds": {
       "idle": "lizardman_idle",
@@ -352,7 +364,7 @@
     "attackRange": 11,
     "leashRadius": 36,
     "fleeAtHpPct": 0,
-    "xp": 270,
+    "xp": 266,
     "loot": "wisp_drops",
     "sounds": {
       "idle": "marsh_wisp_idle",
@@ -373,7 +385,7 @@
     "attackRange": 2,
     "leashRadius": 38,
     "fleeAtHpPct": 0,
-    "xp": 320,
+    "xp": 322,
     "loot": "husk_drops",
     "sounds": {
       "idle": "ash_husk_idle",
@@ -394,7 +406,7 @@
     "attackRange": 12,
     "leashRadius": 36,
     "fleeAtHpPct": 0,
-    "xp": 380,
+    "xp": 383,
     "loot": "fire_elemental_drops",
     "sounds": {
       "idle": "fire_elemental_idle",
@@ -415,7 +427,7 @@
     "attackRange": 1.7,
     "leashRadius": 40,
     "fleeAtHpPct": 0,
-    "xp": 300,
+    "xp": 383,
     "loot": "bone_bat_drops",
     "sounds": {
       "idle": "bone_bat_idle",
@@ -436,7 +448,7 @@
     "attackRange": 2.2,
     "leashRadius": 36,
     "fleeAtHpPct": 0,
-    "xp": 480,
+    "xp": 451,
     "loot": "wraith_drops",
     "sounds": {
       "idle": "wraith_idle",
@@ -448,9 +460,9 @@
   "cinder_golem_boss": {
     "name": "Furnace Golem",
     "sprite": "cinder_golem",
-    "level": 13,
-    "hp": 950,
-    "damage": 40,
+    "level": 14,
+    "hp": 1083,
+    "damage": 44,
     "moveSpeed": 2.6,
     "attacks": [
       {
@@ -458,7 +470,7 @@
       },
       {
         "ability": "ember_burst",
-        "damage": 24,
+        "damage": 27,
         "minRange": 4
       }
     ],
@@ -466,7 +478,7 @@
     "attackRange": 14,
     "leashRadius": 46,
     "fleeAtHpPct": 0,
-    "xp": 900,
+    "xp": 4195,
     "loot": "golem_boss_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
@@ -500,7 +512,7 @@
     "attackRange": 12,
     "leashRadius": 48,
     "fleeAtHpPct": 0,
-    "xp": 1400,
+    "xp": 4832,
     "loot": "lich_boss_drops",
     "sounds": {
       "idle": "lich_boss_idle",
@@ -521,7 +533,7 @@
     "attackRange": 2.1,
     "leashRadius": 38,
     "fleeAtHpPct": 0.08,
-    "xp": 430,
+    "xp": 451,
     "loot": "marauder_drops",
     "sounds": {
       "idle": "marauder_idle",
@@ -542,7 +554,7 @@
     "attackRange": 1.8,
     "leashRadius": 42,
     "fleeAtHpPct": 0,
-    "xp": 400,
+    "xp": 451,
     "loot": "gravehound_drops",
     "sounds": {
       "idle": "gravehound_idle",
@@ -572,7 +584,7 @@
     "attackRange": 11,
     "leashRadius": 40,
     "fleeAtHpPct": 0,
-    "xp": 520,
+    "xp": 524,
     "loot": "soldier_drops",
     "sounds": {
       "idle": "fallen_soldier_idle",
@@ -593,7 +605,7 @@
     "attackRange": 2.4,
     "leashRadius": 44,
     "fleeAtHpPct": 0,
-    "xp": 750,
+    "xp": 690,
     "loot": "sentinel_drops",
     "sounds": {
       "idle": "oathbound_sentinel_idle",
@@ -640,7 +652,7 @@
     "attackRange": 13,
     "leashRadius": 30,
     "fleeAtHpPct": 0,
-    "xp": 3400,
+    "xp": 10550,
     "loot": "king_drops",
     "sounds": {
       "idle": "sundered_king_idle",
@@ -671,7 +683,7 @@
     ],
     "ranks": [
       {
-        "atLevel": 8,
+        "atLevel": 6,
         "add": [
           {
             "ability": "bolt_shot",
@@ -680,10 +692,11 @@
             "weight": 2
           }
         ],
+        "xpMult": 1.84,
         "titleSuffix": "Deadeye"
       },
       {
-        "atLevel": 11,
+        "atLevel": 9,
         "remove": [
           "bone_bow"
         ],
@@ -695,6 +708,7 @@
           }
         ],
         "damageMult": 1.1,
+        "xpMult": 1.34,
         "titleSuffix": "Roadwarden"
       }
     ],
@@ -714,42 +728,44 @@
   "powder_brigand": {
     "name": "Powder Brigand",
     "sprite": "bandit_bombardier",
-    "level": 5,
-    "hp": 82,
-    "damage": 14,
+    "level": 4,
+    "hp": 72,
+    "damage": 13,
     "moveSpeed": 2.7,
     "attacks": [
       {
         "ability": "powder_flask",
-        "damage": 14,
+        "damage": 13,
         "weight": 1
       }
     ],
     "ranks": [
       {
-        "atLevel": 8,
+        "atLevel": 6,
         "add": [
           {
             "ability": "fuse_line",
-            "damage": 10,
+            "damage": 9,
             "minRange": 3,
             "weight": 2
           }
         ],
+        "xpMult": 1.43,
         "titleSuffix": "Sapper"
       },
       {
-        "atLevel": 11,
+        "atLevel": 9,
         "remove": [
           "powder_flask"
         ],
         "add": [
           {
             "ability": "oil_flask",
-            "damage": 20,
+            "damage": 18,
             "weight": 3
           }
         ],
+        "xpMult": 1.35,
         "titleSuffix": "Powdermaster"
       }
     ],
@@ -757,7 +773,7 @@
     "attackRange": 18,
     "leashRadius": 28,
     "fleeAtHpPct": 0.35,
-    "xp": 66,
+    "xp": 51,
     "loot": "bandit_drops",
     "sounds": {
       "idle": "bandit_idle",
@@ -769,9 +785,9 @@
   "bandit_enforcer": {
     "name": "Bandit Enforcer",
     "sprite": "bandit_enforcer",
-    "level": 6,
-    "hp": 165,
-    "damage": 15,
+    "level": 4,
+    "hp": 127,
+    "damage": 12,
     "moveSpeed": 2.5,
     "attacks": [
       {
@@ -781,26 +797,28 @@
     ],
     "ranks": [
       {
-        "atLevel": 9,
+        "atLevel": 6,
         "add": [
           {
             "ability": "iron_bash",
-            "damage": 10,
+            "damage": 8,
             "weight": 2
           }
         ],
+        "xpMult": 1.43,
         "titleSuffix": "Ironjaw"
       },
       {
-        "atLevel": 12,
+        "atLevel": 10,
         "add": [
           {
             "ability": "crown_strike",
-            "damage": 24,
+            "damage": 19,
             "weight": 2
           }
         ],
         "hpMult": 1.08,
+        "xpMult": 1.42,
         "titleSuffix": "Warden of the Road"
       }
     ],
@@ -808,7 +826,7 @@
     "attackRange": 2.4,
     "leashRadius": 30,
     "fleeAtHpPct": 0,
-    "xp": 108,
+    "xp": 102,
     "loot": "bandit_drops",
     "sounds": {
       "idle": "marauder_idle",
@@ -820,26 +838,27 @@
   "hollow_cowl": {
     "name": "Hollow Cowl",
     "sprite": "bandit_mystic",
-    "level": 7,
-    "hp": 110,
-    "damage": 16,
+    "level": 4,
+    "hp": 74,
+    "damage": 12,
     "moveSpeed": 2.6,
     "attacks": [
       {
         "ability": "wisp_bolt",
-        "damage": 16,
+        "damage": 12,
         "weight": 1
       }
     ],
     "ranks": [
       {
-        "atLevel": 10,
+        "atLevel": 8,
         "add": [
           {
             "ability": "mend_kin",
             "weight": 6
           }
         ],
+        "xpMult": 1.81,
         "titleSuffix": "Priest"
       },
       {
@@ -861,7 +880,7 @@
     "attackRange": 20,
     "leashRadius": 26,
     "fleeAtHpPct": 0,
-    "xp": 150,
+    "xp": 76,
     "loot": "bandit_drops",
     "sounds": {
       "idle": "wraith_idle",
@@ -873,9 +892,9 @@
   "thrace_redcap": {
     "name": "Thrace the Redcap",
     "sprite": "bandit_chief",
-    "level": 7,
-    "hp": 520,
-    "damage": 20,
+    "level": 5,
+    "hp": 400,
+    "damage": 16,
     "moveSpeed": 3,
     "attacks": [
       {
@@ -884,12 +903,12 @@
       },
       {
         "ability": "thrust",
-        "damage": 24,
+        "damage": 19,
         "weight": 2
       },
       {
         "ability": "iron_bash",
-        "damage": 16,
+        "damage": 13,
         "weight": 2
       },
       {
@@ -903,7 +922,7 @@
         "add": [
           {
             "ability": "fuse_line",
-            "damage": 14,
+            "damage": 11,
             "minRange": 3,
             "weight": 2
           }
@@ -916,7 +935,7 @@
     "attackRange": 2.6,
     "leashRadius": 34,
     "fleeAtHpPct": 0,
-    "xp": 420,
+    "xp": 582,
     "loot": "bandit_boss_drops",
     "sounds": {
       "idle": "marauder_idle",
@@ -940,7 +959,7 @@
     ],
     "ranks": [
       {
-        "atLevel": 9,
+        "atLevel": 6,
         "add": [
           {
             "ability": "raptor_bite",
@@ -948,10 +967,11 @@
           }
         ],
         "moveSpeedMult": 1.08,
+        "xpMult": 2.32,
         "titleSuffix": "Mauler"
       },
       {
-        "atLevel": 12,
+        "atLevel": 9,
         "remove": [
           "wolf_bite"
         ],
@@ -962,6 +982,7 @@
             "weight": 3
           }
         ],
+        "xpMult": 1.35,
         "titleSuffix": "Fenhound"
       }
     ],
@@ -969,7 +990,7 @@
     "attackRange": 1.9,
     "leashRadius": 26,
     "fleeAtHpPct": 0,
-    "xp": 26,
+    "xp": 23,
     "loot": "wolf_drops",
     "sounds": {
       "idle": "gravehound_idle",
@@ -1026,6 +1047,7 @@
         ],
         "hpMult": 1.4,
         "damageMult": 1.5,
+        "xpMult": 1.7,
         "titleSuffix": "Culled"
       }
     ],
@@ -1045,14 +1067,14 @@
   "ossuary_stitcher": {
     "name": "Ossuary Stitcher",
     "sprite": "ossuary_stitcher",
-    "level": 9,
-    "hp": 160,
-    "damage": 18,
+    "level": 8,
+    "hp": 140,
+    "damage": 16,
     "moveSpeed": 2.3,
     "attacks": [
       {
         "ability": "shadow_lance",
-        "damage": 18,
+        "damage": 16,
         "weight": 3
       },
       {
@@ -1069,6 +1091,7 @@
             "weight": 4
           }
         ],
+        "xpMult": 1.19,
         "titleSuffix": "Reanimator"
       },
       {
@@ -1090,7 +1113,7 @@
     "attackRange": 12,
     "leashRadius": 24,
     "fleeAtHpPct": 0,
-    "xp": 190,
+    "xp": 257,
     "loot": "wraith_drops",
     "sounds": {
       "idle": "wraith_idle",
@@ -1102,9 +1125,9 @@
   "bone_warden": {
     "name": "Bone Warden",
     "sprite": "bone_warden",
-    "level": 10,
-    "hp": 420,
-    "damage": 24,
+    "level": 9,
+    "hp": 368,
+    "damage": 22,
     "moveSpeed": 1.9,
     "attacks": [
       {
@@ -1128,6 +1151,7 @@
         ],
         "hpMult": 1.1,
         "moveSpeedMult": 1.05,
+        "xpMult": 1.11,
         "attackRange": 22,
         "leashRadius": 46,
         "titleSuffix": "Ossuary Warden"
@@ -1137,7 +1161,7 @@
     "attackRange": 20,
     "leashRadius": 30,
     "fleeAtHpPct": 0,
-    "xp": 360,
+    "xp": 863,
     "loot": "wraith_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
@@ -1169,7 +1193,7 @@
     ],
     "ranks": [
       {
-        "atLevel": 15,
+        "atLevel": 14,
         "remove": [
           "raise_bones"
         ],
@@ -1193,7 +1217,7 @@
     "attackRange": 14,
     "leashRadius": 30,
     "fleeAtHpPct": 0,
-    "xp": 420,
+    "xp": 766,
     "loot": "wraith_drops",
     "sounds": {
       "idle": "wraith_idle",
@@ -1233,6 +1257,7 @@
         "atLevel": 14,
         "hpMult": 1.1,
         "damageMult": 1.05,
+        "xpMult": 1.31,
         "aggroRadius": 13,
         "titleSuffix": "Charnel Feaster"
       }
@@ -1241,7 +1266,7 @@
     "attackRange": 2,
     "leashRadius": 22,
     "fleeAtHpPct": 0,
-    "xp": 78,
+    "xp": 133,
     "loot": "bone_bat_drops",
     "sounds": {
       "idle": "gravehound_idle",
@@ -1344,7 +1369,7 @@
     "attackRange": 16,
     "leashRadius": 38,
     "fleeAtHpPct": 0,
-    "xp": 380,
+    "xp": 383,
     "loot": "husk_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
@@ -1396,7 +1421,7 @@
     "attackRange": 12,
     "leashRadius": 40,
     "fleeAtHpPct": 0,
-    "xp": 470,
+    "xp": 575,
     "loot": "fire_elemental_drops",
     "sounds": {
       "idle": "fire_elemental_idle",
@@ -1439,7 +1464,7 @@
     "attackRange": 16,
     "leashRadius": 60,
     "fleeAtHpPct": 0,
-    "xp": 620,
+    "xp": 902,
     "loot": "forge_construct_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
@@ -1485,7 +1510,7 @@
     "attackRange": 16,
     "leashRadius": 30,
     "fleeAtHpPct": 0,
-    "xp": 640,
+    "xp": 902,
     "loot": "husk_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
@@ -1532,7 +1557,7 @@
     "attackRange": 18,
     "leashRadius": 12,
     "fleeAtHpPct": 0,
-    "xp": 700,
+    "xp": 902,
     "loot": "forge_construct_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
@@ -1587,7 +1612,7 @@
     "attackRange": 15,
     "leashRadius": 26,
     "fleeAtHpPct": 0,
-    "xp": 820,
+    "xp": 2098,
     "loot": "forge_construct_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
@@ -1649,7 +1674,7 @@
     "attackRange": 14,
     "leashRadius": 26,
     "fleeAtHpPct": 0.3,
-    "xp": 44,
+    "xp": 73,
     "loot": "bandit_drops",
     "sounds": {
       "idle": "bandit_idle",
@@ -1710,7 +1735,7 @@
     "attackRange": 12,
     "leashRadius": 22,
     "fleeAtHpPct": 0,
-    "xp": 130,
+    "xp": 100,
     "loot": "skeleton_drops",
     "sounds": {
       "idle": "wraith_idle",
@@ -1722,9 +1747,9 @@
   "duneshadow_lioness": {
     "name": "Duneshadow Lioness",
     "sprite": "duneshadow_lioness",
-    "level": 8,
-    "hp": 145,
-    "damage": 18,
+    "level": 7,
+    "hp": 127,
+    "damage": 16,
     "moveSpeed": 4.4,
     "attacks": [
       {
@@ -1733,7 +1758,7 @@
       },
       {
         "ability": "wolf_bite",
-        "damage": 15,
+        "damage": 14,
         "weight": 3
       }
     ],
@@ -1769,7 +1794,7 @@
     "attackRange": 3.6,
     "leashRadius": 44,
     "fleeAtHpPct": 0,
-    "xp": 200,
+    "xp": 133,
     "loot": "wolf_drops",
     "sounds": {
       "idle": "wolf_idle",
@@ -1781,9 +1806,9 @@
   "kaharat": {
     "name": "Kaharat, the Red Mane",
     "sprite": "kaharat",
-    "level": 9,
-    "hp": 520,
-    "damage": 26,
+    "level": 8,
+    "hp": 456,
+    "damage": 23,
     "moveSpeed": 3.3,
     "attacks": [
       {
@@ -1792,7 +1817,7 @@
       },
       {
         "ability": "pounce",
-        "damage": 22,
+        "damage": 20,
         "weight": 2
       },
       {
@@ -1817,7 +1842,7 @@
     "attackRange": 3.6,
     "leashRadius": 40,
     "fleeAtHpPct": 0,
-    "xp": 700,
+    "xp": 1373,
     "loot": "bandit_boss_drops",
     "sounds": {
       "idle": "wolf_idle",
@@ -1858,7 +1883,7 @@
     "attackRange": 12,
     "leashRadius": 26,
     "fleeAtHpPct": 0,
-    "xp": 1400,
+    "xp": 1329,
     "loot": "sekhat_drops",
     "sounds": {
       "idle": "lich_boss_idle",
@@ -1904,7 +1929,7 @@
     ],
     "ranks": [
       {
-        "atLevel": 11,
+        "atLevel": 10,
         "add": [
           {
             "ability": "caustic_gob",
@@ -1914,6 +1939,7 @@
           }
         ],
         "moveSpeedMult": 1.1,
+        "xpMult": 1.13,
         "titleSuffix": "Bilious"
       },
       {
@@ -1932,7 +1958,7 @@
     "attackRange": 12,
     "leashRadius": 24,
     "fleeAtHpPct": 0,
-    "xp": 165,
+    "xp": 172,
     "loot": "slime_drops",
     "sounds": {
       "idle": "slime_idle",
@@ -2006,7 +2032,7 @@
     "attackRange": 12,
     "leashRadius": 20,
     "fleeAtHpPct": 0,
-    "xp": 340,
+    "xp": 532,
     "loot": "slime_drops",
     "sounds": {
       "idle": "slime_idle",
@@ -2018,9 +2044,9 @@
   "grelmoss": {
     "name": "Grelmoss, the Crowned Mire",
     "sprite": "grelmoss",
-    "level": 12,
-    "hp": 820,
-    "damage": 34,
+    "level": 11,
+    "hp": 719,
+    "damage": 31,
     "moveSpeed": 1.6,
     "attacks": [
       {
@@ -2042,7 +2068,7 @@
     "attackRange": 14,
     "leashRadius": 40,
     "fleeAtHpPct": 0,
-    "xp": 850,
+    "xp": 2573,
     "loot": "grelmoss_drops",
     "sounds": {
       "idle": "slime_idle",
@@ -2054,9 +2080,9 @@
   "aelthir": {
     "name": "Aelthir, the Unmarred",
     "sprite": "aelthir",
-    "level": 12,
-    "hp": 900,
-    "damage": 44,
+    "level": 8,
+    "hp": 533,
+    "damage": 29,
     "moveSpeed": 4.6,
     "attacks": [
       {
@@ -2086,7 +2112,7 @@
     "attackRange": 3.8,
     "leashRadius": 40,
     "fleeAtHpPct": 0,
-    "xp": 1100,
+    "xp": 858,
     "loot": "unmarred_drops"
   },
   "cinder_nightmare": {
@@ -2127,7 +2153,7 @@
     "attackRange": 14,
     "leashRadius": 30,
     "fleeAtHpPct": 0,
-    "xp": 640,
+    "xp": 1049,
     "loot": "fire_elemental_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",

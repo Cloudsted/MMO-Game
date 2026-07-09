@@ -256,7 +256,7 @@ describe("entity-linked room events", () => {
     const wave = () =>
       [...sim.allEntities()].filter((e) => e.kind === "mob" && e.brain?.summonerId === mino.id).length;
     expect(wave()).toBe(0);
-    sim.applyDamage(a.session.entity, mino, 400); // 680 → ≤280: crosses 50%
+    sim.applyDamage(a.session.entity, mino, 350); // 596 → ≤246: crosses 50% (crit-safe: 525 < 596)
     expect(mino.combat!.act).not.toBe("dead");
     expect(wave()).toBe(3);
     expect(a.messages.some((m) => m.t === "chat" && m.text.includes("bellows"))).toBe(true);
@@ -311,12 +311,12 @@ describe("entity-linked room events", () => {
     const sim = new RoomSim(loadRoomDef("dungeon"));
     const a = joinRoom(sim);
     const mino = [...sim.allEntities()].find((e) => e.kind === "mob" && e.brain?.mobId === "minotaur_boss")!;
-    sim.applyDamage(a.session.entity, mino, 400); // rally #1
+    sim.applyDamage(a.session.entity, mino, 350); // rally #1
     sim.applyDamage(a.session.entity, mino, 999_999); // dead
     const fresh = sim.spawnMob("minotaur_boss", 46, 12, "boss-hall")!;
     const freshWave = () =>
       [...sim.allEntities()].filter((e) => e.kind === "mob" && e.brain?.summonerId === fresh.id).length;
-    sim.applyDamage(a.session.entity, fresh, 400); // rally #2 fires for the new life
+    sim.applyDamage(a.session.entity, fresh, 350); // rally #2 fires for the new life (crit-safe: 525 < 596)
     expect(freshWave()).toBe(3);
   });
 });
