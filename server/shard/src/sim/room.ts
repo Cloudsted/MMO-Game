@@ -1160,8 +1160,19 @@ export class RoomSim {
     const ground = this.world.groundBelow(x, y + 0.05, z, r);
     const inWater = this.world.liquidAt(x, y + 0.4, z) || this.world.liquidAt(x, y + 1.0, z);
     const descending = y <= p.y + 0.001;
+    // climbing out of deep water: while you heave up over a bank you rise ABOVE
+    // the surface (no longer `inWater`) but you're still over the pond, so
+    // `ground` is the distant pond floor and `y` blows past ground+tolerance —
+    // the exact case that rubber-banded a swim climb-out in water 2+ deep. Allow
+    // it as long as there's still liquid in the column just under the feet: you
+    // are getting OUT of the water, not hovering over dry land. Bounded to ~2
+    // blocks above the surface (liquid must be within y-2), and it ends the
+    // instant you step forward over the bank, where the normal ground check
+    // takes back over.
+    const climbingOutOfWater = this.world.liquidAt(x, y - 1.0, z) || this.world.liquidAt(x, y - 2.0, z);
     const terrainOk =
-      y >= ground - 0.6 && (y <= ground + this.consts.world.terrainYToleranceM || inWater || descending);
+      y >= ground - 0.6 &&
+      (y <= ground + this.consts.world.terrainYToleranceM || inWater || climbingOutOfWater || descending);
     // ascent cap: no legit move climbs more than a jump-arc slice per packet
     // (kills single-packet wall hops that would otherwise pass groundBelow)
     const ascentOk = y - p.y <= 1.5;

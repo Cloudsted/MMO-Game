@@ -94,6 +94,39 @@ describe("RoomSim", () => {
     expect(a.last("correct")).toBeUndefined();
   });
 
+  it("accepts a swim climb-out over deep water (no rubber-band), but not flying over dry land", () => {
+    // Buoyancy caps a swimmer's feet ~0.4 below the surface, so climbing onto a
+    // bank means rising ABOVE the surface while still over the pond — where
+    // `ground` is the distant floor. handleMove must permit that ascent while
+    // there's liquid below the feet, or the climb-out rubber-bands (bug the
+    // owner hit in the fen: "you jitter and can only go back down").
+    const MURK = BLOCK.murk_water!.id;
+    const STONE = BLOCK.stone!.id;
+    const w = sim.world;
+    // carve a 3-deep pond at (30,30): floor y9, murk 10..12, surface at 13;
+    // and a bank ONE block above the water at (31,30): solid to y13, top 14.
+    for (let y = 1; y < 20; y++) w.set(30, y, 30, y <= 9 ? STONE : y <= 12 ? MURK : 0);
+    for (let y = 1; y < 20; y++) w.set(31, y, 30, y <= 13 ? STONE : 0);
+
+    const a = join("swim", "Swimmer", 30, 30);
+    let seq = 0;
+    const mv = (x: number, y: number, z: number) => sim.handleMove(a.session, ++seq, x, y, z, 0, "move");
+    // float up to the surface over the pond (each hop small + still in water)
+    for (let y = a.session.entity.pos.y; y <= 12.6; y += 0.4) mv(30.5, y, 30.5);
+    // THE CLIMB: rise above the surface, still over the pond. Must not reject.
+    for (let y = 12.6; y <= 14.6; y += 0.3) mv(30.5, y, 30.5);
+    expect(a.session.entity.pos.y, "should have risen out of the water, not rubber-banded").toBeGreaterThan(14);
+    // step forward onto the one-block-high bank (hops under moveTolerance)
+    for (let f = 0.3; f <= 1.0; f += 0.3) mv(30.5 + f, 14, 30.5);
+    expect(a.session.entity.pos.x, "should be standing on the bank").toBeGreaterThan(30.9);
+
+    // the exemption is bounded to liquid-below: flying that high over DRY land
+    // (no water beneath) is still rejected.
+    const c = join("cheat", "Cheater", 40, 40);
+    sim.handleMove(c.session, 1, 40, feetY(40, 40) + 5, 40, 0, "move");
+    expect(c.last("correct")).toBeDefined();
+  });
+
   it("rejects moving into the city wall but allows the gate", () => {
     // south wall along z=94 (blocks span z 94..95); the gate spans x 60..68
     const a = join("c1", "Alice", 45, 93.5);
