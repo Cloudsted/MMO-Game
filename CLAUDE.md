@@ -62,8 +62,8 @@ into the paper-doll column; RMB a worn piece unequips; drag onto its slot
 also works**), Enter chat (`/g ` global; admins:
 `/give /gold /tp /spawnmob <mob> [n] [level] /time /level /reload /clearblocks /expire
 /enchant /room /prefab`),
-G god panel (admin), R respawn when dead (hub: town spawn; elsewhere:
-transfer back to Hub City), **H return to the hub from anywhere** (alive,
+G god panel (admin), R respawn when dead (hub: portal-stone spawn; elsewhere:
+transfer back to Greywatch), **H return to the hub from anywhere** (alive,
 no window open), Esc close window / release mouse.
 Every item renders in the hand (held sprite = its icon cell; block items
 show their block tile).
@@ -1224,6 +1224,57 @@ show their block tile).
     invariant; a bespoke Ysolde sprite; a golden-hash determinism baseline
     before relocating any wild-room NPC.
 
+- 2026-07-09 **GREYWATCH — full authored hub rebuild** (world-redesign batch
+  1b, owner-decided; spec = story bible §4, quality bar = the Sundered City).
+  `buildHubCity` → `buildGreywatch` in voxelstructures.ts; hub.json rewritten.
+  - **Five districts, each placed for a reason**: Portal-Stone Plaza
+    (center-south: worn cobble ring around the 2×2 portal-stone at (64,75),
+    offering flowers, 4 braziers; **spawn = (64,78) beside the stone** — the
+    respawn diegesis); the four arches now stand INSIDE the walls in a rough
+    ring around the stone (forest (50,81) / desert (76,83) / dungeon (77,67)
+    / grounds (51,68) — ids unchanged, labels re-pointed to "The Kingless
+    Wood" / "The Sunscour" / "The Sunken Crypt" / "The Freehold"); the south
+    wall **bows outward** (x 46–82 out to z=104) around the cluster — the
+    city built around something older; the **Hunters' Gate** (x 60–68,
+    z=104) carries banners, hung lanterns, and BOTH gate signs (rotting
+    tithe board west, fresh Charter board east); **Charter Hall** (84–96 ×
+    69–83, red-tile civic roof) with the bounty board + braziers on the
+    plaza rim, six empty trophy hooks inside; **Market Row** (NW lane x
+    44–46: Gorren's open-front forge, Mara's provisions + chalk-beam,
+    Zella's stall under the lantern-topped survey-tower, Selvara's
+    weaving-shop, Jib's palisaded timber yard, the row well); **Tally Yard**
+    (NE: two tribute barns on the dead-cart lane past the crypt arch, the
+    tithe-pen, and the **Wall of the Unreturned** — marble plaques, fresh
+    chisel-dust, one lantern, no torch ring); 7 thatch houses + the green
+    tree fill the quarters. The shared portal-arch builder is untouched
+    (natural-formation restyle stays a flagged separate pass).
+  - **NPC recasts** (bible table, dialog verbatim): Gorren/Mara/Zella/
+    Selvara/Jib keep mechanics at new Market Row posts; gate-guard = 
+    **Warder Bren** (states the staggered doors: wood L1 · sands L4 · crypt
+    L6); civs = **Old Tam / Widow Kess / Pip**; NEW dialog-only ids
+    `hunt-master` (**Corvyn**, at the board, sprite npc_guard) and
+    `stonewarden` (**Ivo**, plaza wanderer, sprite villager1) — bespoke
+    sprites are a follow-up. Room name "Greywatch"; the four return portals
+    in forest/desert/dungeon/grounds relabeled "Greywatch — the Last Free
+    City" (labels don't touch gen — hashes held).
+  - Client literals: death screen "Respawn in Greywatch"/"at the
+    portal-stone" (GameUi), H-key flash "returning to Greywatch..."
+    (WorldScreen) — client relaunch needed.
+  - **Trap paid**: `clearAbove(..., G)` with the spawn-plateau G deletes the
+    real surface block wherever the ramp ground sits a block higher (brown
+    exposed-dirt scars along the wall corners on the first render) —
+    `clearLocal` clears per-column at `b.g(x,z)`; wall footings flatten to G.
+  - Tests: hub golden GRID hash updated (only hub moved; features hash
+    unchanged — still no scatter); hard-coded coordinates updated in
+    room.test (wall/gate/portal-walk/interest), phase5 (crypt arch),
+    combat (Gorren), enchant (Selvara), common rooms.test (pairing now
+    derived, not literal); return-probe + enchant-probe walk targets.
+    Verified: typecheck, **452 vitest**, client compiles, travel-bot +
+    return-probe + build-bot live PASS, screenshots
+    tools/out/greywatch-{plaza,board,gate,night}-*.png. (enchant-probe's 4
+    weaving assertions were stale from BEFORE deep weaving — offers 4→12,
+    multi-slot — and still are; its Selvara walk/talk/weave legs pass.)
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -1310,6 +1361,17 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-09 **GREYWATCH SHIPPED (world-redesign batch 1b)** — the hub is now
+  the bible's Last Free City (see the decisions-log entry): five authored
+  districts, arches inside the bowed wall, portal-stone spawn, full NPC
+  recast (+ Corvyn & Ivo), "Greywatch" naming across room def / return-portal
+  labels / client strings. Verified: 452 vitest (hub golden hash updated —
+  only hub moved), typecheck, client compiles, travel/return/build bots live,
+  4 screenshot scenes (tools/out/greywatch-*.png, day + night). Owner
+  feel-checks pending: plaza density, the bow read from outside the gate,
+  Corvyn/Ivo stand-in sprites, "The Sunken Crypt" arch label (Tithe Crypt
+  rename is still [PROPOSAL]).
 
 - 2026-07-09 **DEEP MAGIC WEAVING shipped** (see the decisions-log entry +
   `docs/enchanting-design.md`). The enchanter is now tiered/slotted/quality-

@@ -79,7 +79,7 @@ describe("Selvara the Enchanter (weaves tier I-II)", () => {
   let npcId: number;
 
   function makeCharacter(id: string, name: string, inventory: Array<ItemStack | null>, gold = 5000): CharacterSnapshot {
-    return { id, name, level: 1, xp: 0, gold, inventory, x: 78, y: 0, z: 55, yaw: 0, roles: ["player"] };
+    return { id, name, level: 1, xp: 0, gold, inventory, x: 47, y: 0, z: 54, yaw: 0, roles: ["player"] };
   }
   function join(id: string, name: string, inventory: Array<ItemStack | null> = [], gold = 5000): TestClient {
     const messages: ServerToClient[] = [];

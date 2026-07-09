@@ -1135,7 +1135,7 @@ public class WorldScreen extends ScreenAdapter {
             // in the hub the server answers with a system chat line)
             if (!uiOpen && !ui.dead && welcomed && Gdx.input.isKeyJustPressed(Input.Keys.H)) {
                 socket.sendSafe(Protocol.returnToHub());
-                if (!"hub".equals(roomName)) flash("returning to the hub...");
+                if (!"hub".equals(roomName)) flash("returning to Greywatch...");
             }
         }
 

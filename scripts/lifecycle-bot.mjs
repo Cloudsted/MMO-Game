@@ -114,7 +114,8 @@ const main = async () => {
     const portal = state.portals.find((p) => p.target === "dungeon");
     if (!portal) fail("hub has no dungeon portal");
     if (portal.open === false) fail("dungeon portal is sealed at test start — wait for it to reopen");
-    // the dungeon portal sits outside the wall: through the south gate first
+    // Greywatch rebuild: the crypt arch sits INSIDE the walls on the plaza
+    // ring — these legacy gate waypoints are harmless (BFS routes anyway)
     // (waypoints keep the straight-line walker off the wall collision band)
     if (!(await goTo(ws, state, 64, 93))) fail("never reached the inner gate");
     if (!(await goTo(ws, state, 64, 100))) fail("never passed the gate");

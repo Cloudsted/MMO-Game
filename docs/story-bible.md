@@ -166,6 +166,19 @@ candlelight. This tension is ambient in townsfolk dialog, never a quest.
    names of those the stone kept. Fresh chisel-dust under the newest. A
    tableau that states the respawn mystery without a word of dialog.
 
+> **SHIPPED 2026-07-09 (world-redesign batch 1b):** the full authored rebuild
+> is in-game — five districts as specced above, spawn beside the portal-stone,
+> the four arches inside the south bow, the bounty board on the Charter Hall
+> porch, the tithe-pen, and the Wall of the Unreturned. Room display name is
+> **"Greywatch"**; return-portal labels in other rooms read "Greywatch — the
+> Last Free City". The NPC recasts below are live (including the two NEW ids
+> `hunt-master` Corvyn and `stonewarden` Ivo — sprites are reused stand-ins:
+> npc_guard / villager1; bespoke sprites are a follow-up). Bren states the
+> staggered doors plainly ("the Kingless Wood at level one, the Sunscour at
+> four, the crypt stair at six"); the hub's arch labels read "The Kingless
+> Wood" / "The Sunscour" / "The Sunken Crypt" (Tithe Crypt rename [PROPOSAL]
+> not yet shipped) / "The Freehold".
+
 ### Hub NPC recast table (every existing id, plus Maera & Ysolde)
 
 | id | Name (display) | Recast role | Sample dialog (3 each) |

@@ -1540,7 +1540,7 @@ public class GameUi {
         font.draw(batch, layout, w / 2f - layout.width / 2f, h * 0.62f);
         font.getData().setScale(1f);
         // dying away from the hub respawns you there (server-side hub transfer)
-        String where = "hub".equals(roomId) ? "in town" : "in Hub City";
+        String where = "hub".equals(roomId) ? "at the portal-stone" : "in Greywatch";
         font.setColor(1f, 0.9f, 0.85f, 1f);
         layout.setText(font, "[R]  Respawn " + where + "   —   your items wait where you fell");
         font.draw(batch, layout, w / 2f - layout.width / 2f, h * 0.5f);

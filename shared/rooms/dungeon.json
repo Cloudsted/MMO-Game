@@ -39,7 +39,7 @@
   "portals": [
     {
       "id": "dungeon-hub",
-      "label": "Hub City",
+      "label": "Greywatch — the Last Free City",
       "target": "hub",
       "x": 32,
       "z": 60,

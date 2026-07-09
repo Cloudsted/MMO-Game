@@ -748,7 +748,7 @@ describe("RoomSim gameplay", () => {
   });
 
   it("buys and sells at the shop with gold checks", () => {
-    const a = join("c1", "Alice", 52, 53); // next to Gorren the Smith
+    const a = join("c1", "Alice", 44, 54); // next to Gorren the Smith on Market Row
     const smith = [...sim.allEntities()].find((e) => e.kind === "npc" && e.npcId === "weaponsmith")!;
     sim.handleTalk(a.session, smith.id);
     const dialog = a.last("dialog")!;

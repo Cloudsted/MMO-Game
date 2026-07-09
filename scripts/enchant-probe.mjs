@@ -90,8 +90,8 @@ chat("/gold 1000");
 chat("/give iron_sword 1");
 await sleep(700);
 
-// walk to Selvara (79,56) and talk
-await goTo(ws, state, 79, 55, 2.2);
+// walk to Selvara's weaving-shop on Market Row (48,55) and talk
+await goTo(ws, state, 47, 55, 2.2);
 const selvaraId = [...npcs.entries()].find(([, name]) => name.includes("Selvara"))?.[0];
 ok(selvaraId !== undefined, "Selvara replicated in the hub");
 ws.send(JSON.stringify({ t: "talk", id: selvaraId }));

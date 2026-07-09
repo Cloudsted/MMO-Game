@@ -42,6 +42,8 @@ const UPDATE = process.env.GOLDEN_UPDATE === "1";
 
 /** Golden content hashes per room — see the update procedure above.
  *  (Recorded 2026-07-09 on branch world-redesign, pre-retune baseline.
+ *  hub updated 2026-07-09 for the GREYWATCH authored rebuild (batch 1b) —
+ *  only the hub grid moved; every other room stayed byte-identical.
  *  atelier/dungeon/grounds/hub share a features hash: it is the hash of
  *  the EMPTY ScatterResult — those rooms have no prefab scatter.) */
 const GOLDEN: Record<string, { grid: string; features: string }> = {
@@ -53,7 +55,7 @@ const GOLDEN: Record<string, { grid: string; features: string }> = {
   forest: { grid: "f7af9d8a1d07fc8fe8e553f7b1b64ce6e313577b", features: "6beee38ddb6103982547f057200e8aaed0c11bd4" },
   gloomfen: { grid: "5802ef6c1b976fe379cffee154e0317c8fa1a797", features: "986429b8853b04c7dd3a5dc6c6c37572f0201e1f" },
   grounds: { grid: "493920fcf3e0e14da80e2661dca4cf63dbcc7b14", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
-  hub: { grid: "0c0e507495eb48b4bf31e8b2e5f4513379f3e9e3", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
+  hub: { grid: "4064b6b1c8ad30e642ba19a2d150fb5d2174345b", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
   sundered_city: { grid: "f9aa6be274d3df42ec21b9d6c82e8874f785399f", features: "67b6fc85e01e5fd79bd0760c5934500893c40ac2" },
 };
 

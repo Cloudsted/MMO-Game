@@ -87,7 +87,7 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult 
   const features = scatterPrefabs(b, def, authoredExclusions(def));
   switch (def.id) {
     case "hub":
-      buildHubCity(b, def);
+      buildGreywatch(b, def);
       break;
     case "forest":
       buildForestArena(b, def);
@@ -405,101 +405,397 @@ export class Builder {
 }
 
 // ---------------------------------------------------------------------------
-// Hub City — walled, gated, torch-lit; same footprint the old authored map
-// used so NPC posts, portals, and bot waypoints stay valid.
+// GREYWATCH, THE LAST FREE CITY — full authored rebuild (world-redesign 1b,
+// story bible §4). Five districts, each placed for a reason:
+//   1. Portal-Stone Plaza (center-south): the four natural arches stand in a
+//      rough ring around the portal-stone; the south wall BOWS OUTWARD around
+//      the cluster — the city built itself around something older. Respawn
+//      arrivals wake at the stone (room spawn sits beside it).
+//   2. The Charter Hall + bounty board (plaza's east side): the old
+//      tithe-counting house — six trophy hooks, all empty; ledger shelves;
+//      the board on the plaza rim where every hunter walks past it.
+//   3. Market Row (northwest): Gorren's forge, Mara's provisions (chalk-beam
+//      tally over her door), Zella's stall under the old survey-tower,
+//      Selvara's weaving-shop, Jib's timber yard. Shops face the row.
+//   4. The Hunters' Gate (south, at the bow's mouth): formerly the Tithe
+//      Gate — both signs still up (rotting tithe board west, fresh Charter
+//      board east; the Council's sign-painter never came).
+//   5. The Tally Yard (northeast): tribute warehouses on the dead-cart lane
+//      past the crypt arch, and the Wall of the Unreturned (quiet corner,
+//      one lantern, fresh chisel-dust under the newest name).
+// The city is NOT a ruin — warm, busy, defensible. Streets bend, districts
+// connect, light sits where people would put it. The shared portal-arch
+// builder is deliberately untouched (natural-formation restyle is a flagged
+// separate pass).
 // ---------------------------------------------------------------------------
-function buildHubCity(b: Builder, def: RoomDef): void {
+const GW_WALL = { x0: 26, z0: 26, x1: 102, z1: 94 }; // main curtain rect
+const GW_BULGE = { x0: 46, x1: 82, z1: 104 }; // the south bow around the arch cluster
+const GW_GATE = { x0: 60, x1: 68 }; // the Hunters' Gate opening (z = GW_BULGE.z1)
+const GW_STONE = { x: 64, z: 75 }; // the portal-stone (2x2 pad; spawn wakes beside it)
+const GW_PLAZA = { x: 64, z: 76, r: 14 };
+
+function buildGreywatch(b: Builder, def: RoomDef): void {
+  const seed = def.terrain.seed;
   const G = b.g(def.spawn.x, def.spawn.z); // plateau ground (base=12)
   const FL = G + 1;
 
-  // --- city wall rectangle with a south gate ---
-  const W0 = 24,
-    Z0 = 24,
-    W1 = 104,
-    Z1 = 94;
-  const GATE_X0 = 60,
-    GATE_X1 = 68;
-  b.clearAbove(W0 - 1, Z0 - 1, W1 + 1, Z0 + 1, G);
-  b.clearAbove(W0 - 1, Z1 - 1, W1 + 1, Z1 + 1, G);
-  b.clearAbove(W0 - 1, Z0 - 1, W0 + 1, Z1 + 1, G);
-  b.clearAbove(W1 - 1, Z0 - 1, W1 + 1, Z1 + 1, G);
-  b.wallRun(W0, Z0, W1, Z0, FL, 4); // north
-  b.wallRun(W0, Z0, W0, Z1, FL, 4); // west
-  b.wallRun(W1, Z0, W1, Z1, FL, 4); // east
-  b.wallRun(W0, Z1, GATE_X0 - 1, Z1, FL, 4); // south, west of gate
-  b.wallRun(GATE_X1 + 1, Z1, W1, Z1, FL, 4); // south, east of gate
-  // corner + gate towers
-  b.tower(W0, Z0, FL, 2, 7);
-  b.tower(W1, Z0, FL, 2, 7);
-  b.tower(W0, Z1, FL, 2, 7);
-  b.tower(W1, Z1, FL, 2, 7);
-  b.tower(GATE_X0 - 2, Z1, FL, 1, 6);
-  b.tower(GATE_X1 + 2, Z1, FL, 1, 6);
-  b.torch(GATE_X0 - 2, FL + 6 + 1, Z1);
-  b.torch(GATE_X1 + 2, FL + 6 + 1, Z1);
-  // gate floor
-  b.paint(GATE_X0, Z1 - 1, GATE_X1, Z1 + 1, "path");
-
-  // --- plaza + fountain (offset off the spawn point AND the roads) ---
-  for (let z = 54; z <= 74; z++)
-    for (let x = 54; x <= 74; x++)
-      if (Math.hypot(x - 64, z - 64) <= 9.5) b.clearAbove(x, z, x, z, G);
-  b.paintCircle(64, 64, 9.5, "cobblestone");
-  b.fill(68, FL, 66, 72, FL, 70, "stone_bricks"); // fountain rim
-  b.fill(69, FL, 67, 71, FL, 69, "water"); // basin
-  b.fill(70, FL, 68, 70, FL + 1, 68, "stone_bricks"); // spout pillar
-  b.torch(70, FL + 2, 68);
-  // plaza torch ring
-  for (const [tx, tz] of [
-    [56, 56],
-    [72, 56],
-    [56, 72],
-    [72, 72],
-  ] as const) {
-    b.fill(tx, FL, tz, tx, FL + 1, tz, "log");
-    b.torch(tx, FL + 2, tz);
-  }
-
-  // --- roads (vegetation cleared, then painted onto the surface) ---
-  const road = (x0: number, z0: number, x1: number, z1: number) => {
-    for (let z = z0; z <= z1; z++)
-      for (let x = x0; x <= x1; x++) b.clearAbove(x, z, x, z, b.g(x, z), 8);
-    b.paint(x0, z0, x1, z1, "path");
+  // -- dressing helpers --
+  const lampPost = (x: number, z: number, light: "torch" | "lantern" = "torch"): void => {
+    const g = b.g(x, z); // local ground: ramp-zone posts must not float
+    b.clearAbove(x, z, x, z, g, 6);
+    b.fill(x, g + 1, z, x, g + 2, z, "log");
+    b.set(x, g + 3, z, light);
   };
-  road(63, 73, 65, Z1 + 1); // plaza -> south gate
-  road(63, 34, 65, 55); // plaza -> north
-  road(36, 63, 55, 65); // plaza -> west market
-  road(73, 63, 96, 65); // plaza -> east
-  road(62, Z1 + 2, 66, 102); // beyond the gate to the portal row
+  const brazier = (x: number, z: number): void => {
+    b.set(x, FL, z, "dark_bricks");
+    b.set(x, FL + 1, z, "brazier");
+  };
+  // road: clear vegetation, then path with worn cobble accents
+  const road = (x0: number, z0: number, x1: number, z1: number): void => {
+    for (let z = z0; z <= z1; z++)
+      for (let x = x0; x <= x1; x++) {
+        b.clearAbove(x, z, x, z, b.g(x, z), 8);
+        b.set(x, b.g(x, z), z, hash2(seed ^ 0x67e1, x, z) < 0.16 ? "cobblestone" : "path");
+      }
+  };
+  // per-column vegetation clear at LOCAL ground — the wall corners leave the
+  // plateau, and a clear based on the spawn G would delete the real surface
+  // block wherever the ramp ground sits a block higher (exposed-dirt scar)
+  const clearLocal = (x0: number, z0: number, x1: number, z1: number): void => {
+    for (let z = z0; z <= z1; z++)
+      for (let x = x0; x <= x1; x++) b.clearAbove(x, z, x, z, b.g(x, z));
+  };
+  // wall segment with a flattened footing (corners leave the plateau)
+  const wallSeg = (x0: number, z0: number, x1: number, z1: number): void => {
+    clearLocal(x0 - 1, z0 - 1, x1 + 1, z1 + 1);
+    b.flatten(x0, z0, x1, z1, G, "stone");
+    b.wallRun(x0, z0, x1, z1, FL, 4);
+  };
+  const towerAt = (cx: number, cz: number, half: number, height: number): void => {
+    b.flatten(cx - half, cz - half, cx + half, cz + half, G, "stone");
+    b.tower(cx, cz, FL, half, height);
+  };
 
-  // --- houses ringing the plaza (kept clear of NPC posts) ---
-  b.house(34, 38, 7, 6, G, "s");
-  b.house(50, 32, 7, 6, G, "s");
-  b.house(78, 34, 7, 6, G, "s");
-  b.house(90, 48, 6, 7, G, "w");
-  b.house(90, 72, 6, 7, G, "w");
-  b.house(34, 76, 7, 6, G, "e");
+  // --- 1. the curtain wall: main rect + the south bow around the arches ---
+  wallSeg(GW_WALL.x0, GW_WALL.z0, GW_WALL.x1, GW_WALL.z0); // north
+  wallSeg(GW_WALL.x0, GW_WALL.z0, GW_WALL.x0, GW_WALL.z1); // west
+  wallSeg(GW_WALL.x1, GW_WALL.z0, GW_WALL.x1, GW_WALL.z1); // east
+  wallSeg(GW_WALL.x0, GW_WALL.z1, GW_BULGE.x0, GW_WALL.z1); // south, west of the bow
+  wallSeg(GW_BULGE.x1, GW_WALL.z1, GW_WALL.x1, GW_WALL.z1); // south, east of the bow
+  wallSeg(GW_BULGE.x0, GW_WALL.z1, GW_BULGE.x0, GW_BULGE.z1); // bow west flank
+  wallSeg(GW_BULGE.x1, GW_WALL.z1, GW_BULGE.x1, GW_BULGE.z1); // bow east flank
+  wallSeg(GW_BULGE.x0, GW_BULGE.z1, GW_GATE.x0 - 1, GW_BULGE.z1); // bow front, west of the gate
+  wallSeg(GW_GATE.x1 + 1, GW_BULGE.z1, GW_BULGE.x1, GW_BULGE.z1); // bow front, east of the gate
+  towerAt(GW_WALL.x0, GW_WALL.z0, 2, 7);
+  towerAt(GW_WALL.x1, GW_WALL.z0, 2, 7);
+  towerAt(GW_WALL.x0, GW_WALL.z1, 2, 7);
+  towerAt(GW_WALL.x1, GW_WALL.z1, 2, 7);
+  towerAt(GW_BULGE.x0, GW_WALL.z1, 1, 6); // bow shoulders
+  towerAt(GW_BULGE.x1, GW_WALL.z1, 1, 6);
+  towerAt(GW_BULGE.x0, GW_BULGE.z1, 1, 6); // bow front corners
+  towerAt(GW_BULGE.x1, GW_BULGE.z1, 1, 6);
 
-  // --- west market: stalls near Mara + Jib ---
-  b.stall(42, 56, 4, 3, G);
-  b.stall(48, 68, 4, 3, G);
-  b.stall(42, 70, 4, 3, G);
+  // --- 4. the Hunters' Gate (formerly the Tithe Gate) ---
+  towerAt(GW_GATE.x0 - 3, GW_BULGE.z1, 2, 6);
+  towerAt(GW_GATE.x1 + 3, GW_BULGE.z1, 2, 6);
+  b.torch(GW_GATE.x0 - 3, FL + 7, GW_BULGE.z1);
+  b.torch(GW_GATE.x1 + 3, FL + 7, GW_BULGE.z1);
+  // lintel bridging the opening, Charter banners flying on top
+  b.fill(GW_GATE.x0 - 1, FL + 4, GW_BULGE.z1, GW_GATE.x1 + 1, FL + 5, GW_BULGE.z1, "stone_bricks");
+  for (const bx of [61, 64, 67] as const) b.set(bx, FL + 6, GW_BULGE.z1, "banner");
+  // lanterns hung in the gate arch (3 blocks of headroom below)
+  b.set(GW_GATE.x0, FL + 3, GW_BULGE.z1, "lantern");
+  b.set(GW_GATE.x1, FL + 3, GW_BULGE.z1, "lantern");
+  b.paint(GW_GATE.x0, GW_BULGE.z1 - 1, GW_GATE.x1, GW_BULGE.z1 + 1, "path");
+  // both gate signs still up: the rotting tithe board west, the fresh
+  // Charter board east (a tableau, not a bug — bible §4)
+  b.fill(58, FL, 107, 58, FL + 1, 107, "pale_log");
+  b.fill(57, FL + 2, 107, 59, FL + 2, 107, "rotting_planks");
+  b.fill(70, FL, 107, 70, FL + 1, 107, "log");
+  b.fill(69, FL + 2, 107, 71, FL + 2, 107, "planks");
+  b.set(70, FL + 3, 107, "banner");
 
-  // --- landmark tree on the NE green ---
-  b.giantTree(84, 42, b.g(84, 42), 11);
-
-  // --- torches along the roads ---
-  for (const [tx, tz] of [
-    [62, 80],
-    [66, 88],
-    [62, 96],
-    [66, 99],
-    [46, 63],
-    [80, 63],
-    [63, 44],
-  ] as const) {
-    b.torch(tx, b.g(tx, tz) + 1, tz);
+  // --- 2. Portal-Stone Plaza: paved AROUND the stone the city never moved ---
+  for (let z = Math.floor(GW_PLAZA.z - GW_PLAZA.r) - 2; z <= Math.ceil(GW_PLAZA.z + GW_PLAZA.r) + 2; z++)
+    for (let x = Math.floor(GW_PLAZA.x - GW_PLAZA.r) - 2; x <= Math.ceil(GW_PLAZA.x + GW_PLAZA.r) + 2; x++) {
+      const d = Math.hypot(x - GW_PLAZA.x, z - GW_PLAZA.z);
+      if (d > GW_PLAZA.r) continue;
+      b.clearAbove(x, z, x, z, b.g(x, z));
+      const r = hash2(seed ^ 0x67e2, x, z);
+      b.set(x, b.g(x, z), z, r < 0.12 ? "path" : r < 0.22 ? "mossy_cobblestone" : "cobblestone");
+    }
+  // the worn stone ring the plaza was paved around (older than the paving)
+  for (let a = 0; a < 48; a++) {
+    const ang = (a / 48) * Math.PI * 2;
+    const rx = Math.round(GW_STONE.x + Math.cos(ang) * 5);
+    const rz = Math.round(GW_STONE.z + Math.sin(ang) * 5);
+    b.set(rx, b.g(rx, rz), rz, hash2(seed ^ 0x67e3, rx, rz) < 0.3 ? "mossy_cobblestone" : "stone");
   }
+  // the portal-stone itself: low, plain, scorch-free — never decorated
+  b.fill(GW_STONE.x - 1, FL, GW_STONE.z - 1, GW_STONE.x, FL, GW_STONE.z, "stone");
+  // offerings left at its base (the coins are always gone by morning)
+  b.set(GW_STONE.x - 2, FL, GW_STONE.z, "flower_yellow");
+  b.set(GW_STONE.x + 1, FL, GW_STONE.z - 1, "flower_red");
+  b.set(GW_STONE.x - 1, FL, GW_STONE.z + 2, "flower_yellow");
+  lampPost(60, 79, "lantern"); // Ivo's lamp, by the spawn-side of the stone
+  brazier(56, 70); // plaza warmth on the diagonals
+  brazier(72, 70);
+  brazier(56, 84);
+  brazier(72, 84);
+
+  // --- streets (they bend: L-runs, not spokes) ---
+  road(63, 88, 65, 116); // plaza -> the Hunters' Gate -> the road out
+  road(63, 38, 65, 64); // plaza -> north quarter
+  road(46, 36, 82, 38); // the back lane along the north wall
+  road(46, 62, 57, 64); // plaza -> market (west leg)
+  road(44, 38, 46, 66); // Market Row itself (north-south)
+  road(72, 52, 74, 66); // plaza -> tally yard (the dead-cart lane, past the crypt arch)
+  road(74, 50, 86, 52); // dead-cart lane east leg
+  road(80, 34, 82, 52); // tally yard lane (memorial to warehouses)
+  road(77, 74, 83, 77); // plaza -> Charter Hall porch
+
+  // --- 3. the Charter Hall (the old tithe-counting house) ---
+  const CH = { x0: 84, z0: 69, x1: 96, z1: 83 };
+  b.clearAbove(CH.x0 - 5, CH.z0 - 1, CH.x1 + 1, CH.z1 + 1, G);
+  b.flatten(CH.x0, CH.z0, CH.x1, CH.z1, G, "planks");
+  for (let x = CH.x0; x <= CH.x1; x++) {
+    b.fill(x, FL, CH.z0, x, FL + 3, CH.z0, "stone_bricks");
+    b.fill(x, FL, CH.z1, x, FL + 3, CH.z1, "stone_bricks");
+  }
+  for (let z = CH.z0; z <= CH.z1; z++) {
+    b.fill(CH.x0, FL, z, CH.x0, FL + 3, z, "stone_bricks");
+    b.fill(CH.x1, FL, z, CH.x1, FL + 3, z, "stone_bricks");
+  }
+  for (const [cx, cz] of [
+    [CH.x0, CH.z0],
+    [CH.x1, CH.z0],
+    [CH.x0, CH.z1],
+    [CH.x1, CH.z1],
+  ] as const) {
+    b.fill(cx, FL, cz, cx, FL + 3, cz, "marble");
+  }
+  // windows on the south + east faces
+  for (const wx of [87, 90, 93] as const) b.set(wx, FL + 1, CH.z1, "glass");
+  for (const wz of [73, 79] as const) b.set(CH.x1, FL + 1, wz, "glass");
+  // double door, west face, onto the porch
+  b.fill(CH.x0, FL, 75, CH.x0, FL + 1, 76, 0);
+  // hip roof in red tile — the one civic roof in a thatch town
+  {
+    let rx0 = CH.x0 - 1,
+      rz0 = CH.z0 - 1,
+      rx1 = CH.x1 + 1,
+      rz1 = CH.z1 + 1,
+      ry = FL + 4;
+    while (rx0 <= rx1 && rz0 <= rz1 && ry < WORLD_HEIGHT - 1) {
+      for (let z = rz0; z <= rz1; z++)
+        for (let x = rx0; x <= rx1; x++) {
+          const edge = x === rx0 || x === rx1 || z === rz0 || z === rz1;
+          if (edge || rx1 - rx0 <= 1 || rz1 - rz0 <= 1) b.set(x, ry, z, "roof");
+        }
+      rx0++;
+      rz0++;
+      rx1--;
+      rz1--;
+      ry++;
+    }
+  }
+  // the trophy wall: marble backing, six hooks — one per tyrant, all empty,
+  // hung anyway (the game's promise made furniture)
+  b.fill(CH.x0 + 1, FL, CH.z0 + 1, CH.x1 - 1, FL + 2, CH.z0 + 1, "marble");
+  for (const hx of [85, 87, 89, 91, 93, 95] as const) b.set(hx, FL + 2, CH.z0 + 2, "iron_bars");
+  b.set(90, FL + 3, CH.z0 + 1, "lantern");
+  // ledger desks (tithe-counting, repurposed) + the Charter's shelves
+  b.fill(86, FL, 74, 88, FL, 74, "planks");
+  b.fill(86, FL, 78, 88, FL, 78, "planks");
+  b.fill(CH.x1 - 1, FL, 72, CH.x1 - 1, FL + 1, 74, "bookshelf");
+  b.fill(CH.x1 - 1, FL, 78, CH.x1 - 1, FL + 1, 80, "bookshelf");
+  brazier(86, 81);
+  brazier(94, 81);
+  // porch on the plaza side
+  b.fill(81, FL, 71, 81, FL + 2, 71, "log");
+  b.fill(81, FL, 80, 81, FL + 2, 80, "log");
+  b.paint(81, 71, 83, 80, "planks");
+  b.fill(81, FL + 3, 71, 83, FL + 3, 80, "planks");
+  b.set(82, FL + 2, 79, "lantern"); // hung under the porch roof
+  b.set(81, FL + 4, 73, "banner");
+  b.set(81, FL + 4, 78, "banner");
+  // THE BOUNTY BOARD, on the plaza rim where everyone walks past it:
+  // Wood L1 · Sands L4 · Crypt L6 (the staggered doors — Bren reads it aloud)
+  b.fill(80, FL, 73, 80, FL + 2, 73, "log");
+  b.fill(80, FL, 77, 80, FL + 2, 77, "log");
+  b.fill(80, FL + 1, 74, 80, FL + 2, 76, "planks");
+  b.set(80, FL + 3, 75, "banner");
+  b.torch(80, FL + 3, 73);
+  b.torch(80, FL + 3, 77);
+  brazier(80, 71);
+  brazier(80, 79);
+
+  // --- 3. Market Row (northwest; shops face the row) ---
+  // Mara's provisions: house + the chalk-beam tally over her front
+  b.house(34, 38, 8, 8, G, "e");
+  b.fill(42, FL, 40, 42, FL + 2, 40, "log");
+  b.fill(42, FL, 44, 42, FL + 2, 44, "log");
+  b.fill(42, FL + 3, 40, 42, FL + 3, 44, "planks"); // the beam: parties out, chalked; home, crossed
+  b.set(42, FL, 43, "hay"); // flour sacks by the door
+  // Gorren's forge: open-fronted smithy shed
+  const FG = { x0: 34, z0: 50, x1: 41, z1: 57 };
+  b.clearAbove(FG.x0 - 1, FG.z0 - 1, FG.x1 + 1, FG.z1 + 1, G);
+  b.flatten(FG.x0, FG.z0, FG.x1, FG.z1, G, "path");
+  for (let z = FG.z0; z <= FG.z1; z++) b.fill(FG.x0, FL, z, FG.x0, FL + 2, z, "stone_bricks");
+  for (let x = FG.x0; x <= FG.x1 - 1; x++) {
+    b.fill(x, FL, FG.z0, x, FL + 2, FG.z0, "stone_bricks");
+    b.fill(x, FL, FG.z1, x, FL + 2, FG.z1, "stone_bricks");
+  }
+  b.fill(FG.x1, FL, FG.z0, FG.x1, FL + 2, FG.z0, "log"); // open east front on log posts
+  b.fill(FG.x1, FL, FG.z1, FG.x1, FL + 2, FG.z1, "log");
+  b.fill(FG.x0, FL + 3, FG.z0, FG.x1, FL + 3, FG.z1, "planks");
+  b.fill(35, FL, 52, 36, FL, 53, "dark_bricks"); // the forge
+  b.set(36, FL + 1, 53, "ember_crystal"); // holding its heat
+  b.fill(35, FL + 1, 52, 35, FL + 6, 52, "dark_bricks"); // chimney through the roof
+  b.set(38, FL, 54, "iron_bars"); // the anvil
+  b.set(35, FL, 56, "iron_bars"); // rack of blade blanks
+  b.torch(40, FL + 2, 51);
+  // Zella's stall under the old survey-tower (older than the Charter)
+  b.flatten(50, 40, 54, 44, G, "stone");
+  b.tower(52, 42, FL, 2, 10);
+  for (let y = FL; y <= FL + 8; y++) {
+    for (let z = 40; z <= 44; z++)
+      for (let x = 50; x <= 54; x++) {
+        if (x !== 50 && x !== 54 && z !== 40 && z !== 44) continue;
+        if (hash2(seed ^ 0x67e4, x * 7 + y, z * 11 + y) < 0.12) b.set(x, y, z, "mossy_cobblestone");
+      }
+  }
+  b.set(52, FL + 10, 42, "lantern"); // the survey lamp, still lit
+  b.stall(49, 46, 4, 3, G);
+  // Selvara's weaving-shop
+  b.house(50, 52, 8, 7, G, "w");
+  b.set(50, FL + 2, 55, "banner"); // her mark over the door
+  b.fill(56, FL, 53, 56, FL + 1, 53, "bookshelf");
+  b.fill(56, FL, 57, 56, FL + 1, 57, "bookshelf");
+  b.set(56, FL, 55, "marble"); // the weaving lattice
+  b.set(56, FL + 1, 55, "blue_crystal");
+  // Jib's timber yard (the Freehold's supply line)
+  const TY = { x0: 32, z0: 60, x1: 42, z1: 70 };
+  b.clearAbove(TY.x0 - 1, TY.z0 - 1, TY.x1 + 1, TY.z1 + 1, G);
+  b.flatten(TY.x0, TY.z0, TY.x1, TY.z1, G, "dirt");
+  for (let x = TY.x0; x <= TY.x1; x++) {
+    b.set(x, FL, TY.z0, "palisade");
+    b.set(x, FL, TY.z1, "palisade");
+  }
+  for (let z = TY.z0; z <= TY.z1; z++) {
+    b.set(TY.x0, FL, z, "palisade");
+    if (z < 64 || z > 66) b.set(TY.x1, FL, z, "palisade"); // east gate gap
+  }
+  for (const [cx, cz] of [
+    [TY.x0, TY.z0],
+    [TY.x1, TY.z0],
+    [TY.x0, TY.z1],
+    [TY.x1, TY.z1],
+  ] as const) {
+    b.fill(cx, FL, cz, cx, FL + 1, cz, "palisade");
+    b.torch(cx, FL + 2, cz);
+  }
+  b.fill(34, FL, 62, 38, FL + 1, 63, "log"); // seasoned stock
+  b.fill(34, FL, 67, 37, FL, 68, "log");
+  b.fill(40, FL, 67, 41, FL + 1, 68, "planks");
+  b.set(38, FL, 65, "planks"); // the saw bench
+  b.paint(43, 64, 43, 66, "path"); // gate apron onto the row
+  // the row well
+  b.fill(46, FL, 58, 48, FL, 60, "stone_bricks");
+  b.set(47, FL, 59, "water");
+  lampPost(47, 41, "lantern");
+  lampPost(47, 50, "lantern");
+
+  // --- 5. the Tally Yard (northeast): tribute warehouses, half Charter now ---
+  const barn = (x0: number, z0: number, w: number, d: number, doorSide: "w" | "e"): void => {
+    const x1 = x0 + w - 1;
+    const z1 = z0 + d - 1;
+    b.clearAbove(x0 - 1, z0 - 1, x1 + 1, z1 + 1, G);
+    b.flatten(x0, z0, x1, z1, G, "path");
+    for (let x = x0; x <= x1; x++) {
+      b.fill(x, FL, z0, x, FL + 2, z0, "planks");
+      b.fill(x, FL, z1, x, FL + 2, z1, "planks");
+    }
+    for (let z = z0; z <= z1; z++) {
+      b.fill(x0, FL, z, x0, FL + 2, z, "planks");
+      b.fill(x1, FL, z, x1, FL + 2, z, "planks");
+    }
+    for (const [cx, cz] of [
+      [x0, z0],
+      [x1, z0],
+      [x0, z1],
+      [x1, z1],
+    ] as const) {
+      b.fill(cx, FL, cz, cx, FL + 2, cz, "log");
+    }
+    const mz = Math.floor((z0 + z1) / 2);
+    const dx = doorSide === "w" ? x0 : x1;
+    b.fill(dx, FL, mz, dx, FL + 2, mz + 1, 0); // cart door, full height
+    b.fill(x0, FL + 3, z0, x1, FL + 3, z1, "thatch");
+    b.torch(dx === x0 ? x0 + 2 : x1 - 2, FL + 2, mz - 1);
+  };
+  barn(83, 38, 10, 8, "w"); // east warehouse, door onto the yard lane
+  barn(70, 40, 9, 7, "e"); // west warehouse
+  b.fill(85, FL, 40, 87, FL, 41, "hay"); // tribute grain, still warehoused
+  b.fill(90, FL, 39, 90, FL + 1, 40, "planks"); // Charter crates
+  b.fill(72, FL, 42, 73, FL, 43, "hay");
+  b.set(76, FL, 45, "planks");
+  b.set(79, FL, 47, "hay"); // a load dropped by the lane
+  // the tithe-pen: the herd the Council drives south every new moon —
+  // "the arrangement" staged in blocks (Mara's dialog points at it)
+  const PEN = { x0: 55, z0: 42, x1: 61, z1: 48 };
+  b.clearAbove(PEN.x0, PEN.z0, PEN.x1, PEN.z1, G);
+  for (let x = PEN.x0; x <= PEN.x1; x++) {
+    b.set(x, FL, PEN.z0, "palisade");
+    b.set(x, FL, PEN.z1, "palisade");
+  }
+  for (let z = PEN.z0; z <= PEN.z1; z++) {
+    b.set(PEN.x0, FL, z, "palisade");
+    if (z < 44 || z > 45) b.set(PEN.x1, FL, z, "palisade"); // drover's gate on the road side
+  }
+  b.paint(PEN.x0 + 1, PEN.z0 + 1, PEN.x1 - 1, PEN.z1 - 1, "dirt"); // trampled bare
+  b.set(57, FL, 44, "hay");
+  b.set(59, FL, 46, "hay");
+  b.set(56, FL, 47, "hay");
+  b.fill(58, FL, 42, 59, FL, 42, "stone_bricks"); // the trough on the fence line
+  b.set(58, FL, 43, "water");
+  // the WALL OF THE UNRETURNED (quiet corner: one lantern, no torch ring).
+  // Marble panels carry the chiseled names; the newest cut is at the east
+  // end, fresh chisel-dust under it. States the respawn mystery wordlessly.
+  clearLocal(83, 30, 97, 33);
+  b.flatten(84, 31, 96, 31, G, "stone");
+  b.fill(84, FL, 31, 96, FL + 3, 31, "stone_bricks");
+  for (let px = 85; px <= 95; px += 2) b.set(px, FL + 1, 31, "marble");
+  b.set(95, b.g(95, 32), 32, "sand"); // fresh chisel-dust under the newest name
+  b.set(87, FL, 32, "flower_yellow"); // left by the families
+  b.set(93, FL, 32, "flower_red");
+  lampPost(96, 33, "lantern");
+  lampPost(79, 52, "torch"); // dead-cart lane junction
+
+  // --- residential: the town the districts serve ---
+  b.house(34, 74, 7, 6, G, "e"); // southwest quarter
+  b.house(33, 84, 8, 6, G, "e");
+  b.house(42, 86, 7, 6, G, "n");
+  b.house(86, 86, 7, 6, G, "n"); // southeast quarter
+  b.house(94, 87, 6, 7, G, "w");
+  b.house(54, 30, 7, 6, G, "s"); // north quarter, doors on the back lane
+  b.house(68, 30, 7, 6, G, "s");
+  // the green: one old tree inside the bow, west of the gate road
+  b.giantTree(56, 90, b.g(56, 90), 10);
+  // the Charter muster corner in the bow yard (banners + fodder)
+  b.fill(74, FL, 96, 74, FL + 1, 96, "palisade");
+  b.set(74, FL + 2, 96, "banner");
+  b.set(76, FL, 97, "hay");
+  b.set(75, FL, 95, "hay");
+
+  // --- lamplight along the streets ---
+  lampPost(61, 92);
+  lampPost(67, 98);
+  lampPost(61, 108); // the road out
+  lampPost(67, 114);
+  lampPost(62, 44); // north road
+  lampPost(66, 58);
+  lampPost(75, 60); // dead-cart lane
 }
 
 // ---------------------------------------------------------------------------

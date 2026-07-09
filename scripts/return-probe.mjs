@@ -135,8 +135,9 @@ expect(!!t4, "returnToHub from forest grants a transfer");
 ws.close();
 ({ ws, state } = await enterRoom(t4.wsUrl, t4.ticket));
 expect(state.roomId === "hub", "returnToHub lands in hub");
-const dSpawn = Math.hypot(state.x - 64, state.z - 64);
-expect(dSpawn < 4, `returnToHub arrival ${state.x.toFixed(1)},${state.z.toFixed(1)} is the default hub spawn (${dSpawn.toFixed(1)} from 64,64)`);
+// Greywatch rebuild: hub spawn is the portal-stone at (64,78)
+const dSpawn = Math.hypot(state.x - 64, state.z - 78);
+expect(dSpawn < 4, `returnToHub arrival ${state.x.toFixed(1)},${state.z.toFixed(1)} is the portal-stone spawn (${dSpawn.toFixed(1)} from 64,78)`);
 ws.close();
 
 log(failed ? "RESULT: FAIL" : "RESULT: PASS");

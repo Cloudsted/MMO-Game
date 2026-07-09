@@ -36,10 +36,14 @@ describe("computePortalArrival", () => {
     const forest = loadRoomDef("forest");
     const via = forest.portals.find((p) => p.id === "forest-hub")!;
     const arrival = computePortalArrival(hub, "forest", via)!;
-    // hub-forest at (64,99); hub spawn (64,64) is due -Z of it
-    expect(arrival.x).toBeCloseTo(64);
-    expect(arrival.z).toBeCloseTo(99 - 3.2);
-    expect(arrival.yaw).toBeCloseTo(Math.PI);
+    // Greywatch: the forest arch stands on the plaza ring (50,81); arrivals
+    // land r+1.0 toward the portal-stone spawn, facing away from the arch
+    const gate = hub.portals.find((p) => p.id === "hub-forest")!;
+    expect(Math.hypot(arrival.x - gate.x, arrival.z - gate.z)).toBeCloseTo(gate.r + 1.0);
+    const dSpawnArrival = Math.hypot(hub.spawn.x - arrival.x, hub.spawn.z - arrival.z);
+    const dSpawnGate = Math.hypot(hub.spawn.x - gate.x, hub.spawn.z - gate.z);
+    expect(dSpawnArrival).toBeLessThan(dSpawnGate); // nudged toward the stone
+    expect(arrival.yaw).toBeCloseTo(Math.atan2(arrival.x - gate.x, arrival.z - gate.z));
   });
 
   it("uses the authored exitX/exitZ override when present", () => {

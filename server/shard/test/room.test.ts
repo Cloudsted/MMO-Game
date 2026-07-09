@@ -128,29 +128,31 @@ describe("RoomSim", () => {
   });
 
   it("rejects moving into the city wall but allows the gate", () => {
-    // south wall along z=94 (blocks span z 94..95); the gate spans x 60..68
-    const a = join("c1", "Alice", 45, 93.5);
-    sim.handleMove(a.session, 1, 45, feetY(45, 93.5), 94.0, 0, "move");
+    // Greywatch: south-west wall at z=94 (x 26..46; the bow-shoulder tower
+    // occupies 45..47, so probe at 40); the Hunters' Gate opens the bow
+    // front at z=104, x 60..68
+    const a = join("c1", "Alice", 40, 93.5);
+    sim.handleMove(a.session, 1, 40, feetY(40, 93.5), 94.0, 0, "move");
     expect(a.last("correct")).toBeDefined(); // AABB clips the wall blocks
 
-    const b = join("c2", "Bob", 64, 93.7);
-    sim.handleMove(b.session, 1, 64, feetY(64, 94.2), 94.2, 0, "move");
+    const b = join("c2", "Bob", 64, 103.7);
+    sim.handleMove(b.session, 1, 64, feetY(64, 104.2), 104.2, 0, "move");
     expect(b.last("correct")).toBeUndefined(); // straight through the gate
   });
 
   it("keeps far players out of interest, with enter on approach", () => {
-    // Alice at the portal apron, Bob at the north road end: 65.5m apart,
-    // interest radius 64 — the walk north brings her into range along the
-    // vegetation-cleared gate road.
-    const a = join("c1", "Alice", 64, 99.5);
-    const b = join("c2", "Bob", 64, 34);
+    // Alice outside the Hunters' Gate, Bob on the back lane: 69m apart,
+    // interest radius 64 — the walk north through the gate brings her into
+    // range along the vegetation-cleared gate road.
+    const a = join("c1", "Alice", 64, 105);
+    const b = join("c2", "Bob", 64, 36);
     expect(b.last("welcome")!.ents.filter((e) => e.kind === "player")).toHaveLength(0);
     sim.snapshot();
     expect(b.last("snap")).toBeUndefined();
 
     // walk Alice into range via many legal steps (validation stays on)
     let seq = 0;
-    for (let z = 99; z >= 90; z -= 0.5) {
+    for (let z = 104.5; z >= 94; z -= 0.5) {
       sim.handleMove(a.session, ++seq, 64, feetY(64, z), z, 0, "move");
       const start = Date.now();
       while (Date.now() - start < 1) { /* spin 1ms — sim dt uses wall time */ }
@@ -200,13 +202,13 @@ describe("RoomSim", () => {
   });
 
   it("validates portal use by proximity", () => {
-    const a = join("c1", "Alice"); // hub spawn (64,64); portal hub-forest at (64,99)
+    const a = join("c1", "Alice", 64, 80.5); // on the plaza; forest arch at (50,81)
     expect(sim.validatePortalUse(a.session, "hub-forest")).toBeNull(); // too far
     expect(sim.validatePortalUse(a.session, "nope")).toBeNull(); // unknown id
-    // walk legally down the plaza road, through the gate, to the portal
+    // walk legally west across the plaza to the arch ring
     let seq = 0;
-    for (let z = 64.5; z <= 98.5; z += 0.5) {
-      sim.handleMove(a.session, ++seq, 64, feetY(64, z), z, 0, "move");
+    for (let x = 63.5; x >= 51.5; x -= 0.5) {
+      sim.handleMove(a.session, ++seq, x, feetY(x, 80.5), 80.5, 0, "move");
       const start = Date.now();
       while (Date.now() - start < 1) { /* spin */ }
     }
@@ -230,9 +232,11 @@ describe("RoomSim", () => {
 
   it("raises solid city walls with a gate gap", () => {
     const bricks = BLOCK.stone_bricks!.id;
-    expect(sim.world.get(45, 13, 94)).toBe(bricks); // south wall
-    expect(sim.world.solidAt(64, 13, 94)).toBe(false); // the gate gap
-    expect(sim.world.solidAt(64, 13, 80)).toBe(false); // the road inside
+    expect(sim.world.get(45, 13, 94)).toBe(bricks); // south-west wall
+    expect(sim.world.get(50, 13, 104)).toBe(bricks); // the bow front around the arches
+    expect(sim.world.solidAt(64, 13, 104)).toBe(false); // the Hunters' Gate gap
+    expect(sim.world.solidAt(64, 13, 94)).toBe(false); // the bow interior is open ground
+    expect(sim.world.solidAt(64, 13, 80)).toBe(false); // the plaza inside
   });
 
   it("builds a stone archway at every portal", () => {

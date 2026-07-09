@@ -101,8 +101,8 @@ describe("dungeon", () => {
     const wire = hub.portalsWire();
     expect(wire.find((p) => p.target === "dungeon")!.open).toBe(false);
     expect(wire.find((p) => p.target === "forest")!.open).toBe(true);
-    // standing at the dungeon portal, use is refused with a system message
-    const a = joinRoom(hub, "c1", "Alice", 74, 100);
+    // standing at the crypt arch (77,67), use is refused with a system message
+    const a = joinRoom(hub, "c1", "Alice", 76, 66);
     expect(hub.validatePortalUse(a.session, "hub-dungeon")).toBeNull();
     expect(a.last("chat")?.text).toContain("sealed");
     hub.setRoomStatus("dungeon", true);

@@ -1,12 +1,12 @@
 {
   "id": "hub",
-  "name": "Hub City",
+  "name": "Greywatch",
   "type": "hub",
   "biome": "grass",
   "wind": 0.7,
   "persistence": "stateful",
   "size": { "w": 128, "h": 128 },
-  "spawn": { "x": 64, "z": 64, "yaw": 3.14159 },
+  "spawn": { "x": 64, "z": 78, "yaw": 3.14159 },
   "terrain": {
     "kind": "blocks",
     "seed": 20260702,
@@ -17,85 +17,121 @@
   },
   "flags": { "safeZone": true, "buildingEnabled": false, "pvp": false },
   "portals": [
-    { "id": "hub-forest", "label": "Whispering Forest", "target": "forest", "x": 64, "z": 99, "r": 2.2 },
-    { "id": "hub-desert", "label": "Sunscour Desert", "target": "desert", "x": 54, "z": 100, "r": 2.2 },
-    { "id": "hub-dungeon", "label": "Sunken Crypt", "target": "dungeon", "x": 74, "z": 100, "r": 2.2 },
-    { "id": "hub-grounds", "label": "Building Grounds", "target": "grounds", "x": 44, "z": 101, "r": 2.2 }
+    { "id": "hub-forest", "label": "The Kingless Wood", "target": "forest", "x": 50, "z": 81, "r": 2.2 },
+    { "id": "hub-desert", "label": "The Sunscour", "target": "desert", "x": 76, "z": 83, "r": 2.2 },
+    { "id": "hub-dungeon", "label": "The Sunken Crypt", "target": "dungeon", "x": 77, "z": 67, "r": 2.2 },
+    { "id": "hub-grounds", "label": "The Freehold", "target": "grounds", "x": 51, "z": 68, "r": 2.2 }
   ],
   "spawnTables": [],
   "npcs": [
     {
       "id": "weaponsmith", "name": "Gorren the Smith", "sprite": "npc_smith",
-      "x": 52, "z": 52, "yaw": 2.36, "wanderRadius": 0,
+      "x": 43, "z": 54, "yaw": 1.57, "wanderRadius": 0,
       "dialog": [
-        "Steel for the wilds, friend. A slime will laugh off your fists.",
-        "The iron sword holds an edge twice as long as that rusty thing."
+        "Steel for the wilds, friend. Out there even the rabbits belong to a king.",
+        "My grandfather forged tithe-chains. My father shod tithe-carts. I forge for the Charter. The family improves.",
+        "Royal work — Valdrenn work — is another thing entire. That steel remembers being a country."
       ],
       "shop": { "items": ["rusty_sword", "iron_sword", "hunting_bow", "longbow", "leather_cap", "leather_jerkin", "leather_boots", "wooden_shield"], "buys": true }
     },
     {
       "id": "provisioner", "name": "Mara the Provisioner", "sprite": "npc_provisioner",
-      "x": 47, "z": 62, "yaw": 1.57, "wanderRadius": 0,
+      "x": 43, "z": 42, "yaw": 1.57, "wanderRadius": 0,
       "dialog": [
         "Bread for the road, potions for when the road bites back.",
-        "Wolves hunt in packs out there. Carry more than you think you need."
+        "Every party I provision goes up on that beam in chalk. The ones that come home, I cross out. Don't make me leave chalk standing.",
+        "The Council still drives cattle to the desert's edge every new moon. Call it 'the arrangement' if you like. I call it feeding the thing that starves us."
       ],
       "shop": { "items": ["bread", "health_potion", "mana_potion", "antidote"], "buys": true }
     },
     {
       "id": "arcanist", "name": "Zella the Arcanist", "sprite": "npc_arcanist",
-      "x": 76, "z": 52, "yaw": -2.36, "wanderRadius": 0,
+      "x": 47, "z": 47, "yaw": -1.57, "wanderRadius": 0,
       "dialog": [
         "A staff decides what you are: fire, frost, or mercy.",
+        "I have measured the portal-stone for thirty years. It has measured me right back. Neither of us will say what we found.",
+        "The arches were here before the walls. Before the tyrants, some say. Anyone who tells you they know what the portals are — sell them nothing on credit.",
         "Casting takes focus — stand still, or the spell slips away."
       ],
       "shop": { "items": ["fire_staff", "frost_staff", "heal_staff"], "buys": true }
     },
     {
       "id": "enchanter", "name": "Selvara the Enchanter", "sprite": "npc_enchanter",
-      "x": 79, "z": 56, "yaw": -2.0, "wanderRadius": 0,
+      "x": 48, "z": 55, "yaw": -1.57, "wanderRadius": 0,
       "dialog": [
         "Every blade remembers what it was promised. I simply... remind it.",
         "A finer piece holds more of my work — and holds it stronger.",
         "I weave to the second degree here. For the third, seek the ember-witch past the desert.",
+        "Do you know what a king's ember does to a weaving? Neither do I. Bring me one and we'll both find out.",
         "Tired of an old weaving? I can unpick it — curses too, for a price."
       ],
       "service": { "kind": "enchant", "maxTier": 2, "remove": true, "offers": ["hpRegen", "manaRegen", "moveSpeedPct", "magicTakenPct", "maxHp", "maxMana", "dmgPct", "meleeTakenPct", "rangedTakenPct", "lifesteal", "goldFind", "thorns"] }
     },
     {
       "id": "carpenter", "name": "Jib the Carpenter", "sprite": "villager1",
-      "x": 44, "z": 66, "yaw": 1.57, "wanderRadius": 0,
+      "x": 44, "z": 63, "yaw": 1.57, "wanderRadius": 0,
       "dialog": [
         "Block by block — that's how anything worth keeping gets built.",
-        "Take the west portal to the Building Grounds and stack whatever you like. Torches too, for the night work."
+        "The Freehold's the first ground men have CLAIMED back since the Dividing. Build on it. That's not a hobby, that's a flag.",
+        "When the wood has no king and the fen runs dry, I'll build you a house with a door that locks from the inside only. Imagine that.",
+        "The Freehold arch is the one nearest my yard. Stack whatever you like out there — torches too, for the night work."
       ],
       "shop": { "items": ["block_planks", "block_log", "block_cobblestone", "block_stone_bricks", "block_thatch", "block_glass", "block_torch", "block_dark_bricks", "block_marble", "block_lantern", "block_palisade", "block_hay", "block_iron_bars", "block_bookshelf"], "buys": true }
     },
     {
-      "id": "gate-guard", "name": "Gate Guard", "sprite": "npc_guard",
-      "x": 61, "z": 94, "yaw": 0, "wanderRadius": 0,
+      "id": "gate-guard", "name": "Warder Bren", "sprite": "npc_guard",
+      "x": 61, "z": 100, "yaw": 0, "wanderRadius": 0,
       "dialog": [
-        "That portal leads to the Whispering Forest. Slimes near the road, wolves in the deep wood, bandits camped up north.",
-        "Die out there and your gear stays where you fell. Run back quick before someone else finds it.",
-        "There's a gate at the far end of the forest now — the Fen Gate. That one's for veterans, friend. Level eight or don't bother; the Gloomfen doesn't give bodies back.",
-        "Past the deep desert they've opened the Cinderrift. Ash, lava, and the forge-dead still working their shifts. Bring rift-forged steel or bring a will.",
-        "And if you've beaten the Gravelord — the crypt has a lower door. The Vaults of Morvane. Whatever's down there, the Gravelord was standing guard OVER it. Think on that."
+        "Read the board before you walk an arch. The Charter posts every mark plain: the land, the beast, and the level you'd better be.",
+        "Three doors out of Greywatch, staggered like the board says: the Kingless Wood at level one, the Sunscour at four, the crypt stair at six. Walk them in that order.",
+        "The Kingless Wood first, greenhorn — marks at one through four, and the only crown out there is a poacher's red cap.",
+        "Die past the wall and the stone brings you home. Your gear stays where you fell — the stone keeps no luggage. Run back quick."
       ]
     },
     {
-      "id": "civ-1", "name": "Townsfolk", "sprite": "villager1",
-      "x": 64, "z": 55, "yaw": 0, "wanderRadius": 9,
-      "dialog": ["Lovely day on the plaza, isn't it?"]
+      "id": "civ-1", "name": "Old Tam", "sprite": "villager1",
+      "x": 86, "z": 54, "yaw": -1.57, "wanderRadius": 5,
+      "dialog": [
+        "I drove a tithe-cart forty years. Grain east, cattle south, our dead down the crypt stair. Nobody drives the dead-cart anymore. That's the Charter's doing, that is.",
+        "I saw the smoke when Valdrenn burned. Nine days of it. My cousin swore the ash came down warm here, ninety miles off.",
+        "'Every land has a king,' they taught us. Well. Turns out kings can be skinned. That's new."
+      ]
     },
     {
-      "id": "civ-2", "name": "Townsfolk", "sprite": "villager2",
-      "x": 58, "z": 62, "yaw": 0, "wanderRadius": 9,
-      "dialog": ["They say the bandits up north hoard fine steel."]
+      "id": "civ-2", "name": "Widow Kess", "sprite": "villager2",
+      "x": 90, "z": 34, "yaw": 3.14, "wanderRadius": 2,
+      "dialog": [
+        "My husband's name is on the Tally Yard wall. The stone didn't give him back. They never say why it keeps some.",
+        "The Council smiles at your Charter in daylight and counts tribute owed by candlelight. Watch them.",
+        "The poachers in the wood sell to the kings' own creatures — skin the game AND inform on the hunters. A rope's too kind."
+      ]
     },
     {
-      "id": "civ-3", "name": "Townsfolk", "sprite": "villager3",
-      "x": 70, "z": 60, "yaw": 0, "wanderRadius": 9,
-      "dialog": ["I once saw an epic blade drop from a common thief. Luck of the roll!"]
+      "id": "civ-3", "name": "Pip", "sprite": "villager3",
+      "x": 69, "z": 71, "yaw": -0.9, "wanderRadius": 6,
+      "dialog": [
+        "When I'm grown I'm taking the Red Mane's whole MANE. Warder Bren says start with slimes. Slimes! Ugh.",
+        "I touched the portal-stone once on a dare. It's warm! Like a wall a cat's been sleeping against.",
+        "A hunter sold a king's-guard trophy at Gorren's and the whole street came to look. It was still SMOKING."
+      ]
+    },
+    {
+      "id": "hunt-master", "name": "Hunt-Master Corvyn", "sprite": "npc_guard",
+      "x": 79, "z": 79, "yaw": -1.57, "wanderRadius": 0,
+      "dialog": [
+        "The Charter asks three things: take the mark, bring the proof, tell the truth about what you saw. The last one's hardest.",
+        "We are two years old. The tyrants are older than the roads. Plan accordingly — start at the board, left column, top.",
+        "No one has ever felled a king. Understand what it means when it happens — and it WILL — the tribute, the Council, the map, all of it changes. Be the change, hunter."
+      ]
+    },
+    {
+      "id": "stonewarden", "name": "Stonewarden Ivo", "sprite": "villager1",
+      "x": 61, "z": 72, "yaw": 0.79, "wanderRadius": 3,
+      "dialog": [
+        "Mind the stone. Don't chip it, don't chalk it, don't pray at it too loud. It was here first and it'll be here last.",
+        "Folk leave coins on the stone for the dead it returns. The coins are always gone by morning. I don't take them. I don't ask.",
+        "Every arch in the world hums the same note, if you listen. Zella says that's nonsense. Zella hasn't listened."
+      ]
     }
   ]
 }
