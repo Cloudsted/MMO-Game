@@ -1186,23 +1186,37 @@ public class WorldScreen extends ScreenAdapter {
         if (hitX) velX = 0;
         if (hitZ) velZ = 0;
 
-        // swim climb-out: pushing against a bank boosts you over the lip.
-        // Anchor the ledge scan to the FEET cell (floor(pos.y)), NOT feet+0.4:
-        // when you float at the surface of DEEP water your feet sit ~0.4 below
-        // the bank's lip, so the old +0.4 base scanned one cell too high and
-        // never saw the bank block whose top is at the water surface — you'd
-        // bob against it forever and never climb out. In shallow water your
-        // feet rest on the ground, so +0.4 happened to hit the right cell,
-        // which is why the bug only showed up in water two or more blocks deep.
-        if (inWater && (hitX || hitZ) && movingNow) {
-            float ax = pos.x + tx / speed * (game.constants.playerRadius + 0.45f);
-            float az = pos.z + tz / speed * (game.constants.playerRadius + 0.45f);
-            int fy = (int) Math.floor(pos.y);
-            for (int dy = 0; dy <= 2; dy++) {
-                if (world.solidAt(ax, fy + dy, az)
-                    && !world.solidAt(ax, fy + dy + 1, az)
-                    && !world.solidAt(ax, fy + dy + 2, az)) {
-                    velY = Math.max(velY, 5.6f);
+        // swim climb-out: heave up and over a bank when you swim toward it.
+        // Buoyancy caps your feet at ~0.4 BELOW the water surface, so without a
+        // boost you can never step onto a bank — not one at the surface, and
+        // certainly not the common bog shore whose top sits a block ABOVE the
+        // water. So: while swimming and pressing toward a solid ledge that
+        // breaks the surface (true air, not liquid, above it), give an upward
+        // boost sized to actually clear that ledge's top. Gated on real air
+        // above so it never launches you off a submerged step, and on the
+        // ledge being above your feet so it only ever helps you climb.
+        if (inWater && movingNow) {
+            float nx = tx / speed, nz = tz / speed; // normalized move direction
+            float ax = pos.x + nx * (game.constants.playerRadius + 0.5f);
+            float az = pos.z + nz * (game.constants.playerRadius + 0.5f);
+            int feet = (int) Math.floor(pos.y);
+            for (int by = feet + 1; by >= feet - 1; by--) { // highest reachable ledge first
+                boolean solid = world.solidAt(ax, by, az);
+                // the two cells over the ledge must be OPEN AIR (no solid, no
+                // liquid): that is what proves the ledge is at/above the
+                // waterline and climbing onto it gets you OUT of the water.
+                boolean airAbove = !world.solidAt(ax, by + 1, az) && !world.liquidAt(ax, by + 1, az)
+                    && !world.solidAt(ax, by + 2, az) && !world.liquidAt(ax, by + 2, az);
+                if (solid && airAbove) {
+                    float ledgeTop = by + 1;
+                    if (ledgeTop > pos.y + 0.1f && ledgeTop <= pos.y + 1.9f) {
+                        // apex-to-ledge kinematics (+margins for water drag);
+                        // tuned for a ~0.6-block clearance over the lip — enough
+                        // to complete the step onto it, not a launch. ~6 m/s for
+                        // a surface lip, ~9 for a one-block bog shore.
+                        float need = (float) Math.sqrt(2f * 22f * (ledgeTop - pos.y + 0.3f)) + 0.8f;
+                        velY = Math.max(velY, Math.min(need, 11f));
+                    }
                     break;
                 }
             }
