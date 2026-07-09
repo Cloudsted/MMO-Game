@@ -1,0 +1,81 @@
+{
+  "id": "maw",
+  "name": "The Maw",
+  "type": "dungeon",
+  "biome": "ruin",
+  "wind": 0.4,
+  "persistence": "ephemeral",
+  "fixedTime": 0.46,
+  "nightLight": 1.5,
+  "lifecycle": {
+    "downtimeSec": 600,
+    "warnAtSecLeft": [30, 10]
+  },
+  "size": {
+    "w": 96,
+    "h": 96
+  },
+  "spawn": {
+    "x": 48,
+    "z": 72,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 90731,
+    "base": 24,
+    "amplitude": 0,
+    "frequency": 0.02
+  },
+  "flags": {
+    "safeZone": false,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "maw-desert",
+      "label": "The Wellhead Crater — Sunscour",
+      "target": "desert",
+      "x": 48,
+      "z": 76,
+      "r": 2.2,
+      "exitPortalId": "desert-maw"
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "the-undertide",
+      "region": { "kind": "circle", "x": 48, "z": 46, "r": 3 },
+      "mobs": [{ "mob": "sarquun", "weight": 1 }],
+      "maxAlive": 1,
+      "packSize": [1, 1],
+      "respawnSec": 99999
+    }
+  ],
+  "events": [
+    {
+      "id": "maw-surfaces",
+      "on": { "kind": "bossHpBelowPct", "mob": "sarquun", "pct": 0.85 },
+      "actions": [
+        { "kind": "announce", "text": "The sand falls away. You are standing on its lip." }
+      ]
+    },
+    {
+      "id": "maw-heaves",
+      "on": { "kind": "bossHpBelowPct", "mob": "sarquun", "pct": 0.4 },
+      "actions": [
+        { "kind": "announce", "text": "The Undertide heaves its full bulk from the well. It remembers being a sea." }
+      ]
+    },
+    {
+      "id": "maw-collapse",
+      "on": { "kind": "bossDeath", "mob": "sarquun" },
+      "actions": [
+        { "kind": "announce", "text": "Sarquun shudders — and the pit drinks it back down. The Maw is closing behind it. OUT — one minute!" },
+        { "kind": "setRoomTimer", "sec": 60 }
+      ]
+    }
+  ],
+  "npcs": []
+}

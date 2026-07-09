@@ -848,6 +848,16 @@
         30
       ]
     },
+    "undertide_beak_shard": {
+      "name": "Undertide Beak Shard",
+      "kind": "trophy",
+      "value": 60,
+      "stack": 10,
+      "icon": [
+        6,
+        55
+      ]
+    },
     "war_medal": {
       "name": "War Medal",
       "kind": "trophy",

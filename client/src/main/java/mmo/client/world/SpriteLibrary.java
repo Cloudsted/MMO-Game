@@ -104,6 +104,9 @@ public class SpriteLibrary {
         heights.put("fallen_soldier", 1.75f);
         heights.put("oathbound_sentinel", 2.2f);
         heights.put("sundered_king", 2.6f);
+        // The Maw: colossal-by-staging — the widest sprite in the game at the
+        // minotaur's height cap (the arena dressing does the rest)
+        heights.put("sarquun", 2.8f);
     }
 
     public PlayerSheet sheet(String key) {

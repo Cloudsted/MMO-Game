@@ -264,6 +264,10 @@ public class AudioEngine {
                 bed = "wind_storm"; // desolate ruin wind under the dead city
                 playlist = "dungeon";
             }
+            case "maw" -> {
+                bed = "wind_storm"; // dead air scouring the dried sea's basin
+                playlist = "dungeon";
+            }
             case "desert" -> {
                 bed = "wind_desert";
                 playlist = "wild";

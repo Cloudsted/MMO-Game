@@ -587,7 +587,8 @@ the room teaches both.
      in one structure.
   3. **The crater rim** (☆ hidden portal) — the way down to the Maw,
      concealed by the rim itself; the feeding-schedule countdown gate.
-     Reason: owner seed #2's front door.
+     Reason: owner seed #2's front door. **SHIPPED (batch 2)** as the
+     Wellhead Crater at (96,384), far-SW dunes off every road.
   4. **The pride-dunes** — bone-middens and drag-marks radiating from
      Kaharat's shade-rock. Reason: apex-predator territory reads at a
      glance.
@@ -605,7 +606,23 @@ the room teaches both.
 
 ---
 
-### E2 — **The Maw** (`NEW room`, working name "The Pit") · ~L9 event · ◉ cycling arena
+### E2 — **The Maw** (`maw`) · L9 event · ◉ cycling arena — **SHIPPED (batch 2, 2026-07-09)**
+
+> **SHIPPED as designed** (world-redesign batch 2): room `maw` (96² preset,
+> biome `ruin`, fixedTime 0.46 — pitiless salt-flat daylight, readability
+> per LESSONS), no lifetimeSec, downtimeSec 600, bossDeath → 60s collapse.
+> Desert side: **the Wellhead Crater** (E1 landmark 3) at (96,384) in the
+> far-SW dunes, terraced descent + strand-lines + salt pan + a dead keel,
+> one 1-block stair lane out east through a rim notch. Portal pair
+> `desert-maw` ⇄ `maw-desert`, desert side always-open — the LOCK is the
+> Maw's downtime ("(locked — opens in m:ss)" verified live on a client).
+> Sprite `boss_kraken_1.png` VERIFIED on a contact sheet (pale mint
+> cephalopod, orange slit eyes — exactly as cataloged). Announce lines
+> shipped verbatim (surfacing at 85% hp) + death line: *"Sarquun shudders —
+> and the pit drinks it back down. The Maw is closing behind it. OUT — one
+> minute!"* Trophy `undertide_beak_shard` (value 60) guaranteed on the
+> boss table. Proven by `scripts/maw-probe.mjs` (full cycle live) +
+> screenshots tools/out/maw-{crater,arena,locked}-*.png.
 
 **The thing that drank the sea, at feeding time.** A 96² preset arena in
 the crater floor. The tyrant here is real and colossal and CANNOT LEAVE —
@@ -613,13 +630,17 @@ grown too vast for its own pit, it surfaces on a schedule to feed, and the
 portal's downtime countdown IS the feeding schedule ("(locked — opens in
 m:ss)" as diegesis; zero new tech, per proposal).
 
-- **THE TYRANT (main boss):** **Sarquun, the Undertide** [PROPOSAL], event
-  boss ~L9. The drinker of the sea; the reason E1 is a desert; a tyrant as
-  ecological fact. Sprite [PROPOSAL, UNVERIFIED]: `boss_kraken_1.png`
-  (bulbous mantle + eight tentacles; sand-pale tint pass in-pipeline if
-  needed). "Colossal" is staged, not scaled (billboards cap ~2.6): the
+- **THE TYRANT (main boss):** **Sarquun, the Undertide**, event
+  boss L9 (group-leaning: hp 830 ≈ 1.4× the solo-boss trend, the
+  sundered_king group ratio scaled down; kit = maw_snap big-telegraph
+  chomp / undertide_gout predictive AoE bolt that slows — "the weight of a
+  drowned sea" / maw_geysers pillar line). The drinker of the sea; the
+  reason E1 is a desert; a tyrant as ecological fact. Sprite (VERIFIED):
+  `boss_kraken_1.png` (bulbous mantle + eight tentacles). "Colossal" is
+  staged, not scaled (billboard 2.8, the widest sprite shipped): the
   arena is dressed as the CREST of it — tentacle-blocks breach the sand at
-  the rim, the fight sprite is "the mouth of the thing", and the announce
+  the rim (pale_ruin_stone humps, doubling as cover from the gout), the
+  fight sprite is "the mouth of the thing", and the announce
   text does the rest: *"The sand falls away. You are standing on its
   lip."*
 - **Side boss:** none.
@@ -631,7 +652,7 @@ m:ss)" as diegesis; zero new tech, per proposal).
   3. **The feeding-floor** — bone-meal sand, swept in arcs. Reason: the
      schedule made visible; you fight standing on the menu.
 - **How the story is told:** the countdown portal (the schedule), the
-  strand-lines, announce lines; trophy [PROPOSAL] `undertide_beak_shard`
+  strand-lines, announce lines; trophy `undertide_beak_shard`
   ("A flake off the thing that drank a sea. Proof enough for anyone.").
 - **Named characters:** none. The Maw has no society — that's what makes it
   a good first "true tyrant" kill for mid-level parties.
@@ -946,8 +967,8 @@ tithe-road that used to cross it, plowed under.
 **New defs required by this bible** (authored at band level, per proposal):
 `quartermaster_grole` (W2), `elder_strangler` (W3, mantrap sprite),
 `veshka_broodmother` (W4), `old_wallbreaker` (W5), `barrow_alpha` (W5,
-gravehound sprite), `ser_osmund` (W6, sentinel sprite), `sarquun` (E2),
-`old_kiln` (E3, slagback sprite), `first_draft` (N1, ogre sprite),
+gravehound sprite), `ser_osmund` (W6, sentinel sprite), ~~`sarquun` (E2)~~
+(SHIPPED batch 2), `old_kiln` (E3, slagback sprite), `first_draft` (N1, ogre sprite),
 `cold_curator` (N3, medusa sprite), `first_tyrant` (W8), `rime_warden`
 (W8), plus White Waste trash [PROPOSAL, all UNVERIFIED sprites from the
 catalog]: winter/spectral centaur (`centaur_c_1.png`), snow harpy
@@ -974,7 +995,7 @@ catalog]: winter/spectral centaur (`centaur_c_1.png`), snow harpy
 | W8 | The Rime Wardens | gate guardians | ~21 | NEW `rime_warden` | `gargoyle_1.png` — UNVERIFIED (fallback: frostplate re-palette) |
 | E1 Sunscour | Kaharat, the Red Mane | main TYRANT — pride king; opens Emberfells gate | 8 (retune 9→8) | `kaharat` | `kaharat` (shipped) |
 | E1 | Sekhat the Ninth | side ☆ tomb — the first dead king | 10 | `sekhat` | `sekhat` (shipped) |
-| E2 The Maw | Sarquun, the Undertide [PROPOSAL] | main TYRANT — cycling arena; drank the sea | ~9 event | NEW `sarquun` | `boss_kraken_1.png` — UNVERIFIED |
+| E2 The Maw | Sarquun, the Undertide | main TYRANT — cycling arena; drank the sea | 9 event (group-leaning) | `sarquun` (SHIPPED batch 2) | `boss_kraken_1.png` — VERIFIED (tools/out/sheets/kraken-chars.png) |
 | E3 Emberfells | The Old Kiln | main — the Furnace-King's eldest servant | 11 | NEW `old_kiln` | `slagback_troll` (shipped) |
 | E4 Cinderrift | Vulkhar, the Furnace-King [PROPOSAL] | main TYRANT — stokes the rift; opens Foundry gate | 13 | `cinder_golem_boss` (display re-theme) | `cinder_golem` (shipped) |
 | E4 | The Frostplate Revenant | side (elevated) — the First's tithe-collector | 15 rank | `frostplate_revenant` | shipped |

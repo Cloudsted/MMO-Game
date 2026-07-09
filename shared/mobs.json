@@ -2161,5 +2161,44 @@
       "hurt": "cinder_golem_boss_hurt",
       "die": "cinder_golem_boss_die"
     }
+  },
+  "sarquun": {
+    "name": "Sarquun, the Undertide",
+    "sprite": "sarquun",
+    "level": 9,
+    "hp": 830,
+    "damage": 27,
+    "moveSpeed": 2.3,
+    "attacks": [
+      {
+        "ability": "maw_snap",
+        "weight": 4
+      },
+      {
+        "ability": "undertide_gout",
+        "damage": 22,
+        "minRange": 4,
+        "weight": 3
+      },
+      {
+        "ability": "maw_geysers",
+        "damage": 20,
+        "minRange": 3,
+        "weight": 3
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 18,
+    "attackRange": 12,
+    "leashRadius": 34,
+    "fleeAtHpPct": 0,
+    "xp": 1726,
+    "loot": "sarquun_drops",
+    "sounds": {
+      "idle": "bog_serpent_idle",
+      "attack": "bog_serpent_attack",
+      "hurt": "bog_serpent_hurt",
+      "die": "bog_serpent_die"
+    }
   }
 }

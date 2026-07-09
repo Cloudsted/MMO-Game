@@ -65,7 +65,15 @@ export declare class Builder {
     /** Crenellated wall run along x or z at a fixed ground level. */
     wallRun(x0: number, z0: number, x1: number, z1: number, baseY: number, height: number, block?: string): void;
     tower(cx: number, cz: number, baseY: number, half: number, height: number, block?: string): void;
-    /** Stone portal archway: two pillars + lintel, plus a path apron. */
+    /** Actual BUILT surface at a column (highest solid block y) — authored
+     *  ground included, where g() only knows the natural noise. */
+    groundAt(x: number, z: number): number;
+    /** Stone portal archway: two pillars + lintel, plus a path apron.
+     *  Arches stamp AFTER the authored builders, so a portal standing on dug or
+     *  raised ground (the Wellhead crater pan, the Maw basin) must anchor to the
+     *  BUILT surface — the natural g() would float it 8-16 blocks in the air.
+     *  The >2 guard keeps every portal on natural/flattened ground on the
+     *  byte-identical legacy path (golden-hash-verified). */
     portalArch(px: number, pz: number, alongX: boolean): void;
     /** Thatch-roofed plank house with log posts, windows, a torch inside. */
     house(x0: number, z0: number, w: number, d: number, groundY: number, doorSide: "n" | "s" | "e" | "w"): void;

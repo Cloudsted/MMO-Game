@@ -1996,6 +1996,66 @@
       }
     ]
   },
+  "sarquun_drops": {
+    "gold": [
+      140,
+      240
+    ],
+    "rolls": [
+      2,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 30,
+        "table": "weapons_steel"
+      },
+      {
+        "weight": 20,
+        "table": "armor_fine",
+        "minRarity": "rare"
+      },
+      {
+        "weight": 25,
+        "item": "greater_health_potion",
+        "qty": [
+          2,
+          3
+        ]
+      },
+      {
+        "weight": 15,
+        "item": "mana_potion",
+        "qty": [
+          2,
+          3
+        ]
+      },
+      {
+        "weight": 10,
+        "item": "ancient_coin",
+        "qty": [
+          1,
+          2
+        ]
+      }
+    ],
+    "guaranteed": [
+      {
+        "weight": 1,
+        "item": "undertide_beak_shard",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 1,
+        "table": "weapons_steel",
+        "minRarity": "rare"
+      }
+    ]
+  },
   "sekhat_drops": {
     "gold": [
       90,

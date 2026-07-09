@@ -231,6 +231,12 @@ function grabComponent(png, seedX, seedY) {
     fallen_soldier: { file: resolve(CHARS, "military1.png"), char: [3, 0] }, // faceless full-plate man-at-arms (military2 is all kepi officers — wrong era)
     oathbound_sentinel: { file: resolve(MOBS, "monster_dknight2.png"), single: true }, // blue horned knight
     sundered_king: { file: resolve(MOBS, "monster_dknight1.png"), single: true }, // crimson death knight
+    // ---- world-redesign batch 2: The Maw ----
+    // pale mint-green cephalopod: ribbed bulbous mantle, orange slit eyes at
+    // its base, eight sprawling tentacles. Verified on
+    // tools/out/sheets/kraken-chars.png (107x92 frames, clean 3x4 grid,
+    // no baked shadow).
+    sarquun: { file: resolve(UNSORTED, "boss_kraken_1.png"), single: true },
   };
   const manifest = {};
   for (const [key, spec] of Object.entries(SHEETS)) {

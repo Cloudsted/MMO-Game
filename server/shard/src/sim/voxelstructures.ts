@@ -57,6 +57,8 @@ function authoredExclusions(def: RoomDef): Rect[] {
     out.push({ x0: DESERT_OASIS.x - 10, z0: DESERT_OASIS.z - 10, x1: DESERT_OASIS.x + 10, z1: DESERT_OASIS.z + 10 });
     // the Colossus, the aqueduct spine, and the Throat (S4/S5)
     out.push(...DESERT_SETPIECE_EXCLUSIONS);
+    // the Wellhead Crater (E2 front door) — bowl + rim + the eastern stair lane
+    out.push(WELLHEAD_RECT);
   }
   if (def.id === "gloomfen") {
     // three authored setpieces (S1/S2/S3) — the Drownbell, the Temple, and the
@@ -112,6 +114,9 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult 
       break;
     case "sundered_city":
       buildSunderedCity(b, def, features);
+      break;
+    case "maw":
+      buildMaw(b, def);
       break;
   }
   // every portal gets a stone archway + a path apron facing the room spawn —
@@ -267,12 +272,36 @@ export class Builder {
     this.fill(cx - half + 1, baseY + height - 1, cz - half + 1, cx + half - 1, baseY + height - 1, cz + half - 1, block);
   }
 
-  /** Stone portal archway: two pillars + lintel, plus a path apron. */
+  /** Actual BUILT surface at a column (highest solid block y) — authored
+   *  ground included, where g() only knows the natural noise. */
+  groundAt(x: number, z: number): number {
+    for (let y = WORLD_HEIGHT - 1; y >= 1; y--) {
+      if (this.world.solidAt(x, y, z)) return y;
+    }
+    return this.g(x, z);
+  }
+
+  /** Stone portal archway: two pillars + lintel, plus a path apron.
+   *  Arches stamp AFTER the authored builders, so a portal standing on dug or
+   *  raised ground (the Wellhead crater pan, the Maw basin) must anchor to the
+   *  BUILT surface — the natural g() would float it 8-16 blocks in the air.
+   *  The >2 guard keeps every portal on natural/flattened ground on the
+   *  byte-identical legacy path (golden-hash-verified). */
   portalArch(px: number, pz: number, alongX: boolean): void {
-    const g = this.g(px, pz);
+    const natural = this.g(px, pz);
+    const actual = this.groundAt(px, pz);
+    const authoredSite = Math.abs(actual - natural) > 2;
+    const g = authoredSite ? actual : natural;
     const fl = g + 1;
     this.clearAbove(px - 3, pz - 3, px + 3, pz + 3, g);
-    this.paintCircle(px, pz, 3.2, "path");
+    if (authoredSite) {
+      // flat authored ground: paint the apron at ITS level, not the noise's
+      for (let z = Math.floor(pz - 3.2); z <= Math.ceil(pz + 3.2); z++)
+        for (let x = Math.floor(px - 3.2); x <= Math.ceil(px + 3.2); x++)
+          if (Math.hypot(x - px, z - pz) <= 3.2) this.world.set(x, g, z, id("path"));
+    } else {
+      this.paintCircle(px, pz, 3.2, "path");
+    }
     const dx = alongX ? 0 : 2;
     const dz = alongX ? 2 : 0;
     // pillars
@@ -858,6 +887,17 @@ const DESERT_SETPIECE_EXCLUSIONS: Rect[] = [
   { x0: 30, z0: 242, x1: 51, z1: 259 }, // sunscour_caravanserai (fixed anchor — 21x17 won't scatter)
 ];
 
+// THE WELLHEAD CRATER (world-redesign batch 2; story bible §6 E1 landmark 3 /
+// E2's front door). A terraced sink in the far-southwest dunes, deliberately
+// OFF every road and setpiece sightline — finding it is the reward. The pit
+// drank the desert's sea; the crater bottom is the salt pan the drinking left,
+// and the portal to the Maw stands at its center. The portal is authored
+// always-open on this side: the LOCK is the Maw's downtime countdown (the
+// feeding schedule, diegetically). Surveyed site: natural ground 11-13, no
+// water columns inside the carve, nearest table/setpiece >100 m.
+const WELLHEAD = { cx: 96, cz: 384 };
+const WELLHEAD_RECT: Rect = { x0: 66, z0: 354, x1: 128, z1: 414 };
+
 // Two prefabs too large to scatter reliably in the constrained desert (25x25
 // and 21x17 vs ~10 exclusion rects) — fixed-anchored at surveyed flat spots.
 const DESERT_FIXED_PREFABS: Array<[string, number, number, 0 | 1 | 2 | 3, 0 | 1 | 2]> = [
@@ -954,12 +994,266 @@ function buildDesertRuins(b: Builder, def: RoomDef, features: ScatterResult): vo
   buildColossusOfSekhat(b, def);
   buildAqueductSpine(b, def);
   buildTheThroat(b, def);
+  // the Wellhead Crater — the hidden way down to the Maw (batch 2)
+  buildWellheadCrater(b, def);
   // the five deathwatch soldiers who still hold the aqueduct line
   for (const [ox, oz, rot, ruin] of DESERT_DEATHWATCH) stampFixedPrefab(b, features, "deathwatch_post", ox, oz, rot, ruin);
   // the two dug structures too large to scatter (the cistern, the caravanserai)
   for (const [id, ox, oz, rot, ruin] of DESERT_FIXED_PREFABS) stampFixedPrefab(b, features, id, ox, oz, rot, ruin);
   // setpiece caches (Vessel sarcophagus, the three aqueduct breaks, the Throat)
   for (const c of DESERT_SETPIECE_CACHES) features.caches.push({ ...c });
+}
+
+// ---------------------------------------------------------------------------
+// THE WELLHEAD CRATER + THE MAW — owner seed #2 (world-redesign batch 2,
+// story bible §6 E2). One story told twice at two scales:
+//
+//   Desert side: a terraced crater sunk into the far-SW dunes, raised rim
+//   hiding the descent (☆ — you find it or you don't). Strand-lines ring the
+//   terrace risers top to bottom (the sea's obituary), the bottom is a salt
+//   pan with a dead keel, and the portal to the Maw stands at the center.
+//   A single 1-block stair lane climbs out east through a notch in the rim.
+//
+//   The Maw: a 96² preset arena — the dried sea's basin, 16 blocks below the
+//   surrounding cap rock. Everything placed has a reason: strand-lines on the
+//   pit walls (readable on the way down), shipwreck keels forty years from
+//   any water, the bone-meal feeding-floor swept in arcs around the wellmouth
+//   Sarquun surfaces from, and pale tentacle-breaches frozen mid-heave at the
+//   floor's rim ("colossal" is staged, not scaled — the arena is dressed as
+//   the crest of the thing; they double as cover from the gout).
+//
+// DETERMINISM: layout constants fixed; every ragged edge is hash2(seed^salt).
+// ---------------------------------------------------------------------------
+
+/** A dead ship's keel, forty years from any water: a half-buried rotting
+ *  spine that lifts toward the stern, with rib frames athwart it. `gy` is the
+ *  CARVED ground (b.g() only knows natural terrain). dx/dz should be a unit
+ *  or diagonal step. */
+function deadKeel(b: Builder, seed: number, x0: number, z0: number, dx: number, dz: number, len: number, gy: number): void {
+  const px = dz === 0 ? 0 : 1; // perpendicular (good enough for axis/diagonal)
+  const pz = dx === 0 ? 0 : 1;
+  for (let i = 0; i < len; i++) {
+    const x = Math.round(x0 + dx * i);
+    const z = Math.round(z0 + dz * i);
+    // the spine: buried at the bow, two blocks proud at the stern
+    const lift = i < len / 3 ? 0 : i < (2 * len) / 3 ? 1 : 2;
+    b.fill(x, gy + 1, z, x, gy + 1 + lift, z, "rotting_planks");
+    // rib frames every other segment once the hull stands proud of the sand
+    if (i % 2 === 1 && lift > 0 && hash2(seed ^ 0x4ee1, x, z) < 0.85) {
+      const ribH = lift + 1;
+      b.fill(x + px, gy + 1, z - pz, x + px, gy + ribH, z - pz, "rotting_planks");
+      b.fill(x - px, gy + 1, z + pz, x - px, gy + ribH, z + pz, "rotting_planks");
+    }
+  }
+}
+
+function buildWellheadCrater(b: Builder, def: RoomDef): void {
+  const seed = def.terrain.seed;
+  const { cx, cz } = WELLHEAD;
+  const G0 = b.g(cx, cz); // the one datum every depth hangs off (surveyed: 12)
+  const PAN = Math.max(MIN_DIG_FLOOR + 1, G0 - 8); // salt-pan surface y
+  const SAND = id("sand");
+  const SANDSTONE = id("sandstone");
+  const SNOW = id("snow"); // reads as salt crust in a desert palette
+  const BONE = id("bone_block");
+
+  // terraced bowl: pan → four 2-block terraces → natural ring → raised rim
+  const targetG = (r: number, x: number, z: number): number | null => {
+    if (r >= 27.5) return null; // untouched dunes
+    if (r >= 23) return G0 + 2 + (hash2(seed ^ 0x37e1, x, z) < 0.45 ? 1 : 0); // the wind-worn lip
+    if (r >= 19) return G0;
+    if (r >= 15) return G0 - 2;
+    if (r >= 11) return G0 - 4;
+    if (r >= 7) return G0 - 6;
+    return PAN;
+  };
+
+  const shapeColumn = (x: number, z: number, ty: number, surf: number): void => {
+    // clear everything above the target (dune tops, dead trees, any gen water)
+    for (let y = ty + 1; y <= Math.min(WORLD_HEIGHT - 1, G0 + 18); y++) b.world.set(x, y, z, 0);
+    // solid up to the target (the rim rises over lower dune columns)
+    for (let y = Math.max(1, ty - 8); y < ty; y++) {
+      if (!b.world.solidAt(x, y, z)) b.world.set(x, y, z, SANDSTONE);
+    }
+    b.world.set(x, ty, z, surf);
+  };
+
+  for (let z = cz - 28; z <= cz + 28; z++) {
+    for (let x = cx - 28; x <= cx + 28; x++) {
+      const r = Math.hypot(x - cx, z - cz);
+      const ty = targetG(r, x, z);
+      if (ty === null) continue;
+      let surf: number;
+      if (r < 7) {
+        // the salt pan: crust patches over sand, bone-meal flecks
+        const salt = hash2(seed ^ 0x5a17, Math.floor(x / 6), Math.floor(z / 6)) * 0.7 + hash2(seed ^ 0x5a18, x, z) * 0.3;
+        surf = salt > 0.45 ? SNOW : hash2(seed ^ 0x5a19, x, z) < 0.08 ? BONE : SAND;
+      } else if (r >= 23) {
+        surf = hash2(seed ^ 0x37e2, x, z) < 0.7 ? SANDSTONE : SAND;
+      } else {
+        surf = hash2(seed ^ 0x37e3, x, z) < 0.1 ? SANDSTONE : SAND;
+      }
+      shapeColumn(x, z, Math.max(MIN_DIG_FLOOR + 1, ty), surf);
+      // strand-lines on the terrace risers — the sea's obituary, one line per
+      // old waterline, ragged where the crust fell away
+      if (r >= 7 && r < 23) {
+        const lines: Array<[number, number]> = [
+          [G0 - 7, BONE],
+          [G0 - 5, SNOW],
+          [G0 - 3, BONE],
+          [G0 - 1, SNOW],
+        ];
+        for (const [ly, lb] of lines) {
+          if (ly <= ty && ly >= 1 && hash2(seed ^ 0x57a4, x, z + ly * 61) < 0.78) b.world.set(x, ly, z, lb);
+        }
+      }
+    }
+  }
+
+  // the stair lane: 1-block steps east out of the pan, through a notch cut in
+  // the rim — invisible until you stand on the lip (the ☆ is the point)
+  for (const lz of [cz - 1, cz]) {
+    for (let x = cx + 7; x <= cx + 28; x++) {
+      const ty = Math.min(PAN + (x - (cx + 6)), G0);
+      shapeColumn(x, lz, ty, hash2(seed ^ 0x57a5, x, lz) < 0.2 ? SANDSTONE : SAND);
+    }
+  }
+
+  // pan dressing: a dead keel and the bones of what the drinking stranded
+  deadKeel(b, seed, cx - 7, cz - 5, 1, -1, 6, PAN);
+  b.set(cx + 4, PAN + 1, cz + 5, "skull_pile");
+  b.set(cx - 5, PAN + 1, cz + 3, "bone_block");
+  b.set(cx - 4, PAN + 1, cz + 3, "bone_block");
+  b.set(cx + 3, PAN + 1, cz - 6, "bone_block");
+}
+
+// ---------------------------------------------------------------------------
+// The Maw — the arena itself (room `maw`, biome "ruin": flat 24-high slab the
+// builder owns entirely). See the banner comment above buildWellheadCrater.
+// ---------------------------------------------------------------------------
+const MAW = { cx: 48, cz: 48 };
+
+function buildMaw(b: Builder, def: RoomDef): void {
+  const seed = def.terrain.seed;
+  const { cx, cz } = MAW;
+  const FLOOR = 8; // basin surface y (feet at 9); cap rock slab stays at 24
+  const SAND = id("sand");
+  const SANDSTONE = id("sandstone");
+  const DARK = id("dark_stone");
+  const SNOW = id("snow"); // salt crust
+  const BONE = id("bone_block");
+  const PALE = id("pale_ruin_stone");
+  const OBSIDIAN = id("obsidian");
+  const PATHB = id("path"); // ground bone-meal
+
+  // ring profile: basin floor → four 4-block wall terraces → the cap rock
+  const targetG = (r: number): number => {
+    if (r >= 46) return 24; // untouched slab (repaint only)
+    if (r >= 42) return 24;
+    if (r >= 38) return 20;
+    if (r >= 34) return 16;
+    if (r >= 30) return 12;
+    return FLOOR;
+  };
+
+  for (let z = 0; z < def.size.h; z++) {
+    for (let x = 0; x < def.size.w; x++) {
+      const r = Math.hypot(x - cx, z - cz);
+      const ty = targetG(r);
+      const natural = b.g(x, z); // 24 everywhere (amplitude 0)
+      // carve down to the target (the slab is solid; digging is all we do)
+      for (let y = ty + 1; y <= natural; y++) b.world.set(x, y, z, 0);
+      // surface material by ring
+      let surf: number;
+      if (r < 30) {
+        // the feeding-floor: salt-crust patches, bone-meal arcs swept around
+        // the wellmouth, ground bone flecks
+        const band = Math.floor(r);
+        const inArc = (band >= 8 && band <= 9) || (band >= 12 && band <= 13) || (band >= 16 && band <= 17) || (band >= 20 && band <= 21);
+        const salt = hash2(seed ^ 0x5a17, Math.floor(x / 6), Math.floor(z / 6)) * 0.7 + hash2(seed ^ 0x5a18, x, z) * 0.3;
+        if (inArc && hash2(seed ^ 0xfe3d, x, z) < 0.5) surf = BONE;
+        else if (salt > 0.55) surf = SNOW;
+        else if (hash2(seed ^ 0xfe3e, x, z) < 0.06) surf = PATHB;
+        else surf = SAND;
+      } else if (r < 34) {
+        surf = DARK; // the deep rock the pit ground through
+      } else if (r < 42) {
+        surf = SANDSTONE;
+      } else {
+        surf = SAND; // the cap above the walls
+      }
+      b.world.set(x, ty, z, surf);
+      // strand-lines ringing the pit walls, top to bottom — readable on the
+      // way down: the highest is the oldest sea
+      if (r >= 30 && r < 46) {
+        const lines: Array<[number, number]> = [
+          [10, BONE],
+          [14, SNOW],
+          [18, SNOW],
+          [22, PALE],
+        ];
+        for (const [ly, lb] of lines) {
+          if (ly <= ty && hash2(seed ^ 0x57a4, x, z + ly * 61) < 0.8) b.world.set(x, ly, z, lb);
+        }
+      }
+    }
+  }
+
+  // the wellmouth — the throat it surfaces from: an obsidian dish sunk into
+  // the floor's center, ringed in dark rock, lit by the last of the water
+  for (let z = cz - 6; z <= cz + 6; z++) {
+    for (let x = cx - 6; x <= cx + 6; x++) {
+      const r = Math.hypot(x - cx, z - cz);
+      if (r >= 6) continue;
+      const ty = r < 2.5 ? FLOOR - 2 : r < 4.5 ? FLOOR - 1 : FLOOR;
+      for (let y = ty + 1; y <= FLOOR; y++) b.world.set(x, y, z, 0);
+      b.world.set(x, ty, z, r < 4.5 ? OBSIDIAN : DARK);
+    }
+  }
+  for (const [dx, dz] of [
+    [4, 0],
+    [-4, 0],
+    [0, 4],
+    [0, -4],
+  ] as const) {
+    b.world.setIfAir(cx + dx, FLOOR, cz + dz, id("blue_crystal"));
+  }
+
+  // tentacle-breaches frozen mid-heave around the floor's rim: pale humps
+  // rising and diving back into the sand (cover from the gout, and the
+  // "you are standing on its lip" line made literal). Bearings keep the
+  // portal/spawn corridor (due south, +z) clear.
+  const PROFILE = [1, 3, 5, 6, 4, 2, 1];
+  for (const a of [0.4, 2.6, 3.5, 4.4, 5.3, 6.1]) {
+    const bx = cx + Math.cos(a) * 24;
+    const bz = cz + Math.sin(a) * 24;
+    const tx = -Math.sin(a); // tangent — the hump runs along the rim
+    const tz = Math.cos(a);
+    for (let i = -3; i <= 3; i++) {
+      const x = Math.round(bx + tx * i);
+      const z = Math.round(bz + tz * i);
+      const jitter = hash2(seed ^ 0x7e47, x, z) < 0.5 ? 0 : -1;
+      const h = Math.max(1, PROFILE[i + 3]! + jitter);
+      b.fill(x, FLOOR + 1, z, x, FLOOR + h, z, PALE);
+    }
+  }
+
+  // shipwrecks in the sand — keels forty years from any water
+  deadKeel(b, seed, 30, 60, 1, 1, 11, FLOOR);
+  deadKeel(b, seed, 64, 31, -1, 1, 9, FLOOR);
+
+  // what feeding leaves: skulls near the mouth
+  b.set(54, FLOOR + 1, 50, "skull_pile");
+  b.set(43, FLOOR + 1, 53, "skull_pile");
+  b.set(50, FLOOR + 1, 42, "skull_pile");
+
+  // the last of the water's light: blue crystals at the wall base
+  for (let k = 0; k < 8; k++) {
+    const a = k * 0.785 + 0.35;
+    const x = Math.round(cx + Math.cos(a) * 28.5);
+    const z = Math.round(cz + Math.sin(a) * 28.5);
+    if (hash2(seed ^ 0xb1e5, x, z) < 0.8) b.world.setIfAir(x, FLOOR + 1, z, id("blue_crystal"));
+  }
 }
 
 // ---------------------------------------------------------------------------

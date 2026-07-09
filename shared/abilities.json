@@ -1141,5 +1141,55 @@
     "cooldownMs": 18000,
     "manaCost": 0,
     "fx": "heal"
+  },
+  "maw_snap": {
+    "kind": "melee",
+    "windupMs": 1150,
+    "activeMs": 220,
+    "recoverMs": 800,
+    "range": 3.6,
+    "arcDeg": 170,
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 1400,
+    "manaCost": 0,
+    "fx": "hit"
+  },
+  "undertide_gout": {
+    "kind": "projectile",
+    "castTimeMs": 1000,
+    "recoverMs": 350,
+    "projSpeed": 24,
+    "maxRange": 30,
+    "predictive": true,
+    "aoeRadius": 2.4,
+    "impactFx": "explosion",
+    "projScale": 1.8,
+    "debuff": {
+      "slowPct": 0.45,
+      "durMs": 2500
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 4200,
+    "manaCost": 0,
+    "fx": "frost"
+  },
+  "maw_geysers": {
+    "kind": "pillars",
+    "castTimeMs": 900,
+    "recoverMs": 400,
+    "pillars": {
+      "count": 5,
+      "spacing": 2.2,
+      "radius": 2.2,
+      "staggerMs": 170,
+      "burnMs": 1400
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 10000,
+    "manaCost": 0,
+    "fx": "frost"
   }
 }

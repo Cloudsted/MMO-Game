@@ -1275,6 +1275,73 @@ show their block tile).
     weaving assertions were stale from BEFORE deep weaving — offers 4→12,
     multi-slot — and still are; its Selvara walk/talk/weave legs pass.)
 
+- 2026-07-09 **THE MAW** (world-redesign batch 2, owner seed #2; story bible
+  §6 E2) — the crater-arena cycle: a hidden portal at the bottom of a desert
+  crater leads to a cycling closed-event arena where **Sarquun, the
+  Undertide** (the thing that drank the desert's sea) surfaces to feed.
+  - **The Wellhead Crater** (desert, ☆ exploration find at (96,384), far-SW
+    dunes, off every road/setpiece): terraced bowl sunk 8 below the dunes
+    (2-block risers — you can drop in anywhere, but the ONE way out is a
+    1-block stair lane east through a notch in the raised rim), strand-lines
+    on every riser (bone/salt bands — the sea's obituary), salt-crust pan
+    (snow blocks read as salt) with a dead keel + bones, and the always-open
+    `desert-maw` portal at the center. The LOCK is the Maw's downtime — the
+    "(locked – opens in m:ss)" countdown is the feeding schedule,
+    diegetically. Crater rect added to desert authoredExclusions.
+  - **Room `maw`** (96² preset, biome `ruin`, fixedTime **0.46** — pitiless
+    salt-flat daylight; readability > mood per LESSONS): the dried sea's
+    basin 16 below the cap rock — 4-block wall terraces with strand-lines
+    (highest line = the oldest sea), obsidian wellmouth dish at center ringed
+    in blue crystals, bone-meal feeding arcs swept around it, two shipwreck
+    keels, skull piles, and six pale tentacle-breaches frozen mid-heave at
+    the floor rim ("colossal" is staged, not scaled — they double as cover
+    from the gout). Lifecycle: NO lifetimeSec (stands until the boss dies),
+    `downtimeSec 600`, warn [30,10]; bossDeath → announce + setRoomTimer 60.
+    Explicit-arena exception: portal→boss is a straight 30 m walk by design.
+  - **Sarquun** L9 event boss, GROUP-leaning (hp 830 ≈ 1.4× the solo-boss
+    trend — the sundered_king group ratio scaled to L9; dmg 27, speed 2.3 —
+    the arena + kit anti-kite, not the legs). Kit: `maw_snap` (1.15 s
+    telegraph chomp, 170°) / `undertide_gout` (predictive AoE bolt, slow
+    0.45×2.5 s, projScale 1.8, explodes) / `maw_geysers` (5-pillar line).
+    xp **1726** = the batch-1 formula (boss ×8 @ L9 — identical to the
+    Gravelord, on purpose). Loot `sarquun_drops`: guaranteed trophy
+    **`undertide_beak_shard`** (value 60, icon (6,55) bone-spike cell,
+    eyeball-verified) + weapons_steel rare guarantee (T2 home at L9).
+    Sprite `sarquun` = `boss_kraken_1.png` single-grid (VERIFIED on
+    tools/out/sheets/kraken-chars.png — pale mint cephalopod, orange slit
+    eyes); billboard height 2.8. Vocals reuse bog_serpent groups; audio bed
+    wind_storm. No event waves (the Maw has no society) — the flagged
+    `spawnMobs level` engine add was NOT needed.
+  - **ENGINE FIX (found by the probe): `portalArch` anchored to the NATURAL
+    terrain height** — an arch over authored dug/raised ground floated in
+    midair (both crater-bottom arches hovered 8-16 blocks up, and their
+    floating path-apron slabs blocked bot pathing). `Builder.groundAt` scans
+    the BUILT surface; portalArch uses it only when it differs from natural
+    by >2 (every existing portal stays on the byte-identical legacy path —
+    golden-hash-verified: only desert+maw grids moved).
+  - Goldens: desert grid+features (crater + portal shifted scatter
+    deterministically) + NEW maw entry; all 9 other rooms held. Economy
+    invariant test rooms list += maw (sarquun in the bosses set).
+  - Verified: typecheck, **466 vitest** (13 new in maw.test.ts), and
+    `scripts/maw-probe.mjs` FULL PASS live (24 checks: /tp → BFS descent
+    down the stair lane → portal → boss → surfacing announce at 85% →
+    kill → death announce → T-10 warning → evict 74 s after the kill →
+    re-enter lands in the hub (collapse evicts hub-bound, same as
+    crypt_depths/city) → desert portal closed + `reopenInSec` countdown +
+    "sealed right now" denial → reopens fresh after downtime → Sarquun back
+    at full). Screenshots: tools/out/maw-crater-2.png (terraced crater +
+    arch from the rim), maw-arena-2.png (Sarquun at the wellmouth, strand-
+    lined walls), maw-locked-4.png ("The Maw (locked - opens in 7:58)" —
+    ticking, 8:17 in frame 1). Probe staging traps paid: bots can't path
+    UNDER portal arches (lintel reads as a wall to their top-solid height
+    sampler — stand beside the arch line instead), and /tp onto a cell
+    CORNER at a terrace edge embeds the player AABB in the riser (every
+    move rejected → correction loop; /tp to open ground).
+  - Owner feel-checks pending: solo-vs-group difficulty at L9 (a lone
+    at-band player should need to be very good), the gout/geyser dodge
+    windows, the 0.46 salt-glare mood, 600 s feeding schedule pacing, and
+    whether snow-as-salt-crust reads right.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -1361,6 +1428,24 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-09 **THE MAW SHIPPED (world-redesign batch 2)** — the 11th room
+  (see the decisions-log entry): the Wellhead Crater ☆ in the Sunscour's
+  far-SW dunes descends to an always-open portal whose lock is the Maw's own
+  600 s downtime countdown; the Maw is a 96² preset cycling arena (dried-sea
+  basin: strand-lines, salt pan, shipwrecks, tentacle-breaches) holding
+  **Sarquun, the Undertide** — L9 group-leaning event tyrant (chomp /
+  predictive slowing gout / geyser pillars), guaranteed
+  `undertide_beak_shard` bounty proof. bossDeath → 60 s collapse → 600 s
+  downtime → fresh. En route: `portalArch` now anchors to BUILT ground when
+  it differs from natural (dug/raised portal sites no longer float — the
+  probe caught both crater arches hovering). Verified: **466 vitest**
+  (13 new; goldens desert+maw only), typecheck, client compiles,
+  `scripts/maw-probe.mjs` full-cycle live PASS, 3 screenshot scenes
+  (tools/out/maw-{crater,arena,locked}-*.png incl. the ticking countdown
+  label). Owner feel-checks in the decisions-log entry. NOTE: `claude_test`
+  exists on the fresh DB with an unknown password — screenshot staging used
+  `claude_test2:devpass1`.
 
 - 2026-07-09 **GREYWATCH SHIPPED (world-redesign batch 1b)** — the hub is now
   the bible's Last Free City (see the decisions-log entry): five authored
