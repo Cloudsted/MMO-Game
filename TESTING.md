@@ -152,6 +152,7 @@ Run it as a **background task**. First-ever build downloads Gradle + JDK 21
 | `MMO_UI=inventory\|god\|talk\|shop\|enchant` | opens that UI window on entry (talk/shop/enchant auto-talk to the nearest NPC — stage the character within ~4 m of one; `enchant` lands on Selvara's blessing menu) |
 | `MMO_HOVER_SLOT=<n>` | pins the item tooltip to inventory slot n while the inventory is open (mouse hover can't be injected into a background GLFW window) — combine with `MMO_UI=inventory` |
 | `MMO_HOVER_EFFECT=<n>` | pins the tooltip to status-effect bar entry n (gear mods first, then timed slow/dot/hot) — the bar sits above the left HP bar |
+| `MMO_ENCHANT_TARGET=<n>` | with `MMO_UI=enchant`, pre-selects inventory slot n as the weave target so the tab renders the per-offer tier/price, the slot-capacity header, and the unpick list unattended (no way to click-select in a background window) |
 | `MMO_WIN=WxH` | window size at launch (default 1280x720) — for UI-scaling checks at other resolutions |
 | `MMO_UI_SCALE=<n>` | force the integer HUD scale (default auto: 1x ≤1080p, 2x at 1440p, 3x at 4K) |
 | `MMO_DEBUG_NO_SHADOWS=1` | skip the entity CAST-shadow pass (render-pass isolation; blob decals no longer exist) |

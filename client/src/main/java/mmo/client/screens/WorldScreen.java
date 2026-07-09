@@ -349,6 +349,8 @@ public class WorldScreen extends ScreenAdapter {
                     if ("inventory".equals(uiHook)) ui.window = GameUi.Window.INVENTORY;
                     else if ("god".equals(uiHook)) ui.window = GameUi.Window.GOD;
                     else if ("talk".equals(uiHook) || "shop".equals(uiHook) || "enchant".equals(uiHook)) pendingTalkHook = uiHook;
+                    String encTgt = System.getenv("MMO_ENCHANT_TARGET");
+                    if (encTgt != null) try { ui.debugEnchantTarget = Integer.parseInt(encTgt.trim()); } catch (NumberFormatException ignored) {}
                     for (JsonElement el : Protocol.arr(msg, "ents")) addRemote(el.getAsJsonObject());
                 }
                 case "world" -> {

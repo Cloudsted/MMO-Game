@@ -104,6 +104,10 @@ public class GameUi {
     public boolean autoOpenShop = false;
     /** test hook: the next dialog opens straight onto its enchant tab */
     public boolean autoOpenEnchant = false;
+    /** test hook (MMO_ENCHANT_TARGET): pre-select this inventory slot as the
+     *  weave target when the enchant tab auto-opens, so unattended screenshots
+     *  show the tier/price/unpick state; -1 = none */
+    public int debugEnchantTarget = -1;
 
     // dialog / shop / enchanter
     private int dialogNpc = -1;
@@ -352,6 +356,10 @@ public class GameUi {
         enchantOpen = autoOpenEnchant && !enchantOffers.isEmpty();
         autoOpenEnchant = false;
         enchantTarget = -1;
+        if (enchantOpen && debugEnchantTarget >= 0 && debugEnchantTarget < slots.length
+            && isEquippableStack(slots[debugEnchantTarget])) {
+            enchantTarget = debugEnchantTarget; // test hook only
+        }
         shopOpen = !enchantOpen && autoOpenShop && !shopEntries.isEmpty();
         autoOpenShop = false;
         window = Window.DIALOG;
@@ -1394,7 +1402,7 @@ public class GameUi {
             if (!enchantRemoveRects.isEmpty() && target != null) {
                 font.getData().setScale(0.5f);
                 font.setColor(1f, 0.7f, 0.7f, 1f);
-                font.draw(batch, "Unpick  (" + removeCost(target) + "g each)", px + pw / 2f + 14, py + 140);
+                font.draw(batch, "Unpick  (" + removeCost(target) + "g each)", px + pw / 2f + 14, py + 158);
                 for (int i = 0; i < enchantRemoveRects.size() && i < enchantRemoveIds.size(); i++) {
                     Rectangle row = enchantRemoveRects.get(i);
                     String id = enchantRemoveIds.get(i);
