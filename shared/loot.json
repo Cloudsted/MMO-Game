@@ -1720,6 +1720,14 @@
           1,
           1
         ]
+      },
+      {
+        "weight": 8,
+        "item": "greater_amulet",
+        "qty": [
+          1,
+          1
+        ]
       }
     ],
     "guaranteed": []

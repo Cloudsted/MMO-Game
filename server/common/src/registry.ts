@@ -468,6 +468,10 @@ export class RegistryService {
       if (mod.enchant && mod.enchant.tiers.some((t) => t <= 0)) {
         throw new Error(`modifier ${id}: enchant tiers must be positive`);
       }
+      // integer mods (maxHp/maxMana/thorns) must weave whole numbers
+      if (mod.enchant && mod.integer && mod.enchant.tiers.some((t) => !Number.isInteger(t))) {
+        throw new Error(`modifier ${id}: integer modifier's enchant tiers must be whole numbers`);
+      }
     }
     for (const [id, mob] of Object.entries(mobs)) {
       const attacks = mobAttacks(mob);

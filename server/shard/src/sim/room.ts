@@ -2239,7 +2239,7 @@ export class RoomSim {
     if (!stack) return;
     const def = this.reg.items[stack.item];
     if (!def || !isEquippable(def.kind)) {
-      this.system(session, "Selvara shakes her head: that cannot hold an enchantment.");
+      this.system(session, `${npc.name.split(" ")[0]} shakes her head: that cannot hold an enchantment.`);
       return;
     }
     if (!(mod.appliesTo as readonly string[]).includes(def.kind)) {
@@ -2267,11 +2267,14 @@ export class RoomSim {
       return;
     }
     session.gold -= price;
-    stack.mods = { ...mods, [enchantId]: mod.enchant.tiers[tier - 1]! };
+    // integer mods (Vitality/Clarity/Thorns) stamp whole numbers even if a
+    // future ladder rung were authored fractional (registry also rejects that)
+    const rung = mod.integer ? Math.round(mod.enchant.tiers[tier - 1]!) : mod.enchant.tiers[tier - 1]!;
+    stack.mods = { ...mods, [enchantId]: rung };
     session.dirtyStats = true;
     this.touchInv(session);
     const roman = ROMAN_TIER[tier] ?? String(tier);
-    this.system(session, `Selvara whispers over your ${def.name}... ${mod.name} ${roman} settles into it. (-${price}g)`);
+    this.system(session, `${npc.name.split(" ")[0]} whispers over your ${def.name}... ${mod.name} ${roman} settles into it. (-${price}g)`);
     this.log.info(`${session.character.name} enchanted ${stack.item} with ${enchantId} T${tier} for ${price}g`);
   }
 
@@ -2299,7 +2302,7 @@ export class RoomSim {
     session.dirtyStats = true;
     this.touchInv(session);
     const modName = this.reg.modifiers[modId]?.name ?? modId;
-    this.system(session, `Selvara unpicks the ${modName} from your ${def?.name ?? "item"}. (-${price}g)`);
+    this.system(session, `${npc.name.split(" ")[0]} unpicks the ${modName} from your ${def?.name ?? "item"}. (-${price}g)`);
     this.log.info(`${session.character.name} removed ${modId} from ${stack.item} for ${price}g`);
   }
 

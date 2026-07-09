@@ -1349,7 +1349,7 @@ public class GameUi {
             Stack target = enchantTarget >= 0 ? slots[enchantTarget] : null;
             font.setColor(0.85f, 0.75f, 1f, 1f);
             font.draw(batch, "Weave  (to tier " + roman(enchantMaxTier) + ")", px + 14, py + ph - 44);
-            String rhead = target == null ? "Pick an item →"
+            String rhead = target == null ? "Pick a piece of gear"
                 : itemName(target) + "   " + usedSlots(target) + "/" + capSlots(target) + " slots";
             font.draw(batch, rhead, px + pw / 2f + 14, py + ph - 44);
             for (int i = 0; i < enchantOffers.size() && i < enchantRowRects.size(); i++) {

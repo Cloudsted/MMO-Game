@@ -83,6 +83,18 @@ void main() {
                 // bias = base + 1.5 texels of the receiver's depth slope
                 float tanT = min(sqrt(max(1.0 - ndl * ndl, 0.0)) / ndl, 8.0);
                 float biasM = 0.02 + 1.5 * u_shadowTexel * tanT;
+                // + receiver-plane footprint term: the meters of light-space
+                // depth that ONE screen pixel spans in the map. ~0 in the
+                // magnified near/mid field (near-field bias stays put), it
+                // grows with minification at distance — where a pixel covers
+                // many nearest-sampled texels, so a single tap on a sun-tilted
+                // receiver mis-reads its own depth by far more than 1.5 texels
+                // and the texel-frequency self-shadow acne aliases into the
+                // shimmering far stripes. This term covers that reconstruction
+                // error; the min() clamps peter-panning to 3 m (only reached
+                // under deep minification, where 3 m is sub-pixel and in fog).
+                // u_shadowRange converts normalized fwidth back to meters.
+                biasM = min(biasM + 0.75 * fwidth(spos.z) * u_shadowRange, 3.0);
                 // nearer occluder of: world geometry, entity sprite quads
                 float d = min(unpackDepth(texture2D(u_shadowMap, spos.xy)),
                               unpackDepth(texture2D(u_entShadowMap, spos.xy)));

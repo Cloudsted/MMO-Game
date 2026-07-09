@@ -10,13 +10,13 @@ export declare const RaritySchema: z.ZodObject<{
     color: z.ZodString;
     weight: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    weight: number;
     mult: number;
     color: string;
+    weight: number;
 }, {
-    weight: number;
     mult: number;
     color: string;
+    weight: number;
 }>;
 export type RarityDef = z.infer<typeof RaritySchema>;
 /** The five equipment slots, fixed order (wire/DB equipment arrays index by it). */
@@ -73,14 +73,14 @@ export declare const ItemDefSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     value: number;
     name: string;
-    kind: "building" | "weapon" | "armor" | "consumable" | "trophy" | "misc" | "trinket";
+    kind: "weapon" | "armor" | "trinket" | "consumable" | "building" | "trophy" | "misc";
     stack: number;
     icon: [number, number];
-    durability?: number | undefined;
     armor?: number | undefined;
     ability?: string | undefined;
     damage?: number | undefined;
     slot?: "head" | "chest" | "legs" | "feet" | "offhand" | undefined;
+    durability?: number | undefined;
     block?: string | undefined;
     tier?: number | undefined;
     viewmodel?: string | undefined;
@@ -94,14 +94,14 @@ export declare const ItemDefSchema: z.ZodObject<{
 }, {
     value: number;
     name: string;
-    kind: "building" | "weapon" | "armor" | "consumable" | "trophy" | "misc" | "trinket";
+    kind: "weapon" | "armor" | "trinket" | "consumable" | "building" | "trophy" | "misc";
     stack: number;
     icon: [number, number];
-    durability?: number | undefined;
     armor?: number | undefined;
     ability?: string | undefined;
     damage?: number | undefined;
     slot?: "head" | "chest" | "legs" | "feet" | "offhand" | undefined;
+    durability?: number | undefined;
     block?: string | undefined;
     tier?: number | undefined;
     viewmodel?: string | undefined;
@@ -149,15 +149,15 @@ export declare const AbilityDefSchema: z.ZodObject<{
         staggerMs: z.ZodDefault<z.ZodNumber>;
         burnMs: z.ZodDefault<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
-        staggerMs: number;
         count: number;
-        radius: number;
         spacing: number;
+        radius: number;
+        staggerMs: number;
         burnMs: number;
     }, {
         count: number;
-        radius: number;
         spacing: number;
+        radius: number;
         staggerMs?: number | undefined;
         burnMs?: number | undefined;
     }>>;
@@ -194,19 +194,19 @@ export declare const AbilityDefSchema: z.ZodObject<{
         grantsXp: z.ZodDefault<z.ZodBoolean>;
         grantsLoot: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
-        mob: string;
         count: number;
         radius: number;
+        mob: string;
         cap: number;
         grantsXp: boolean;
         grantsLoot: boolean;
         text?: string | undefined;
     }, {
-        mob: string;
         count: number;
+        mob: string;
         radius?: number | undefined;
-        text?: string | undefined;
         cap?: number | undefined;
+        text?: string | undefined;
         grantsXp?: boolean | undefined;
         grantsLoot?: boolean | undefined;
     }>>;
@@ -251,10 +251,10 @@ export declare const AbilityDefSchema: z.ZodObject<{
     damage?: number | undefined;
     heal?: number | undefined;
     pillars?: {
-        staggerMs: number;
         count: number;
-        radius: number;
         spacing: number;
+        radius: number;
+        staggerMs: number;
         burnMs: number;
     } | undefined;
     dmgClass?: "melee" | "ranged" | "magic" | undefined;
@@ -275,9 +275,9 @@ export declare const AbilityDefSchema: z.ZodObject<{
         dotTotal?: number | undefined;
     } | undefined;
     summon?: {
-        mob: string;
         count: number;
         radius: number;
+        mob: string;
         cap: number;
         grantsXp: boolean;
         grantsLoot: boolean;
@@ -302,8 +302,8 @@ export declare const AbilityDefSchema: z.ZodObject<{
     heal?: number | undefined;
     pillars?: {
         count: number;
-        radius: number;
         spacing: number;
+        radius: number;
         staggerMs?: number | undefined;
         burnMs?: number | undefined;
     } | undefined;
@@ -325,11 +325,11 @@ export declare const AbilityDefSchema: z.ZodObject<{
         dotTotal?: number | undefined;
     } | undefined;
     summon?: {
-        mob: string;
         count: number;
+        mob: string;
         radius?: number | undefined;
-        text?: string | undefined;
         cap?: number | undefined;
+        text?: string | undefined;
         grantsXp?: boolean | undefined;
         grantsLoot?: boolean | undefined;
     } | undefined;
@@ -418,14 +418,14 @@ export declare const MobAttackSchema: z.ZodObject<{
     /** weighted-random share when several options are usable at once */
     weight: z.ZodDefault<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
-    ability: string;
     weight: number;
+    ability: string;
     damage?: number | undefined;
     minRange?: number | undefined;
 }, {
     ability: string;
-    damage?: number | undefined;
     weight?: number | undefined;
+    damage?: number | undefined;
     minRange?: number | undefined;
 }>;
 export type MobAttackDef = z.infer<typeof MobAttackSchema>;
@@ -449,14 +449,14 @@ export declare const MobRankSchema: z.ZodObject<{
         /** weighted-random share when several options are usable at once */
         weight: z.ZodDefault<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
-        ability: string;
         weight: number;
+        ability: string;
         damage?: number | undefined;
         minRange?: number | undefined;
     }, {
         ability: string;
-        damage?: number | undefined;
         weight?: number | undefined;
+        damage?: number | undefined;
         minRange?: number | undefined;
     }>, "many">>;
     /** ability ids to drop from the kit (a veteran stops using the weak swing) */
@@ -482,14 +482,14 @@ export declare const MobRankSchema: z.ZodObject<{
     /** display suffix: "Bandit" -> "Bandit Veteran" */
     titleSuffix: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    remove: string[];
     atLevel: number;
     add: {
-        ability: string;
         weight: number;
+        ability: string;
         damage?: number | undefined;
         minRange?: number | undefined;
     }[];
+    remove: string[];
     hpMult: number;
     damageMult: number;
     moveSpeedMult: number;
@@ -501,13 +501,13 @@ export declare const MobRankSchema: z.ZodObject<{
     titleSuffix?: string | undefined;
 }, {
     atLevel: number;
-    remove?: string[] | undefined;
     add?: {
         ability: string;
-        damage?: number | undefined;
         weight?: number | undefined;
+        damage?: number | undefined;
         minRange?: number | undefined;
     }[] | undefined;
+    remove?: string[] | undefined;
     hpMult?: number | undefined;
     damageMult?: number | undefined;
     moveSpeedMult?: number | undefined;
@@ -538,14 +538,14 @@ export declare const MobDefSchema: z.ZodObject<{
         /** weighted-random share when several options are usable at once */
         weight: z.ZodDefault<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
-        ability: string;
         weight: number;
+        ability: string;
         damage?: number | undefined;
         minRange?: number | undefined;
     }, {
         ability: string;
-        damage?: number | undefined;
         weight?: number | undefined;
+        damage?: number | undefined;
         minRange?: number | undefined;
     }>, "many">>;
     /** level-gated kit growth; see MobRankSchema. Sorted by atLevel at resolve. */
@@ -561,14 +561,14 @@ export declare const MobDefSchema: z.ZodObject<{
             /** weighted-random share when several options are usable at once */
             weight: z.ZodDefault<z.ZodNumber>;
         }, "strip", z.ZodTypeAny, {
-            ability: string;
             weight: number;
+            ability: string;
             damage?: number | undefined;
             minRange?: number | undefined;
         }, {
             ability: string;
-            damage?: number | undefined;
             weight?: number | undefined;
+            damage?: number | undefined;
             minRange?: number | undefined;
         }>, "many">>;
         /** ability ids to drop from the kit (a veteran stops using the weak swing) */
@@ -594,14 +594,14 @@ export declare const MobDefSchema: z.ZodObject<{
         /** display suffix: "Bandit" -> "Bandit Veteran" */
         titleSuffix: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
-        remove: string[];
         atLevel: number;
         add: {
-            ability: string;
             weight: number;
+            ability: string;
             damage?: number | undefined;
             minRange?: number | undefined;
         }[];
+        remove: string[];
         hpMult: number;
         damageMult: number;
         moveSpeedMult: number;
@@ -613,13 +613,13 @@ export declare const MobDefSchema: z.ZodObject<{
         titleSuffix?: string | undefined;
     }, {
         atLevel: number;
-        remove?: string[] | undefined;
         add?: {
             ability: string;
-            damage?: number | undefined;
             weight?: number | undefined;
+            damage?: number | undefined;
             minRange?: number | undefined;
         }[] | undefined;
+        remove?: string[] | undefined;
         hpMult?: number | undefined;
         damageMult?: number | undefined;
         moveSpeedMult?: number | undefined;
@@ -656,23 +656,23 @@ export declare const MobDefSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     name: string;
     damage: number;
-    level: number;
-    sprite: string;
     aggroRadius: number;
     fleeAtHpPct: number;
     attackRange: number;
     leashRadius: number;
+    sprite: string;
+    level: number;
     hp: number;
     moveSpeed: number;
     ranks: {
-        remove: string[];
         atLevel: number;
         add: {
-            ability: string;
             weight: number;
+            ability: string;
             damage?: number | undefined;
             minRange?: number | undefined;
         }[];
+        remove: string[];
         hpMult: number;
         damageMult: number;
         moveSpeedMult: number;
@@ -687,8 +687,8 @@ export declare const MobDefSchema: z.ZodObject<{
     loot: string;
     ability?: string | undefined;
     attacks?: {
-        ability: string;
         weight: number;
+        ability: string;
         damage?: number | undefined;
         minRange?: number | undefined;
     }[] | undefined;
@@ -701,12 +701,12 @@ export declare const MobDefSchema: z.ZodObject<{
 }, {
     name: string;
     damage: number;
-    level: number;
-    sprite: string;
     aggroRadius: number;
     fleeAtHpPct: number;
     attackRange: number;
     leashRadius: number;
+    sprite: string;
+    level: number;
     hp: number;
     moveSpeed: number;
     xp: number;
@@ -714,19 +714,19 @@ export declare const MobDefSchema: z.ZodObject<{
     ability?: string | undefined;
     attacks?: {
         ability: string;
-        damage?: number | undefined;
         weight?: number | undefined;
+        damage?: number | undefined;
         minRange?: number | undefined;
     }[] | undefined;
     ranks?: {
         atLevel: number;
-        remove?: string[] | undefined;
         add?: {
             ability: string;
-            damage?: number | undefined;
             weight?: number | undefined;
+            damage?: number | undefined;
             minRange?: number | undefined;
         }[] | undefined;
+        remove?: string[] | undefined;
         hpMult?: number | undefined;
         damageMult?: number | undefined;
         moveSpeedMult?: number | undefined;
@@ -797,14 +797,14 @@ export declare const LootEntrySchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     weight: number;
     item?: string | undefined;
-    qty?: [number, number] | undefined;
     table?: string | undefined;
+    qty?: [number, number] | undefined;
     minRarity?: string | undefined;
 }, {
     weight: number;
     item?: string | undefined;
-    qty?: [number, number] | undefined;
     table?: string | undefined;
+    qty?: [number, number] | undefined;
     minRarity?: string | undefined;
 }>;
 export declare const LootTableSchema: z.ZodObject<{
@@ -819,14 +819,14 @@ export declare const LootTableSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }, {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }>, "many">;
     /** boss-style guaranteed-drop slots: every entry always rolls once */
@@ -839,22 +839,22 @@ export declare const LootTableSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }, {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }>, "many">>;
 }, "strip", z.ZodTypeAny, {
     entries: {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }[];
     rolls: [number, number];
@@ -862,16 +862,16 @@ export declare const LootTableSchema: z.ZodObject<{
     guaranteed: {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }[];
 }, {
     entries: {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }[];
     rolls: [number, number];
@@ -879,8 +879,8 @@ export declare const LootTableSchema: z.ZodObject<{
     guaranteed?: {
         weight: number;
         item?: string | undefined;
-        qty?: [number, number] | undefined;
         table?: string | undefined;
+        qty?: [number, number] | undefined;
         minRarity?: string | undefined;
     }[] | undefined;
 }>;

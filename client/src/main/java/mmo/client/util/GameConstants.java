@@ -37,15 +37,27 @@ public final class GameConstants {
     /** enchant strength tier (1-3) → price multiplier */
     private final java.util.Map<Integer, Float> tierPriceMult = new java.util.HashMap<>();
 
+    /** Capacity for a gear tier, mirroring the server's weaveCapacity clamp:
+     *  exact rung, else the highest defined rung <= gearTier, else the lowest. */
+    private int[] tierCap(int gearTier) {
+        int[] exact = tierCapacity.get(gearTier);
+        if (exact != null) return exact;
+        int best = Integer.MIN_VALUE, lowest = Integer.MAX_VALUE;
+        for (int k : tierCapacity.keySet()) {
+            lowest = Math.min(lowest, k);
+            if (k <= gearTier) best = Math.max(best, k);
+        }
+        int[] c = tierCapacity.get(best != Integer.MIN_VALUE ? best : lowest);
+        return c != null ? c : new int[] { 1, 1 };
+    }
+
     /** enchant slots a gear tier holds (default 1). */
     public int enchantSlots(int gearTier) {
-        int[] c = tierCapacity.get(gearTier);
-        return c != null ? c[0] : 1;
+        return tierCap(gearTier)[0];
     }
     /** max enchant strength tier a gear tier accepts (default 1). */
     public int enchantItemMaxTier(int gearTier) {
-        int[] c = tierCapacity.get(gearTier);
-        return c != null ? c[1] : 1;
+        return tierCap(gearTier)[1];
     }
     /** price multiplier for an enchant strength tier (default 1). */
     public float enchantTierPriceMult(int tier) {

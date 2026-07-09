@@ -292,3 +292,27 @@ describe("Ysolde the Ember-Witch (master enchanter, weaves tier III)", () => {
     expect(Object.keys(s.slots[0]!.mods!)).toHaveLength(3);
   });
 });
+
+describe("weaving invariants", () => {
+  it("every weavable perk's tiers ascend and stay within its stat cap", () => {
+    const caps = consts.items.mods.caps as Record<string, number>;
+    for (const [id, mod] of Object.entries(reg.modifiers)) {
+      if (!mod.enchant) continue;
+      const tiers = mod.enchant.tiers;
+      expect(tiers.length, id).toBeGreaterThanOrEqual(1);
+      for (let i = 1; i < tiers.length; i++) expect(tiers[i]!, id).toBeGreaterThan(tiers[i - 1]!);
+      const cap = caps[mod.stat];
+      // a single max-tier weave must not alone blow the aggregate stat ceiling
+      if (cap !== undefined) expect(Math.max(...tiers), id).toBeLessThanOrEqual(cap);
+      // integer mods weave whole numbers
+      if (mod.integer) for (const t of tiers) expect(Number.isInteger(t), id).toBe(true);
+    }
+  });
+
+  it("Selvara caps at tier 2, the Ember-Witch at tier 3", () => {
+    const selvara = loadRoomDef("hub").npcs.find((n) => n.id === "enchanter")!;
+    expect(selvara.service!.maxTier).toBe(2);
+    const ysolde = loadRoomDef("cinderrift").npcs.find((n) => n.id === "ember-witch")!;
+    expect(ysolde.service!.maxTier).toBe(3);
+  });
+});
