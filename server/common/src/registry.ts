@@ -47,6 +47,11 @@ export const ItemDefSchema = z.object({
   block: z.string().optional(),
   value: z.number().int(), // shop base price (gold); shops buy at a fraction
   stack: z.number().int().positive(),
+  /** equippables: authored quality tier (1-5). Drives WEAVING capacity via
+   *  constants.enchanting.tierCapacity — how many enchant slots it holds and
+   *  the max enchant strength tier it accepts. Absent = 1. Non-equippables
+   *  ignore it. NOTE: distinct from per-instance rarity (which is a drop roll). */
+  tier: z.number().int().min(1).optional(),
   icon: z.tuple([z.number().int(), z.number().int()]), // (col,row) in tficons_limited_16
   viewmodel: z.string().optional(), // first-person held sprite key
   effect: z
@@ -180,8 +185,11 @@ export const ModifierDefSchema = z.object({
   integer: z.boolean().optional(),
   /** rarity → [min,max] magnitude roll range (negative for curses) */
   rolls: z.record(z.string(), z.tuple([z.number(), z.number()])),
-  /** present = the enchanter offers this as a fixed tier-1 enchant */
-  enchant: z.object({ mag: z.number(), priceMult: z.number() }).optional(),
+  /** present = the enchanter can weave this. `tiers` = the strength ladder
+   *  [I, II, III] (magnitudes in this def's units; must be perk-positive).
+   *  The strength woven is min(item tier's maxTier, NPC's maxTier); price =
+   *  value × rarity × priceMult × tierPriceMult[tier] × ... (see enchantPrice). */
+  enchant: z.object({ tiers: z.array(z.number()).min(1), priceMult: z.number() }).optional(),
 });
 export type ModifierDef = z.infer<typeof ModifierDefSchema>;
 
@@ -456,6 +464,10 @@ export class RegistryService {
         }
       }
       if (mod.enchant && mod.curse) throw new Error(`modifier ${id}: the enchanter sells no curses`);
+      // woven magnitudes are perks: a negative rung would be a curse in disguise
+      if (mod.enchant && mod.enchant.tiers.some((t) => t <= 0)) {
+        throw new Error(`modifier ${id}: enchant tiers must be positive`);
+      }
     }
     for (const [id, mob] of Object.entries(mobs)) {
       const attacks = mobAttacks(mob);

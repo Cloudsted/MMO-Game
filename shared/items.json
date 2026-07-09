@@ -25,6 +25,7 @@
     "rusty_sword": {
       "name": "Rusty Sword",
       "kind": "weapon",
+      "tier": 1,
       "ability": "swing",
       "damage": 6,
       "durability": 250,
@@ -38,6 +39,7 @@
     "iron_sword": {
       "name": "Iron Sword",
       "kind": "weapon",
+      "tier": 2,
       "ability": "swing",
       "damage": 11,
       "durability": 450,
@@ -51,6 +53,7 @@
     "hunting_bow": {
       "name": "Hunting Bow",
       "kind": "weapon",
+      "tier": 1,
       "ability": "bow_shot",
       "damage": 9,
       "durability": 300,
@@ -64,6 +67,7 @@
     "longbow": {
       "name": "Longbow",
       "kind": "weapon",
+      "tier": 2,
       "ability": "bow_shot",
       "damage": 14,
       "durability": 500,
@@ -77,6 +81,7 @@
     "fire_staff": {
       "name": "Fire Staff",
       "kind": "weapon",
+      "tier": 2,
       "ability": "firebolt",
       "damage": 13,
       "durability": 400,
@@ -90,6 +95,7 @@
     "frost_staff": {
       "name": "Frost Staff",
       "kind": "weapon",
+      "tier": 2,
       "ability": "frost",
       "damage": 8,
       "durability": 400,
@@ -103,6 +109,7 @@
     "heal_staff": {
       "name": "Staff of Mending",
       "kind": "weapon",
+      "tier": 2,
       "ability": "heal",
       "damage": 0,
       "durability": 450,
@@ -116,6 +123,7 @@
     "leather_cap": {
       "name": "Leather Cap",
       "kind": "armor",
+      "tier": 1,
       "slot": "head",
       "armor": 4,
       "durability": 200,
@@ -129,6 +137,7 @@
     "iron_helm": {
       "name": "Iron Helm",
       "kind": "armor",
+      "tier": 2,
       "slot": "head",
       "armor": 8,
       "durability": 350,
@@ -142,6 +151,7 @@
     "leather_jerkin": {
       "name": "Leather Jerkin",
       "kind": "armor",
+      "tier": 1,
       "slot": "chest",
       "armor": 6,
       "durability": 250,
@@ -155,6 +165,7 @@
     "iron_cuirass": {
       "name": "Iron Cuirass",
       "kind": "armor",
+      "tier": 2,
       "slot": "chest",
       "armor": 12,
       "durability": 450,
@@ -168,6 +179,7 @@
     "leather_boots": {
       "name": "Leather Boots",
       "kind": "armor",
+      "tier": 1,
       "slot": "feet",
       "armor": 3,
       "durability": 200,
@@ -181,6 +193,7 @@
     "iron_boots": {
       "name": "Iron Boots",
       "kind": "armor",
+      "tier": 2,
       "slot": "feet",
       "armor": 6,
       "durability": 350,
@@ -194,6 +207,7 @@
     "wooden_shield": {
       "name": "Wooden Shield",
       "kind": "armor",
+      "tier": 1,
       "slot": "offhand",
       "armor": 5,
       "durability": 220,
@@ -207,6 +221,7 @@
     "iron_shield": {
       "name": "Iron Shield",
       "kind": "armor",
+      "tier": 2,
       "slot": "offhand",
       "armor": 9,
       "durability": 400,
@@ -220,6 +235,7 @@
     "lucky_locket": {
       "name": "Lucky Locket",
       "kind": "trinket",
+      "tier": 1,
       "value": 60,
       "stack": 1,
       "icon": [
@@ -230,11 +246,45 @@
     "wisp_talisman": {
       "name": "Wisp Talisman",
       "kind": "trinket",
+      "tier": 2,
       "value": 140,
       "stack": 1,
       "icon": [
         4,
         26
+      ]
+    },
+    "greater_amulet": {
+      "name": "Greater Amulet",
+      "kind": "trinket",
+      "tier": 3,
+      "value": 220,
+      "stack": 1,
+      "icon": [
+        12,
+        49
+      ]
+    },
+    "master_amulet": {
+      "name": "Master Amulet",
+      "kind": "trinket",
+      "tier": 4,
+      "value": 360,
+      "stack": 1,
+      "icon": [
+        14,
+        49
+      ]
+    },
+    "mythic_relic": {
+      "name": "Mythic Relic",
+      "kind": "trinket",
+      "tier": 5,
+      "value": 520,
+      "stack": 1,
+      "icon": [
+        15,
+        49
       ]
     },
     "bread": {
@@ -357,6 +407,7 @@
     "steel_sword": {
       "name": "Steel Sword",
       "kind": "weapon",
+      "tier": 3,
       "ability": "swing",
       "damage": 17,
       "durability": 700,
@@ -370,6 +421,7 @@
     "war_axe": {
       "name": "Fen-Cleaver Axe",
       "kind": "weapon",
+      "tier": 3,
       "ability": "cleave",
       "damage": 21,
       "durability": 650,
@@ -383,6 +435,7 @@
     "venom_dagger": {
       "name": "Weaver's Fang",
       "kind": "weapon",
+      "tier": 3,
       "ability": "quick_stab",
       "damage": 11,
       "durability": 500,
@@ -396,6 +449,7 @@
     "ranger_crossbow": {
       "name": "Marsh Ranger's Crossbow",
       "kind": "weapon",
+      "tier": 3,
       "ability": "bolt_shot",
       "damage": 17,
       "durability": 550,
@@ -409,6 +463,7 @@
     "wisp_wand": {
       "name": "Wisp Wand",
       "kind": "weapon",
+      "tier": 3,
       "ability": "firebolt",
       "damage": 16,
       "durability": 450,
@@ -422,6 +477,7 @@
     "fen_staff": {
       "name": "Staff of the Fen",
       "kind": "weapon",
+      "tier": 3,
       "ability": "greater_heal",
       "damage": 0,
       "durability": 600,
@@ -435,6 +491,7 @@
     "emberpike": {
       "name": "Emberpike",
       "kind": "weapon",
+      "tier": 4,
       "ability": "thrust",
       "damage": 24,
       "durability": 800,
@@ -448,6 +505,7 @@
     "rift_greataxe": {
       "name": "Riftwarden Greataxe",
       "kind": "weapon",
+      "tier": 4,
       "ability": "cleave",
       "damage": 28,
       "durability": 900,
@@ -461,6 +519,7 @@
     "gravewind_scythe": {
       "name": "Gravewind Scythe",
       "kind": "weapon",
+      "tier": 4,
       "ability": "reap",
       "damage": 30,
       "durability": 850,
@@ -474,6 +533,7 @@
     "ashen_scepter": {
       "name": "Ashen Scepter",
       "kind": "weapon",
+      "tier": 4,
       "ability": "greater_firebolt",
       "damage": 26,
       "durability": 700,
@@ -487,6 +547,7 @@
     "tidecaller_staff": {
       "name": "Tidecaller Staff",
       "kind": "weapon",
+      "tier": 4,
       "ability": "greater_frost",
       "damage": 18,
       "durability": 700,
@@ -500,6 +561,7 @@
     "dwarven_arbalest": {
       "name": "Dwarven Arbalest",
       "kind": "weapon",
+      "tier": 4,
       "ability": "bolt_shot",
       "damage": 24,
       "durability": 750,
@@ -733,6 +795,7 @@
     "kingsrend_greataxe": {
       "name": "Kingsrend Greataxe",
       "kind": "weapon",
+      "tier": 5,
       "ability": "cleave",
       "damage": 36,
       "durability": 950,
@@ -746,6 +809,7 @@
     "oathbreaker_pike": {
       "name": "Oathbreaker Pike",
       "kind": "weapon",
+      "tier": 5,
       "ability": "thrust",
       "damage": 33,
       "durability": 900,
@@ -759,6 +823,7 @@
     "sovereign_scythe": {
       "name": "Sovereign Scythe",
       "kind": "weapon",
+      "tier": 5,
       "ability": "reap",
       "damage": 35,
       "durability": 900,
@@ -772,6 +837,7 @@
     "scepter_of_ruin": {
       "name": "Scepter of Ruin",
       "kind": "weapon",
+      "tier": 5,
       "ability": "greater_frost",
       "damage": 32,
       "durability": 750,

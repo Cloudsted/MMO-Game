@@ -112,13 +112,17 @@ export const NpcDefSchema = z.object({
       buys: z.boolean(), // will buy any player item at a fraction of value
     })
     .optional(),
-  /** enchanter service: fixed tier-1 enchant menu (modifier ids that carry
-   *  an `enchant` block in shared/modifiers.json). RoomSim warns on
+  /** enchanter service: weaving menu (modifier ids that carry an `enchant`
+   *  block in shared/modifiers.json). `maxTier` = the highest enchant strength
+   *  this weaver can apply (Selvara 2, a master enchanter 3); `remove` = this
+   *  weaver can strip a woven enchant (and lift curses). RoomSim warns on
    *  dangling/offer-less ids at boot. */
   service: z
     .object({
       kind: z.literal("enchant"),
       offers: z.array(z.string()).min(1),
+      maxTier: z.number().int().min(1).default(1),
+      remove: z.boolean().default(false),
     })
     .optional(),
 });

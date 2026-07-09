@@ -199,12 +199,48 @@ declare const ConstantsSchema: z.ZodObject<{
     enchanting: z.ZodObject<{
         priceBase: z.ZodNumber;
         priceValueMult: z.ZodNumber;
+        /** gear tier (1-5) → weaving capacity: how many enchant slots it holds and
+         *  the max enchant strength tier it accepts. Keyed by tier as a string. */
+        tierCapacity: z.ZodRecord<z.ZodString, z.ZodObject<{
+            slots: z.ZodNumber;
+            maxTier: z.ZodNumber;
+        }, "strip", z.ZodTypeAny, {
+            slots: number;
+            maxTier: number;
+        }, {
+            slots: number;
+            maxTier: number;
+        }>>;
+        /** enchant strength tier (1-3) → price multiplier (keyed by tier string) */
+        tierPriceMult: z.ZodRecord<z.ZodString, z.ZodNumber>;
+        /** each additional woven enchant on the same item multiplies its price by
+         *  this raised to the count of enchants already present */
+        slotSurchargeMult: z.ZodNumber;
+        /** removing a woven enchant: ceil(removeCostBase + value×rarity×removeCostValueMult) */
+        removeCostBase: z.ZodNumber;
+        removeCostValueMult: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
         priceBase: number;
         priceValueMult: number;
+        tierCapacity: Record<string, {
+            slots: number;
+            maxTier: number;
+        }>;
+        tierPriceMult: Record<string, number>;
+        slotSurchargeMult: number;
+        removeCostBase: number;
+        removeCostValueMult: number;
     }, {
         priceBase: number;
         priceValueMult: number;
+        tierCapacity: Record<string, {
+            slots: number;
+            maxTier: number;
+        }>;
+        tierPriceMult: Record<string, number>;
+        slotSurchargeMult: number;
+        removeCostBase: number;
+        removeCostValueMult: number;
     }>;
     progression: z.ZodObject<{
         baseHp: z.ZodNumber;
@@ -348,6 +384,14 @@ declare const ConstantsSchema: z.ZodObject<{
     enchanting: {
         priceBase: number;
         priceValueMult: number;
+        tierCapacity: Record<string, {
+            slots: number;
+            maxTier: number;
+        }>;
+        tierPriceMult: Record<string, number>;
+        slotSurchargeMult: number;
+        removeCostBase: number;
+        removeCostValueMult: number;
     };
     progression: {
         baseHp: number;
@@ -435,6 +479,14 @@ declare const ConstantsSchema: z.ZodObject<{
     enchanting: {
         priceBase: number;
         priceValueMult: number;
+        tierCapacity: Record<string, {
+            slots: number;
+            maxTier: number;
+        }>;
+        tierPriceMult: Record<string, number>;
+        slotSurchargeMult: number;
+        removeCostBase: number;
+        removeCostValueMult: number;
     };
     progression: {
         baseHp: number;

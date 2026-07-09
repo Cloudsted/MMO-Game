@@ -85,6 +85,8 @@ const CHUNKS_PER_MSG = 12;
 const SPEED_GRACE = 1.6; // multiplier over walkSpeed before a move is rejected
 const CORPSE_LINGER_MS = 1500; // dead mob stays visible before despawn
 const PACK_AGGRO_RADIUS = 10;
+/** enchant strength tier → roman numeral for system messages (index by tier) */
+const ROMAN_TIER = ["", "I", "II", "III", "IV", "V"];
 
 /** Aggregated dynamic-modifier state for one player: per-stat capped sums
  *  (enforcement) + per-modifier-id sums (the status bar), from the 6 live
@@ -2168,35 +2170,70 @@ export class RoomSim {
         .filter((id) => this.reg.modifiers[id]?.enchant)
         .map((id) => {
           const def = this.reg.modifiers[id]!;
-          return { id, name: `${def.name} I`, mag: def.enchant!.mag, priceMult: def.enchant!.priceMult };
+          return { id, name: def.name, tiers: def.enchant!.tiers, priceMult: def.enchant!.priceMult };
         });
-      if (offers.length > 0) enchant = { offers };
+      if (offers.length > 0) {
+        enchant = { offers, maxTier: npc.service.maxTier, remove: npc.service.remove };
+      }
     }
     session.send({ t: "dialog", id: entityId, name: npc.name, lines: npc.dialog, shop, enchant });
   }
 
-  /** The enchanter's price for putting `mod` on `stack` — value- and
-   *  rarity-scaled from shared constants; the client computes the same
-   *  number for display, this one is authoritative. */
-  enchantPrice(stack: ItemStack, priceMult: number): number {
+  /** Weaving capacity for a gear tier: enchant slots + max strength tier
+   *  (constants.enchanting.tierCapacity). An unknown/absent tier clamps to the
+   *  highest defined rung at or below it, else the lowest rung. */
+  private weaveCapacity(gearTier: number): { slots: number; maxTier: number } {
+    const table = this.consts.enchanting.tierCapacity;
+    const exact = table[String(gearTier)];
+    if (exact) return exact;
+    const keys = Object.keys(table)
+      .map(Number)
+      .sort((a, b) => a - b);
+    let best = keys[0] ?? 1;
+    for (const k of keys) if (k <= gearTier) best = k;
+    return table[String(best)] ?? { slots: 1, maxTier: 1 };
+  }
+
+  /** The weaver's price to add strength `tier` of `mod` onto `stack`, given
+   *  how many enchants it already carries (each prior one surcharges). Value-
+   *  and rarity-scaled from shared constants; the client mirrors this exactly
+   *  for display, this one is authoritative. */
+  enchantPrice(stack: ItemStack, priceMult: number, tier: number, existingMods: number): number {
     const def = this.reg.items[stack.item];
     const rarityMult = this.reg.rarities[stack.rarity]?.mult ?? 1;
     const e = this.consts.enchanting;
-    return Math.ceil((def?.value ?? 0) * rarityMult * priceMult * e.priceValueMult + e.priceBase);
+    const tierMult = e.tierPriceMult[String(tier)] ?? 1;
+    const surcharge = Math.pow(e.slotSurchargeMult, Math.max(0, existingMods));
+    return Math.ceil((def?.value ?? 0) * rarityMult * priceMult * tierMult * surcharge * e.priceValueMult + e.priceBase);
   }
 
-  /** Buy a fixed tier-1 enchant for the inventory stack at `slot`. Server
-   *  re-validates everything at receipt (the menu may be stale: invMove/
-   *  sell/drop races just change the target): near + service + offer,
-   *  eligible kind via the modifier's appliesTo, UNMODIFIED instance only
-   *  (curses count — she cannot weave over another's work), gold. */
-  handleEnchant(session: PlayerSession, npcEntityId: number, slot: number, enchantId: string): void {
+  /** The weaver's price to strip one woven enchant off `stack`. */
+  removeCost(stack: ItemStack): number {
+    const def = this.reg.items[stack.item];
+    const rarityMult = this.reg.rarities[stack.rarity]?.mult ?? 1;
+    const e = this.consts.enchanting;
+    return Math.ceil(e.removeCostBase + (def?.value ?? 0) * rarityMult * e.removeCostValueMult);
+  }
+
+  /** Weave enchant `enchantId` at strength `tier` onto the inventory stack at
+   *  `slot`. Server re-validates everything at receipt (the menu may be stale:
+   *  invMove/sell/drop races just change the target): near + service + offer,
+   *  eligible kind via the modifier's appliesTo, the strength within BOTH the
+   *  weaver's and the item's tier cap, a FREE enchant slot (capacity counts
+   *  every mod — rolled or woven), no duplicate of this modifier (no in-place
+   *  upgrade — remove first), gold. */
+  handleEnchant(session: PlayerSession, npcEntityId: number, slot: number, enchantId: string, tier: number): void {
     if (session.entity.combat!.act === "dead") return;
     const npc = this.npcDef(npcEntityId);
     if (!npc || npc.service?.kind !== "enchant" || !this.nearNpc(session, npcEntityId)) return;
     if (!npc.service.offers.includes(enchantId)) return;
     const mod = this.reg.modifiers[enchantId];
     if (!mod?.enchant) return;
+    if (!Number.isInteger(tier) || tier < 1 || tier > mod.enchant.tiers.length) return;
+    if (tier > npc.service.maxTier) {
+      this.system(session, "That degree of weaving is beyond my art — seek a greater enchanter.");
+      return;
+    }
     if (slot < 0 || slot >= INV_SIZE) return;
     const stack = session.slots[slot];
     if (!stack) return;
@@ -2209,21 +2246,61 @@ export class RoomSim {
       this.system(session, `${mod.name} will not take on a ${def.kind}.`);
       return;
     }
-    if (stack.mods !== undefined && Object.keys(stack.mods).length > 0) {
-      this.system(session, "That item already bears an enchantment — I cannot weave over another's work.");
+    const cap = this.weaveCapacity(def.tier ?? 1);
+    if (tier > cap.maxTier) {
+      this.system(session, `This ${def.name} cannot hold so great a weaving.`);
       return;
     }
-    const price = this.enchantPrice(stack, mod.enchant.priceMult);
+    const mods = stack.mods ?? {};
+    if (mods[enchantId] !== undefined) {
+      this.system(session, `It already bears ${mod.name} — I cannot layer it. Have me unpick it first.`);
+      return;
+    }
+    const count = Object.keys(mods).length;
+    if (count >= cap.slots) {
+      this.system(session, `This ${def.name} has no room for another weaving.`);
+      return;
+    }
+    const price = this.enchantPrice(stack, mod.enchant.priceMult, tier, count);
     if (session.gold < price) {
       this.system(session, "Not enough gold.");
       return;
     }
     session.gold -= price;
-    stack.mods = { [enchantId]: mod.enchant.mag };
+    stack.mods = { ...mods, [enchantId]: mod.enchant.tiers[tier - 1]! };
     session.dirtyStats = true;
     this.touchInv(session);
-    this.system(session, `Selvara whispers over your ${def.name}... ${mod.name} I settles into it. (-${price}g)`);
-    this.log.info(`${session.character.name} enchanted ${stack.item} with ${enchantId} for ${price}g`);
+    const roman = ROMAN_TIER[tier] ?? String(tier);
+    this.system(session, `Selvara whispers over your ${def.name}... ${mod.name} ${roman} settles into it. (-${price}g)`);
+    this.log.info(`${session.character.name} enchanted ${stack.item} with ${enchantId} T${tier} for ${price}g`);
+  }
+
+  /** Strip a woven modifier off the item at `slot` (frees its enchant slot;
+   *  also lifts curses off drop gear). Only weavers with service.remove offer
+   *  it; server re-validates near + service + remove + the mod being present. */
+  handleUnenchant(session: PlayerSession, npcEntityId: number, slot: number, modId: string): void {
+    if (session.entity.combat!.act === "dead") return;
+    const npc = this.npcDef(npcEntityId);
+    if (!npc || npc.service?.kind !== "enchant" || !npc.service.remove || !this.nearNpc(session, npcEntityId)) return;
+    if (slot < 0 || slot >= INV_SIZE) return;
+    const stack = session.slots[slot];
+    if (!stack || !stack.mods || stack.mods[modId] === undefined) return;
+    const def = this.reg.items[stack.item];
+    const price = this.removeCost(stack);
+    if (session.gold < price) {
+      this.system(session, "Not enough gold.");
+      return;
+    }
+    session.gold -= price;
+    const rest = { ...stack.mods };
+    delete rest[modId];
+    if (Object.keys(rest).length === 0) delete stack.mods;
+    else stack.mods = rest;
+    session.dirtyStats = true;
+    this.touchInv(session);
+    const modName = this.reg.modifiers[modId]?.name ?? modId;
+    this.system(session, `Selvara unpicks the ${modName} from your ${def?.name ?? "item"}. (-${price}g)`);
+    this.log.info(`${session.character.name} removed ${modId} from ${stack.item} for ${price}g`);
   }
 
   handleBuy(session: PlayerSession, npcEntityId: number, itemId: string, qty: number): void {

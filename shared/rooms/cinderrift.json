@@ -353,5 +353,17 @@
       ]
     }
   ],
-  "npcs": []
+  "npcs": [
+    {
+      "id": "ember-witch", "name": "Ysolde the Ember-Witch", "sprite": "npc_arcanist",
+      "x": 148, "z": 270, "yaw": -1.5708, "wanderRadius": 0,
+      "dialog": [
+        "All this way for my needle? Then you're serious. Good.",
+        "Selvara weaves to the second degree. I weave to the third — the fire lends me its strength.",
+        "Bring me a worthy piece. Cheap trinkets crack under a third weaving.",
+        "Regret a weaving? I'll burn it out — curses too. Those, I rather enjoy."
+      ],
+      "service": { "kind": "enchant", "maxTier": 3, "remove": true, "offers": ["hpRegen", "manaRegen", "moveSpeedPct", "magicTakenPct", "maxHp", "maxMana", "dmgPct", "meleeTakenPct", "rangedTakenPct", "lifesteal", "goldFind", "thorns"] }
+    }
+  ]
 }

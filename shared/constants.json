@@ -108,7 +108,18 @@
   },
   "enchanting": {
     "priceBase": 25,
-    "priceValueMult": 1.5
+    "priceValueMult": 1.5,
+    "tierCapacity": {
+      "1": { "slots": 1, "maxTier": 1 },
+      "2": { "slots": 1, "maxTier": 2 },
+      "3": { "slots": 2, "maxTier": 2 },
+      "4": { "slots": 2, "maxTier": 3 },
+      "5": { "slots": 3, "maxTier": 3 }
+    },
+    "tierPriceMult": { "1": 1, "2": 2.5, "3": 5 },
+    "slotSurchargeMult": 1.6,
+    "removeCostBase": 40,
+    "removeCostValueMult": 0.35
   },
   "progression": {
     "baseHp": 80,

@@ -77,6 +77,17 @@ const ConstantsSchema = z.object({
   enchanting: z.object({
     priceBase: z.number(),
     priceValueMult: z.number(),
+    /** gear tier (1-5) → weaving capacity: how many enchant slots it holds and
+     *  the max enchant strength tier it accepts. Keyed by tier as a string. */
+    tierCapacity: z.record(z.string(), z.object({ slots: z.number().int(), maxTier: z.number().int() })),
+    /** enchant strength tier (1-3) → price multiplier (keyed by tier string) */
+    tierPriceMult: z.record(z.string(), z.number()),
+    /** each additional woven enchant on the same item multiplies its price by
+     *  this raised to the count of enchants already present */
+    slotSurchargeMult: z.number(),
+    /** removing a woven enchant: ceil(removeCostBase + value×rarity×removeCostValueMult) */
+    removeCostBase: z.number(),
+    removeCostValueMult: z.number(),
   }),
   progression: z.object({
     baseHp: z.number(),

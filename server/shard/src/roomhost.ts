@@ -269,7 +269,10 @@ class RoomHost {
           this.sim!.handleEquipSlot(session, msg.slot, msg.invIndex);
           break;
         case "enchant":
-          this.sim!.handleEnchant(session, msg.npc, msg.slot, msg.enchantId);
+          this.sim!.handleEnchant(session, msg.npc, msg.slot, msg.enchantId, msg.tier);
+          break;
+        case "unenchant":
+          this.sim!.handleUnenchant(session, msg.npc, msg.slot, msg.modId);
           break;
         case "invMove":
           this.sim!.handleInvMove(session, msg.from, msg.to);

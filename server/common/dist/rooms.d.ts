@@ -214,18 +214,26 @@ export declare const NpcDefSchema: z.ZodObject<{
         items: string[];
         buys: boolean;
     }>>;
-    /** enchanter service: fixed tier-1 enchant menu (modifier ids that carry
-     *  an `enchant` block in shared/modifiers.json). RoomSim warns on
+    /** enchanter service: weaving menu (modifier ids that carry an `enchant`
+     *  block in shared/modifiers.json). `maxTier` = the highest enchant strength
+     *  this weaver can apply (Selvara 2, a master enchanter 3); `remove` = this
+     *  weaver can strip a woven enchant (and lift curses). RoomSim warns on
      *  dangling/offer-less ids at boot. */
     service: z.ZodOptional<z.ZodObject<{
         kind: z.ZodLiteral<"enchant">;
         offers: z.ZodArray<z.ZodString, "many">;
+        maxTier: z.ZodDefault<z.ZodNumber>;
+        remove: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
+        maxTier: number;
         kind: "enchant";
         offers: string[];
+        remove: boolean;
     }, {
         kind: "enchant";
         offers: string[];
+        maxTier?: number | undefined;
+        remove?: boolean | undefined;
     }>>;
 }, "strip", z.ZodTypeAny, {
     name: string;
@@ -241,8 +249,10 @@ export declare const NpcDefSchema: z.ZodObject<{
         buys: boolean;
     } | undefined;
     service?: {
+        maxTier: number;
         kind: "enchant";
         offers: string[];
+        remove: boolean;
     } | undefined;
 }, {
     name: string;
@@ -260,6 +270,8 @@ export declare const NpcDefSchema: z.ZodObject<{
     service?: {
         kind: "enchant";
         offers: string[];
+        maxTier?: number | undefined;
+        remove?: boolean | undefined;
     } | undefined;
 }>;
 export type NpcDef = z.infer<typeof NpcDefSchema>;
@@ -925,18 +937,26 @@ export declare const RoomDefSchema: z.ZodObject<{
             items: string[];
             buys: boolean;
         }>>;
-        /** enchanter service: fixed tier-1 enchant menu (modifier ids that carry
-         *  an `enchant` block in shared/modifiers.json). RoomSim warns on
+        /** enchanter service: weaving menu (modifier ids that carry an `enchant`
+         *  block in shared/modifiers.json). `maxTier` = the highest enchant strength
+         *  this weaver can apply (Selvara 2, a master enchanter 3); `remove` = this
+         *  weaver can strip a woven enchant (and lift curses). RoomSim warns on
          *  dangling/offer-less ids at boot. */
         service: z.ZodOptional<z.ZodObject<{
             kind: z.ZodLiteral<"enchant">;
             offers: z.ZodArray<z.ZodString, "many">;
+            maxTier: z.ZodDefault<z.ZodNumber>;
+            remove: z.ZodDefault<z.ZodBoolean>;
         }, "strip", z.ZodTypeAny, {
+            maxTier: number;
             kind: "enchant";
             offers: string[];
+            remove: boolean;
         }, {
             kind: "enchant";
             offers: string[];
+            maxTier?: number | undefined;
+            remove?: boolean | undefined;
         }>>;
     }, "strip", z.ZodTypeAny, {
         name: string;
@@ -952,8 +972,10 @@ export declare const RoomDefSchema: z.ZodObject<{
             buys: boolean;
         } | undefined;
         service?: {
+            maxTier: number;
             kind: "enchant";
             offers: string[];
+            remove: boolean;
         } | undefined;
     }, {
         name: string;
@@ -971,6 +993,8 @@ export declare const RoomDefSchema: z.ZodObject<{
         service?: {
             kind: "enchant";
             offers: string[];
+            maxTier?: number | undefined;
+            remove?: boolean | undefined;
         } | undefined;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
@@ -1098,8 +1122,10 @@ export declare const RoomDefSchema: z.ZodObject<{
             buys: boolean;
         } | undefined;
         service?: {
+            maxTier: number;
             kind: "enchant";
             offers: string[];
+            remove: boolean;
         } | undefined;
     }[];
     fixedTime?: number | undefined;
@@ -1183,6 +1209,8 @@ export declare const RoomDefSchema: z.ZodObject<{
         service?: {
             kind: "enchant";
             offers: string[];
+            maxTier?: number | undefined;
+            remove?: boolean | undefined;
         } | undefined;
     }[];
     wind?: number | undefined;

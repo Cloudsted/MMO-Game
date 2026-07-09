@@ -309,13 +309,25 @@ export const ClientToServerSchema = z.discriminatedUnion("t", [
     slot: z.enum(EQUIP_SLOTS),
     invIndex: z.number().int().optional(),
   }),
-  /** Buy a fixed tier-1 enchant from an enchanter NPC for the item at
-   *  inventory `slot`. Refused unless the item is an unmodified equippable. */
+  /** Weave an enchant from an enchanter NPC onto the equippable at inventory
+   *  `slot` at strength `tier`. Refused unless the target has a free enchant
+   *  slot, its tier capacity + the weaver's maxTier both allow `tier`, and it
+   *  doesn't already bear that modifier (no in-place upgrade — remove first). */
   z.object({
     t: z.literal("enchant"),
     npc: z.number().int(),
     slot: z.number().int(),
     enchantId: z.string(),
+    tier: z.number().int().min(1),
+  }),
+  /** Strip a woven modifier `modId` off the equippable at inventory `slot`
+   *  (frees its slot; also lifts curses). Refused unless the weaver offers
+   *  removal (`service.remove`) and the item bears that modifier. */
+  z.object({
+    t: z.literal("unenchant"),
+    npc: z.number().int(),
+    slot: z.number().int(),
+    modId: z.string(),
   }),
   z.object({ t: z.literal("invMove"), from: z.number().int(), to: z.number().int() }),
   z.object({ t: z.literal("consume"), slot: z.number().int() }),
@@ -386,12 +398,16 @@ export interface ShopWire {
   buys: boolean;
 }
 
-/** An enchanter NPC's fixed tier-1 menu. Display prices are computed
- *  client-side per target item from shared constants (`enchanting`:
- *  ceil(value × rarityMult × priceMult × priceValueMult + priceBase));
- *  the server recomputes authoritatively at `enchant` receipt. */
+/** An enchanter NPC's weaving menu. Each offer carries the modifier's strength
+ *  ladder `tiers` [I,II,III]; the applied strength is min(this weaver's
+ *  `maxTier`, the target item's tier capacity). Prices are computed client-side
+ *  per target item from shared constants (`enchanting`); the server recomputes
+ *  authoritatively at `enchant` receipt. `remove` = this weaver can strip a
+ *  woven enchant (and lift curses). */
 export interface EnchantWire {
-  offers: Array<{ id: string; name: string; mag: number; priceMult: number }>;
+  offers: Array<{ id: string; name: string; tiers: number[]; priceMult: number }>;
+  maxTier: number;
+  remove: boolean;
 }
 
 /** One active effect on the self status bar. `durMs` is REMAINING duration

@@ -1118,6 +1118,14 @@
           1,
           2
         ]
+      },
+      {
+        "weight": 8,
+        "item": "greater_amulet",
+        "qty": [
+          1,
+          1
+        ]
       }
     ]
   },
@@ -1163,6 +1171,14 @@
           1,
           2
         ]
+      },
+      {
+        "weight": 8,
+        "item": "master_amulet",
+        "qty": [
+          1,
+          1
+        ]
       }
     ]
   },
@@ -1204,6 +1220,14 @@
       {
         "weight": 16,
         "item": "bone_charm",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 8,
+        "item": "master_amulet",
         "qty": [
           1,
           1
@@ -1445,6 +1469,15 @@
         "qty": [
           1,
           2
+        ]
+      },
+      {
+        "weight": 15,
+        "item": "mythic_relic",
+        "minRarity": "rare",
+        "qty": [
+          1,
+          1
         ]
       },
       {

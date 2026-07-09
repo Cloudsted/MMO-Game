@@ -194,10 +194,17 @@
         "invIndex": "n?"
       },
       "enchant": {
-        "$comment": "buy a fixed tier-1 enchant from an enchanter NPC for the unmodified equippable at inventory slot; server recomputes the price (enchanting constants) and refuses modified items",
+        "$comment": "weave enchant enchantId at strength tier onto the equippable at inventory slot; server re-validates (free enchant slot, tier <= item cap and weaver maxTier, no duplicate modifier) and recomputes price (enchanting constants)",
         "npc": "n",
         "slot": "n",
-        "enchantId": "s"
+        "enchantId": "s",
+        "tier": "n"
+      },
+      "unenchant": {
+        "$comment": "strip woven modifier modId off the equippable at inventory slot (frees a slot, lifts curses); only weavers with service.remove; server recomputes removeCost",
+        "npc": "n",
+        "slot": "n",
+        "modId": "s"
       },
       "invMove": {
         "from": "n",
@@ -386,12 +393,12 @@
         "text": "s"
       },
       "dialog": {
-        "$comment": "enchant = enchanter NPCs' fixed tier-1 menu; display prices computed client-side per target item (enchanting constants), server recomputes at enchant receipt",
+        "$comment": "enchant = enchanter NPC weaving menu; each offer carries the modifier strength ladder tiers[]; applied strength = min(maxTier, target item tier cap); remove = weaver can strip enchants; display prices computed client-side, server recomputes at enchant receipt",
         "id": "n",
         "name": "s",
         "lines": "a<s>",
         "shop": "{items:a<{item:s,price:n}>,buys:b}|null",
-        "enchant": "{offers:a<{id:s,name:s,mag:n,priceMult:n}>}|null?"
+        "enchant": "{offers:a<{id:s,name:s,tiers:a<n>,priceMult:n}>,maxTier:n,remove:b}|null?"
       },
       "portalState": {
         "$comment": "destination room went up/down",

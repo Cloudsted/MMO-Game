@@ -340,16 +340,29 @@ export declare class RoomSim {
     private npcDef;
     private nearNpc;
     handleTalk(session: PlayerSession, entityId: number): void;
-    /** The enchanter's price for putting `mod` on `stack` — value- and
-     *  rarity-scaled from shared constants; the client computes the same
-     *  number for display, this one is authoritative. */
-    enchantPrice(stack: ItemStack, priceMult: number): number;
-    /** Buy a fixed tier-1 enchant for the inventory stack at `slot`. Server
-     *  re-validates everything at receipt (the menu may be stale: invMove/
-     *  sell/drop races just change the target): near + service + offer,
-     *  eligible kind via the modifier's appliesTo, UNMODIFIED instance only
-     *  (curses count — she cannot weave over another's work), gold. */
-    handleEnchant(session: PlayerSession, npcEntityId: number, slot: number, enchantId: string): void;
+    /** Weaving capacity for a gear tier: enchant slots + max strength tier
+     *  (constants.enchanting.tierCapacity). An unknown/absent tier clamps to the
+     *  highest defined rung at or below it, else the lowest rung. */
+    private weaveCapacity;
+    /** The weaver's price to add strength `tier` of `mod` onto `stack`, given
+     *  how many enchants it already carries (each prior one surcharges). Value-
+     *  and rarity-scaled from shared constants; the client mirrors this exactly
+     *  for display, this one is authoritative. */
+    enchantPrice(stack: ItemStack, priceMult: number, tier: number, existingMods: number): number;
+    /** The weaver's price to strip one woven enchant off `stack`. */
+    removeCost(stack: ItemStack): number;
+    /** Weave enchant `enchantId` at strength `tier` onto the inventory stack at
+     *  `slot`. Server re-validates everything at receipt (the menu may be stale:
+     *  invMove/sell/drop races just change the target): near + service + offer,
+     *  eligible kind via the modifier's appliesTo, the strength within BOTH the
+     *  weaver's and the item's tier cap, a FREE enchant slot (capacity counts
+     *  every mod — rolled or woven), no duplicate of this modifier (no in-place
+     *  upgrade — remove first), gold. */
+    handleEnchant(session: PlayerSession, npcEntityId: number, slot: number, enchantId: string, tier: number): void;
+    /** Strip a woven modifier off the item at `slot` (frees its enchant slot;
+     *  also lifts curses off drop gear). Only weavers with service.remove offer
+     *  it; server re-validates near + service + remove + the mod being present. */
+    handleUnenchant(session: PlayerSession, npcEntityId: number, slot: number, modId: string): void;
     handleBuy(session: PlayerSession, npcEntityId: number, itemId: string, qty: number): void;
     handleSell(session: PlayerSession, npcEntityId: number, slot: number, qty: number): void;
     /** Sell-value multiplier from an instance's modifiers: perks add, curses

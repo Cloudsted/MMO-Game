@@ -159,12 +159,19 @@ describe("equipment wire schemas", () => {
     expect(() => decodeClientToServer(encode({ t: "equipSlot", slot: "hat" }))).toThrow();
   });
 
-  it("round-trips enchant", () => {
-    expect(decodeClientToServer(encode({ t: "enchant", npc: 3, slot: 9, enchantId: "hpRegen" }))).toEqual({
+  it("round-trips enchant + unenchant", () => {
+    expect(decodeClientToServer(encode({ t: "enchant", npc: 3, slot: 9, enchantId: "hpRegen", tier: 2 }))).toEqual({
       t: "enchant",
       npc: 3,
       slot: 9,
       enchantId: "hpRegen",
+      tier: 2,
+    });
+    expect(decodeClientToServer(encode({ t: "unenchant", npc: 3, slot: 9, modId: "hpRegen" }))).toEqual({
+      t: "unenchant",
+      npc: 3,
+      slot: 9,
+      modId: "hpRegen",
     });
   });
 
