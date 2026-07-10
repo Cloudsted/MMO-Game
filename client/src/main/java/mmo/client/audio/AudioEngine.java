@@ -284,6 +284,14 @@ public class AudioEngine {
                 bed = "drone_crypt"; // the sorting-house under the crypt
                 playlist = "dungeon";
             }
+            case "sundering_fields" -> {
+                bed = "wind_storm"; // the capital's dead wind reaching south over the trenches
+                playlist = "wild";
+            }
+            case "foundry" -> {
+                bed = "drone_dungeon"; // the shift that never stops
+                playlist = "dungeon";
+            }
             case "desert" -> {
                 bed = "wind_desert";
                 playlist = "wild";

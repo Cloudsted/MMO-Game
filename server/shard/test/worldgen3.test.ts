@@ -203,6 +203,8 @@ describe("portal graph (auto-pairing both ways)", () => {
     ["emberfells", "cinderrift"],
     ["dungeon", "ossuary_galleries"], // batch 5: the Ossuary spliced the old crypt↔depths edge
     ["ossuary_galleries", "crypt_depths"],
+    ["gloomfen", "sundering_fields"], // batch 7: the fields spliced the old gloomfen↔city edge
+    ["sundering_fields", "foundry"], // batch 7: the two mainlines meet at the capital's doors
   ];
 
   it.each(pairs)("%s ↔ %s arrive at each other's twin gates", (parentId, childId) => {

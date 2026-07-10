@@ -458,7 +458,30 @@ EVIDENCE: this is what a tyrant's appetite does to a map.
 
 ---
 
-### W5 — **The Sundering Fields** (`NEW room`, working name "Warfields") · L11–13
+### W5 — **The Sundering Fields** (`sundering_fields`) · L11–13 — **SHIPPED (batch 7, 2026-07-10)**
+
+> **SHIPPED as designed, one reading fixed in the ground:** the trench
+> crescents face NORTH toward the capital — so the builder's story is that
+> the gates broke FIRST, and the army dug in south of its own fallen city
+> to hold the road while the people fled into the fen. The sledge-furrow
+> runs arrow-straight OUT of the city's direction and dies at the war-sledge
+> arena mid-room; Old Wallbreaker (NEW `old_wallbreaker`, boss_giant_1.png —
+> now VERIFIED: sepia dust-caked club brute, single 3×4, clean) grazes
+> beside the empty yoke at L14/1083 hp with slam + siege-charge +
+> rubble-shock, guaranteed `wallbreaker_clasp` (a yoke-clasp, 100). The
+> Barrow Alpha (NEW `barrow_alpha`, gravehound sprite) dens at L13 in an
+> authored mass barrow in the east, ringed by her packs; her `barrow_howl`
+> summons pay nothing. Landmarks shipped: both trench crescents (firing
+> steps south, berms + stakes north, duckboard gaps), the furrow + arena,
+> the mustering stones (fallen_soldier at base 14 — the day-nine line), the
+> toll arch with its chains still up (walk-through cross blocks), two
+> besieger camps the Ashpickers squat, shell craters, the fen-creep south
+> fringe, and a corpse-candle trail marking the ☆ Drowned West Road gate.
+> Wallbreaker's death line is this section's verbatim; his 50% rally
+> re-forms the dead line (L13 skeleton wave). The Grelmoss ⚿ on this border
+> (W4's entry) did NOT ship — the fen⇄fields edges are open thoroughfares
+> per the proposal's node row; the territory-line gate stays a W4-rework
+> option.
 
 **Where the king's army made its stand — for nine days.** The approach plain
 south of Valdrenn: siege-scars, trench lines, the wreck of the tribute-road,
@@ -857,7 +880,32 @@ the campaign's best breadcrumb.
 
 ---
 
-### E5 — **The Foundry** (`NEW room`, working name kept) · L14–16 · preset interior
+### E5 — **The Foundry** (`foundry`) · L14–16 · preset interior — **SHIPPED (batch 7, 2026-07-10)**
+
+> **SHIPPED as designed** (tableau-implication only, per the register): 160²
+> preset interior (biome ruin), stateful, three junction gates — ⚿ from the
+> Cinderrift (a NEW `cinderrift-foundry` portal behind the Forge Ruin that
+> boots SEALED and opens on the Furnace-King's death with this section's E4
+> announce verbatim; his 900 s respawn is the door-ajar window), ⇄ the
+> Sundering Fields (west), ⇄ Valdrenn's east breach (the `city-breach`
+> portal re-targeted, its authored 240,128 landing preserved). The assembly
+> line runs small→large down the S-bent long hall (two offset crosswalls)
+> past rune-plates that light toward the north end, and ends at the
+> THRONE-SIZED FRAME: legs, iron torso cage, a gold heart-socket filled and
+> waiting, NO HEAD — with the next one half-built on anvils behind it (the
+> death-announce tableau, pre-authored). The two docks shipped: the stamped
+> tribute dock's crates are ICED shut (the Revenant's rime-stamp — frost
+> seals in a fire-works) beside the UNSTAMPED dock's gold-fitted held-back
+> work. THE UNFINISHED KING = `forge_prototype` elevated to L17 by spawn
+> table + a boss rank that overrides name AND loot (a new rank capability —
+> the cinderrift's base-14 prototypes keep "Forge Prototype" and
+> forge_construct_drops byte-identically): 1495 hp (Osmund's L17 peer),
+> 6251 xp (room boss ×8), kit slam/lob/throne-flames + `foundry_summon`
+> (waking dormant wards), guaranteed `unfinished_sigil` (a half-made king's
+> seal-face, 180) + rare royal weapon. Foundry Captain / Foundry Overseer
+> ranks finally reachable in their namesake room (L16 line-north table);
+> forge_ward L15 "statues" hold the doors. Death announce verbatim; his 50%
+> rally wakes L15 wards down the line.
 
 **Where the Furnace-King builds its heresy.** A 160² preset interior — the
 production floor the whole east branch has been climbing toward. Official
@@ -1011,6 +1059,22 @@ workforce, finally in their home room at their home levels.
 
 ### N3 — **The Pale Court** (`crypt_depths`, was "Vaults of Morvane") · L12–14 · keeps collapse cycle
 
+> **ESCAPE-GATE BEAT SHIPPED (batch 7, 2026-07-10)** — landmark 4 and the
+> collapse arc, ahead of the full N3 rework: the FAR GATE (`depths-escape`)
+> stands in the frozen vault east of the ice dais — a torn arch dressed in
+> leaning cracked masonry, a fallen jamb, a blue-crystal leak, and the chain
+> rope-line strung across its approach BY NOBODY (the rope tableau stays
+> unexplained). It boots SEALED, and Morvane's death event now runs this
+> section's announce VERBATIM ("The Pale King is unmade... the far gate
+> TEARS. Sixty seconds. GO."), tears the gate open, and arms the 60 s
+> collapse — the window is the collapse itself; the fresh room boots sealed
+> again with no extra wiring. One-way by omission (authored exitX/exitZ, no
+> pair): travellers land at Valdrenn's COLLAPSED POSTERN (210.5,110.5), a
+> new authored undercroft mouth in the graveyard quarter — a stair down out
+> of the city's own crypts, choked with rubble two steps in, the Court's
+> cold light bleeding through the fall. The rest of N3 (the seated court,
+> the Cold Curator, the rename) remains unshipped.
+
 **The court being composed.** The Pale King's seat: dark-brick vaults, iron
 cells, the frozen third — and now the re-theme lands: everything in it was
 PAID FOR by Greywatch's dead-tithe. The Court is Morvane's masterwork in
@@ -1123,8 +1187,9 @@ tithe-road that used to cross it, plowed under.
 
 **New defs required by this bible** (authored at band level, per proposal):
 `quartermaster_grole` (W2), `elder_strangler` (W3, mantrap sprite),
-`veshka_broodmother` (W4), `old_wallbreaker` (W5), `barrow_alpha` (W5,
-gravehound sprite), `ser_osmund` (W6, sentinel sprite), ~~`sarquun` (E2)~~
+`veshka_broodmother` (W4), ~~`old_wallbreaker` (W5)~~ (SHIPPED batch 7),
+~~`barrow_alpha` (W5, gravehound sprite)~~ (SHIPPED batch 7),
+`ser_osmund` (W6, sentinel sprite), ~~`sarquun` (E2)~~
 (SHIPPED batch 2), ~~`old_kiln` (E3, slagback sprite)~~ (SHIPPED batch 5), `first_draft` (N1, ogre sprite),
 `cold_curator` (N3, medusa sprite), `first_tyrant` (W8), `rime_warden`
 (W8), plus White Waste trash [PROPOSAL, all UNVERIFIED sprites from the
@@ -1143,8 +1208,8 @@ catalog]: winter/spectral centaur (`centaur_c_1.png`), snow harpy
 | W3 Strangler's March | The Elder Strangler | main — the fen's garden, personified | 8 | NEW `elder_strangler` | `mantrap` (shipped) |
 | W4 Gloomfen | Grelmoss, the Crowned Mire | main TYRANT — the living dam; opens Fields gate | 11 (retune 12→11) | `grelmoss` | `grelmoss` (shipped) |
 | W4 | Veshka, Mother of the Hollows [PROPOSAL] | side ☆ broodmother | ~10 | NEW `veshka_broodmother` | `boss_drider_1.png` — UNVERIFIED |
-| W5 Sundering Fields | Old Wallbreaker | main — the siege-beast that broke Valdrenn | 14 | NEW `old_wallbreaker` | `boss_giant_1.png` — UNVERIFIED |
-| W5 | The Barrow Alpha | side — gravehound matriarch | 13 | NEW `barrow_alpha` | `gravehound` (shipped) |
+| W5 Sundering Fields | Old Wallbreaker | main — the siege-beast that broke Valdrenn | 14 | `old_wallbreaker` (SHIPPED batch 7) | `boss_giant_1.png` — VERIFIED (tools/out/sheets/wallbreaker-giant-single-chars.png) |
+| W5 | The Barrow Alpha | side — gravehound matriarch | 13 | `barrow_alpha` (SHIPPED batch 7) | `gravehound` (shipped) |
 | W6 Valdrenn | Ser Osmund, the Gatekeeper [PROPOSAL] | main — oath as a lock; opens court gate | 17 | NEW `ser_osmund` | `oathbound_sentinel` (shipped) |
 | W6 | The Riderless | side — the king's burning horse | 17 | `cinder_nightmare` @ rank | `cinder_nightmare` (shipped) |
 | W7 Broken Court | Vaelric, the Sundered King | main — the second dead king; solo peak; opens the breach | 19 (retune 18→19) | `sundered_king` | `sundered_king` (shipped) |
@@ -1156,7 +1221,7 @@ catalog]: winter/spectral centaur (`centaur_c_1.png`), snow harpy
 | E3 Emberfells | The Old Kiln | main — the Furnace-King's eldest servant | 11 | NEW `old_kiln` | `slagback_troll` (shipped) |
 | E4 Cinderrift | Vulkhar, the Furnace-King [PROPOSAL] | main TYRANT — stokes the rift; opens Foundry gate | 13 | `cinder_golem_boss` (display re-theme) | `cinder_golem` (shipped) |
 | E4 | The Frostplate Revenant | side (elevated) — the First's tithe-collector | 15 rank | `frostplate_revenant` | shipped |
-| E5 Foundry | The Unfinished King | main — the made tyrant, incomplete | 17 (retune 14→17) | `forge_prototype` (display re-theme) | shipped |
+| E5 Foundry | The Unfinished King | main — the made tyrant, incomplete | 17 (retune 14→17) | `forge_prototype` @ L17 boss rank w/ name+loot overrides (SHIPPED batch 7) | shipped |
 | N1 Tithe Crypt | The Gravelord | main — the Pale King's door-warden; opens Ossuary gate | 9 (retune 10→9) | `minotaur_boss` (display re-theme) | `minotaur` (shipped) |
 | N1 | The First Draft | side ☆ caged | ~9 | NEW `first_draft` | `ogre_1.png` — UNVERIFIED |
 | N2 Ossuary Galleries | The Bone Warden | main — gallery foreman; opens Court gate | 12 | `bone_warden` | shipped |

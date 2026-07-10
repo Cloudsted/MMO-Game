@@ -305,7 +305,8 @@ describe("entity-linked room events", () => {
     const lich = [...sim.allEntities()].find((e) => e.kind === "mob" && e.brain?.mobId === "lich_boss")!;
     sim.applyDamage(a.session.entity, lich, 999_999);
     expect(armed).toEqual([60]);
-    expect(a.messages.some((m) => m.t === "chat" && m.text.includes("crumble"))).toBe(true);
+    // batch 7: the bible's collapse line replaced the placeholder announce
+    expect(a.messages.some((m) => m.t === "chat" && m.text.includes("the far gate TEARS"))).toBe(true);
   });
 
   it("hp-threshold triggers re-arm when the boss respawns", () => {

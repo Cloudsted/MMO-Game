@@ -889,7 +889,7 @@ describe("economy invariants", () => {
   /** Every mob a spawn table can produce, with the level it produces it at. */
   function shippedSpawns(): Array<{ room: string; table: string; mob: string; level: number; maxAlive: number; respawnSec: number }> {
     const out: Array<{ room: string; table: string; mob: string; level: number; maxAlive: number; respawnSec: number }> = [];
-    for (const roomId of ["hub", "forest", "desert", "dungeon", "gloomfen", "cinderrift", "crypt_depths", "sundered_city", "broken_court", "maw", "greenhood_run", "stranglers_march", "emberfells", "ossuary_galleries", "grounds", "atelier"]) {
+    for (const roomId of ["hub", "forest", "desert", "dungeon", "gloomfen", "cinderrift", "crypt_depths", "sundered_city", "broken_court", "maw", "greenhood_run", "stranglers_march", "emberfells", "ossuary_galleries", "sundering_fields", "foundry", "grounds", "atelier"]) {
       const def = loadRoomDef(roomId);
       for (const t of def.spawnTables) {
         for (const m of t.mobs) {
@@ -929,8 +929,13 @@ describe("economy invariants", () => {
       // the ossuary's boss is the existing bone_warden ELEVATED to L12 by its
       // spawn-table override + boss rank — the cap must be the L12 resolve
       ossuary_galleries: resolveMob(reg.mobs["bone_warden"]!, 12, SCALE).xp,
+      // batch 7: the graph's final reconnections
+      sundering_fields: resolveMob(reg.mobs["old_wallbreaker"]!, undefined, SCALE).xp,
+      // the foundry's ruling power is forge_prototype ELEVATED to L17 by its
+      // spawn-table override + boss rank — the cap must be the L17 resolve
+      foundry: resolveMob(reg.mobs["forge_prototype"]!, 17, SCALE).xp,
     };
-    const bosses = new Set(["minotaur_boss", "lich_boss", "cinder_golem_boss", "sundered_king", "ser_osmund", "thrace_redcap", "kaharat", "sekhat", "grelmoss", "aelthir", "sarquun", "quartermaster_grole", "elder_strangler", "old_kiln", "bone_warden"]);
+    const bosses = new Set(["minotaur_boss", "lich_boss", "cinder_golem_boss", "sundered_king", "ser_osmund", "thrace_redcap", "kaharat", "sekhat", "grelmoss", "aelthir", "sarquun", "quartermaster_grole", "elder_strangler", "old_kiln", "bone_warden", "old_wallbreaker", "barrow_alpha", "forge_prototype"]);
     for (const s of shippedSpawns()) {
       const cap = bossXp[s.room];
       if (cap === undefined || bosses.has(s.mob)) continue;

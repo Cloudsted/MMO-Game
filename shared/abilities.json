@@ -1285,5 +1285,77 @@
     "cooldownMs": 10000,
     "manaCost": 0,
     "fx": "frost"
+  },
+  "siege_charge": {
+    "kind": "melee",
+    "windupMs": 900,
+    "activeMs": 160,
+    "recoverMs": 550,
+    "range": 4.2,
+    "arcDeg": 50,
+    "debuff": {
+      "slowPct": 0.35,
+      "durMs": 1800
+    },
+    "canMoveWhile": true,
+    "interruptible": false,
+    "cooldownMs": 6500,
+    "manaCost": 0,
+    "fx": "hit"
+  },
+  "rubble_shock": {
+    "kind": "pillars",
+    "castTimeMs": 1100,
+    "recoverMs": 450,
+    "pillars": {
+      "count": 4,
+      "spacing": 2.4,
+      "radius": 2.2,
+      "staggerMs": 190,
+      "burnMs": 1400
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 10000,
+    "manaCost": 0,
+    "fx": "firebolt"
+  },
+  "barrow_howl": {
+    "kind": "self",
+    "castTimeMs": 1300,
+    "recoverMs": 450,
+    "summon": {
+      "mob": "gravehound",
+      "count": 2,
+      "radius": 5,
+      "cap": 4,
+      "text": "The Barrow Alpha howls — the pack pours out of the mound!",
+      "grantsXp": false,
+      "grantsLoot": false
+    },
+    "canMoveWhile": false,
+    "interruptible": true,
+    "cooldownMs": 22000,
+    "manaCost": 0,
+    "fx": "frost"
+  },
+  "foundry_summon": {
+    "kind": "self",
+    "castTimeMs": 1500,
+    "recoverMs": 500,
+    "summon": {
+      "mob": "forge_ward",
+      "count": 2,
+      "radius": 6,
+      "cap": 3,
+      "text": "The Unfinished King's vents SCREAM — down the line, dead frames light their eyes.",
+      "grantsXp": true,
+      "grantsLoot": true
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 28000,
+    "manaCost": 0,
+    "fx": "firebolt"
   }
 }

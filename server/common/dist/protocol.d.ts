@@ -224,13 +224,13 @@ export declare const EntityFullSchema: z.ZodObject<{
     yaw: number;
     anim: string;
     name?: string | undefined;
-    sprite?: string | undefined;
-    level?: number | undefined;
-    hp?: number | undefined;
     loot?: {
         item: string;
         rarity: string;
     }[] | undefined;
+    sprite?: string | undefined;
+    level?: number | undefined;
+    hp?: number | undefined;
     maxHp?: number | undefined;
     act?: string | undefined;
     actMs?: number | undefined;
@@ -243,13 +243,13 @@ export declare const EntityFullSchema: z.ZodObject<{
     yaw: number;
     anim: string;
     name?: string | undefined;
-    sprite?: string | undefined;
-    level?: number | undefined;
-    hp?: number | undefined;
     loot?: {
         item: string;
         rarity: string;
     }[] | undefined;
+    sprite?: string | undefined;
+    level?: number | undefined;
+    hp?: number | undefined;
     maxHp?: number | undefined;
     act?: string | undefined;
     actMs?: number | undefined;
@@ -279,11 +279,11 @@ export declare const EntityDeltaSchema: z.ZodObject<{
     }>, "many">>;
 }, "strip", z.ZodTypeAny, {
     id: number;
-    hp?: number | undefined;
     loot?: {
         item: string;
         rarity: string;
     }[] | undefined;
+    hp?: number | undefined;
     x?: number | undefined;
     y?: number | undefined;
     z?: number | undefined;
@@ -293,11 +293,11 @@ export declare const EntityDeltaSchema: z.ZodObject<{
     actMs?: number | undefined;
 }, {
     id: number;
-    hp?: number | undefined;
     loot?: {
         item: string;
         rarity: string;
     }[] | undefined;
+    hp?: number | undefined;
     x?: number | undefined;
     y?: number | undefined;
     z?: number | undefined;

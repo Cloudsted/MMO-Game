@@ -31,21 +31,21 @@
   "portals": [
     {
       "id": "city-southgate",
-      "label": "Gloomfen Marsh — Old North Road",
-      "target": "gloomfen",
+      "label": "The Sundering Fields — Old North Road",
+      "target": "sundering_fields",
       "x": 128,
       "z": 226,
       "r": 2.2,
-      "exitPortalId": "gloomfen-city-north"
+      "exitPortalId": "fields-city"
     },
     {
       "id": "city-breach",
-      "label": "Gloomfen Marsh — Drowned West Road",
-      "target": "gloomfen",
+      "label": "The Foundry — East Breach Road",
+      "target": "foundry",
       "x": 244,
       "z": 128,
       "r": 2.2,
-      "exitPortalId": "gloomfen-city-west",
+      "exitPortalId": "foundry-city",
       "exitX": 240,
       "exitZ": 128
     },

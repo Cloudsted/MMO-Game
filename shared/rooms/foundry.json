@@ -1,0 +1,148 @@
+{
+  "id": "foundry",
+  "name": "The Foundry",
+  "type": "dungeon",
+  "biome": "ruin",
+  "wind": 0,
+  "persistence": "stateful",
+  "fixedTime": 0.9,
+  "nightLight": 1.5,
+  "size": {
+    "w": 160,
+    "h": 160
+  },
+  "spawn": {
+    "x": 80,
+    "z": 140,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 92777,
+    "base": 12,
+    "amplitude": 0,
+    "frequency": 0.02
+  },
+  "flags": {
+    "safeZone": false,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "foundry-cinderrift",
+      "label": "The Cinderrift",
+      "target": "cinderrift",
+      "x": 80,
+      "z": 148,
+      "r": 2.2,
+      "exitPortalId": "cinderrift-foundry"
+    },
+    {
+      "id": "foundry-fields",
+      "label": "The Sundering Fields",
+      "target": "sundering_fields",
+      "x": 16,
+      "z": 80,
+      "r": 2.2,
+      "exitPortalId": "fields-foundry"
+    },
+    {
+      "id": "foundry-city",
+      "label": "Valdrenn — the East Breach",
+      "target": "sundered_city",
+      "x": 144,
+      "z": 80,
+      "r": 2.2,
+      "exitPortalId": "city-breach"
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "works-gate",
+      "region": { "kind": "circle", "x": 80, "z": 124, "r": 10 },
+      "mobs": [{ "mob": "ember_warplate", "weight": 1, "level": 14 }],
+      "maxAlive": 4,
+      "packSize": [2, 2],
+      "respawnSec": 70
+    },
+    {
+      "id": "line-south",
+      "region": { "kind": "circle", "x": 80, "z": 96, "r": 12 },
+      "mobs": [
+        { "mob": "ember_warplate", "weight": 2, "level": 14 },
+        { "mob": "forge_tender", "weight": 1, "level": 14 }
+      ],
+      "maxAlive": 6,
+      "packSize": [2, 3],
+      "respawnSec": 65
+    },
+    {
+      "id": "casting-floor",
+      "region": { "kind": "circle", "x": 44, "z": 76, "r": 13 },
+      "mobs": [
+        { "mob": "fire_elemental", "weight": 2, "level": 14 },
+        { "mob": "forge_tender", "weight": 1, "level": 14 }
+      ],
+      "maxAlive": 5,
+      "packSize": [1, 2],
+      "respawnSec": 70
+    },
+    {
+      "id": "tribute-dock",
+      "region": { "kind": "circle", "x": 118, "z": 82, "r": 12 },
+      "mobs": [
+        { "mob": "ember_warplate", "weight": 2, "level": 14 },
+        { "mob": "forge_ward", "weight": 1, "level": 15 }
+      ],
+      "maxAlive": 5,
+      "packSize": [1, 2],
+      "respawnSec": 75
+    },
+    {
+      "id": "line-north",
+      "region": { "kind": "circle", "x": 80, "z": 60, "r": 12 },
+      "mobs": [
+        { "mob": "ember_warplate", "weight": 2, "level": 16 },
+        { "mob": "forge_tender", "weight": 1, "level": 16 }
+      ],
+      "maxAlive": 5,
+      "packSize": [2, 2],
+      "respawnSec": 75
+    },
+    {
+      "id": "ward-doors",
+      "region": { "kind": "circle", "x": 80, "z": 66, "r": 12 },
+      "mobs": [{ "mob": "forge_ward", "weight": 1, "level": 15 }],
+      "maxAlive": 3,
+      "packSize": [1, 1],
+      "respawnSec": 120
+    },
+    {
+      "id": "the-unfinished-king",
+      "region": { "kind": "circle", "x": 80, "z": 32, "r": 4 },
+      "mobs": [{ "mob": "forge_prototype", "weight": 1, "level": 17 }],
+      "maxAlive": 1,
+      "packSize": [1, 1],
+      "respawnSec": 900
+    }
+  ],
+  "events": [
+    {
+      "id": "king-wakes-line",
+      "on": { "kind": "bossHpBelowPct", "mob": "forge_prototype", "pct": 0.5 },
+      "actions": [
+        { "kind": "announce", "text": "Down the line, half-built frames stir on their anvils — the Foundry answers its king." },
+        { "kind": "spawnMobs", "mob": "forge_ward", "count": 2, "radius": 8, "level": 15 }
+      ]
+    },
+    {
+      "id": "king-fails",
+      "on": { "kind": "bossDeath", "mob": "forge_prototype" },
+      "actions": [
+        { "kind": "announce", "text": "The Unfinished King fails. On the anvils behind it: the next one, half-built." }
+      ]
+    }
+  ],
+  "npcs": []
+}

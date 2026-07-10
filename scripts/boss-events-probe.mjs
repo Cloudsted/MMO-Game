@@ -8,9 +8,13 @@
  *        {target:crypt_depths, open:true}
  *   3. walk through the event-opened portal -> arrive in crypt_depths
  *   4. kill Morvane the lich (he summons bone bats mid-fight):
- *      - death announces the collapse ("crumble") and re-arms the room
- *        timer to 60s -> expect the T-10 warning chat and the evict within
- *        ~75s of the kill
+ *      - death announces the collapse (the bible's "the far gate TEARS"
+ *        line), re-arms the room timer to 60s, AND tears open the one-way
+ *        ESCAPE GATE (batch 7: depths-escape, sealed until this moment)
+ *   5. RUN: walk to the far gate inside the collapse window, transfer
+ *      through -> land at Valdrenn's collapsed postern (210.5,110.5 — the
+ *      authored one-way landing; no return portal anywhere near it), then
+ *      watch /api/status close crypt_depths behind you
  * Needs the `dropbot` account to be admin (node scripts/make-admin.mjs dropbot).
  * Exits 0 on success, 1 on any failed expectation.
  *
@@ -20,7 +24,7 @@ import WebSocket from "ws";
 import { loadEnv, makeWorldTracker, sleep, goTo } from "./lib.mjs";
 
 loadEnv();
-const MASTER = `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
+const MASTER = process.env.MMO_MASTER_ORIGIN ?? `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
 
 async function api(path, body, token) {
   const res = await fetch(`${MASTER}${path}`, {
@@ -199,10 +203,18 @@ const skeletonsNearBoss = () =>
   ).length;
 const skeletonsBefore = skeletonsNearBoss();
 
+// rally adds must be observed DURING the fight — the bot's cleave arc mows
+// the L6 wave down beside the boss, and a post-fight count sees 0 -> 0
+// (the same trap city-probe documents for the court raid)
+let skeletonsPeak = skeletonsBefore;
+const rallyWatch = setInterval(() => {
+  skeletonsPeak = Math.max(skeletonsPeak, skeletonsNearBoss());
+}, 250);
 const minoDead = await fight(ws, state, mino.id);
+clearInterval(rallyWatch);
 expect(minoDead, `Gravelord killed (bot hp ${state.stats?.hp}, died=${state.died})`);
 expect(chatWith(state, "bellows"), "half-health rally announced (\"bellows\")");
-expect(skeletonsNearBoss() > skeletonsBefore, `rally adds appeared near the boss (${skeletonsBefore} -> ${skeletonsNearBoss()})`);
+expect(skeletonsPeak > skeletonsBefore, `rally adds appeared near the boss mid-fight (${skeletonsBefore} -> peak ${skeletonsPeak})`);
 expect(chatWith(state, "stands open"), "gate-opening announced (\"the lower stair stands open\")");
 const opened = state.portalStates.find((p) => p.target === "ossuary_galleries" && p.open === true);
 expect(!!opened, "portalState {ossuary_galleries, open:true} replicated");
@@ -221,11 +233,24 @@ ws.close();
 // full crypt→ossuary→depths through-walk is ossuary-probe's job; this probe
 // hops on by admin /room to keep its subject the EVENT ARC (gate + collapse)
 expect(state.roomId === "ossuary_galleries", `arrived in ${state.roomId} (the spliced sorting-house)`);
+// a prior run's collapse may still hold crypt_depths down — wait for the
+// master to reopen it (MMO_DOWNTIME_OVERRIDE_SEC keeps this short)
+for (let i = 0; i < 240; i++) {
+  const status = await api("/api/status").catch(() => null);
+  const room = status ? (status.shards ?? []).flatMap((s) => s.rooms ?? []).find((r) => r.roomId === "crypt_depths") : null;
+  if (room && room.status === "open") break;
+  if (i === 0) log("     (crypt_depths in downtime — waiting for the reopen)");
+  await sleep(1000);
+}
 ({ ws, state } = await gotoRoom(ws, state, "crypt_depths"));
 expect(state.roomId === "crypt_depths", `hopped on to ${state.roomId}`);
 
-// ---- 4. kill Morvane: summons mid-fight, collapse re-armed to 60s ----
+// ---- 4. kill Morvane: summons mid-fight, the far gate TEARS, 60s window ----
 await gearUp(ws, state); // fresh potions for the harder fight
+for (let i = 0; i < 30 && state.portals.length === 0; i++) await sleep(100);
+const escGate = state.portals.find((p) => p.id === "depths-escape");
+expect(!!escGate && escGate.target === "sundered_city", "the far gate replicates (targets Valdrenn)");
+expect(escGate?.open === false, "the far gate boots SEALED while the Pale King holds court");
 // approach the lich vault (48,16) so the boss enters interest
 await goTo(ws, state, 48, 30, 2.5);
 await sleep(500);
@@ -238,18 +263,46 @@ const lichDead = await fight(ws, state, lich.id);
 expect(lichDead, `Morvane killed (bot hp ${state.stats?.hp}, died=${state.died})`);
 const bats = [...state.ents.values()].filter((e) => e.kind === "mob" && e.name === "Crypt Shrieker");
 log(`     (bone bats seen in the fight: ${bats.length}; summon line: ${chatWith(state, "Rise and feast")})`);
-expect(chatWith(state, "crumble"), "collapse announced (\"crumble\")");
+expect(chatWith(state, "the far gate TEARS"), "collapse announced with the bible's line");
+expect(state.portalStates.some((p) => p.target === "sundered_city" && p.open === true), "portalState {sundered_city, open:true} — the gate tore");
 
-// the timer was re-armed to 60s: expect the T-10 warning, then the evict
-let sawEvict = false;
-for (let i = 0; i < 900 && !sawEvict; i++) {
-  sawEvict = state.evicted !== null;
-  await sleep(100);
+// ---- 5. RUN: through the far gate inside the collapse window ----
+const ranUp = await goTo(ws, state, 66, 14.2, 1.2); // one row off the arch line, inside the trigger
+expect(ranUp, `ran to the far gate (${state.x.toFixed(1)},${state.z.toFixed(1)})`);
+state.transfer = null;
+let tEsc = null;
+for (let attempt = 0; attempt < 3 && !tEsc; attempt++) {
+  ws.send(JSON.stringify({ t: "usePortal", portalId: "depths-escape" }));
+  tEsc = await waitTransfer(state, 5000);
+}
+expect(!!tEsc, "the torn gate grants a transfer");
+if (!tEsc) { log("RESULT: FAIL"); process.exit(1); }
+ws.close();
+({ ws, state } = await enterRoom(tEsc.wsUrl, tEsc.ticket));
+const escSec = (Date.now() - killedAt) / 1000;
+expect(state.roomId === "sundered_city", `escaped into ${state.roomId} ${escSec.toFixed(0)}s after the kill`);
+expect(
+  Math.hypot(state.x - 210.5, state.z - 110.5) < 1.5,
+  `landed at the collapsed postern (${state.x.toFixed(1)},${state.z.toFixed(1)} vs 210.5,110.5)`
+);
+expect(Math.abs(state.y - 13) < 1.5, `standing on the graveyard-quarter ground (y=${state.y.toFixed(1)})`);
+for (let i = 0; i < 30 && state.portals.length === 0; i++) await sleep(100);
+expect(!state.portals.some((p) => Math.hypot(p.x - 210.5, p.z - 110.5) < 30), "no return portal at the postern (one-way by omission)");
+
+// ---- 6. the vaults come down behind you ----
+let depthsClosed = false;
+for (let i = 0; i < 120 && !depthsClosed; i++) {
+  await sleep(1000);
+  try {
+    const status = await api("/api/status");
+    const room = (status.shards ?? []).flatMap((s) => s.rooms ?? []).find((r) => r.roomId === "crypt_depths");
+    depthsClosed = !room || room.status !== "open";
+  } catch {
+    /* master briefly busy — keep polling */
+  }
 }
 const tookSec = (Date.now() - killedAt) / 1000;
-expect(chatWith(state, "collapses in 10 seconds"), "T-10 collapse warning fired");
-expect(sawEvict, `evicted by the collapse (${state.evicted}) ${tookSec.toFixed(0)}s after the kill`);
-expect(tookSec < 90, `collapse landed within 90s of the kill (${tookSec.toFixed(0)}s)`);
+expect(depthsClosed, `crypt_depths collapsed behind the escape (${tookSec.toFixed(0)}s after the kill)`);
 
 ws.close();
 log(failed ? "RESULT: FAIL" : "RESULT: PASS");

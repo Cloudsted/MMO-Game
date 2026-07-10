@@ -1732,9 +1732,11 @@ export class RoomSim {
         // a mob reused above its base level is worth proportionally more xp;
         // a summoned minion may be worth none at all (splitters)
         if (winner && (tgt.brain?.grantsXp ?? true)) this.awardXp(winner, this.resolvedMobOf(tgt)?.xp ?? mobDef.xp);
-        // loot: owner-locked to the top damage dealer for a grace window
+        // loot: owner-locked to the top damage dealer for a grace window.
+        // Resolved at the SPAWN level — a rank may re-point the table (the
+        // Unfinished King's boss bounty never leaks to base-level prototypes).
         const rolled = (tgt.brain?.grantsLoot ?? true)
-          ? rollLoot(this.reg, this.consts, mobDef.loot)
+          ? rollLoot(this.reg, this.consts, this.resolvedMobOf(tgt)?.loot ?? mobDef.loot)
           : { items: [], gold: 0 };
         if (rolled.items.length > 0 || rolled.gold > 0) {
           this.spawnLootBag(

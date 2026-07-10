@@ -481,6 +481,15 @@ export declare const MobRankSchema: z.ZodObject<{
     leashRadius: z.ZodOptional<z.ZodNumber>;
     /** display suffix: "Bandit" -> "Bandit Veteran" */
     titleSuffix: z.ZodOptional<z.ZodString>;
+    /** full display-name override (wins over titleSuffix): the boss bump that
+     *  turns "Forge Prototype" into "The Unfinished King" without forking the
+     *  def. Last applicable rank wins. */
+    name: z.ZodOptional<z.ZodString>;
+    /** loot-table override: a def elevated to a room boss by a rank must not
+     *  hand its guaranteed boss table to every lower-level spawn of the same
+     *  def (the Bone Warden kept wraith_drops for exactly this reason before
+     *  ranks could carry loot). Last applicable rank wins. */
+    loot: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     atLevel: number;
     add: {
@@ -494,13 +503,16 @@ export declare const MobRankSchema: z.ZodObject<{
     damageMult: number;
     moveSpeedMult: number;
     xpMult: number;
+    name?: string | undefined;
     aggroRadius?: number | undefined;
     fleeAtHpPct?: number | undefined;
     attackRange?: number | undefined;
     leashRadius?: number | undefined;
     titleSuffix?: string | undefined;
+    loot?: string | undefined;
 }, {
     atLevel: number;
+    name?: string | undefined;
     add?: {
         ability: string;
         weight?: number | undefined;
@@ -517,6 +529,7 @@ export declare const MobRankSchema: z.ZodObject<{
     attackRange?: number | undefined;
     leashRadius?: number | undefined;
     titleSuffix?: string | undefined;
+    loot?: string | undefined;
 }>;
 export type MobRankDef = z.infer<typeof MobRankSchema>;
 export declare const MobDefSchema: z.ZodObject<{
@@ -593,6 +606,15 @@ export declare const MobDefSchema: z.ZodObject<{
         leashRadius: z.ZodOptional<z.ZodNumber>;
         /** display suffix: "Bandit" -> "Bandit Veteran" */
         titleSuffix: z.ZodOptional<z.ZodString>;
+        /** full display-name override (wins over titleSuffix): the boss bump that
+         *  turns "Forge Prototype" into "The Unfinished King" without forking the
+         *  def. Last applicable rank wins. */
+        name: z.ZodOptional<z.ZodString>;
+        /** loot-table override: a def elevated to a room boss by a rank must not
+         *  hand its guaranteed boss table to every lower-level spawn of the same
+         *  def (the Bone Warden kept wraith_drops for exactly this reason before
+         *  ranks could carry loot). Last applicable rank wins. */
+        loot: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         atLevel: number;
         add: {
@@ -606,13 +628,16 @@ export declare const MobDefSchema: z.ZodObject<{
         damageMult: number;
         moveSpeedMult: number;
         xpMult: number;
+        name?: string | undefined;
         aggroRadius?: number | undefined;
         fleeAtHpPct?: number | undefined;
         attackRange?: number | undefined;
         leashRadius?: number | undefined;
         titleSuffix?: string | undefined;
+        loot?: string | undefined;
     }, {
         atLevel: number;
+        name?: string | undefined;
         add?: {
             ability: string;
             weight?: number | undefined;
@@ -629,6 +654,7 @@ export declare const MobDefSchema: z.ZodObject<{
         attackRange?: number | undefined;
         leashRadius?: number | undefined;
         titleSuffix?: string | undefined;
+        loot?: string | undefined;
     }>, "many">>;
     aggroRadius: z.ZodNumber;
     attackRange: z.ZodNumber;
@@ -660,6 +686,7 @@ export declare const MobDefSchema: z.ZodObject<{
     fleeAtHpPct: number;
     attackRange: number;
     leashRadius: number;
+    loot: string;
     sprite: string;
     level: number;
     hp: number;
@@ -677,14 +704,15 @@ export declare const MobDefSchema: z.ZodObject<{
         damageMult: number;
         moveSpeedMult: number;
         xpMult: number;
+        name?: string | undefined;
         aggroRadius?: number | undefined;
         fleeAtHpPct?: number | undefined;
         attackRange?: number | undefined;
         leashRadius?: number | undefined;
         titleSuffix?: string | undefined;
+        loot?: string | undefined;
     }[];
     xp: number;
-    loot: string;
     ability?: string | undefined;
     attacks?: {
         weight: number;
@@ -705,12 +733,12 @@ export declare const MobDefSchema: z.ZodObject<{
     fleeAtHpPct: number;
     attackRange: number;
     leashRadius: number;
+    loot: string;
     sprite: string;
     level: number;
     hp: number;
     moveSpeed: number;
     xp: number;
-    loot: string;
     ability?: string | undefined;
     attacks?: {
         ability: string;
@@ -720,6 +748,7 @@ export declare const MobDefSchema: z.ZodObject<{
     }[] | undefined;
     ranks?: {
         atLevel: number;
+        name?: string | undefined;
         add?: {
             ability: string;
             weight?: number | undefined;
@@ -736,6 +765,7 @@ export declare const MobDefSchema: z.ZodObject<{
         attackRange?: number | undefined;
         leashRadius?: number | undefined;
         titleSuffix?: string | undefined;
+        loot?: string | undefined;
     }[] | undefined;
     sounds?: {
         idle?: string | undefined;
@@ -769,6 +799,8 @@ export interface ResolvedMob {
     attackRange: number;
     leashRadius: number;
     fleeAtHpPct: number;
+    /** loot table at this level (rank `loot` override, else the def's) */
+    loot: string;
 }
 /**
  * Evaluate `def` at `level`. Stats compound per level above the def's base

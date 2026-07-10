@@ -64,6 +64,15 @@ const UPDATE = process.env.GOLDEN_UPDATE === "1";
  *  + forced portcullis + court-gate arch + roof breach + the mountain
  *  glimpse massif; the treasury cache moved out with the throne room), and
  *  the court is a new 96² preset; every other room held byte-identical.
+ *  NEW sundering_fields + foundry entries added 2026-07-10 for batch 7 (the
+ *  graph's final reconnections), plus three documented deltas: cinderrift
+ *  grid+FEATURES (the new sealed cinderrift-foundry portal behind the Forge
+ *  Ruin — the arch + bone-road spur moved the grid, and the nearPortals
+ *  wayshrine scatter re-dealt around the new portal, which moves features),
+ *  crypt_depths grid (the torn far-gate arch + rope tableau beside the
+ *  dais; features held), and sundered_city grid (the collapsed-postern
+ *  escape landing in the graveyard quarter; features held). gloomfen held
+ *  byte-identical — its re-targets are data-only.
  *  atelier/dungeon/grounds/hub/maw
  *  share a features hash: it is the hash of the EMPTY ScatterResult — no
  *  prefab scatter. greenhood_run has no scatter either, but its authored
@@ -71,12 +80,13 @@ const UPDATE = process.env.GOLDEN_UPDATE === "1";
 const GOLDEN: Record<string, { grid: string; features: string }> = {
   atelier: { grid: "a5a2f7b6d3f36a836370c123b136e9db477cda33", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
   broken_court: { grid: "9ecceac6c38d882d925cca023f230f6c2050ceaa", features: "35d68df7bb65002ec459140d1219f1548baff40e" },
-  cinderrift: { grid: "2b4c4d47c3b429445b7a6f8933414a435255e14c", features: "dc3d9ec84ab63088664776590ba7adf44645df85" },
-  crypt_depths: { grid: "4ebd017459a67adce7a64d2a4470bf377353f290", features: "2f8b38a89da3d19331960f0781803646b57af960" },
+  cinderrift: { grid: "3f559fbb5131ec058becb54bdb2c4ff5fbaf265e", features: "64fd739a989b4a5014c437d9e235aa6c81726653" },
+  crypt_depths: { grid: "4ebf6b0f596bb8fba7690bb48aec26cc6f393213", features: "2f8b38a89da3d19331960f0781803646b57af960" },
   desert: { grid: "aff409b0bd4eec1683fd5e8b1163268d045ebe1a", features: "f908e575dd8e4b5f1fea511bc7a034d1a02ccb55" },
   dungeon: { grid: "ca34988c68a1b7720ef8bcaeda7c6f835fd1d9ec", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
   emberfells: { grid: "1d958a3c423a87ccfee68c2f0a42f86088ba17fd", features: "4608f78baf0ca48c66686e051d638693a41ce3aa" },
   forest: { grid: "ebadbef57df8650f9f564bcf2632c8190ce8b6dd", features: "4ce7137d3ce38a1e7f0981d8342b2f57b3060ed4" },
+  foundry: { grid: "7aff669f1a485d8cb718ddf625581d8ef205f8d1", features: "6c4725467c0187a91bc129fdddf81b885bc8b3db" },
   gloomfen: { grid: "5802ef6c1b976fe379cffee154e0317c8fa1a797", features: "986429b8853b04c7dd3a5dc6c6c37572f0201e1f" },
   greenhood_run: { grid: "6892ee8672400bd3f7f41b11959d9f9ab3165cb4", features: "3d75f2e784f6244c6660eba46e1709d9b4836f29" },
   grounds: { grid: "493920fcf3e0e14da80e2661dca4cf63dbcc7b14", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
@@ -84,7 +94,8 @@ const GOLDEN: Record<string, { grid: string; features: string }> = {
   maw: { grid: "75b9919c5b5493a24bc0fcd6295950063edc63be", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
   ossuary_galleries: { grid: "93449a63b6693ded27ebf70ca746a35fde76a247", features: "5024f7cc83d4530fd86438cdea1fd188a55473b0" },
   stranglers_march: { grid: "0e82fe8cd0cc9cd0d28406e0e0a2aff14d8ec3e7", features: "e9737c696504c7800346841a71b1a234b1a61134" },
-  sundered_city: { grid: "195ab4ed0e33416458aae3bf33183dcbfebb38dd", features: "bf6a11e455e64f48a5650907e6b6ee9dbba02aca" },
+  sundered_city: { grid: "cbbb29c3b2ba66a949be8f3cf1e7a1668dd4a953", features: "bf6a11e455e64f48a5650907e6b6ee9dbba02aca" },
+  sundering_fields: { grid: "b1056c9c6aeecb85da195bd857e577e6e9b2a711", features: "450d747d7d4032586dc92699a8b1bc289ce1be3b" },
 };
 
 function hashRoom(world: VoxelWorld): { grid: string; features: string } {

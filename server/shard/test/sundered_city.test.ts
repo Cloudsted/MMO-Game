@@ -11,7 +11,7 @@
  * ground-snap to the FLOOR), the Osmund gate (boots sealed while he
  * lives / opens on his death / reseals on his 900 s respawn), the
  * L14-16 table band, Osmund's kit/economy anchors, and the tripled
- * portal pairing (gloomfen ×2 + the court).
+ * portal pairing (the fields + the foundry breach + the court).
  */
 import { describe, expect, it } from "vitest";
 import type { CharacterSnapshot, ServerToClient } from "@fantasy-mmo/common";
@@ -23,7 +23,6 @@ import { VoxelWorld } from "../src/sim/voxel.js";
 const reg = new RegistryService();
 const SCALE = gameConstants().mobs.scaling;
 const def = loadRoomDef("sundered_city");
-const gloomfen = loadRoomDef("gloomfen");
 const court = loadRoomDef("broken_court");
 const world = new VoxelWorld(def);
 
@@ -137,7 +136,7 @@ describe("sundered_city preset gen — the court gate rework", () => {
     expect(reg.loot["cache_royal"]).toBeDefined();
   });
 
-  it("floor-walks from spawn to the gatehouse, Osmund's post, the court gate, chapel, camp, and both gloomfen gates", () => {
+  it("floor-walks from spawn to the gatehouse, Osmund's post, the court gate, chapel, camp, and both border gates", () => {
     const reach = floorReach(world, 128, 218);
     const key = (x: number, z: number) => x + z * world.w;
     const targets: Array<[string, number, number]> = [
@@ -285,7 +284,7 @@ describe("the court gate — sealed behind Osmund", () => {
     expect(gate.actions.some((a) => a.kind === "announce" && a.text.includes("released at last"))).toBe(true);
   });
 
-  it("boots the city with the court gate sealed; the gloomfen gates open", () => {
+  it("boots the city with the court gate sealed; the border gates open", () => {
     const sim = new RoomSim(def);
     const wire = sim.portalsWire();
     expect(wire.find((p) => p.id === "city-court")!.open).toBe(false);
@@ -308,25 +307,33 @@ describe("the court gate — sealed behind Osmund", () => {
   });
 });
 
-describe("portal pairing — gloomfen ×2 and the court", () => {
-  it("routes each gloomfen road to its own city gate", () => {
-    const north = gloomfen.portals.find((p) => p.id === "gloomfen-city-north")!;
-    const west = gloomfen.portals.find((p) => p.id === "gloomfen-city-west")!;
-    const aN = computePortalArrival(def, "gloomfen", north)!;
-    expect(Math.hypot(aN.x - 128, aN.z - 222.8)).toBeLessThan(0.5);
-    const aW = computePortalArrival(def, "gloomfen", west)!;
-    expect(aW.x).toBe(240);
-    expect(aW.z).toBe(128);
-    expect(Math.abs(aW.yaw - Math.atan2(-1, 0))).toBeLessThan(1e-6);
+describe("portal pairing — the fields, the foundry breach, and the court", () => {
+  // batch 7 re-pointed the city's border gates: the south gate now opens on
+  // the Sundering Fields (the gloomfen edge moved south a room) and the east
+  // breach carries the Foundry road. The exitX/exitZ convention on the breach
+  // is PRESERVED — arrivals into the city still land at (240,128).
+  const fields = loadRoomDef("sundering_fields");
+  const foundry = loadRoomDef("foundry");
+
+  it("routes the fields' road to the south gate, both ways", () => {
+    const up = fields.portals.find((p) => p.id === "fields-city")!;
+    const aCity = computePortalArrival(def, "sundering_fields", up)!;
+    expect(Math.hypot(aCity.x - 128, aCity.z - 222.8)).toBeLessThan(0.5);
+    const south = def.portals.find((p) => p.id === "city-southgate")!;
+    expect(south.target).toBe("sundering_fields");
+    const aFields = computePortalArrival(fields, "sundered_city", south)!;
+    expect(Math.hypot(aFields.x - 144, aFields.z - 26)).toBeLessThan(4); // beside fields-city
   });
 
-  it("routes each city gate back to its own gloomfen road", () => {
-    const south = def.portals.find((p) => p.id === "city-southgate")!;
+  it("routes the foundry road through the east breach with the authored landing", () => {
+    const up = foundry.portals.find((p) => p.id === "foundry-city")!;
+    const aCity = computePortalArrival(def, "foundry", up)!;
+    expect(aCity.x).toBe(240); // the breach's authored exitX/exitZ, kept
+    expect(aCity.z).toBe(128);
     const breach = def.portals.find((p) => p.id === "city-breach")!;
-    const aS = computePortalArrival(gloomfen, "sundered_city", south)!;
-    expect(Math.hypot(aS.x - 160, aS.z - 30)).toBeLessThan(4); // the north road
-    const aB = computePortalArrival(gloomfen, "sundered_city", breach)!;
-    expect(Math.hypot(aB.x - 52, aB.z - 92)).toBeLessThan(4); // the west road
+    expect(breach.target).toBe("foundry");
+    const aFdy = computePortalArrival(foundry, "sundered_city", breach)!;
+    expect(Math.hypot(aFdy.x - 144, aFdy.z - 80)).toBeLessThan(4); // beside foundry-city
   });
 
   it("routes the court gate to the court's forecourt, both ways at the gatehouses", () => {
@@ -336,5 +343,9 @@ describe("portal pairing — gloomfen ×2 and the court", () => {
     const up = court.portals.find((p) => p.id === "court-city")!;
     const aCity = computePortalArrival(def, "broken_court", up)!;
     expect(Math.hypot(aCity.x - 128, aCity.z - 45.2)).toBeLessThan(0.5);
+  });
+
+  it("nothing in the city pairs back to crypt_depths (the escape gate is one-way)", () => {
+    expect(def.portals.some((p) => p.target === "crypt_depths")).toBe(false);
   });
 });

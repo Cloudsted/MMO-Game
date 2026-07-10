@@ -392,6 +392,9 @@
     "damage": 23,
     "moveSpeed": 3.2,
     "ability": "bandit_slash",
+    "ranks": [
+      { "atLevel": 12, "xpMult": 1.0518, "titleSuffix": "Carrion-Sworn" }
+    ],
     "aggroRadius": 10,
     "attackRange": 2.1,
     "leashRadius": 36,
@@ -674,6 +677,79 @@
       "attack": "oathbound_sentinel_attack",
       "hurt": "oathbound_sentinel_hurt",
       "die": "oathbound_sentinel_die"
+    }
+  },
+  "old_wallbreaker": {
+    "name": "Old Wallbreaker",
+    "sprite": "old_wallbreaker",
+    "level": 14,
+    "hp": 1083,
+    "damage": 44,
+    "moveSpeed": 2.4,
+    "attacks": [
+      {
+        "ability": "golem_slam",
+        "weight": 4
+      },
+      {
+        "ability": "siege_charge",
+        "damage": 36,
+        "minRange": 3,
+        "weight": 3
+      },
+      {
+        "ability": "rubble_shock",
+        "damage": 26,
+        "minRange": 2,
+        "weight": 3
+      }
+    ],
+    "aggroRadius": 11,
+    "attackRange": 13,
+    "leashRadius": 26,
+    "fleeAtHpPct": 0,
+    "xp": 4195,
+    "loot": "wallbreaker_drops",
+    "sounds": {
+      "idle": "minotaur_boss_idle",
+      "attack": "minotaur_boss_attack",
+      "hurt": "minotaur_boss_hurt",
+      "die": "minotaur_boss_die"
+    }
+  },
+  "barrow_alpha": {
+    "name": "The Barrow Alpha",
+    "sprite": "gravehound",
+    "level": 13,
+    "hp": 560,
+    "damage": 30,
+    "moveSpeed": 4.0,
+    "attacks": [
+      {
+        "ability": "wolf_bite",
+        "weight": 4
+      },
+      {
+        "ability": "pounce",
+        "minRange": 2.4,
+        "weight": 2
+      },
+      {
+        "ability": "barrow_howl",
+        "weight": 3
+      }
+    ],
+    "aggroRadius": 12,
+    "attackRange": 2,
+    "leashRadius": 30,
+    "fleeAtHpPct": 0,
+    "xp": 2254,
+    "loot": "barrow_alpha_drops",
+    "sounds": {
+      "idle": "gravehound_idle",
+      "attack": "gravehound_attack",
+      "hurt": "gravehound_hurt",
+      "die": "gravehound_die"
     }
   },
   "ser_osmund": {
@@ -1814,6 +1890,20 @@
         "hpMult": 1.3,
         "damageMult": 1.1,
         "titleSuffix": "Rekindled"
+      },
+      {
+        "atLevel": 17,
+        "add": [
+          {
+            "ability": "foundry_summon",
+            "weight": 4
+          }
+        ],
+        "hpMult": 1.4927,
+        "damageMult": 0.9,
+        "xpMult": 1.8603,
+        "name": "The Unfinished King",
+        "loot": "unfinished_king_drops"
       }
     ],
     "aggroRadius": 12,

@@ -98,6 +98,19 @@ function authoredExclusions(def: RoomDef): Rect[] {
     out.push(EMBER_TERRACE_EXCLUSION);
     out.push(...emberRoadExclusions());
   }
+  if (def.id === "sundering_fields") {
+    // the war's authored ground: the arena + war-sledge, the mass barrow, the
+    // mustering line, the toll arch, both besieger camps, the sledge-furrow,
+    // both trench crescents, and the two road corridors
+    out.push(FIELDS_ARENA_EXCLUSION);
+    out.push(FIELDS_BARROW_EXCLUSION);
+    out.push(FIELDS_MUSTER_EXCLUSION);
+    out.push(FIELDS_TOLL_EXCLUSION);
+    out.push(FIELDS_FURROW_EXCLUSION);
+    out.push(...FIELDS_TRENCH_EXCLUSIONS);
+    out.push(...FIELDS_CAMP_EXCLUSIONS);
+    out.push(...fieldsRoadExclusions());
+  }
   return out;
 }
 
@@ -152,6 +165,12 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult 
       break;
     case "ossuary_galleries":
       buildOssuaryGalleries(b, def, features);
+      break;
+    case "sundering_fields":
+      buildSunderingFields(b, def, features);
+      break;
+    case "foundry":
+      buildFoundry(b, def, features);
       break;
   }
   // every portal gets a stone archway + a path apron facing the room spawn —
@@ -2111,6 +2130,32 @@ function buildCinderrift(b: Builder, def: RoomDef, features: ScatterResult): voi
   if (hooks.spawnRegion) {
     features.bindings.push({ tableId: "furnace-arena", x: hooks.spawnRegion.x, z: hooks.spawnRegion.z });
   }
+
+  // ---- the Foundry gate approach (batch 7): the tribute road's last leg,
+  // BEHIND the Forge Ruin — you walk past the Furnace-King's arena to reach
+  // it, and the gate stays sealed until he is dead. Minimal dressing: the
+  // bone road's continuation + a dead lantern pair flanking the approach.
+  for (let z = 17; z <= 23; z++) {
+    for (const x of [143, 144, 145]) {
+      const g = b.g(x, z);
+      if (g <= wl) {
+        b.set(x, wl + 1, z, "bone_block");
+      } else {
+        b.clearAbove(x, z, x, z, g, 8);
+        b.set(x, g, z, hash2(seed ^ 0xf0d7, x, z) < 0.35 ? "bone_block" : "ash");
+      }
+    }
+  }
+  for (const [lx, lz] of [
+    [139, 20],
+    [149, 20],
+  ] as const) {
+    const g = b.g(lx, lz);
+    if (g > wl) {
+      b.fill(lx, g + 1, lz, lx, g + 2, lz, "dark_bricks");
+      b.set(lx, g + 3, lz, "lantern");
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -2782,6 +2827,36 @@ function buildCryptDepths(b: Builder, def: RoomDef, features: ScatterResult): vo
     b.set(cx, FL + 1, cz, "blue_crystal");
   }
   b.set(48, FL + 3, 15, "blue_crystal"); // the throne-back shard
+
+  // ---- the FAR GATE (batch 7): the one-way escape arch east of the dais.
+  // Torn, visibly unstable, and ROPED OFF by no one alive — the rope tableau
+  // stays unexplained (mysteries register). The portal arch itself stamps
+  // after the builders (portal depths-escape at 66,12); this is the wreckage
+  // it stands in: leaning cracked masonry, a dropped lintel, and the chain
+  // line strung across the approach.
+  b.clearAbove(61, 7, 71, 17, G);
+  for (let z = 8; z <= 16; z++) {
+    for (let x = 62; x <= 70; x++) {
+      const r = hash2(seed ^ 0xfa47, x, z);
+      b.set(x, G, z, r < 0.4 ? "dark_bricks" : r < 0.55 ? "cracked_bricks" : "snow");
+    }
+  }
+  // the torn frame it used to hang in — one jamb standing, one down.
+  // Everything here sits OUTSIDE the portal arch's own 7×7 clear rect
+  // (63..69 × 9..15 around 66,12) — the arch stamps after the builders and
+  // sweeps that box clean.
+  for (let y = FL; y <= FL + 4; y++) b.set(61, y, 12, hash2(seed ^ 0xfa48, 61, y) < 0.5 ? "cracked_bricks" : "dark_bricks");
+  b.set(61, FL + 5, 12, "cracked_bricks"); // the sheared spring of the arch
+  b.fill(70, FL, 10, 71, FL, 13, "cracked_bricks"); // the fallen jamb, flat in the snow
+  b.set(71, FL + 1, 11, "rubble");
+  // the rope line: posts + chain, hung across the approach by NOBODY
+  for (const px of [62, 70] as const) {
+    b.set(px, FL, 16, "dark_bricks");
+  }
+  for (let x = 63; x <= 69; x += 2) {
+    b.set(x, FL, 16, "chain");
+  }
+  b.world.setIfAir(61, FL, 9, id("blue_crystal")); // the tear leaks the vault's light
 }
 
 // ---------------------------------------------------------------------------
@@ -3536,6 +3611,48 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
   b.paintCircle(133, 222, 1.2, "ash");
   b.set(133, FL, 222, "charred_log");
   b.torch(133, FL + 1, 222);
+
+  // ---- the collapsed postern (batch 7): where the Pale Court's escape gate
+  // surfaces. A broken undercroft mouth in the graveyard quarter — a stair
+  // up out of the city's own crypts, collapsed a few steps down, cold blue
+  // light bleeding through the rubble. One-way arrivals from crypt_depths
+  // land beside it at (210.5, 110.5); the mouth is the thing they came out of.
+  b.clearAbove(203, 103, 213, 113, G);
+  for (let z = 104; z <= 112; z++) {
+    for (let x = 204; x <= 212; x++) {
+      const r = hash2(seed ^ 0xe5c1, x, z);
+      b.set(x, G, z, r < 0.35 ? "path" : r < 0.5 ? "mossy_cobblestone" : "stone_bricks");
+    }
+  }
+  // the stair: descending northward into the ground, then CHOKED
+  b.set(207, G, 109, 0);
+  b.set(208, G, 109, 0);
+  b.set(209, G, 109, 0);
+  for (const sx of [207, 208, 209] as const) {
+    b.set(sx, G - 1, 109, "dark_bricks"); // first step down
+    b.set(sx, G, 108, 0);
+    b.set(sx, G - 1, 108, 0);
+    b.set(sx, G - 2, 108, "dark_bricks"); // second step
+    b.set(sx, G, 107, 0);
+    b.set(sx, G - 1, 107, 0);
+    b.set(sx, G - 2, 107, "rubble"); // and the collapse — no way back down
+    b.set(sx, G - 1, 106, "rubble");
+    b.set(sx, G, 106, "rubble");
+  }
+  b.set(208, G - 1, 107, "blue_crystal"); // the Court's cold light, under the fall
+  // the arch that used to frame it, torn and leaning
+  for (const [ax, h] of [
+    [206, 3],
+    [210, 2],
+  ] as const) {
+    for (let y = FL; y <= FL + h; y++) {
+      b.set(ax, y, 109, hash2(seed ^ 0xe5c2, ax, y) < 0.5 ? "cracked_bricks" : "dark_bricks");
+    }
+  }
+  b.set(206, FL + 3, 110, "chain"); // what the arch dropped
+  b.set(207, FL, 110, "rubble");
+  b.set(211, FL, 108, "rubble");
+  b.set(205, FL, 106, "skull_pile"); // the crypt gave some of itself back up
 }
 
 // ---------------------------------------------------------------------------
@@ -3836,4 +3953,797 @@ function rubbleMoundAt(b: Builder, seed: number, cx: number, cz: number, r: numb
       for (let y = 0; y < h; y++) b.set(x, baseY + y, z, "rubble");
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// THE SUNDERING FIELDS (W5, world-redesign batch 7; story bible §6 W5) — the
+// approach plain south of Valdrenn, where the king's army made its stand for
+// nine days AFTER the gates broke: the trench crescents face NORTH, toward
+// the capital the enemy already held, and the sledge-furrow runs south out of
+// the city — Old Wallbreaker was driven THROUGH the army toward the people
+// fleeing into the fen. The war froze where it stopped.
+//
+//   PROC + AUTHORED (seed 92001 SURVEYED, batch-4 discipline): the seed's own
+//   hydrology puts a drowned mere squarely on the direct south-gate →
+//   city-gate line (~60/201 ray columns flooded), and the two authored trench
+//   crescents ditch the rest of it — every crossing must bend to a duckboard
+//   gap or the beast's own breach. The builder adds: the fen-creep gradient
+//   (the marsh eating the south fringe), the bending tribute road + the
+//   Foundry haul-road, the trench crescents (firing steps south, berms and
+//   stakes north — passable southward, blocking northward except at the
+//   gaps), the sledge-furrow ending at the war-sledge arena, the mustering
+//   stones, the toll arch with its chains still up, two besieger camps the
+//   Ashpickers squat now, the mass barrow (the Alpha's den), shell craters,
+//   and the corpse-candle trail to the hidden west road.
+// DETERMINISM: layout constants fixed; every ragged edge is hash2(seed^salt).
+// ---------------------------------------------------------------------------
+const FIELDS_ROAD: Array<[number, number]> = [
+  [144, 262], // the fen gate apron (Old North Road, south end)
+  [138, 244],
+  [122, 228], // bending west around the drowned mere
+  [110, 210],
+  [108, 196], // the west shore; the beast's arena looms west of the road
+  [116, 172],
+  [126, 148],
+  [126, 128], // trench A crossing (the duckboard gap)
+  [132, 108],
+  [140, 92], // trench B crossing
+  [144, 76], // the mustering verge
+  [144, 40], // the toll arch
+  [144, 26], // the city gate apron
+];
+const FIELDS_HAUL: Array<[number, number]> = [
+  [262, 116], // the Foundry gate apron
+  [238, 124],
+  [214, 136],
+  [190, 144],
+  [166, 136],
+  [148, 120],
+  [132, 108], // joins the tribute road north of trench A
+];
+// trench crescents, concave north (geometry as testimony): z(x) polylines
+const FIELDS_TRENCH_A: Array<[number, number]> = [
+  [60, 138],
+  [78, 130],
+  [96, 126],
+  [114, 124],
+  [132, 125],
+  [152, 132],
+];
+const FIELDS_TRENCH_B: Array<[number, number]> = [
+  [84, 102],
+  [102, 93],
+  [120, 88],
+  [138, 88],
+  [156, 92],
+  [172, 100],
+];
+const FIELDS_GAP_A = 126; // road crossing on line A (±2 columns undug)
+const FIELDS_GAP_B = 140; // road crossing on line B
+const FIELDS_FURROW = { x: 92, z0: 4, z1: 184 }; // the sledge-furrow (3 wide)
+const FIELDS_ARENA = { x: 92, z: 190, r: 10 }; // the war-sledge stand
+const FIELDS_BARROW = { x: 232, z: 206 }; // the mass barrow (the Alpha's den)
+const FIELDS_MUSTER = { x0: 132, z: 70, x1: 168 }; // the standard line
+const FIELDS_TOLL = { x: 144, z: 40 }; // the tribute-road toll arch
+const FIELDS_CAMPS: Array<[number, number]> = [
+  [120, 56],
+  [172, 52],
+];
+const FIELDS_ARENA_EXCLUSION: Rect = { x0: 78, z0: 174, x1: 106, z1: 204 };
+const FIELDS_BARROW_EXCLUSION: Rect = { x0: 218, z0: 192, x1: 248, z1: 220 };
+const FIELDS_MUSTER_EXCLUSION: Rect = { x0: 126, z0: 58, x1: 174, z1: 82 };
+const FIELDS_TOLL_EXCLUSION: Rect = { x0: 134, z0: 30, x1: 158, z1: 48 };
+const FIELDS_FURROW_EXCLUSION: Rect = { x0: 86, z0: 2, x1: 98, z1: 206 };
+const FIELDS_TRENCH_EXCLUSIONS: Rect[] = [
+  { x0: 56, z0: 118, x1: 156, z1: 144 },
+  { x0: 80, z0: 82, x1: 176, z1: 108 },
+];
+const FIELDS_CAMP_EXCLUSIONS: Rect[] = FIELDS_CAMPS.map(([cx, cz]) => ({ x0: cx - 10, z0: cz - 10, x1: cx + 10, z1: cz + 10 }));
+
+function polylineDist(line: Array<[number, number]>, x: number, z: number): number {
+  let best = Infinity;
+  for (let i = 0; i < line.length - 1; i++) {
+    const [ax, az] = line[i]!;
+    const [bx, bz] = line[i + 1]!;
+    const vx = bx - ax;
+    const vz = bz - az;
+    const t = Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz)));
+    best = Math.min(best, Math.hypot(x - (ax + vx * t), z - (az + vz * t)));
+  }
+  return best;
+}
+
+function fieldsRoadExclusions(): Rect[] {
+  const out: Rect[] = [];
+  for (const seg of [FIELDS_ROAD, FIELDS_HAUL]) {
+    for (let i = 0; i < seg.length - 1; i++) {
+      const [ax, az] = seg[i]!;
+      const [bx, bz] = seg[i + 1]!;
+      out.push({ x0: Math.min(ax, bx) - 4, z0: Math.min(az, bz) - 4, x1: Math.max(ax, bx) + 4, z1: Math.max(az, bz) + 4 });
+    }
+  }
+  return out;
+}
+
+function buildSunderingFields(b: Builder, def: RoomDef, features: ScatterResult): void {
+  const seed = def.terrain.seed;
+  const wl = def.terrain.waterLevel ?? 12;
+  const w = b.world;
+  const GRASS = id("grass");
+  const MUD = id("mud");
+
+  // rects the loose dressing passes must not touch (prefab scatter ran first)
+  const keepOut: Rect[] = [
+    FIELDS_ARENA_EXCLUSION,
+    FIELDS_BARROW_EXCLUSION,
+    FIELDS_MUSTER_EXCLUSION,
+    FIELDS_TOLL_EXCLUSION,
+    ...FIELDS_CAMP_EXCLUSIONS,
+  ];
+  for (const p of features.placements) {
+    const pd = PREFABS[p.prefab];
+    if (!pd) continue;
+    const rw = p.rot % 2 ? pd.footprint.d : pd.footprint.w;
+    const rd = p.rot % 2 ? pd.footprint.w : pd.footprint.d;
+    keepOut.push({ x0: p.ox - 2, z0: p.oz - 2, x1: p.ox + rw + 1, z1: p.oz + rd + 1 });
+  }
+  const inKeepOut = (x: number, z: number): boolean =>
+    keepOut.some((r) => x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1);
+
+  // --- 1. the fen creep: the marsh is eating the south fringe -------------
+  for (let z = 235; z < def.size.h; z++) {
+    const f = Math.min(0.8, (z - 235) / 40);
+    for (let x = 0; x < def.size.w; x++) {
+      const g = b.g(x, z);
+      if (g <= wl) continue;
+      if (w.get(x, g, z) !== GRASS) continue;
+      if (hash2(seed ^ 0x7b01, x, z) < f) {
+        w.set(x, g, z, MUD);
+        if (hash2(seed ^ 0x7b02, x, z) < 0.06) w.setIfAir(x, g + 1, z, id("reeds"));
+      }
+    }
+  }
+  // --- and the churned band between the trench lines: grass died here -----
+  for (let z = 84; z <= 140; z++) {
+    for (let x = 40; x <= 200; x++) {
+      const g = b.g(x, z);
+      if (g <= wl || w.get(x, g, z) !== GRASS) continue;
+      const r = hash2(seed ^ 0x7b03, x, z);
+      if (r < 0.1) w.set(x, g, z, id("dirt"));
+      else if (r < 0.14) w.set(x, g, z, id("path"));
+      else if (r > 0.997) w.setIfAir(x, g + 1, z, id("bone_block")); // the dead, unclaimed
+    }
+  }
+
+  // --- 2. the roads: the tribute road + the Foundry haul-road -------------
+  const roadCell = (x: number, z: number): void => {
+    const g = b.g(x, z);
+    if (g <= wl) {
+      w.set(x, wl + 1, z, id("rotting_planks"));
+    } else {
+      b.clearAbove(x, z, x, z, g, 10);
+      w.set(x, g, z, hash2(seed ^ 0x7b04, x, z) < 0.62 ? id("path") : hash2(seed ^ 0x7b05, x, z) < 0.5 ? id("dirt") : id("cobblestone"));
+    }
+  };
+  for (const seg of [FIELDS_ROAD, FIELDS_HAUL]) {
+    for (let i = 0; i < seg.length - 1; i++) {
+      const [ax, az] = seg[i]!;
+      const [bx, bz] = seg[i + 1]!;
+      const len = Math.max(Math.abs(bx - ax), Math.abs(bz - az));
+      for (let t = 0; t <= len; t++) {
+        const cx = Math.round(ax + ((bx - ax) * t) / len);
+        const cz = Math.round(az + ((bz - az) * t) / len);
+        for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) roadCell(cx + dx, cz + dz);
+      }
+    }
+  }
+
+  // --- 3. the trench crescents: firing step south, berm + stakes north ----
+  // Passable SOUTHWARD everywhere (step down 2, climb out via the firing
+  // step); blocking northward except at the duckboard gaps and the breach.
+  const digCol = (x: number, z: number, floorY: number, surface: string): void => {
+    const g = b.g(x, z);
+    b.clearAbove(x, z, x, z, g, 10);
+    const fy = Math.max(10, floorY);
+    for (let y = fy + 1; y <= g; y++) w.set(x, y, z, 0);
+    w.set(x, fy, z, id(surface));
+    for (let y = Math.max(1, fy - 2); y < fy; y++) {
+      if (!w.solidAt(x, y, z)) w.set(x, y, z, id("dirt"));
+    }
+  };
+  const digTrench = (line: Array<[number, number]>, gapX: number, salt: number): void => {
+    for (let i = 0; i < line.length - 1; i++) {
+      const [ax, az] = line[i]!;
+      const [bx, bz] = line[i + 1]!;
+      for (let x = ax; x <= bx; x++) {
+        const t = (x - ax) / (bx - ax);
+        const zc = Math.round(az + (bz - az) * t);
+        // the beast's breach: the trench is simply GONE where the furrow ran
+        if (x >= FIELDS_FURROW.x - 4 && x <= FIELDS_FURROW.x + 4) continue;
+        if (Math.abs(x - gapX) <= 2) {
+          // the crossing: original ground, duckboarded, berm and stakes gapped
+          for (let dz = -1; dz <= 1; dz++) {
+            const g = b.g(x, zc + dz);
+            b.clearAbove(x, zc + dz, x, zc + dz, g, 10);
+            w.set(x, g, zc + dz, id("rotting_planks"));
+          }
+          continue;
+        }
+        const g = b.g(x, zc);
+        const duck = hash2(seed ^ salt, x, zc) < 0.3;
+        digCol(x, zc + 1, g - 1, duck ? "rotting_planks" : "dirt"); // the firing step
+        digCol(x, zc, g - 2, duck ? "rotting_planks" : hash2(seed ^ (salt + 1), x, zc) < 0.25 ? "mud" : "dirt");
+        digCol(x, zc - 1, g - 2, "dirt");
+        // the north berm: spoil thrown toward the enemy
+        const bg = b.g(x, zc - 2);
+        if (bg > wl && hash2(seed ^ (salt + 2), x, zc) < 0.8) {
+          w.set(x, bg + 1, zc - 2, hash2(seed ^ (salt + 3), x, zc) < 0.3 ? id("rubble") : id("dirt"));
+          if (hash2(seed ^ (salt + 4), x, zc) < 0.18) w.set(x, bg + 2, zc - 2, id("rubble"));
+        }
+        // stakes on the enemy-facing slope
+        const sg = b.g(x, zc - 3);
+        if (sg > wl && hash2(seed ^ (salt + 5), x, zc) < 0.22) {
+          w.setIfAir(x, sg + 1, zc - 3, id("palisade"));
+          if (hash2(seed ^ (salt + 6), x, zc) < 0.3) w.setIfAir(x, sg + 2, zc - 3, id("palisade"));
+        }
+      }
+    }
+  };
+  digTrench(FIELDS_TRENCH_A, FIELDS_GAP_A, 0x7b10);
+  digTrench(FIELDS_TRENCH_B, FIELDS_GAP_B, 0x7b20);
+
+  // --- 4. the sledge-furrow: the beast's arrival, written in the ground ---
+  const F = FIELDS_FURROW;
+  for (let z = F.z0; z <= F.z1; z++) {
+    const breach = z >= 118 && z <= 134; // where it went THROUGH trench A
+    for (const x of [F.x - 1, F.x, F.x + 1]) {
+      const g = b.g(x, z);
+      const ramp = z % 22 === 10 && x === F.x - 1; // collapsed wall — a way out
+      const r = hash2(seed ^ 0x7b30, x, z);
+      digCol(x, z, ramp ? g - 1 : g - 2, r < 0.3 ? "mud" : r > 0.94 ? "rubble" : "dirt");
+      if (r > 0.985) w.setIfAir(x, Math.max(10, g - 2) + 1, z, id("bone_block"));
+    }
+    // rubble berms thrown up both sides
+    for (const x of [F.x - 2, F.x + 2]) {
+      const g = b.g(x, z);
+      if (g > wl && hash2(seed ^ 0x7b31, x, z) < (breach ? 0.7 : 0.35)) {
+        w.setIfAir(x, g + 1, z, id("rubble"));
+      }
+    }
+  }
+
+  // --- 5. the arena: the war-sledge at the furrow's end -------------------
+  const A = FIELDS_ARENA;
+  const GA = b.g(A.x, A.z);
+  b.clearAbove(A.x - A.r - 2, A.z - A.r - 2, A.x + A.r + 2, A.z + A.r + 2, GA, 14);
+  for (let z = A.z - A.r; z <= A.z + A.r; z++) {
+    for (let x = A.x - A.r; x <= A.x + A.r; x++) {
+      if (Math.hypot(x - A.x, z - A.z) > A.r) continue;
+      for (let y = GA + 1; y < WORLD_HEIGHT; y++) w.set(x, y, z, 0);
+      for (let y = Math.max(1, GA - 3); y < GA; y++) {
+        if (!w.solidAt(x, y, z)) w.set(x, y, z, id("dirt"));
+      }
+      const r = hash2(seed ^ 0x7b40, x, z);
+      w.set(x, GA, z, r < 0.4 ? id("mud") : r < 0.55 ? id("path") : id("dirt")); // churned ground
+      if (r > 0.975) w.set(x, GA + 1, z, id("bone_block"));
+    }
+  }
+  // the sledge: two charred runners, a splintered deck, the empty yoke
+  for (let z = A.z + 1; z <= A.z + 9; z++) {
+    b.set(A.x - 3, GA + 1, z, "charred_log");
+    b.set(A.x + 3, GA + 1, z, "charred_log");
+  }
+  for (let z = A.z + 3; z <= A.z + 8; z++) {
+    for (let x = A.x - 2; x <= A.x + 2; x++) {
+      if (hash2(seed ^ 0x7b41, x, z) < 0.55) b.set(x, GA + 2, z, "planks");
+    }
+  }
+  b.fill(A.x - 3, GA + 1, A.z, A.x - 3, GA + 2, A.z, "log"); // the yoke posts
+  b.fill(A.x + 3, GA + 1, A.z, A.x + 3, GA + 2, A.z, "log");
+  b.fill(A.x - 3, GA + 3, A.z, A.x + 3, GA + 3, A.z, "charred_log"); // the beam
+  b.set(A.x - 1, GA + 2, A.z, "chain"); // the harness it walked out of
+  b.set(A.x + 1, GA + 2, A.z, "chain");
+  b.set(A.x - 5, GA + 1, A.z + 6, "skull_pile");
+  b.set(A.x + 6, GA + 1, A.z + 3, "skull_pile");
+
+  // --- 6. the mustering stones: the standards still planted ---------------
+  const M = FIELDS_MUSTER;
+  for (let z = M.z - 6; z <= M.z + 6; z++) {
+    for (let x = M.x0 - 4; x <= M.x1 + 4; x++) {
+      const g = b.g(x, z);
+      if (g <= wl) continue;
+      b.clearAbove(x, z, x, z, g, 10);
+      const r = hash2(seed ^ 0x7b50, x, z);
+      if (r < 0.35) w.set(x, g, z, id("path"));
+      else if (r < 0.45) w.set(x, g, z, id("dirt"));
+    }
+  }
+  for (let x = M.x0; x <= M.x1; x += 6) {
+    const g = b.g(x, M.z);
+    b.set(x, g, M.z, "stone_bricks");
+    b.fill(x, g + 1, M.z, x, g + 2, M.z, "log");
+    if (hash2(seed ^ 0x7b51, x, M.z) < 0.75) b.set(x, g + 3, M.z, "banner");
+  }
+
+  // --- 7. the toll arch: even Valdrenn taxed its own road -----------------
+  const T = FIELDS_TOLL;
+  const GT = b.g(T.x, T.z);
+  b.clearAbove(T.x - 6, T.z - 4, T.x + 10, T.z + 4, GT, 12);
+  for (const px of [T.x - 3, T.x + 3]) {
+    for (let y = GT + 1; y <= GT + 4; y++) {
+      b.set(px, y, T.z, hash2(seed ^ 0x7b60, px, y) < 0.3 ? "cracked_bricks" : "stone_bricks");
+    }
+  }
+  b.fill(T.x - 3, GT + 5, T.z, T.x + 3, GT + 5, T.z, "stone_bricks");
+  b.set(T.x - 1, GT + 4, T.z, "chain"); // the toll-chains, still up
+  b.set(T.x + 1, GT + 4, T.z, "chain");
+  b.set(T.x, GT + 3, T.z, "chain");
+  // the toll hut, roofless; its strongbox outlived its keeper
+  for (let z = T.z - 4; z <= T.z - 1; z++) {
+    for (let x = T.x + 6; x <= T.x + 10; x++) {
+      const edge = x === T.x + 6 || x === T.x + 10 || z === T.z - 4 || z === T.z - 1;
+      const g = b.g(x, z);
+      w.set(x, g, z, id("path"));
+      if (!edge) continue;
+      const bite = Math.floor(hash2(seed ^ 0x7b61, x, z) * 2.4);
+      for (let y = g + 1; y <= g + 2 - bite; y++) {
+        w.set(x, y, z, hash2(seed ^ 0x7b62, x, z) < 0.35 ? id("cracked_bricks") : id("stone_bricks"));
+      }
+    }
+  }
+  b.fill(T.x + 8, GT + 1, T.z - 1, T.x + 8, GT + 2, T.z - 1, 0); // the door
+  features.caches.push({ x: T.x + 7.5, y: GT + 1, z: T.z - 2.5, table: "cache_sundering_fields", respawnSec: 480 });
+
+  // --- 8. the besieger camps: the army that waited, and what squats it now
+  for (let i = 0; i < FIELDS_CAMPS.length; i++) {
+    const [cx, cz] = FIELDS_CAMPS[i]!;
+    const gc = b.g(cx, cz);
+    b.clearAbove(cx - 8, cz - 8, cx + 8, cz + 8, gc, 12);
+    b.paintCircle(cx, cz, 6.5, "ash");
+    // the fire ring — one camp's fire is LIVE (the Ashpickers moved in)
+    for (const [fx, fz] of [
+      [cx - 1, cz - 1],
+      [cx + 1, cz - 1],
+      [cx - 1, cz + 1],
+      [cx + 1, cz + 1],
+    ] as const) {
+      b.set(fx, gc + 1, fz, "charred_log");
+    }
+    if (i === 0) b.torch(cx, gc + 1, cz);
+    else b.set(cx, gc + 1, cz, "skull_pile");
+    // tent frames: palisade posts + ridge + hay bedding
+    for (const [tx, tz, rot] of [
+      [cx - 5, cz - 3, 0],
+      [cx + 4, cz - 4, 1],
+      [cx - 2, cz + 4, 0],
+    ] as const) {
+      const g2 = b.g(tx, tz);
+      const dx = rot === 0 ? 2 : 0;
+      const dz = rot === 0 ? 0 : 2;
+      b.fill(tx, g2 + 1, tz, tx, g2 + 2, tz, "palisade");
+      b.fill(tx + dx * 2, g2 + 1, tz + dz * 2, tx + dx * 2, g2 + 2, tz + dz * 2, "palisade");
+      b.fill(tx, g2 + 3, tz, tx + dx * 2, g2 + 3, tz + dz * 2, "charred_log");
+      b.set(tx + dx, g2 + 1, tz + dz, "hay");
+    }
+    // crates + the warband's mark
+    b.fill(cx + 4, gc + 1, cz + 3, cx + 5, gc + 1, cz + 4, "planks");
+    b.set(cx + 4, gc + 2, cz + 3, "planks");
+    b.fill(cx - 5, gc + 1, cz + 1, cx - 5, gc + 2, cz + 1, "dark_bricks");
+    b.set(cx - 5, gc + 3, cz + 1, "banner");
+  }
+
+  // --- 9. the mass barrow: the hounds ate well here and never left --------
+  const BA = FIELDS_BARROW;
+  const GB = b.g(BA.x, BA.z);
+  b.clearAbove(BA.x - 11, BA.z - 8, BA.x + 11, BA.z + 8, GB, 14);
+  for (let dz = -7; dz <= 7; dz++) {
+    for (let dx = -10; dx <= 10; dx++) {
+      const d = Math.hypot(dx * 0.7, dz);
+      if (d > 7) continue;
+      const jitter = hash2(seed ^ 0x7b70, BA.x + dx, BA.z + dz) * 0.8;
+      const h = Math.max(0, Math.round(5.2 - d * 0.75 - jitter));
+      if (h === 0) continue;
+      for (let y = GB + 1; y <= GB + h; y++) w.set(BA.x + dx, y, BA.z + dz, id("dirt"));
+      w.set(BA.x + dx, GB + h, BA.z + dz, hash2(seed ^ 0x7b71, dx, dz) < 0.55 ? id("moss_carpet") : id("dirt"));
+    }
+  }
+  // the den: a stone-lined mouth on the west face, a hollow under the mound
+  b.fill(BA.x - 10, GB + 1, BA.z - 1, BA.x - 2, GB + 2, BA.z + 1, 0); // the crawl
+  b.fill(BA.x - 2, GB + 1, BA.z - 2, BA.x + 5, GB + 3, BA.z + 2, 0); // the chamber
+  for (const [lx, lz] of [
+    [BA.x - 10, BA.z - 2],
+    [BA.x - 10, BA.z + 2],
+  ] as const) {
+    b.fill(lx, GB + 1, lz, lx, GB + 2, lz, "mossy_cobblestone");
+  }
+  b.fill(BA.x - 10, GB + 3, BA.z - 1, BA.x - 10, GB + 3, BA.z + 1, "stone_bricks"); // the lintel
+  for (let z = BA.z - 2; z <= BA.z + 2; z++) {
+    for (let x = BA.x - 2; x <= BA.x + 5; x++) {
+      const r = hash2(seed ^ 0x7b72, x, z);
+      if (r < 0.3) w.set(x, GB, z, id("bone_block")); // the floor IS the grave
+    }
+  }
+  b.set(BA.x + 2, GB + 1, BA.z, "hay"); // the nest
+  b.set(BA.x + 3, GB + 1, BA.z + 1, "hay");
+  b.set(BA.x + 1, GB + 1, BA.z - 2, "skull_pile");
+  b.set(BA.x + 4, GB + 1, BA.z + 2, "skull_pile");
+  features.caches.push({ x: BA.x + 4.5, y: GB + 1, z: BA.z - 1.5, table: "cache_sundering_fields", respawnSec: 600 });
+  // ring stones the barrow-diggers left
+  for (const [sx, sz] of [
+    [BA.x - 12, BA.z - 6],
+    [BA.x - 6, BA.z + 9],
+    [BA.x + 9, BA.z + 8],
+    [BA.x + 12, BA.z - 5],
+  ] as const) {
+    const g2 = b.g(sx, sz);
+    if (g2 > wl) b.fill(sx, g2 + 1, sz, sx, g2 + 1 + Math.floor(hash2(seed ^ 0x7b73, sx, sz) * 2), sz, "mossy_cobblestone");
+  }
+
+  // --- 10. shell craters: the bombardment, frozen ------------------------
+  for (const [cx, cz, cr] of [
+    [160, 160, 3],
+    [178, 122, 2],
+    [104, 154, 2],
+    [70, 120, 3],
+    [56, 96, 2],
+    [190, 76, 3],
+    [98, 66, 2],
+    [206, 152, 2],
+    [134, 180, 2],
+  ] as const) {
+    if (polylineDist(FIELDS_ROAD, cx, cz) < 6 || polylineDist(FIELDS_HAUL, cx, cz) < 6) continue;
+    if (inKeepOut(cx, cz)) continue;
+    const gc = b.g(cx, cz);
+    if (gc <= wl + 1) continue;
+    for (let z = cz - cr - 1; z <= cz + cr + 1; z++) {
+      for (let x = cx - cr - 1; x <= cx + cr + 1; x++) {
+        const d = Math.hypot(x - cx, z - cz);
+        const g2 = b.g(x, z);
+        b.clearAbove(x, z, x, z, g2, 10);
+        if (d <= cr) {
+          // per-column bowl (the ground rolls — a flat-G dig would float rims)
+          w.set(x, g2, z, 0);
+          w.set(x, g2 - 1, z, id("ash"));
+        } else if (d <= cr + 1.2 && hash2(seed ^ 0x7b80, x, z) < 0.5) {
+          w.set(x, g2 + 1, z, id("rubble"));
+        }
+      }
+    }
+    if (cr >= 3) {
+      w.set(cx, gc - 2, cz, id("ash"));
+      w.set(cx, gc - 1, cz, id("ember_crystal")); // the big wounds still smoulder
+    }
+  }
+
+  // --- 11. the corpse-candle trail to the hidden west road ----------------
+  const CANDLES: Array<[number, number]> = [
+    [106, 220],
+    [92, 224],
+    [78, 228],
+    [64, 231],
+    [52, 234],
+    [44, 235],
+  ];
+  for (let i = 0; i < CANDLES.length - 1; i++) {
+    const [ax, az] = CANDLES[i]!;
+    const [bx, bz] = CANDLES[i + 1]!;
+    const len = Math.max(Math.abs(bx - ax), Math.abs(bz - az));
+    for (let t = 0; t <= len; t += 7) {
+      const cx = Math.round(ax + ((bx - ax) * t) / len);
+      const cz = Math.round(az + ((bz - az) * t) / len);
+      const g = b.g(cx, cz);
+      if (g > wl) w.setIfAir(cx, g + 1, cz, id("bog_candle"));
+    }
+  }
+  // two dead lantern posts mark the west gate's forgotten apron
+  for (const [px, pz] of [
+    [36, 232],
+    [44, 240],
+  ] as const) {
+    const g = b.g(px, pz);
+    b.fill(px, g + 1, pz, px, g + 2, pz, "dark_bricks");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// THE FOUNDRY (E5, world-redesign batch 7; story bible §6 E5) — the
+// Emberwrights' works: the production floor the whole east branch climbs
+// toward. Official story: the Furnace-King's weapon-tribute is made here.
+// Actual story, told by the room: the assembly line runs small → large down
+// the long hall and ends in a THRONE-SIZED frame, empty. 160² PRESET interior
+// (buildCrypt/city technique, biome "ruin" — the builder owns every visible
+// block): rift-gate court (south) → the works gate → the long hall S-bending
+// through two offset crosswalls → the casting floor (west wing, live lava
+// channels) and the tribute dock (east wing: Revenant-stamped crates iced
+// shut beside an UNSTAMPED dock of better work held back) → the ward doors →
+// the Unfinished King before the empty frame. Light = language: lanterns on
+// the working line, ember/lava on the casting floor, braziers and lit
+// rune-plates at the king's end. Convention: G = 12 (flat slab), FL = G+1.
+// ---------------------------------------------------------------------------
+const FDY_WALL = { x0: 30, z0: 22, x1: 130, z1: 132 }; // the works' curtain
+const FDY_HALL = { x0: 62, z0: 22, x1: 98, z1: 120 }; // the long hall
+const FDY_CAST = { x0: 34, z0: 52, x1: 60, z1: 100 }; // casting floor (west)
+const FDY_DOCK = { x0: 100, z0: 56, x1: 126, z1: 104 }; // tribute dock (east)
+const FDY_FRAME = { x: 80, z: 26 }; // the throne-sized frame (the line's end)
+
+function buildFoundry(b: Builder, def: RoomDef, features: ScatterResult): void {
+  const seed = def.terrain.seed;
+  const G = b.g(def.spawn.x, def.spawn.z); // 12 — flat everywhere (amplitude 0)
+  const FL = G + 1;
+  const w = b.world;
+
+  // slag-aged masonry: dark bricks pitted with cracks and bare rock
+  const slagged = (x: number, y: number, z: number): void => {
+    const r = hash2(seed ^ 0xfd01, x * 7 + y * 131, z * 13 + y);
+    b.set(x, y, z, r < 0.18 ? "cracked_bricks" : r < 0.28 ? "dark_stone" : "dark_bricks");
+  };
+
+  // ---- ground: slag yards outside the walls, worked floors inside --------
+  for (let z = 0; z < def.size.h; z++) {
+    for (let x = 0; x < def.size.w; x++) {
+      const inside = x >= FDY_WALL.x0 && x <= FDY_WALL.x1 && z >= FDY_WALL.z0 && z <= FDY_WALL.z1;
+      const r = hash2(seed ^ 0xfd02, x, z);
+      if (inside) b.set(x, G, z, r < 0.5 ? "ash" : r < 0.62 ? "path" : "dark_stone");
+      else b.set(x, G, z, r < 0.42 ? "ash" : r < 0.52 ? "dirt" : "dark_stone");
+    }
+  }
+  // slag heaps + charred posts in the outer yards
+  for (let i = 0; i < 26; i++) {
+    const hx = 4 + Math.floor(hash2(seed ^ 0xfd03, i, 1) * 152);
+    const hz = 4 + Math.floor(hash2(seed ^ 0xfd03, i, 2) * 152);
+    if (hx >= FDY_WALL.x0 - 3 && hx <= FDY_WALL.x1 + 3 && hz >= FDY_WALL.z0 - 3 && hz <= FDY_WALL.z1 + 3) continue;
+    if (def.portals.some((p) => Math.hypot(hx - p.x, hz - p.z) < 8)) continue;
+    if (hash2(seed ^ 0xfd04, hx, hz) < 0.6) {
+      const hh = 1 + Math.floor(hash2(seed ^ 0xfd05, hx, hz) * 2);
+      for (let dy = 0; dy < hh; dy++) {
+        for (let dx = -(hh - 1 - dy); dx <= hh - 1 - dy; dx++) b.set(hx + dx, FL + dy, hz, "dark_stone");
+      }
+      if (hash2(seed ^ 0xfd06, hx, hz) < 0.3) w.setIfAir(hx, FL + hh, hz, id("ember_crystal"));
+    } else {
+      b.fill(hx, FL, hz, hx, FL + 1 + Math.floor(hash2(seed ^ 0xfd07, hx, hz) * 2), hz, "charred_log");
+    }
+  }
+
+  // ---- the curtain wall: dark brick, h6, corner towers --------------------
+  const WA = FDY_WALL;
+  for (let x = WA.x0; x <= WA.x1; x++) {
+    for (const z of [WA.z0, WA.z1]) for (let y = FL; y <= FL + 5; y++) slagged(x, y, z);
+  }
+  for (let z = WA.z0; z <= WA.z1; z++) {
+    for (const x of [WA.x0, WA.x1]) for (let y = FL; y <= FL + 5; y++) slagged(x, y, z);
+  }
+  b.tower(WA.x0, WA.z0, FL, 2, 8, "dark_bricks");
+  b.tower(WA.x1, WA.z0, FL, 2, 8, "dark_bricks");
+  b.tower(WA.x0, WA.z1, FL, 2, 8, "dark_bricks");
+  b.tower(WA.x1, WA.z1, FL, 2, 8, "dark_bricks");
+  // three gates: south (the rift road), west (the war road), east (the city road)
+  b.fill(76, FL, WA.z1, 84, FL + 4, WA.z1, 0);
+  b.fill(WA.x0, FL, 76, WA.x0, FL + 4, 84, 0);
+  b.fill(WA.x1, FL, 76, WA.x1, FL + 4, 84, 0);
+  for (const [gx, gz] of [
+    [75, WA.z1],
+    [85, WA.z1],
+  ] as const) {
+    b.set(gx, FL + 5, gz, "lantern");
+  }
+  for (const gz of [75, 85] as const) {
+    b.set(WA.x0, FL + 5, gz, "lantern");
+    b.set(WA.x1, FL + 5, gz, "lantern");
+  }
+  // paved approaches: portal aprons → gates
+  const lane = (x0: number, z0: number, x1: number, z1: number): void => {
+    for (let z = z0; z <= z1; z++) {
+      for (let x = x0; x <= x1; x++) {
+        b.set(x, G, z, hash2(seed ^ 0xfd08, x, z) < 0.75 ? "path" : "ash");
+      }
+    }
+  };
+  lane(78, WA.z1 + 1, 82, 148); // south portal → south gate
+  lane(16, 78, WA.x0 - 1, 82); // west portal → west gate
+  lane(WA.x1 + 1, 78, 145, 82); // east portal → east gate
+
+  // ---- the long hall: walls h7, beamed part-roof, two S crosswalls --------
+  const H = FDY_HALL;
+  for (let z = H.z0; z <= H.z1; z++) {
+    for (const x of [H.x0, H.x1]) {
+      for (let y = FL; y <= FL + 6; y++) slagged(x, y, z);
+    }
+  }
+  for (let x = H.x0; x <= H.x1; x++) {
+    for (const z of [H.z0, H.z1]) {
+      for (let y = FL; y <= FL + 6; y++) slagged(x, y, z);
+    }
+  }
+  // doorways CUT (lintels stay): the works door south, a wing door each side
+  b.fill(78, FL, H.z1, 82, FL + 4, H.z1, 0);
+  b.fill(H.x0, FL, 74, H.x0, FL + 3, 78, 0);
+  b.fill(H.x1, FL, 86, H.x1, FL + 3, 90, 0);
+  // beamed roof: charred joists + slag plates, torn open in patches
+  for (let z = H.z0; z <= H.z1; z++) {
+    for (let x = H.x0; x <= H.x1; x++) {
+      if (x % 4 === 2) b.set(x, FL + 7, z, "charred_log");
+      else if (hash2(seed ^ 0xfd09, x, z) < 0.5) b.set(x, FL + 7, z, "dark_stone");
+    }
+  }
+  // hall floor: worked stone with the line lane down the middle
+  for (let z = H.z0 + 1; z <= H.z1 - 1; z++) {
+    for (let x = H.x0 + 1; x <= H.x1 - 1; x++) {
+      const r = hash2(seed ^ 0xfd0a, x, z);
+      b.set(x, G, z, r < 0.4 ? "stone" : r < 0.55 ? "path" : "dark_bricks");
+    }
+  }
+  for (let z = 30; z <= 116; z += 6) {
+    b.set(80, G, z, z <= 60 ? "rune_plate_lit" : "rune_plate"); // the line wakes toward the king
+  }
+  // the two crosswalls: offset doors force the S (east door, then west door)
+  for (const [cz, doorX0] of [
+    [96, 90],
+    [64, 66],
+  ] as const) {
+    for (let x = H.x0 + 1; x <= H.x1 - 1; x++) {
+      if (x >= doorX0 && x <= doorX0 + 2) continue;
+      for (let y = FL; y <= FL + 4; y++) slagged(x, y, cz);
+    }
+    b.set(doorX0 - 1, FL + 3, cz, "lantern");
+    b.set(doorX0 + 3, FL + 3, cz, "lantern");
+  }
+  // wall lanterns pace the working line
+  for (let z = H.z0 + 6; z <= H.z1 - 4; z += 8) {
+    b.set(H.x0 + 1, FL + 3, z, "lantern");
+    b.set(H.x1 - 1, FL + 3, z, "lantern");
+  }
+
+  // ---- THE ASSEMBLY LINE: frames ascending small → large down the hall ----
+  const frameAt = (fx: number, fz: number, tier: 0 | 1 | 2): void => {
+    b.set(fx, FL, fz, "dark_bricks"); // the anvil-plinth
+    if (tier === 0) {
+      b.set(fx, FL + 1, fz, "iron_bars"); // a part, not yet a shape
+      return;
+    }
+    if (tier === 1) {
+      b.fill(fx, FL + 1, fz, fx, FL + 2, fz, "palisade"); // the armature
+      b.set(fx, FL + 3, fz, "iron_bars"); // a torso rib
+      return;
+    }
+    // tier 2: man-and-a-half, ribbed, chained to the beam above
+    b.fill(fx - 1, FL + 1, fz, fx - 1, FL + 2, fz, "dark_bricks");
+    b.fill(fx + 1, FL + 1, fz, fx + 1, FL + 2, fz, "dark_bricks");
+    b.fill(fx - 1, FL + 3, fz, fx + 1, FL + 4, fz, "iron_bars");
+    b.set(fx, FL + 5, fz, "chain");
+    b.set(fx, FL + 6, fz, "chain");
+  };
+  for (let i = 0; i < 10; i++) {
+    const fz = 112 - i * 8; // south → north up the line
+    const fx = i % 2 === 0 ? 73 : 87; // alternating sides of the lane
+    if (Math.abs(fz - 96) <= 1 || Math.abs(fz - 64) <= 1) continue; // crosswalls
+    frameAt(fx, fz, fz > 92 ? 0 : fz > 60 ? 1 : 2);
+    // each station gets its worklight
+    b.set(fx + (fx < 80 ? 1 : -1), FL, fz + 1, "brazier");
+  }
+
+  // ---- the king's end: the throne-sized frame, empty ----------------------
+  const K = FDY_FRAME;
+  // the apse floor: swept ash before the frame
+  for (let z = H.z0 + 1; z <= 40; z++) {
+    for (let x = H.x0 + 1; x <= H.x1 - 1; x++) {
+      const r = hash2(seed ^ 0xfd0b, x, z);
+      b.set(x, G, z, r < 0.5 ? "ash" : "dark_stone");
+    }
+  }
+  // the line's last plates run lit right up to the frame
+  for (let z = 30; z <= 40; z += 6) b.set(80, G, z, "rune_plate_lit");
+  b.fill(K.x - 2, FL, K.z, K.x + 2, FL, K.z, "marble"); // the master plinth
+  b.fill(K.x - 2, FL + 1, K.z, K.x - 2, FL + 2, K.z, "dark_bricks"); // legs
+  b.fill(K.x + 2, FL + 1, K.z, K.x + 2, FL + 2, K.z, "dark_bricks");
+  b.fill(K.x - 2, FL + 3, K.z, K.x + 2, FL + 5, K.z, "iron_bars"); // the torso cage
+  b.fill(K.x - 1, FL + 4, K.z, K.x + 1, FL + 4, K.z, 0); // hollow at the heart
+  b.set(K.x, FL + 4, K.z, "gold_block"); // the heart-socket, filled and waiting
+  b.fill(K.x - 3, FL + 6, K.z, K.x + 3, FL + 6, K.z, "charred_log"); // shoulder beam
+  // NO head. That is the point.
+  b.set(K.x - 3, FL + 5, K.z, "chain");
+  b.set(K.x + 3, FL + 5, K.z, "chain");
+  for (const bx of [K.x - 4, K.x + 4] as const) {
+    b.set(bx, FL, K.z + 2, "dark_bricks");
+    b.set(bx, FL + 1, K.z + 2, "brazier");
+  }
+  // behind it, on the anvils: the next one, half-built (the death-announce
+  // tableau is authored, never explained — mysteries register discipline)
+  for (const ax of [K.x - 6, K.x + 6] as const) {
+    b.fill(ax, FL, K.z - 2, ax + 1, FL, K.z - 2, "dark_bricks");
+    b.set(ax, FL + 1, K.z - 2, "iron_bars");
+    b.set(ax + 1, FL + 2, K.z - 2, "chain");
+    b.set(ax, FL + 4, K.z - 2, "lantern");
+  }
+
+  // ---- the casting floor (west wing): the works still run -----------------
+  const C = FDY_CAST;
+  for (let z = C.z0; z <= C.z1; z++) {
+    for (let x = C.x0; x <= C.x1; x++) {
+      const r = hash2(seed ^ 0xfd0c, x, z);
+      b.set(x, G, z, r < 0.5 ? "dark_stone" : r < 0.65 ? "ash" : "stone");
+    }
+  }
+  // two live lava channels (authored liquid — gen never fills digs)
+  for (const cz of [64, 86] as const) {
+    for (let x = C.x0 + 2; x <= C.x1 - 2; x++) {
+      if ((x - C.x0) % 9 === 4) {
+        b.set(x, G, cz, "obsidian"); // a cooled step: the crossing
+        continue;
+      }
+      b.set(x, G, cz, "lava");
+      if (hash2(seed ^ 0xfd0d, x, cz) < 0.3) b.set(x, G, cz - 1, "obsidian");
+    }
+  }
+  // crucible stations along the channels
+  for (const [ux, uz] of [
+    [40, 60],
+    [52, 60],
+    [44, 90],
+    [56, 90],
+  ] as const) {
+    b.fill(ux, FL, uz, ux + 1, FL + 1, uz, "dark_bricks");
+    b.set(ux, FL + 2, uz, "ember_crystal");
+  }
+  // the tool locker, and what the shift left in it
+  b.fill(C.x0 + 1, FL, C.z0 + 1, C.x0 + 3, FL + 1, C.z0 + 2, "planks");
+  b.set(C.x0 + 2, FL + 2, C.z0 + 1, "iron_bars");
+  features.caches.push({ x: C.x0 + 2.5, y: FL, z: C.z0 + 3.5, table: "cache_foundry", respawnSec: 600 });
+
+  // ---- the tribute dock (east wing): two docks, one glance ----------------
+  const D = FDY_DOCK;
+  for (let z = D.z0; z <= D.z1; z++) {
+    for (let x = D.x0; x <= D.x1; x++) {
+      const r = hash2(seed ^ 0xfd0e, x, z);
+      b.set(x, G, z, r < 0.55 ? "path" : r < 0.7 ? "planks" : "dark_stone");
+    }
+  }
+  // the STAMPED dock (south rows): the Revenant's tribute, iced shut —
+  // frost seals in a fire-works, and nobody here asks why
+  for (let rz = 92; rz <= 100; rz += 4) {
+    for (let rx = D.x0 + 3; rx <= D.x1 - 5; rx += 4) {
+      b.fill(rx, FL, rz, rx + 1, FL, rz + 1, "planks");
+      if (hash2(seed ^ 0xfd0f, rx, rz) < 0.6) b.set(rx, FL + 1, rz, "planks");
+      b.set(rx + 1, FL + 1, rz + 1, "ice"); // the collector's rime-stamp
+    }
+  }
+  b.set(D.x0 + 2, FL + 3, 96, "banner"); // the tally post
+  b.fill(D.x0 + 2, FL, 96, D.x0 + 2, FL + 2, 96, "dark_bricks");
+  // the UNSTAMPED dock (north rows): better work, held back
+  for (let rz = 60; rz <= 68; rz += 4) {
+    for (let rx = D.x0 + 3; rx <= D.x1 - 9; rx += 4) {
+      b.fill(rx, FL, rz, rx + 1, FL, rz + 1, "planks");
+      b.set(rx + 1, FL + 1, rz, "planks");
+      if (hash2(seed ^ 0xfd10, rx, rz) < 0.5) b.set(rx, FL + 1, rz + 1, "gold_block"); // fittings too good for tribute
+    }
+  }
+  // weapon racks beside the held-back crates
+  for (let z = 60; z <= 68; z += 2) {
+    b.set(D.x1 - 7, FL, z, "iron_bars");
+  }
+  // the strongroom: an iron cage nobody outside the works has a key to
+  b.fill(D.x1 - 5, FL, 58, D.x1 - 1, FL + 3, 62, "iron_bars");
+  b.fill(D.x1 - 4, FL, 59, D.x1 - 2, FL + 3, 61, 0);
+  b.fill(D.x1 - 5, FL, 60, D.x1 - 5, FL + 1, 60, 0); // the bent-open door
+  b.set(D.x1 - 5, FL + 4, 60, "lantern");
+  features.caches.push({ x: D.x1 - 2.5, y: FL, z: 60.5, table: "cache_foundry", respawnSec: 900 });
+  // dock lighting: lanterns down the loading lane
+  for (const lz of [62, 78, 94] as const) {
+    b.fill(D.x0 + 1, FL, lz, D.x0 + 1, FL + 1, lz, "dark_bricks");
+    b.set(D.x0 + 1, FL + 2, lz, "lantern");
+  }
+
+  // ---- gate courts: what a traveller sees first ---------------------------
+  // the south court: the shift-change yard (spawn side)
+  for (const [px, pz] of [
+    [72, 126],
+    [88, 126],
+  ] as const) {
+    b.fill(px, FL, pz, px, FL + 1, pz, "dark_bricks");
+    b.set(px, FL + 2, pz, "lantern");
+  }
+  // ore carts abandoned mid-haul on the south lane
+  b.fill(77, FL, 138, 78, FL, 139, "planks");
+  b.set(77, FL + 1, 138, "dark_stone");
+  b.set(83, FL, 142, "charred_log");
+  b.set(84, FL, 143, "charred_log");
 }

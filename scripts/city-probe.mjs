@@ -5,9 +5,9 @@
  * King at L19).
  *
  * CITY LEG:
- *   1. /room gloomfen, /tp to the Old North Road portal, usePortal →
+ *   1. /room sundering_fields, /tp to the tribute-road portal, usePortal →
  *      paired arrival at the city SOUTH GATE (authored exitPortalId pairing)
- *   2. stateful city sanity over the wire: both gloomfen portals OPEN, the
+ *   2. stateful city sanity over the wire: both border portals OPEN, the
  *      NEW city-court portal SEALED (Ser Osmund lives — restaged via
  *      /spawnmob if a prior run left him on his 900 s timer); the keep
  *      gatehouse decodes (portcullis bars, crosswall marble, NO throne —
@@ -47,7 +47,7 @@
  */
 import WebSocket from "ws";
 import { readFileSync } from "node:fs";
-import { loadEnv, makeWorldTracker, sleep } from "./lib.mjs";
+import { goTo, loadEnv, makeWorldTracker, sleep } from "./lib.mjs";
 
 loadEnv();
 const MASTER = process.env.MMO_MASTER_ORIGIN ?? `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
@@ -401,13 +401,17 @@ log(`entered ${state.roomId} at ${state.x.toFixed(1)},${state.z.toFixed(1)}`);
 
 // ============================ CITY LEG ============================
 
-// ---- 1. gloomfen north road -> paired arrival at the city south gate ----
-({ ws, state } = await gotoRoom(ws, state, "gloomfen"));
-expect(await tp(ws, state, 160, 31), `stood at the Old North Road portal (${state.x.toFixed(1)},${state.z.toFixed(1)})`);
+// ---- 1. the fields' tribute road -> paired arrival at the city south gate
+// (batch 7 spliced the Sundering Fields between the fen and the capital:
+// the city's south-gate neighbour is the fields now) ----
+({ ws, state } = await gotoRoom(ws, state, "sundering_fields"));
+await tp(ws, state, 144, 31);
+const atGate = await goTo(ws, state, 144, 27.4, 0.9); // one row off the arch line, inside the trigger
+expect(atGate, `stood at the tribute-road city portal (${state.x.toFixed(1)},${state.z.toFixed(1)})`);
 state.transfer = null;
-ws.send(JSON.stringify({ t: "usePortal", portalId: "gloomfen-city-north" }));
+ws.send(JSON.stringify({ t: "usePortal", portalId: "fields-city" }));
 const tCity = await waitTransfer(state);
-expect(!!tCity, "north-road portal granted a transfer");
+expect(!!tCity, "fields-city portal granted a transfer");
 if (!tCity) { log("RESULT: FAIL"); process.exit(1); }
 ws.close();
 ({ ws, state } = await enterRoom(tCity.wsUrl, tCity.ticket));
@@ -422,7 +426,8 @@ for (let i = 0; i < 30 && state.portals.length === 0; i++) await sleep(100);
 const back = state.portals.find((p) => p.id === "city-southgate");
 const breach = state.portals.find((p) => p.id === "city-breach");
 let court = state.portals.find((p) => p.id === "city-court");
-expect(back?.open === true && breach?.open === true, "both gloomfen portals replicate OPEN (the city stands — it is STATEFUL now)");
+expect(back?.target === "sundering_fields" && back?.open === true, "the south gate targets the fields and replicates OPEN (the city stands — STATEFUL)");
+expect(breach?.target === "foundry" && breach?.open === true, "the east breach carries the Foundry road and replicates OPEN");
 expect(!!court, "the NEW city-court portal replicates");
 await gearUp(ws, state);
 let staged = false;

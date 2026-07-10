@@ -1838,6 +1838,204 @@ show their block tile).
     the avenue, and Ser Osmund's black-knight look vs the sentinels at a
     glance.
 
+- 2026-07-10 **THE SUNDERING FIELDS + THE FOUNDRY + MORVANE'S ESCAPE GATE**
+  (world-redesign batch 7, proposal Part 5 step 7 — the graph's FINAL
+  reconnections; story bible §6 W5 + E5 + N3's escape beat). Rooms 17 and
+  18: the two mainlines now merge at the capital, and the crypt branch
+  reconnects through the most dramatic door in the game. NOT COMMITTED —
+  working-tree batch.
+  - **Room `sundering_fields`** (288² proc+setpieces, L11-13, STATEFUL,
+    grass biome + murk_water, seed **92001** survey-picked: the drowned
+    MERE sits square on the direct south-gate → city-gate ray (~60/201
+    flooded columns pre-authoring) and the gates/POIs all land dry).
+    Splices gloomfen⇄city on BOTH roads: gloomfen's `gloomfen-city-north` →
+    **`gloomfen-fields-north`** (Old North Road, same spot 160,30) and
+    `gloomfen-city-west` → **`gloomfen-fields-west`** (Drowned West Road,
+    the ☆ far-corner one, same spot 52,92); city's `city-southgate` →
+    target sundering_fields (exitPortalId `fields-city`); plus the NEW
+    fields⇄foundry east edge. The hidden west gate (40,236) stays an
+    off-road exploration find (>40 m from any road; a corpse-candle trail
+    is its only marker — the fen's light-language reaching over the
+    border). exitPortalId authored BOTH ways on the two-road edge (the
+    greenhood ambiguity rule: two portals to the same room).
+  - **Builder `buildSunderingFields`** — the war frozen where it stopped,
+    with one reading FIXED IN THE GROUND (recorded in the bible's W5
+    SHIPPED note): the trench crescents face NORTH toward the capital, so
+    the story the geometry tells is that the gates broke FIRST and the
+    army dug in south of its own fallen city to cover the road to the fen.
+    (1) two TRENCH CRESCENTS (polyline ditches w/ a tactical cross-section:
+    firing step south — always climbable OUT southward — 2-deep ditch,
+    spoil berm + palisade stakes north: passable southward everywhere,
+    blocking northward except at the duckboard gaps the road uses; the
+    x=144 direct ray is ditched by BOTH lines where the mere misses it,
+    test-locked); (2) the SLEDGE-FURROW — a 3-wide 2-deep gouge running
+    arrow-straight from the north horizon down x=92, THROUGH trench A (the
+    breach: the trench simply erased, rubble-fanned) to the war-sledge
+    ARENA at its end (charred runners, splintered deck, the EMPTY yoke w/
+    hanging chains, churned mud + bone); ramp columns every 22 z so the
+    gouge never traps anyone; (3) the MUSTERING STONES (standard line:
+    plinth+log+banner every 6 blocks — fallen_soldier's base-14 table, the
+    day-nine line still forming up); (4) the TOLL ARCH (chains still up —
+    cross blocks, walk-through) + roofless toll hut w/ cache; (5) two
+    BESIEGER CAMPS the Ashpickers squat (one fire lives); (6) the MASS
+    BARROW (232,206) — dirt long-mound w/ a stone-lined west den mouth, a
+    hollow chamber (bone floor, hay nest, skull piles), the hounds' hoard
+    cache, ring stones; (7) shell craters (per-column bowls — the flat-G
+    dig floats rims on rolling ground), fen-creep south repaint + reeds,
+    churned-band repaint w/ rare unclaimed bone.
+  - **Fields tables** (11): skeleton L12/L13 on the trench lines (+wraith
+    L13 officers), fallen_soldier base 14 at the muster, marauder+
+    gravehound L13 camps, gravehound packs ×3 (one ringing the barrow),
+    lizardman L12 fen-creep, marsh_wisp L11 candle-shore. **lizardman
+    gained r12** {xpMult 1.0518 "Carrion-Sworn"} → 383 EXACT at 12 (448 at
+    13, −0.7%); gloomfen's base-10 lizardmen untouched. marsh_wisp@11
+    ships plain Δ1 (311 vs curve 322, −3.4% — batch-6 override precedent).
+  - **OLD WALLBREAKER** (new mob, L14 = band-top+1, sprite
+    `old_wallbreaker` = Unsorted/boss_giant_1.png — single 3×4, 107×92
+    frames, eyeballed clean on tools/out/sheets/wallbreaker-giant-*.png:
+    sepia dust-caked club giant, "the palette reads as dust-caked" per the
+    bible, now VERIFIED): hp **1083 = the Furnace Golem's L14 peer** (on
+    purpose, the old_kiln≡Grelmoss xp precedent), dmg 44, moveSpeed 2.4,
+    aggro 11 / leash 26 (it defends its furrow-end), xp **4195 =
+    round(8·(14+2·14^2.1))** — identical to the golem, both L14 room
+    bosses. Kit re-enacts the siege: golem_slam / NEW `siege_charge`
+    (4.2 m gap-closer melee + 35% slow — the anti-kite; a wall-breaker
+    hits like one) / NEW `rubble_shock` (4-pillar marching line, the
+    Sarquun-precedent pillars tech). Events: 50% rally re-forms the dead
+    line (skeleton ×3 **at L13**, the leveled event field) + the bible's
+    death line verbatim. Loot `wallbreaker_drops`: guaranteed
+    **`wallbreaker_clasp`** (yoke-clasp trophy, value 100 — gallstone 75 <
+    clasp < gauntlet 140; icon [9,51] red_pendant_harness, eyeballed — a
+    beast-harness fitting in war colors) + weapons_rift rare guarantee +
+    an 8-weight weapons_royal entry (the T4 edge).
+  - **The Barrow Alpha** (new mob `barrow_alpha`, L13 side boss, sprite
+    gravehound reused): hp 560 / dmg 30 / moveSpeed 4.0 (leash 30 ≤ the
+    fast-mob cap), xp **2254 = round(5·(14+2·13^2.1))** (side-boss ×5).
+    Kit wolf_bite / pounce / NEW `barrow_howl` (summons 2 gravehounds cap
+    4, grantsXp/grantsLoot FALSE, INTERRUPTIBLE — hit her mid-howl and the
+    mound stays quiet). 1-maxAlive, 900 s, in the barrow's den chamber —
+    an exploration find guarded by its own reward (cache inside).
+  - **Room `foundry`** (160² PRESET interior, L14-16, STATEFUL, biome ruin,
+    fixedTime 0.9, nightLight 1.5, seed 92777): the Emberwrights' works.
+    Portals: **⚿ `cinderrift-foundry`** — NEW portal behind the Forge Ruin
+    (144,16; bone-road spur + dead-lantern pair dressing) that boots
+    SEALED and opens on `bossDeath cinder_golem_boss` (NEW cinderrift event
+    `furnace-gate`, the bible's announce verbatim; the golem's 900 s
+    respawn = the door-ajar window, the Thrace/Osmund pattern);
+    `foundry-fields` (west) ⇄ the fields; `foundry-city` (east) ⇄ the
+    city's `city-breach` (re-targeted from gloomfen, its authored
+    exitX/exitZ 240,128 landing PRESERVED). Builder `buildFoundry`
+    (buildCrypt/city technique): slag yards outside a dark-brick curtain
+    (3 gates, corner towers), the LONG HALL S-bent by two offset crosswall
+    doors (walk/euclid ≥1.3 test-locked), the ASSEMBLY LINE ascending
+    small→large past a rune-plate lane that runs LIT toward the north end
+    (light = language), the CASTING FLOOR west wing (live authored lava
+    channels crossed at cooled obsidian steps, crucibles, tool-locker
+    cache 600 s), the TRIBUTE DOCK east wing (the stamped dock's crates
+    ICED shut — the Revenant's rime-stamp, frost seals in a fire-works —
+    beside the UNSTAMPED gold-fitted held-back dock; strongroom cache
+    900 s), and the KING'S APSE: the THRONE-SIZED FRAME (legs, iron torso
+    cage, gold heart-socket filled and waiting, **NO HEAD — that is the
+    point**) with "the next one, half-built" on anvils behind it (the
+    death-announce tableau pre-authored; mysteries-register discipline —
+    never explained). Tables L14-16: warplate/tender 14 + **16 (Foundry
+    Captain / Foundry Overseer — the namesake ranks finally reachable in
+    their namesake room)**, elemental 14, ward 15 statues at the doors,
+    dock watch. Events: 50% rally wakes L15 wards down the line + the
+    bible's death announce verbatim.
+  - **THE UNFINISHED KING = forge_prototype ELEVATED** (spawn-table level
+    17 + a NEW L17 boss rank) — and the elevation needed a small ENGINE
+    ADD: **MobRankSchema `name` (full display override, wins over
+    titleSuffix) and `loot` (loot-table override)**, resolved in
+    resolveMob/ResolvedMob, loot READ AT KILL via resolvedMobOf (room.ts)
+    so a rank can carry a boss bounty without leaking it — the Bone Warden
+    kept wraith_drops in batch 5 precisely because ranks couldn't do this;
+    now they can. Registry cross-checks rank loot ids at load. The r17
+    rank: {hpMult 1.4927 → **1495 hp EXACTLY** (= Ser Osmund, the L17
+    peer), damageMult 0.9 → 46 (a boss, not a Vaelric), xpMult 1.8603 →
+    **6251 = round(8·(14+2·17^2.1))** (miniboss ×4 re-anchored to room
+    boss ×8), name "The Unfinished King", loot `unfinished_king_drops`,
+    add NEW `foundry_summon` (wakes 2 forge_wards, cap 3 — boss adds pay
+    xp/loot, the lich/oath pattern)}. Stacking reconciliation: cinderrift's
+    THREE base-14 proto-yard minibosses resolve byte-identically ("Forge
+    Prototype", forge_construct_drops, 520/2098 — test-locked), and the
+    shipped r16 Rekindled tier is unchanged below 17. Loot: guaranteed
+    **`unfinished_sigil`** (value 180 — gauntlet 140 < sigil < horn 350;
+    icon [13,50] golden_smiling_mask, eyeballed: a serene gold face =
+    the king's seal-die, half-made) + weapons_royal rare (the royal edge).
+  - **MORVANE'S ESCAPE GATE** (proposal reconnection #3): NEW
+    `depths-escape` portal in crypt_depths' frozen vault (66,12 — east of
+    the ice dais, LEGIBLE before the fight per the bible) → target
+    sundered_city with **authored exitX/exitZ 210.5,110.5 and no
+    exitPortalId = the one-way branch** (greenhood-out precedent). Boots
+    SEALED (lich alive at every ephemeral boot); Morvane's death event now
+    runs announce (bible VERBATIM — "the far gate TEARS. Sixty seconds.
+    GO." — replacing the placeholder "crumble" line) → openPortal →
+    setRoomTimer 60, in that order: **the window IS the collapse; no
+    reseal wiring needed** — the fresh room boots sealed again. Dressing
+    both ends: the depths' torn arch (leaning cracked jambs, a fallen one,
+    a blue-crystal leak, and the chain rope-line strung across the
+    approach BY NOBODY — the rope tableau stays unexplained; everything
+    placed OUTSIDE the portal arch's own 7×7 clear rect, which sweeps its
+    box clean when it stamps) and Valdrenn's COLLAPSED POSTERN in the
+    graveyard quarter — a stair down out of the city's own crypts, choked
+    with rubble two steps in, the Court's cold light under the fall.
+  - **Goldens** (exact delta, documented in goldenhash.test.ts): NEW
+    sundering_fields + foundry; cinderrift grid+FEATURES (the new portal
+    arch + bone-road spur moved the grid; the nearPortals wayshrine
+    scatter re-dealt around the new portal — features move with it);
+    crypt_depths grid only (far-gate dressing; features held);
+    sundered_city grid only (postern dressing; features held). gloomfen +
+    all 13 other rooms byte-identical — the road re-targets are data-only.
+  - **rank-coverage: 24/35 → 29/36** (+lizardman r12, +ember_warplate
+    r14/r16, +forge_tender r14/r16, +forge_ward r15, +forge_prototype
+    r16/r17 — the whole forge family's ranks light in the foundry).
+  - Client: build-assets `old_wallbreaker` entry + SpriteLibrary height
+    2.7f (over the King, under Sarquun) + AudioEngine beds
+    (sundering_fields→wind_storm/wild — the capital's dead wind reaching
+    south; foundry→drone_dungeon/dungeon — the shift that never stops).
+    Wallbreaker vocals reuse minotaur_boss groups; the Alpha gravehound's.
+    ZERO wire/protocol changes.
+  - Verified: typecheck, **644 vitest** (23 sundering_fields + 19 foundry
+    + 8 escape_gate new; sundered_city pairing rework, worldgen3 pairs +2,
+    mobranks room/boss lists +2, bosses.test announce), client compiles
+    (direct javac — the sandbox fenced IPv4 loopback again; the whole live
+    stack ran the batch-6 [::1] playbook incl. a session mongod on
+    ::1:27018), verify-icons 0 errors, sprite-proof + icon-proof
+    eyeballed. **Live probes ALL PASS** over the [::1] stack:
+    `fields-probe.mjs` (23 checks — both fen roads, the bending trench
+    route walked with 0 corrections, city south-gate pairing, both
+    bosses at band), `foundry-probe.mjs` (27 checks — sealed boot +
+    guardian denial + golem kill + bible announce + the S-bent hall walked
+    on a floor-gap BFS + the King at 1495 + both junction doors incl. the
+    240,128 breach landing), `boss-events-probe.mjs` (extended with the
+    escape leg: Morvane kill → "the far gate TEARS" → RUN → one-way
+    postern landing at 210.5,110.5 24 s after the kill → crypt_depths
+    collapsed behind it at ~78 s, watched via /api/status), and
+    regressions travel-bot + march-probe + the FULL city-probe two-stage
+    arc (its entry leg re-pointed through the fields). Screenshots
+    tools/out/: fields-trenches6-3 (the churned band + legionaries on the
+    line), fields-wallbreaker4-2 (the beast before its war-sledge — the
+    flagship), fields-wallbreaker3-2 (down the furrow to the arena),
+    foundry-floor-1/-2 (the lantern-lit line at work — magma vents + a
+    +100 forge-mend mid-frame), foundry-king-2 (the King on the lit lane
+    before the headless frame), escape-landing-3 (the postern at sunset,
+    shriekers and wraiths prowling past).
+  - Probe traps paid this batch: a blind boss RESTAGE mints a second boss —
+    only /spawnmob when the gate is actually OPEN (at room spawn a living
+    boss is merely out of interest); rally waves must be counted DURING
+    the fight on an interval (a probe's cleave mows the adds — the
+    city-probe trap, now in boss-events too); an idle staged character in
+    an L11+ room dies in ~15 s to a single ranged trash pull (bone_bow
+    range 30 ≫ aggro) — clear-then-shoot or put a holdbot on the pack.
+  - Owner feel-checks pending: the trench read on foot (does the
+    firing-step/berm asymmetry teach itself), Wallbreaker solo at L13-14
+    (siege_charge slow + rubble_shock dodge windows), the Alpha's howl
+    pacing, foundry pack density on the S-route, whether the iced-crates /
+    held-back-dock tableau reads without a caption, the King's 0.9 damage
+    tune, and the escape run's 60 s (24 s bot pace leaves ~36 s of loot
+    margin — is that generous enough for a first-timer).
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -1924,6 +2122,40 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-10 **THE SUNDERING FIELDS + THE FOUNDRY + MORVANE'S ESCAPE GATE
+  (world-redesign batch 7, WORKING TREE — not committed)** — rooms 17 and 18
+  and the graph's final reconnections (see the decisions-log entry): **The
+  Sundering Fields** (288² proc+setpieces, L11-13, survey seed 92001)
+  splices gloomfen⇄city on BOTH roads and adds the fields⇄foundry edge —
+  north-facing trench crescents with firing steps/berms/stakes, the
+  sledge-furrow ending at the war-sledge arena, mustering stones, the toll
+  arch's chains, besieger camps, the mass barrow; **Old Wallbreaker** (L14,
+  boss_giant_1 sprite VERIFIED, hp 1083 = the golem's peer, xp 4195,
+  slam/siege-charge/rubble-shock, guaranteed `wallbreaker_clasp`) + **the
+  Barrow Alpha** (L13 side boss, ×5 xp 2254, interruptible no-loot
+  `barrow_howl`). **The Foundry** (160² preset interior, L14-16, stateful)
+  behind a NEW sealed cinderrift gate (opens on the Furnace Golem's death,
+  bible announce verbatim) and junctioned to the fields + the city's east
+  breach (authored 240,128 landing preserved) — the assembly line ends at a
+  headless throne-sized frame; **THE UNFINISHED KING** = forge_prototype
+  elevated by an L17 boss rank using NEW rank `name`+`loot` overrides
+  (engine add: resolveMob + kill-time loot via resolvedMobOf; cinderrift's
+  base-14 prototypes byte-identical) — 1495 hp / 6251 xp / guaranteed
+  `unfinished_sigil`. **The escape gate**: crypt_depths' far gate boots
+  sealed, TEARS open on Morvane's death (verbatim announce + the 60 s
+  collapse IS the window), one-way authored landing at Valdrenn's new
+  collapsed postern (210.5,110.5). Verified: typecheck, **644 vitest** (50
+  new; goldens = 2 NEW + cinderrift/crypt_depths/sundered_city documented
+  dressing deltas, all else held), client compiles, fields-probe +
+  foundry-probe + the escape-extended boss-events-probe ALL PASS live +
+  travel-bot/march-probe/full city-probe regressions, 5 screenshot scenes
+  (tools/out/fields-trenches6-3, fields-wallbreaker4-2, fields-
+  wallbreaker3-2, foundry-floor-1/2, foundry-king-2, escape-landing-3).
+  NOTE: this session's sandbox fenced IPv4 loopback AGAIN — the batch-6
+  [::1] playbook (MMO_MASTER_ORIGIN / SHARD_GAME_BIND / session mongod on
+  ::1:27018, direct-javac client) ran the whole verification. Owner
+  feel-checks in the decisions-log entry.
 
 - 2026-07-09 **THE BROKEN COURT SPLIT (world-redesign batch 6, WORKING TREE —
   not committed)** — the 16th room (see the decisions-log entry): Vaelric's

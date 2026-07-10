@@ -41,22 +41,22 @@
       "r": 2.2
     },
     {
-      "id": "gloomfen-city-north",
-      "label": "Valdrenn — Old North Road",
-      "target": "sundered_city",
+      "id": "gloomfen-fields-north",
+      "label": "The Sundering Fields — Old North Road",
+      "target": "sundering_fields",
       "x": 160,
       "z": 30,
       "r": 2.2,
-      "exitPortalId": "city-southgate"
+      "exitPortalId": "fields-gloomfen-road"
     },
     {
-      "id": "gloomfen-city-west",
-      "label": "Valdrenn — Drowned West Road",
-      "target": "sundered_city",
+      "id": "gloomfen-fields-west",
+      "label": "The Sundering Fields — Drowned West Road",
+      "target": "sundering_fields",
       "x": 52,
       "z": 92,
       "r": 2.2,
-      "exitPortalId": "city-breach"
+      "exitPortalId": "fields-gloomfen-west"
     }
   ],
   "spawnTables": [

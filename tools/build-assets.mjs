@@ -248,6 +248,12 @@ function grabComponent(png, seedX, seedY) {
     // tools/out/sheets/kraken-chars.png (107x92 frames, clean 3x4 grid,
     // no baked shadow).
     sarquun: { file: resolve(UNSORTED, "boss_kraken_1.png"), single: true },
+    // ---- world-redesign batch 7: The Sundering Fields ----
+    // Old Wallbreaker: sepia dust-caked giant, bald + bearded, ragged tunic,
+    // club over one shoulder. Verified on
+    // tools/out/sheets/wallbreaker-giant-single-chars.png (107x92 frames,
+    // clean single 3x4 grid, all four walk rows, no baked shadow).
+    old_wallbreaker: { file: resolve(UNSORTED, "boss_giant_1.png"), single: true },
   };
   const manifest = {};
   for (const [key, spec] of Object.entries(SHEETS)) {

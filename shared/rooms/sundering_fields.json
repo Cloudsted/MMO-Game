@@ -1,0 +1,194 @@
+{
+  "id": "sundering_fields",
+  "name": "The Sundering Fields",
+  "type": "wilderness",
+  "biome": "grass",
+  "wind": 0.6,
+  "persistence": "stateful",
+  "size": {
+    "w": 288,
+    "h": 288
+  },
+  "spawn": {
+    "x": 144,
+    "z": 256,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 92001,
+    "base": 14,
+    "amplitude": 4.2,
+    "frequency": 0.023,
+    "plateauRadius": 8,
+    "waterLevel": 12,
+    "liquid": "murk_water",
+    "treeDensity": 0.22
+  },
+  "flags": {
+    "safeZone": true,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "fields-gloomfen-road",
+      "label": "Gloomfen Marsh — Old North Road",
+      "target": "gloomfen",
+      "x": 144,
+      "z": 262,
+      "r": 2.2,
+      "exitPortalId": "gloomfen-fields-north"
+    },
+    {
+      "id": "fields-gloomfen-west",
+      "label": "Gloomfen Marsh — Drowned West Road",
+      "target": "gloomfen",
+      "x": 40,
+      "z": 236,
+      "r": 2.2,
+      "exitPortalId": "gloomfen-fields-west"
+    },
+    {
+      "id": "fields-city",
+      "label": "Valdrenn — the Fallen Capital",
+      "target": "sundered_city",
+      "x": 144,
+      "z": 26,
+      "r": 2.2,
+      "exitPortalId": "city-southgate"
+    },
+    {
+      "id": "fields-foundry",
+      "label": "The Foundry",
+      "target": "foundry",
+      "x": 262,
+      "z": 116,
+      "r": 2.2,
+      "exitPortalId": "foundry-fields"
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "trench-south",
+      "region": { "kind": "circle", "x": 108, "z": 130, "r": 14 },
+      "mobs": [{ "mob": "skeleton", "weight": 1, "level": 12 }],
+      "maxAlive": 6,
+      "packSize": [2, 3],
+      "respawnSec": 60
+    },
+    {
+      "id": "trench-north",
+      "region": { "kind": "circle", "x": 120, "z": 92, "r": 13 },
+      "mobs": [
+        { "mob": "skeleton", "weight": 2, "level": 13 },
+        { "mob": "wraith", "weight": 1, "level": 13 }
+      ],
+      "maxAlive": 5,
+      "packSize": [2, 2],
+      "respawnSec": 70
+    },
+    {
+      "id": "mustering-stones",
+      "region": { "kind": "circle", "x": 150, "z": 70, "r": 12 },
+      "mobs": [{ "mob": "fallen_soldier", "weight": 1 }],
+      "maxAlive": 4,
+      "packSize": [2, 2],
+      "respawnSec": 75
+    },
+    {
+      "id": "ashpicker-camp",
+      "region": { "kind": "circle", "x": 120, "z": 56, "r": 11 },
+      "mobs": [
+        { "mob": "marauder", "weight": 3, "level": 13 },
+        { "mob": "gravehound", "weight": 1, "level": 13 }
+      ],
+      "maxAlive": 5,
+      "packSize": [2, 3],
+      "respawnSec": 65
+    },
+    {
+      "id": "hound-fields-east",
+      "region": { "kind": "circle", "x": 216, "z": 180, "r": 15 },
+      "mobs": [{ "mob": "gravehound", "weight": 1, "level": 13 }],
+      "maxAlive": 5,
+      "packSize": [2, 3],
+      "respawnSec": 55
+    },
+    {
+      "id": "hound-fields-west",
+      "region": { "kind": "circle", "x": 56, "z": 180, "r": 13 },
+      "mobs": [{ "mob": "gravehound", "weight": 1, "level": 13 }],
+      "maxAlive": 4,
+      "packSize": [2, 2],
+      "respawnSec": 60
+    },
+    {
+      "id": "fen-creep",
+      "region": { "kind": "circle", "x": 76, "z": 236, "r": 13 },
+      "mobs": [{ "mob": "lizardman", "weight": 1, "level": 12 }],
+      "maxAlive": 4,
+      "packSize": [2, 2],
+      "respawnSec": 70
+    },
+    {
+      "id": "candle-shore",
+      "region": { "kind": "circle", "x": 96, "z": 222, "r": 12 },
+      "mobs": [{ "mob": "marsh_wisp", "weight": 1, "level": 11 }],
+      "maxAlive": 3,
+      "packSize": [1, 1],
+      "respawnSec": 80
+    },
+    {
+      "id": "barrow-pack",
+      "region": { "kind": "circle", "x": 232, "z": 206, "r": 14 },
+      "mobs": [{ "mob": "gravehound", "weight": 1, "level": 13 }],
+      "maxAlive": 4,
+      "packSize": [2, 2],
+      "respawnSec": 65
+    },
+    {
+      "id": "the-barrow",
+      "region": { "kind": "circle", "x": 232, "z": 206, "r": 5 },
+      "mobs": [{ "mob": "barrow_alpha", "weight": 1 }],
+      "maxAlive": 1,
+      "packSize": [1, 1],
+      "respawnSec": 900
+    },
+    {
+      "id": "wallbreaker-sledge",
+      "region": { "kind": "circle", "x": 92, "z": 190, "r": 5 },
+      "mobs": [{ "mob": "old_wallbreaker", "weight": 1 }],
+      "maxAlive": 1,
+      "packSize": [1, 1],
+      "respawnSec": 900
+    }
+  ],
+  "prefabs": [
+    { "prefab": "ruined_watchtower", "count": 2, "minSpacing": 70, "ruinBias": 1.2 },
+    { "prefab": "graveyard", "count": 2, "minSpacing": 60 },
+    { "prefab": "bone_orchard", "count": 2, "minSpacing": 55 },
+    { "prefab": "roadside_gibbet", "count": 2, "minSpacing": 50 },
+    { "prefab": "abandoned_camp", "count": 3, "minSpacing": 45, "ruinBias": 1.2 },
+    { "prefab": "warding_ring", "count": 1, "minSpacing": 0, "ruinBias": 1.4 },
+    { "prefab": "wayshrine", "count": 2, "minSpacing": 25, "nearPortals": true }
+  ],
+  "events": [
+    {
+      "id": "wallbreaker-rally",
+      "on": { "kind": "bossHpBelowPct", "mob": "old_wallbreaker", "pct": 0.5 },
+      "actions": [
+        { "kind": "announce", "text": "Old Wallbreaker bellows across the Fields — and the dead re-form their line." },
+        { "kind": "spawnMobs", "mob": "skeleton", "count": 3, "radius": 7, "level": 13 }
+      ]
+    },
+    {
+      "id": "wallbreaker-falls",
+      "on": { "kind": "bossDeath", "mob": "old_wallbreaker" },
+      "actions": [
+        { "kind": "announce", "text": "Old Wallbreaker is down. Forty years late, the Fields hold." }
+      ]
+    }
+  ],
+  "npcs": []
+}

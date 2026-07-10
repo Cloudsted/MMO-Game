@@ -918,6 +918,26 @@
         45
       ]
     },
+    "wallbreaker_clasp": {
+      "name": "Wallbreaker's Yoke-Clasp",
+      "kind": "trophy",
+      "value": 100,
+      "stack": 10,
+      "icon": [
+        9,
+        51
+      ]
+    },
+    "unfinished_sigil": {
+      "name": "The Unfinished Sigil",
+      "kind": "trophy",
+      "value": 180,
+      "stack": 10,
+      "icon": [
+        13,
+        50
+      ]
+    },
     "osmunds_gauntlet": {
       "name": "Ser Osmund's Gauntlet",
       "kind": "trophy",

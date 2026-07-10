@@ -241,6 +241,15 @@ export const MobRankSchema = z.object({
   leashRadius: z.number().optional(),
   /** display suffix: "Bandit" -> "Bandit Veteran" */
   titleSuffix: z.string().optional(),
+  /** full display-name override (wins over titleSuffix): the boss bump that
+   *  turns "Forge Prototype" into "The Unfinished King" without forking the
+   *  def. Last applicable rank wins. */
+  name: z.string().optional(),
+  /** loot-table override: a def elevated to a room boss by a rank must not
+   *  hand its guaranteed boss table to every lower-level spawn of the same
+   *  def (the Bone Warden kept wraith_drops for exactly this reason before
+   *  ranks could carry loot). Last applicable rank wins. */
+  loot: z.string().optional(),
 });
 export type MobRankDef = z.infer<typeof MobRankSchema>;
 
@@ -304,6 +313,8 @@ export interface ResolvedMob {
   attackRange: number;
   leashRadius: number;
   fleeAtHpPct: number;
+  /** loot table at this level (rank `loot` override, else the def's) */
+  loot: string;
 }
 
 /**
@@ -329,6 +340,7 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
 
   let attacks = mobAttacks(def).slice();
   let name = def.name;
+  let loot = def.loot;
   let aggroRadius = def.aggroRadius;
   let attackRange = def.attackRange;
   let leashRadius = def.leashRadius;
@@ -351,6 +363,8 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
     if (rank.leashRadius !== undefined) leashRadius = rank.leashRadius;
     if (rank.fleeAtHpPct !== undefined) fleeAtHpPct = rank.fleeAtHpPct;
     if (rank.titleSuffix) name = `${def.name} ${rank.titleSuffix}`;
+    if (rank.name) name = rank.name; // full override wins over the suffix
+    if (rank.loot) loot = rank.loot;
   }
 
   // A per-attack `damage` override is authored RELATIVE to the def's base level
@@ -375,6 +389,7 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
     attackRange,
     leashRadius,
     fleeAtHpPct,
+    loot,
   };
 }
 
@@ -515,6 +530,12 @@ export class RegistryService {
         }
       }
       if (!loot[mob.loot]) throw new Error(`mob ${id}: unknown loot table ${mob.loot}`);
+      // rank loot overrides only surface at their spawn level — validate at load
+      for (const rank of mob.ranks) {
+        if (rank.loot && !loot[rank.loot]) {
+          throw new Error(`mob ${id}: rank atLevel ${rank.atLevel} names unknown loot table ${rank.loot}`);
+        }
+      }
     }
     for (const [id, ability] of Object.entries(abilities)) {
       if (ability.summon && !mobs[ability.summon.mob]) {

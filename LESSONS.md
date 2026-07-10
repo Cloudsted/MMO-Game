@@ -118,6 +118,21 @@ assets dir under a running game. **Rule:** asset pipelines overwrite in
 place and never delete an output tree a live process may hold open; keep
 locked-but-existing files with a warning and carry on.
 
+### PowerShell 5.1 Get-Content/Set-Content mangles UTF-8 source files
+(batch 7) A one-word identifier fix went through a `(Get-Content f) -replace
+... | Set-Content f` pipeline — and silently rewrote every multi-byte UTF-8
+character in a 4,700-line TypeScript file as CP-1252 mojibake ("—" became
+"â€""), plus a BOM. tsc still compiled it, so the damage only surfaced in
+`git diff` (1090 insertions where ~900 were expected, em-dashes garbled in
+untouched comments). PS 5.1 reads BOM-less UTF-8 as ANSI and writes -Encoding
+utf8 WITH a BOM — the same family as the JSON BOM trap, now proven against
+source files. **Rules:** never route a source file through PowerShell string
+cmdlets — use the Edit tool or a Node one-liner (`fs.readFileSync(f,'utf8')`)
+for mechanical replacements. If it already happened, the damage is exactly
+reversible (encode each char back to CP-1252 bytes, decode as UTF-8, strip
+the BOM) — and `git diff --stat` showing deletions on lines you never touched
+is the tell to check for it before anything else lands on top.
+
 ### A sandboxed agent session can fence IPv4 loopback — IPv6 is the way out
 (batch 6) Every gradle build died with "Could not connect to the Gradle
 daemon" — twelve daemons started, listened on 127.0.0.1, and their own

@@ -111,6 +111,9 @@ public class SpriteLibrary {
         // The Maw: colossal-by-staging — the widest sprite in the game at the
         // minotaur's height cap (the arena dressing does the rest)
         heights.put("sarquun", 2.8f);
+        // batch 7 (the Sundering Fields): the siege-beast — over the King,
+        // under Sarquun
+        heights.put("old_wallbreaker", 2.7f);
     }
 
     public PlayerSheet sheet(String key) {

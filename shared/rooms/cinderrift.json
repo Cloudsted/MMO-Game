@@ -38,6 +38,15 @@
       "x": 144,
       "z": 278,
       "r": 2.2
+    },
+    {
+      "id": "cinderrift-foundry",
+      "label": "The Foundry",
+      "target": "foundry",
+      "x": 144,
+      "z": 16,
+      "r": 2.2,
+      "exitPortalId": "foundry-cinderrift"
     }
   ],
   "spawnTables": [
@@ -350,6 +359,23 @@
     }
   ],
   "events": [
+    {
+      "id": "furnace-gate",
+      "on": {
+        "kind": "bossDeath",
+        "mob": "cinder_golem_boss"
+      },
+      "actions": [
+        {
+          "kind": "announce",
+          "text": "The Furnace-King collapses into its own coals. Past the Forge Ruin, the Foundry gate stands open."
+        },
+        {
+          "kind": "openPortal",
+          "portalId": "cinderrift-foundry"
+        }
+      ]
+    },
     {
       "id": "furnace-rally",
       "on": {

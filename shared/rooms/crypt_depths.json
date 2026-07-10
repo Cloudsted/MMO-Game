@@ -45,6 +45,16 @@
       "x": 48,
       "z": 90,
       "r": 2.2
+    },
+    {
+      "id": "depths-escape",
+      "label": "The Far Gate — Valdrenn",
+      "target": "sundered_city",
+      "x": 66,
+      "z": 12,
+      "r": 2.2,
+      "exitX": 210.5,
+      "exitZ": 110.5
     }
   ],
   "spawnTables": [
@@ -286,7 +296,11 @@
       "actions": [
         {
           "kind": "announce",
-          "text": "Morvane is destroyed! The vaults begin to crumble — take your spoils and RUN!"
+          "text": "The Pale King is unmade. The Court forgets its poses — and the far gate TEARS. Sixty seconds. GO."
+        },
+        {
+          "kind": "openPortal",
+          "portalId": "depths-escape"
         },
         {
           "kind": "setRoomTimer",

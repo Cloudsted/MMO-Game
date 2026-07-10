@@ -2056,6 +2056,285 @@
       }
     ]
   },
+  "wallbreaker_drops": {
+    "gold": [
+      200,
+      360
+    ],
+    "rolls": [
+      2,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 28,
+        "table": "weapons_rift"
+      },
+      {
+        "weight": 8,
+        "table": "weapons_royal"
+      },
+      {
+        "weight": 18,
+        "table": "armor_fine",
+        "minRarity": "rare"
+      },
+      {
+        "weight": 24,
+        "item": "greater_health_potion",
+        "qty": [
+          2,
+          3
+        ]
+      },
+      {
+        "weight": 12,
+        "item": "war_medal",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 10,
+        "item": "greater_mana_potion",
+        "qty": [
+          1,
+          2
+        ]
+      }
+    ],
+    "guaranteed": [
+      {
+        "weight": 1,
+        "item": "wallbreaker_clasp",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 1,
+        "table": "weapons_rift",
+        "minRarity": "rare"
+      }
+    ]
+  },
+  "barrow_alpha_drops": {
+    "gold": [
+      120,
+      220
+    ],
+    "rolls": [
+      1,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 26,
+        "table": "weapons_rift"
+      },
+      {
+        "weight": 20,
+        "table": "armor_fine"
+      },
+      {
+        "weight": 24,
+        "item": "greater_health_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 18,
+        "item": "war_medal",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 12,
+        "item": "bone_charm",
+        "qty": [
+          1,
+          2
+        ]
+      }
+    ],
+    "guaranteed": [
+      {
+        "weight": 1,
+        "table": "weapons_rift",
+        "minRarity": "rare"
+      }
+    ]
+  },
+  "unfinished_king_drops": {
+    "gold": [
+      260,
+      440
+    ],
+    "rolls": [
+      2,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 30,
+        "table": "weapons_royal"
+      },
+      {
+        "weight": 22,
+        "item": "greater_health_potion",
+        "qty": [
+          2,
+          3
+        ]
+      },
+      {
+        "weight": 18,
+        "item": "greater_mana_potion",
+        "qty": [
+          2,
+          3
+        ]
+      },
+      {
+        "weight": 18,
+        "table": "armor_fine",
+        "minRarity": "rare"
+      },
+      {
+        "weight": 12,
+        "item": "ember_core",
+        "qty": [
+          1,
+          2
+        ]
+      }
+    ],
+    "guaranteed": [
+      {
+        "weight": 1,
+        "item": "unfinished_sigil",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 1,
+        "table": "weapons_royal",
+        "minRarity": "rare"
+      }
+    ]
+  },
+  "cache_sundering_fields": {
+    "gold": [
+      22,
+      48
+    ],
+    "rolls": [
+      1,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 22,
+        "table": "weapons_steel"
+      },
+      {
+        "weight": 14,
+        "table": "weapons_rift"
+      },
+      {
+        "weight": 20,
+        "item": "war_medal",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 18,
+        "item": "greater_health_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 14,
+        "item": "greater_mana_potion",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 12,
+        "item": "royal_seal",
+        "qty": [
+          1,
+          1
+        ]
+      }
+    ]
+  },
+  "cache_foundry": {
+    "gold": [
+      28,
+      55
+    ],
+    "rolls": [
+      1,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 22,
+        "table": "weapons_rift"
+      },
+      {
+        "weight": 10,
+        "table": "weapons_royal"
+      },
+      {
+        "weight": 22,
+        "item": "ember_core",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 18,
+        "item": "greater_health_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 16,
+        "item": "greater_mana_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 12,
+        "item": "royal_seal",
+        "qty": [
+          1,
+          1
+        ]
+      }
+    ]
+  },
   "cache_stranglers_march": {
     "gold": [
       12,
