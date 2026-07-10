@@ -496,7 +496,27 @@ world (Valdrenn "the Sundered City" — this is where the sundering happened).
 
 ---
 
-### W6 — **Valdrenn, the Fallen Capital** (`sundered_city`, keep "Valdrenn") · L14–16
+### W6 — **Valdrenn, the Fallen Capital** (`sundered_city`, keep "Valdrenn") · L14–16 — **SHIPPED (batch 6, 2026-07-09)**
+
+> **SHIPPED as designed** (world-redesign batch 6, the Broken Court split):
+> room renamed "Valdrenn, the Fallen Capital", STATEFUL (lifecycle + all king
+> events moved to the court), tables banded L14-16 (marauder/gravehound/
+> bone_bat 14, hound-ruins/soldier-avenue/wraith 15, oathbound 16; gate
+> garrison stays base 14). **Ser Osmund, the Gatekeeper** L17 (new mob
+> `ser_osmund`, sprite = theblackknight_1.png — dark blue-black plate, gold
+> brow band; kit sentinel_blade / iron_bash (slow) / pounce, pure-melee
+> duelist holding his post at aggro 9 / leash 24) stands inside the keep,
+> which is now the **castle gatehouse**: full-height inner crosswall,
+> murder-hole passage, portcullis FORCED open at the center, the `city-court`
+> arch where the dais stood under a torn roof breach. His 50% announce
+> paraphrases the oath ("The door stays shut..."); his death announce is the
+> bible's verbatim + openPortal; his 900 s respawn is the door-ajar window.
+> Guaranteed trophy `osmunds_gauntlet` (140) + a rare royal weapon. Maera
+> keeps her post with this section's 4 lines verbatim; her lean-to camp +
+> the avenue's proclamation banners + the BREACH GLIMPSE (dark mountain
+> massif over the castle's north wall, snow/ice V-notch on the avenue axis,
+> blue-crystal glints) are authored. The Riderless stays. The gloomfen-edge
+> portals still target gloomfen (the Warfields re-point is batch 7).
 
 **The city that said no.** Display name tightens to **"Valdrenn"** (portal
 labels: "Valdrenn — the Fallen Capital"). Becomes STATEFUL (proposal); the
@@ -539,9 +559,26 @@ to open again, and the king was left alive-ish on his throne as the receipt.
 
 ---
 
-### W7 — **The Broken Court** (`NEW room`, working name kept) · L17–19 · ◉ cycling
+### W7 — **The Broken Court** (`broken_court`, working name kept) · L17–19 · ◉ cycling — **SHIPPED (batch 6, 2026-07-09)**
 
-**The throne room, and what sits on it.** A 96² preset arena — the proposal
+> **SHIPPED as designed** (world-redesign batch 6): 96² preset cycling arena
+> (ephemeral, no lifetimeSec, downtimeSec **900**, warn [30,10]; fixedTime
+> 0.74 — the capital's sunset, kept). The throne complex restaged at room
+> scale in a mountain notch: forecourt + return portal (open sky — arrivals
+> ground-snap), banner-post processional, the marble hall with two war-torn
+> roof shafts, colonnade + sconces + braziers all still lit, **THE SET TABLE**
+> (two marble boards, gold candelabra, lanterns still burning), the dais +
+> gold throne + rose window (its glow the only warm light — the dais keeps
+> its roof), treasury (cache_royal 900 s) + barracks wings, and **THE BREACH**
+> — the north wall torn into raw rock, a climbing tunnel dusted snow/ice with
+> blue-crystal glints, dead-ended at a collapse (dressing only; its White
+> Waste portal is batch 8's). **Vaelric at L19** via spawn-table override +
+> a rank whose xpMult re-anchors him to the finale formula (11798 = 12×curve;
+> hp 2508, dmg 51); rallies moved here at 66/33% with **L18 sentinel waves**
+> (the batch-5 event `level` field; rally-1 announce is this section's
+> muster-call verbatim), bossDeath → this section's announce verbatim +
+> setRoomTimer 60. The crown's guaranteed drop moved with him. One king per
+> room — no other spawns. A 96² preset arena — the proposal
 is explicit: straight-to-boss, this room IS the fight. The court is exactly
 as day ten left it: braziers lit, banners hung, table set — the First Tyrant
 tidied the room around its lesson. **Vaelric, the Sundered King** (existing

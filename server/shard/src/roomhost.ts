@@ -114,7 +114,10 @@ class RoomHost {
     this.log = makeLogger(`roomhost/${roomId}`);
     const consts = gameConstants();
 
-    this.wss = new WebSocketServer({ port, host: "0.0.0.0" });
+    // SHARD_GAME_BIND: gameplay-WS bind host override (default IPv4-any;
+    // "::" serves dual-stack — sandboxed test sessions whose IPv4 loopback
+    // is fenced reach the rooms via [::1], see SHARD_GAME_HOST in host.ts)
+    this.wss = new WebSocketServer({ port, host: process.env.SHARD_GAME_BIND ?? "0.0.0.0" });
     this.wss.on("connection", (ws) => this.onConnection(ws));
     this.wss.on("listening", () => {
       this.log.info(`gameplay WS listening on :${port}`);

@@ -236,6 +236,12 @@ function grabComponent(png, seedX, seedY) {
     fallen_soldier: { file: resolve(CHARS, "military1.png"), char: [3, 0] }, // faceless full-plate man-at-arms (military2 is all kepi officers — wrong era)
     oathbound_sentinel: { file: resolve(MOBS, "monster_dknight2.png"), single: true }, // blue horned knight
     sundered_king: { file: resolve(MOBS, "monster_dknight1.png"), single: true }, // crimson death knight
+    // Ser Osmund (batch 6, the court gatekeeper): the Black Knight — heavy
+    // dark blue-black full plate, gold brow band + belt clasp, spiked
+    // pauldrons. Kin to the blue Oathbound, dressed in the king's gold.
+    // Eyeballed on tools/out/sheets/osmund-blackknight-chars.png (3x4 walk
+    // grid, 26x36 frames, clean).
+    ser_osmund: { file: resolve(UNSORTED, "theblackknight_1.png"), single: true },
     // ---- world-redesign batch 2: The Maw ----
     // pale mint-green cephalopod: ribbed bulbous mantle, orange slit eyes at
     // its base, eight sprawling tentacles. Verified on

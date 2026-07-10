@@ -118,6 +118,25 @@ assets dir under a running game. **Rule:** asset pipelines overwrite in
 place and never delete an output tree a live process may hold open; keep
 locked-but-existing files with a warning and carry on.
 
+### A sandboxed agent session can fence IPv4 loopback — IPv6 is the way out
+(batch 6) Every gradle build died with "Could not connect to the Gradle
+daemon" — twelve daemons started, listened on 127.0.0.1, and their own
+launcher timed out connecting. The daemon was fine; the SESSION was the bug:
+a `net.connect` to a listener in the SAME node process returned ETIMEDOUT on
+127.0.0.1, and even `Test-NetConnection 127.0.0.1 -Port 27017` against the
+owner's live mongod failed. **The sandbox dropped all IPv4 loopback packets
+(disable flags did not lift it) — but `::1` worked.** Diagnose with the
+15-second self-connect test before blaming any tool. Escapes that shipped as
+permanent knobs: client `MMO_MASTER` (master origin), scripts
+`MMO_MASTER_ORIGIN`, roomhost `SHARD_GAME_BIND` ("::" = dual-stack; the
+master and control WS were already dual-stack via bare `listen(port)`),
+`MASTER_URL`/`SHARD_GAME_HOST` already existed. mongod needs `--ipv6
+--bind_ip ::1` (a session-local instance on 27018 with a scratch dbpath
+keeps the owner's data out of it). Gradle itself has no such knob — compile
+with the toolchain javac directly (`~/.gradle/jdks/...` + the dependency
+jars from `~/.gradle/caches/modules-2`, ONE lwjgl version only, plus
+`src/main/resources` and slf4j-api on the classpath).
+
 ## libGDX / rendering
 
 - `TextureRegionDrawable.tint()` returns a **SpriteDrawable** — assigning it

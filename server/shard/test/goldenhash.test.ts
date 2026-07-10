@@ -58,12 +58,19 @@ const UPDATE = process.env.GOLDEN_UPDATE === "1";
  *  (the desert⇄cinderrift and crypt⇄depths splices): every other room held
  *  byte-identical — the four spliced rooms' changes are DATA-ONLY (portal
  *  retargets at the same coordinates, level overrides, the dungeon's
- *  persistence flip). atelier/dungeon/grounds/hub/maw
+ *  persistence flip). sundered_city grid+features updated + the NEW
+ *  broken_court entry added 2026-07-09 for batch 6 (THE BROKEN COURT
+ *  SPLIT): the keep's throne interior became the court gatehouse (crosswall
+ *  + forced portcullis + court-gate arch + roof breach + the mountain
+ *  glimpse massif; the treasury cache moved out with the throne room), and
+ *  the court is a new 96² preset; every other room held byte-identical.
+ *  atelier/dungeon/grounds/hub/maw
  *  share a features hash: it is the hash of the EMPTY ScatterResult — no
  *  prefab scatter. greenhood_run has no scatter either, but its authored
  *  caches ride the features handle, so its hash differs.) */
 const GOLDEN: Record<string, { grid: string; features: string }> = {
   atelier: { grid: "a5a2f7b6d3f36a836370c123b136e9db477cda33", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
+  broken_court: { grid: "9ecceac6c38d882d925cca023f230f6c2050ceaa", features: "35d68df7bb65002ec459140d1219f1548baff40e" },
   cinderrift: { grid: "2b4c4d47c3b429445b7a6f8933414a435255e14c", features: "dc3d9ec84ab63088664776590ba7adf44645df85" },
   crypt_depths: { grid: "4ebd017459a67adce7a64d2a4470bf377353f290", features: "2f8b38a89da3d19331960f0781803646b57af960" },
   desert: { grid: "aff409b0bd4eec1683fd5e8b1163268d045ebe1a", features: "f908e575dd8e4b5f1fea511bc7a034d1a02ccb55" },
@@ -77,7 +84,7 @@ const GOLDEN: Record<string, { grid: string; features: string }> = {
   maw: { grid: "75b9919c5b5493a24bc0fcd6295950063edc63be", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
   ossuary_galleries: { grid: "93449a63b6693ded27ebf70ca746a35fde76a247", features: "5024f7cc83d4530fd86438cdea1fd188a55473b0" },
   stranglers_march: { grid: "0e82fe8cd0cc9cd0d28406e0e0a2aff14d8ec3e7", features: "e9737c696504c7800346841a71b1a234b1a61134" },
-  sundered_city: { grid: "f9aa6be274d3df42ec21b9d6c82e8874f785399f", features: "67b6fc85e01e5fd79bd0760c5934500893c40ac2" },
+  sundered_city: { grid: "195ab4ed0e33416458aae3bf33183dcbfebb38dd", features: "bf6a11e455e64f48a5650907e6b6ee9dbba02aca" },
 };
 
 function hashRoom(world: VoxelWorld): { grid: string; features: string } {

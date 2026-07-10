@@ -1448,6 +1448,61 @@
       }
     ]
   },
+  "osmund_drops": {
+    "gold": [
+      220,
+      380
+    ],
+    "rolls": [
+      2,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 30,
+        "table": "weapons_royal"
+      },
+      {
+        "weight": 25,
+        "item": "royal_seal",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 25,
+        "item": "greater_health_potion",
+        "qty": [
+          2,
+          3
+        ]
+      },
+      {
+        "weight": 20,
+        "item": "greater_mana_potion",
+        "qty": [
+          2,
+          3
+        ]
+      }
+    ],
+    "guaranteed": [
+      {
+        "weight": 1,
+        "table": "weapons_royal",
+        "minRarity": "rare"
+      },
+      {
+        "weight": 1,
+        "item": "osmunds_gauntlet",
+        "qty": [
+          1,
+          1
+        ]
+      }
+    ]
+  },
   "king_drops": {
     "gold": [
       400,

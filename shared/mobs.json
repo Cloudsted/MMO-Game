@@ -676,6 +676,41 @@
       "die": "oathbound_sentinel_die"
     }
   },
+  "ser_osmund": {
+    "name": "Ser Osmund, the Gatekeeper",
+    "sprite": "ser_osmund",
+    "level": 17,
+    "hp": 1495,
+    "damage": 42,
+    "moveSpeed": 3,
+    "attacks": [
+      {
+        "ability": "sentinel_blade",
+        "weight": 3
+      },
+      {
+        "ability": "iron_bash",
+        "weight": 2
+      },
+      {
+        "ability": "pounce",
+        "minRange": 2.6,
+        "weight": 2
+      }
+    ],
+    "aggroRadius": 9,
+    "attackRange": 2.6,
+    "leashRadius": 24,
+    "fleeAtHpPct": 0,
+    "xp": 6251,
+    "loot": "osmund_drops",
+    "sounds": {
+      "idle": "oathbound_sentinel_idle",
+      "attack": "oathbound_sentinel_attack",
+      "hurt": "oathbound_sentinel_hurt",
+      "die": "oathbound_sentinel_die"
+    }
+  },
   "sundered_king": {
     "name": "Vaelric, the Sundered King",
     "sprite": "sundered_king",
@@ -708,6 +743,12 @@
       {
         "ability": "oath_summon",
         "weight": 5
+      }
+    ],
+    "ranks": [
+      {
+        "atLevel": 19,
+        "xpMult": 0.9558
       }
     ],
     "aggroRadius": 16,

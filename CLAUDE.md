@@ -1721,6 +1721,123 @@ show their block tile).
     L10, and the Gravelord's new 900 s cycle (his gate now opens/reseals
     on a rhythm instead of once per instance).
 
+- 2026-07-09 **THE BROKEN COURT SPLIT** (world-redesign batch 6, proposal
+  Part 5 step 6; story bible §6 W6+W7) — the flagship rework: Vaelric and
+  his throne complex moved out of the Sundered City into their own cycling
+  finale room; the city became a stateful L14-16 room behind a new
+  gatekeeper boss. Room 16. NOT COMMITTED — working-tree batch.
+  - **Room `broken_court`** (96² preset, biome ruin, fixedTime 0.74 — the
+    capital's sunset kept, EPHEMERAL {no lifetimeSec, downtimeSec **900**,
+    warn [30,10]}): the throne room restaged at room scale in a mountain
+    notch (dark_stone massif walls the north). Straight-to-boss by explicit
+    arena exception — forecourt (return portal under open sky; paired
+    arrivals ground-snap) → banner-post processional → marble hall (roof
+    with two hash-torn sunset shafts; the dais keeps its cover so the rose
+    window is the only warm light on the throne) → dais/gold throne/window/
+    braziers moved from the city keep + **THE SET TABLE** (bible W7 landmark:
+    two marble boards, gold candelabra, lanterns still lit — the state
+    dinner forty years stale) + treasury (the city's cache_royal 900 s moved
+    here) and barracks wings (SOUTH corners — the north belongs to the
+    breach) + **THE BREACH** behind the throne: the north wall torn into raw
+    rock, a climbing tunnel (1-block steps every 3 z) dusted snow/ice with
+    blue_crystal glints, DEAD-ENDED at a rubble collapse — dressing only,
+    its White Waste portal is batch 8's.
+  - **Vaelric at L19**: spawn-table `level: 19` on the existing def (base
+    18) + a king rank `{atLevel 19, xpMult 0.9558}` — 1.17^Δ overpays the
+    finale curve by 4.6%, the rank re-anchors xp to **11798 =
+    round(12·(14+2·19^2.1)) exactly**; hp 2508 / dmg 51 ride the plain
+    1.14/1.11 scaling. Kit/name untouched. His rallies moved here (66/33%,
+    rally-1 = the bible's muster-call verbatim) with **`level: 18` sentinel
+    waves** (the batch-5 event field's first shipped non-restorative use —
+    ability `oath_summon` minions stay base 16 by design, so a fight shows
+    BOTH 16s and 18s); bossDeath → the bible's "the mountain is OPEN"
+    verbatim + setRoomTimer 60. Crown drop rides king_drops with him.
+  - **The city reworked** (`sundered_city`): renamed "Valdrenn, the Fallen
+    Capital", **stateful** (lifecycle removed — zero king events remain,
+    the collapse is the court's), tables banded **L14-16** via level
+    overrides (marauders/hound-east/market/graveyard bats 14; hound-ruins/
+    soldier-avenue/chapel wraiths 15; gate-garrison soldiers stay base 14;
+    oathbound base 16; Riderless L17 unchanged). xp deltas vs the curve:
+    Δ1 overrides land within +1% (528 vs 524), Δ2 within +2.2% (617 vs
+    604), bone_bat@14 EXACT (524, its r12 xpMult carries the anchor).
+    Keep interior → **the court gate**: full-height marble crosswall with a
+    murder-hole passage + portcullis FORCED open at the center (the city
+    gates' pattern), the `city-court` arch standing where the dais was
+    under a NEW 4th roof breach (arrivals ground-snap to the floor — the
+    greenhood open-shaft rule; test-locked), braziers/banners/lanterns
+    flank the gate. Throne/rose window/treasury/barracks all moved out;
+    keep-oathbound re-pointed to the keep door (128,75 r4). Bible dressing:
+    Maera's lean-to camp + cookfire at the approach (her 4 §4-table lines
+    verbatim), tribute-refusal **proclamation banners** on dead avenue
+    lantern posts, and the **BREACH GLIMPSE** — a dark_stone massif (top
+    ~38-44) rising behind the castle's north wall with a snow/ice V-notch
+    on the avenue axis + blue-crystal glints: the way to the Waste,
+    advertised two rooms early (visible over the keep from mid-avenue).
+  - **SER OSMUND, THE GATEKEEPER** (new mob `ser_osmund`, L17 = band-top+1):
+    xp **6251** = boss ×8 formula exactly; hp **1495** = lich_boss 1150 ×
+    1.14² (the solo trend); dmg 42. Pure-melee duelist BY DESIGN —
+    sentinel_blade (fast) + iron_bash (50% slow — the anti-kite) + pounce
+    (minRange 2.6 gap-closer); aggro 9 / leash 24 (he holds his post, you
+    come to him), moveSpeed 3.0. Loot `osmund_drops`: guaranteed
+    **`osmunds_gauntlet`** (value 140 — gallstone 75 < gauntlet < horn 350;
+    icon [3,46] steel gauntlet, eyeball-verified, verify-icons 0 errors /
+    1 royal_seal-shape soft warning) + a rare weapons_royal. Events:
+    50% stand announce + bossDeath → bible verbatim "released at last" +
+    openPortal city-court; his **900 s respawnSec is the door-ajar window**
+    (the greenhood/Thrace pattern). Sprite **`ser_osmund` =
+    theblackknight_1.png** (Unsorted, single 3×4, 26×36): heavy dark
+    blue-black plate, gold brow band + belt clasp, spiked pauldrons —
+    kin to the blue Oathbound (dknight2), dressed in the king's gold;
+    eyeballed on tools/out/sheets/osmund-blackknight-chars.png (the Golden
+    Spikey Knight was the runner-up — too shining-champion, wrong kin).
+    Client: build-assets entry + SpriteLibrary height 2.3 + AudioEngine
+    broken_court bed (drone_crypt/dungeon); vocals reuse the sentinel
+    groups.
+  - **Pairing**: city-court ⇄ court-city via exitPortalId BOTH ways;
+    arrivals land at the gatehouses (city side (128,45.2) under the roof
+    breach, court side (48,84.8) on the forecourt). The city's gloomfen
+    portals untouched (batch 7 re-points them at the Warfields).
+  - **ENV KNOBS added en route** (sandboxed-session survival — this
+    session's IPv4 loopback was FENCED, see LESSONS.md): client
+    `MMO_MASTER` (master origin override), scripts `MMO_MASTER_ORIGIN`
+    (city-probe/city-tank-bot/travel-bot/ossuary-probe), roomhost
+    `SHARD_GAME_BIND` (gameplay-WS bind host, default "0.0.0.0"; "::" =
+    dual-stack). The whole live verification ran over `[::1]` with a
+    session-local mongod on ::1:27018.
+  - Verified: typecheck, **589 vitest** (28 new: broken_court.test.ts +
+    the sundered_city.test.ts rework; mobranks economy lists += room/boss
+    caps), goldens = sundered_city grid+features moved + NEW broken_court,
+    all 14 other rooms byte-identical; client compiles (javac direct — the
+    gradle daemon needs IPv4 loopback); **city-probe.mjs reworked into the
+    two-stage arc and FULL PASS live** (twin-gate arrival → stateful city +
+    sealed gate + keep rework decoded over the wire → L14/15/16/17 band
+    sweeps → the barricade S-curve walked ON FOOT → Osmund duel w/ both
+    announces → gate opens → court leg: forecourt arrival, throne/window/
+    breach-snow decode, Vaelric L19, 3-bot raid w/ both rallies + the L18
+    wave observed live + crown loot → T-30 → evict → the city's countdown
+    gate (reopenInSec) → fresh reopen with the King at full 2508 → reseal
+    via spawnMob → cleanup restarts). travel-bot + ossuary-probe regressions
+    PASS. Screenshots tools/out/: court-throne-1.png (carpet → dais → gold
+    throne → glowing rose window, braziers + set table + breach glints),
+    court-king-1.png (Vaelric advancing through his own throne_flames
+    pillars, oath-summon banner on screen), city-gatehouse-{1,2}.png
+    (Ser Osmund filling the frame under "The Broken Court (locked)"),
+    city-street-*.png (the avenue band read).
+  - Probe traps paid: the avenue CRATER at (128,161) is a walk trap (bowl
+    feet 12, rubble lip feet 14 — a +2 step no bot climbs; route around on
+    the west kerb x122, between the x123 lantern posts); a pre-boss
+    clearNear must SKIP the boss by name or it steals the scripted duel;
+    rally-wave levels must be observed DURING the fight (the raid deletes
+    dead adds from interest before any post-fight assert);
+    MMO_DOWNTIME_OVERRIDE_SEC is a MASTER knob (setting it on the shard
+    does nothing).
+  - Owner feel-checks pending: the Osmund duel solo at L16-17 (pure-melee +
+    slow — is kiting in the hall fair), whether TWO trash-band sweeps
+    (L14 south / L15 north) read as a gradient on foot, the court's
+    900 s reset pacing, the set-table read, the massif/notch skyline from
+    the avenue, and Ser Osmund's black-knight look vs the sentinels at a
+    glance.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -1807,6 +1924,30 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-09 **THE BROKEN COURT SPLIT (world-redesign batch 6, WORKING TREE —
+  not committed)** — the 16th room (see the decisions-log entry): Vaelric's
+  throne complex split out of the Sundered City into **`broken_court`** (96²
+  preset cycling finale: forecourt → processional → the restaged throne hall
+  with the set table + THE BREACH as dressing; ephemeral, 900 s downtime,
+  60 s collapse on the King's death; Vaelric at L19 = 2508 hp / 11798 xp
+  exactly on the finale formula via a rank xpMult, L18 rally waves), and
+  **Valdrenn, the Fallen Capital** is now STATEFUL at L14-16 behind **Ser
+  Osmund, the Gatekeeper** (new L17 pure-melee duelist, black-knight sprite,
+  6251 xp / 1495 hp on the formulas, guaranteed `osmunds_gauntlet`) holding
+  the keep-turned-gatehouse; his death opens `city-court`, his 900 s respawn
+  reseals it. Bible dressing: Maera's camp, proclamation banners, the
+  mountain BREACH GLIMPSE over the castle. Verified: typecheck, **589
+  vitest** (28 new; goldens = sundered_city + NEW broken_court only),
+  client compiles, **city-probe.mjs reworked into the two-stage arc — FULL
+  PASS live** (incl. countdown gate, fresh reopen, reseal), travel-bot +
+  ossuary-probe PASS, 4 screenshot scenes (tools/out/court-throne-1,
+  court-king-1, city-gatehouse-1/2, city-street*). NOTE: this session's
+  sandbox fenced IPv4 loopback — the live stack ran over [::1] via new env
+  knobs (MMO_MASTER / MMO_MASTER_ORIGIN / SHARD_GAME_BIND) and a
+  session-local mongod on ::1:27018 (the owner's data untouched); gradle
+  needed a direct-javac fallback. Owner feel-checks in the decisions-log
+  entry.
 
 - 2026-07-09 **THE EMBERFELLS + THE OSSUARY GALLERIES (world-redesign batch
   5, WORKING TREE — not committed)** — rooms 14 and 15 (see the decisions-log

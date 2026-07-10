@@ -889,7 +889,7 @@ describe("economy invariants", () => {
   /** Every mob a spawn table can produce, with the level it produces it at. */
   function shippedSpawns(): Array<{ room: string; table: string; mob: string; level: number; maxAlive: number; respawnSec: number }> {
     const out: Array<{ room: string; table: string; mob: string; level: number; maxAlive: number; respawnSec: number }> = [];
-    for (const roomId of ["hub", "forest", "desert", "dungeon", "gloomfen", "cinderrift", "crypt_depths", "sundered_city", "maw", "greenhood_run", "stranglers_march", "emberfells", "ossuary_galleries", "grounds", "atelier"]) {
+    for (const roomId of ["hub", "forest", "desert", "dungeon", "gloomfen", "cinderrift", "crypt_depths", "sundered_city", "broken_court", "maw", "greenhood_run", "stranglers_march", "emberfells", "ossuary_galleries", "grounds", "atelier"]) {
       const def = loadRoomDef(roomId);
       for (const t of def.spawnTables) {
         for (const m of t.mobs) {
@@ -918,7 +918,10 @@ describe("economy invariants", () => {
       gloomfen: resolveMob(reg.mobs["grelmoss"]!, undefined, SCALE).xp,
       crypt_depths: resolveMob(reg.mobs["lich_boss"]!, undefined, SCALE).xp,
       cinderrift: resolveMob(reg.mobs["cinder_golem_boss"]!, undefined, SCALE).xp,
-      sundered_city: resolveMob(reg.mobs["sundered_king"]!, undefined, SCALE).xp,
+      // the city's ruling power is Ser Osmund now; the King holds his own room
+      // at the court's spawn level (batch 6: the Broken Court split)
+      sundered_city: resolveMob(reg.mobs["ser_osmund"]!, undefined, SCALE).xp,
+      broken_court: resolveMob(reg.mobs["sundered_king"]!, 19, SCALE).xp,
       maw: resolveMob(reg.mobs["sarquun"]!, undefined, SCALE).xp,
       greenhood_run: resolveMob(reg.mobs["quartermaster_grole"]!, undefined, SCALE).xp,
       stranglers_march: resolveMob(reg.mobs["elder_strangler"]!, undefined, SCALE).xp,
@@ -927,7 +930,7 @@ describe("economy invariants", () => {
       // spawn-table override + boss rank — the cap must be the L12 resolve
       ossuary_galleries: resolveMob(reg.mobs["bone_warden"]!, 12, SCALE).xp,
     };
-    const bosses = new Set(["minotaur_boss", "lich_boss", "cinder_golem_boss", "sundered_king", "thrace_redcap", "kaharat", "sekhat", "grelmoss", "aelthir", "sarquun", "quartermaster_grole", "elder_strangler", "old_kiln", "bone_warden"]);
+    const bosses = new Set(["minotaur_boss", "lich_boss", "cinder_golem_boss", "sundered_king", "ser_osmund", "thrace_redcap", "kaharat", "sekhat", "grelmoss", "aelthir", "sarquun", "quartermaster_grole", "elder_strangler", "old_kiln", "bone_warden"]);
     for (const s of shippedSpawns()) {
       const cap = bossXp[s.room];
       if (cap === undefined || bosses.has(s.mob)) continue;

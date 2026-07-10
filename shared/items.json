@@ -918,6 +918,16 @@
         45
       ]
     },
+    "osmunds_gauntlet": {
+      "name": "Ser Osmund's Gauntlet",
+      "kind": "trophy",
+      "value": 140,
+      "stack": 10,
+      "icon": [
+        3,
+        46
+      ]
+    },
     "spiral_horn": {
       "name": "Aelthir's Spiral Horn",
       "kind": "trophy",

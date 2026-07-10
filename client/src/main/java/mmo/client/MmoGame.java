@@ -26,7 +26,10 @@ public class MmoGame extends Game {
         constants = GameConstants.load();
         items = new ItemRegistry();
         blocks = new BlockRegistry();
-        master = new MasterApi("http://127.0.0.1:4000");
+        // MMO_MASTER: master origin override (unattended test runs — e.g. a
+        // sandboxed session whose IPv4 loopback is fenced targets [::1])
+        String masterOrigin = System.getenv("MMO_MASTER");
+        master = new MasterApi(masterOrigin != null && !masterOrigin.isBlank() ? masterOrigin : "http://127.0.0.1:4000");
         ui = new UiKit();
         audio = new AudioEngine();
         setScreen(new LoginScreen(this));

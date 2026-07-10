@@ -138,6 +138,9 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult 
     case "sundered_city":
       buildSunderedCity(b, def, features);
       break;
+    case "broken_court":
+      buildBrokenCourt(b, def, features);
+      break;
     case "maw":
       buildMaw(b, def);
       break;
@@ -3167,7 +3170,13 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
   b.set(82, PFL, 80, "iron_bars");
   rubbleMound(84, 78, 1, PFL);
 
-  // ---- the KEEP: marble great hall + throne room ----
+  // ---- the KEEP: the COURT GATE (world-redesign batch 6) ----
+  // The throne room moved out to the Broken Court (its own room); the keep
+  // interior is now the castle gatehouse Ser Osmund holds — inner gate wall
+  // with a murder-hole passage, a portcullis FORCED open at the center, and
+  // the court portal standing where the dais was, under a war-torn roof
+  // breach (paired arrivals ground-snap; a roofed portal chamber would put
+  // them on the cap).
   // shell
   for (let z = KEEP.z0; z <= KEEP.z1; z++) {
     for (let x = KEEP.x0; x <= KEEP.x1; x++) {
@@ -3188,10 +3197,13 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
   // war-torn ceiling BREACHES: the siege tore the roof open in three places —
   // perpetual-sunset skylight pours into the hall in shafts (the owner's
   // "insanely dark" fix that also tells the story)
+  // (the 4th breach hangs over the court gate — the wound the First Tyrant
+  // left when it tore the way to the court open; arrivals land under it)
   for (const [hx, hz, hr] of [
     [112, 50, 2.6],
     [144, 62, 3.1],
     [128, 47, 2.2],
+    [128, 43, 3.4],
   ] as const) {
     for (let z = Math.floor(hz - hr - 1); z <= Math.ceil(hz + hr + 1); z++) {
       for (let x = Math.floor(hx - hr - 1); x <= Math.ceil(hx + hr + 1); x++) {
@@ -3217,13 +3229,6 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
   b.fill(127, PFL, KEEP.z1, 129, PFL + 3, KEEP.z1, 0);
   b.torch(126, PFL + 4, KEEP.z1 + 1);
   b.torch(130, PFL + 4, KEEP.z1 + 1);
-  // rose window (north wall, behind the throne): a leaded diamond that
-  // burns with the kingdom's last light (stained_glass glows)
-  for (let y = PFL + 2; y <= PFL + 10; y++) {
-    for (let x = 121; x <= 135; x++) {
-      if (Math.abs(x - 128) + Math.abs(y - (PFL + 6)) <= 4) b.set(x, y, KEEP.z0, "stained_glass");
-    }
-  }
   // lancet windows along the hall walls
   for (const z of [46, 54, 62] as const) {
     for (const wx of [KEEP.x0, KEEP.x1] as const) {
@@ -3245,88 +3250,67 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
     b.torch(KEEP.x0 + 1, PFL + 3, sz);
     b.torch(KEEP.x1 - 1, PFL + 3, sz);
   }
-  // the royal carpet: door → dais
-  for (let z = 46; z <= KEEP.z1 - 1; z++) {
+  // the royal carpet: door → the court gate (the processional's last stretch)
+  for (let z = 45; z <= KEEP.z1 - 1; z++) {
     for (let x = 127; x <= 129; x++) b.set(x, PG, z, "red_carpet");
   }
-  // dais: three marble steps, carpet up the middle
-  b.fill(120, PFL, 38, 136, PFL, 44, "marble");
-  b.fill(123, PFL + 1, 39, 133, PFL + 1, 43, "marble");
-  b.fill(125, PFL + 2, 40, 131, PFL + 2, 42, "marble");
-  for (const [cy, cz] of [
-    [PFL, 44],
-    [PFL + 1, 43],
-    [PFL + 2, 42],
-  ] as const) {
-    for (let x = 127; x <= 129; x++) b.set(x, cy, cz, "red_carpet");
+  // ---- the inner gate: a full-height marble crosswall with a murder-hole
+  // passage, its portcullis FORCED open at the center — the door Ser Osmund
+  // keeps. North of it, the gate chamber: the court portal stands where the
+  // dais stood, under the torn roof.
+  b.fill(KEEP.x0 + 1, PFL, 52, KEEP.x1 - 1, PFL + 11, 55, "marble");
+  // the gate passage through it, on the avenue axis
+  b.fill(126, PFL, 52, 130, PFL + 3, 55, 0);
+  // murder holes over the passage (dark shafts in the passage ceiling)
+  b.fill(127, PFL + 4, 53, 127, PFL + 6, 53, 0);
+  b.fill(129, PFL + 4, 55, 129, PFL + 6, 55, 0);
+  // the portcullis at the passage's north mouth: outer columns hang their
+  // full drop, the center bars bent open (the way the Tyrant left it)
+  for (let x = 126; x <= 130; x++) {
+    const open = x >= 127 && x <= 129;
+    for (let y = PFL; y <= PFL + 3; y++) {
+      if (open && y <= PFL + 2) continue;
+      b.set(x, y, 52, "iron_bars");
+    }
   }
-  // the throne: gold, tall-backed, flanked by braziers on the dais
-  b.set(THRONE.x, PFL + 3, THRONE.z, "gold_block"); // seat
-  b.fill(THRONE.x, PFL + 3, THRONE.z - 1, THRONE.x, PFL + 6, THRONE.z - 1, "gold_block"); // back
-  b.set(THRONE.x - 1, PFL + 3, THRONE.z, "gold_block"); // arms
-  b.set(THRONE.x + 1, PFL + 3, THRONE.z, "gold_block");
-  for (const bx of [124, 132] as const) {
-    b.set(bx, PFL + 2, 41, "dark_bricks");
-    b.set(bx, PFL + 3, 41, "ember_crystal");
-  }
+  // gate-chamber dressing: braziers still lit either side of Osmund's post,
+  // lanterns + the king's banners flanking the way down to the court
   for (const bx of [122, 134] as const) {
     b.set(bx, PFL, 46, "dark_bricks");
     b.set(bx, PFL + 1, 46, "ember_crystal");
   }
-  // two more brazier pairs light the nave's length
+  for (const lx of [120, 136] as const) b.set(lx, PFL + 3, 44, "lantern");
+  for (const bx of [122, 134] as const) b.set(bx, PFL + 4, 38, "banner");
+  // two more brazier pairs light the nave's length (south of the gate wall)
   for (const [bx, bz] of [
-    [120, 56],
-    [136, 56],
-    [120, 66],
-    [136, 66],
+    [120, 60],
+    [136, 60],
+    [120, 68],
+    [136, 68],
   ] as const) {
     b.set(bx, PFL, bz, "dark_bricks");
     b.set(bx, PFL + 1, bz, "ember_crystal");
   }
-  // treasury (west wing): gold heaped behind a forced partition
-  for (let z = KEEP.z0 + 1; z <= 50; z++) {
-    for (let y = PFL; y <= PFL + 5; y++) {
-      if (z === 44 || z === 45) continue; // forced doorway
-      b.set(110, y, z, "marble");
+
+  // ---- the BREACH GLIMPSE (story bible W6 landmark 5): the mountain the
+  // First Tyrant came down, rising behind the castle — a dark ridge over the
+  // north wall with a torn V-notch on the avenue axis, dusted white and
+  // glinting cold (the way to the Waste, advertised two rooms early; the
+  // notch itself is unreachable dressing behind the curtain wall)
+  for (let z = 0; z <= 23; z++) {
+    for (let x = 88; x <= 168; x++) {
+      const ridge = 26 + (23 - z) * 0.78 + hash2(seed ^ 0xb7ea, x, z) * 4 - Math.abs(x - 128) * 0.08;
+      const notch = Math.abs(x - 128) <= 4 ? 11 - Math.abs(x - 128) * 1.5 : 0;
+      const top = Math.min(44, Math.max(FL + 1, Math.round(ridge - notch)));
+      b.fill(x, FL, z, x, top, z, "dark_stone");
+      // the notch wears the Waste's colors
+      if (notch > 0 && z <= 14) {
+        b.set(x, top, z, hash2(seed ^ 0xb7eb, x, z) < 0.3 ? "ice" : "snow");
+      }
     }
   }
-  for (let x = KEEP.x0 + 1; x <= 109; x++) {
-    for (let y = PFL; y <= PFL + 5; y++) b.set(x, y, 50, "marble");
-  }
-  for (const [gx, gz, h] of [
-    [100, 40, 2],
-    [101, 40, 1],
-    [100, 41, 1],
-    [104, 43, 1],
-    [99, 46, 1],
-    [103, 39, 1],
-  ] as const) {
-    for (let y = 0; y < h; y++) b.set(gx, PFL + y, gz, "gold_block");
-  }
-  b.set(106, PFL, 47, "rubble"); // the looters got this far and no further
-  b.set(100, PFL + 3, 44, "lantern");
-  features.caches.push({ x: 102.5, y: PFL, z: 41.5, table: "cache_royal", respawnSec: 900 });
-  // barracks (east wing): the Oathbound's last muster
-  for (let z = KEEP.z0 + 1; z <= 50; z++) {
-    for (let y = PFL; y <= PFL + 5; y++) {
-      if (z === 44 || z === 45) continue;
-      b.set(146, y, z, "marble");
-    }
-  }
-  for (let x = 147; x <= KEEP.x1 - 1; x++) {
-    for (let y = PFL; y <= PFL + 5; y++) b.set(x, y, 50, "marble");
-  }
-  for (const [px, pz] of [
-    [150, 39],
-    [153, 39],
-    [156, 39],
-  ] as const) {
-    b.fill(px, PFL, pz, px + 1, PFL, pz, "planks"); // cots
-  }
-  b.set(157, PFL, 48, "iron_bars"); // arms racks
-  b.set(157, PFL, 47, "iron_bars");
-  b.set(149, PFL, 48, "hay");
-  b.set(156, PFL + 3, 44, "lantern");
+  b.world.setIfAir(127, 34, 8, id("blue_crystal"));
+  b.world.setIfAir(130, 37, 5, id("blue_crystal"));
 
   // ---- west market quarter: burned stalls, the marauders squatting it ----
   for (let z = 168; z <= 190; z++) {
@@ -3528,11 +3512,14 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
     if (hash2(seed ^ 0xaa0d, rx, rz) < 0.7) b.world.setIfAir(rx, FL, rz, id("rubble"));
     else b.world.setIfAir(rx, FL, rz, id("ash"));
   }
-  // avenue lantern posts: the city's last lights, half of them dead
+  // avenue lantern posts: the city's last lights, half of them dead. The
+  // dead posts wear the tribute-refusal proclamations, still nailed up and
+  // weathered to lace (story bible W6 landmark 2 — the NO that started it)
   for (let z = 104; z <= 204; z += 10) {
     for (const lx of [123, 133] as const) {
       b.fill(lx, FL, z, lx, FL + 1, z, "dark_bricks");
       if (hash2(seed ^ 0xaa0e, lx, z) < 0.55) b.set(lx, FL + 2, z, "lantern");
+      else if (hash2(seed ^ 0xaa0f, lx, z) < 0.5) b.set(lx, FL + 2, z, "banner");
     }
   }
 
@@ -3540,4 +3527,313 @@ function buildSunderedCity(b: Builder, def: RoomDef, features: ScatterResult): v
   street(120, CITY.z1 + 5, 136, 232);
   rubbleMound(118, 224, 2, FL);
   snag(140, 228);
+  // Maera's camp (story bible W6 landmark 4): the Chronicler's lean-to at
+  // the approach — the only living fire in the city
+  b.fill(137, FL, 218, 137, FL + 1, 218, "charred_log");
+  b.fill(137, FL, 222, 137, FL + 1, 222, "charred_log");
+  b.fill(135, FL + 2, 218, 137, FL + 2, 222, "planks");
+  b.set(136, FL, 219, "hay");
+  b.paintCircle(133, 222, 1.2, "ash");
+  b.set(133, FL, 222, "charred_log");
+  b.torch(133, FL + 1, 222);
+}
+
+// ---------------------------------------------------------------------------
+// THE BROKEN COURT (W7, world-redesign batch 6) — the throne room, and what
+// sits on it. Valdrenn's throne complex split out of the city into its own
+// 96² cycling finale stage: the proposal is explicit that this room IS the
+// fight (straight-to-boss, an authored arena exception). The court is exactly
+// as day ten left it — braziers lit, banners hung, the state dinner still on
+// the table — nested into a notch of the mountain the First Tyrant came down.
+// North (low z) = throne + THE BREACH (dressing only; its White Waste portal
+// ships in batch 8); south = the forecourt with the return portal (open sky,
+// so paired arrivals ground-snap to the floor, never a roof).
+// ---------------------------------------------------------------------------
+const COURT_HALL = { x0: 26, z0: 14, x1: 70, z1: 58 }; // marble hall shell
+const COURT_THRONE = { x: 48, z: 19 }; // the Sundered King's seat
+const COURT_BREACH = { x0: 30, x1: 40 }; // torn north-wall span → the mountain
+
+function buildBrokenCourt(b: Builder, def: RoomDef, features: ScatterResult): void {
+  const seed = def.terrain.seed;
+  const G = b.g(def.spawn.x, def.spawn.z); // 12 — flat everywhere (amplitude 0)
+  const FL = G + 1;
+  const H = COURT_HALL;
+
+  // aged exterior masonry (the forecourt weathered; the hall itself stays
+  // pristine marble — the First Tyrant tidied the room around its lesson)
+  const aged = (x: number, y: number, z: number): void => {
+    const r = hash2(seed ^ 0xc0a7, x * 7 + y * 131, z * 13 + y);
+    b.set(x, y, z, r < 0.25 ? "cracked_bricks" : r < 0.34 ? "mossy_cobblestone" : "stone_bricks");
+  };
+
+  // ---- the MOUNTAIN: a dark massif walling the room's north, with
+  // shoulders hugging the hall's flanks — the notch the court is built into
+  for (let z = 0; z <= 13; z++) {
+    for (let x = 0; x < def.size.w; x++) {
+      const top = Math.min(44, Math.round(28 + (13 - z) * 1.1 + hash2(seed ^ 0x3a5f, x, z) * 4));
+      b.fill(x, FL, z, x, top, z, "dark_stone");
+    }
+  }
+  for (const side of [
+    { x0: 0, x1: H.x0 - 1 },
+    { x0: H.x1 + 1, x1: def.size.w - 1 },
+  ]) {
+    for (let z = 14; z <= 34; z++) {
+      for (let x = side.x0; x <= side.x1; x++) {
+        const taper = (34 - z) / 20; // 1 at z14 → 0 at z34
+        const top = Math.round(FL + taper * (14 + hash2(seed ^ 0x3a60, x, z) * 4));
+        if (top <= FL) continue;
+        b.fill(x, FL, z, x, top, z, "dark_stone");
+      }
+    }
+  }
+
+  // ---- the HALL: marble shell, roofed, war-torn in exactly three places
+  b.clearAbove(H.x0 - 1, H.z0 - 1, H.x1 + 1, H.z1 + 1, G, 20);
+  for (let z = H.z0; z <= H.z1; z++) {
+    for (let x = H.x0; x <= H.x1; x++) {
+      b.set(x, G, z, "marble"); // floor
+      const edge = x === H.x0 || x === H.x1 || z === H.z0 || z === H.z1;
+      if (!edge) {
+        b.fill(x, FL, z, x, FL + 11, z, 0);
+        continue;
+      }
+      for (let y = FL; y <= FL + 11; y++) b.set(x, y, z, "marble");
+    }
+  }
+  // roof + two sunset shafts (the dais keeps its cover — the window's glow
+  // is the only warm light on the throne)
+  b.fill(H.x0, FL + 12, H.z0, H.x1, FL + 12, H.z1, "stone_bricks");
+  for (const [hx, hz, hr] of [
+    [40, 36, 2.6],
+    [58, 46, 2.9],
+  ] as const) {
+    for (let z = Math.floor(hz - hr - 1); z <= Math.ceil(hz + hr + 1); z++) {
+      for (let x = Math.floor(hx - hr - 1); x <= Math.ceil(hx + hr + 1); x++) {
+        const d = Math.hypot(x - hx, z - hz);
+        if (d <= hr + (hash2(seed ^ 0xce21, x, z) - 0.5) * 1.2) b.set(x, FL + 12, z, 0);
+        else if (d <= hr + 1.4 && hash2(seed ^ 0xce22, x, z) < 0.3) b.set(x, FL + 12, z, "cracked_bricks");
+      }
+    }
+  }
+  // corner towers
+  for (const [tx, tz] of [
+    [H.x0, H.z0],
+    [H.x1, H.z0],
+    [H.x0, H.z1],
+    [H.x1, H.z1],
+  ] as const) {
+    b.fill(tx - 2, FL, tz - 2, tx + 2, FL + 14, tz + 2, "marble");
+    for (let dz = -2; dz <= 2; dz++)
+      for (let dx = -2; dx <= 2; dx++)
+        if ((Math.abs(dx) === 2 || Math.abs(dz) === 2) && (dx + dz) % 2 === 0)
+          b.set(tx + dx, FL + 15, tz + dz, "marble");
+  }
+  // grand doors: 3 wide × 4 tall, south wall, on the processional axis
+  b.fill(47, FL, H.z1, 49, FL + 3, H.z1, 0);
+  b.torch(46, FL + 4, H.z1 + 1);
+  b.torch(50, FL + 4, H.z1 + 1);
+  // rose window (north wall, behind the throne): the kingdom's last light
+  for (let y = FL + 2; y <= FL + 10; y++) {
+    for (let x = 41; x <= 55; x++) {
+      if (Math.abs(x - 48) + Math.abs(y - (FL + 6)) <= 4) b.set(x, y, H.z0, "stained_glass");
+    }
+  }
+  // lancet windows along both hall walls
+  for (const z of [26, 36, 46] as const) {
+    for (const wx of [H.x0, H.x1] as const) {
+      b.fill(wx, FL + 3, z, wx, FL + 4, z + 1, "stained_glass");
+    }
+  }
+  // colonnade: lantern + banner on every column (the lamplighters' last round)
+  for (const cx of [36, 60] as const) {
+    for (const cz of [20, 26, 32, 38, 44] as const) {
+      b.fill(cx, FL, cz, cx, FL + 11, cz, "marble");
+      const aisle = cx === 36 ? cx + 1 : cx - 1;
+      b.set(aisle, FL + 3, cz, "lantern");
+      b.set(aisle, FL + 5, cz, "banner");
+    }
+  }
+  // wall sconces
+  for (const sz of [22, 32, 42, 52] as const) {
+    b.torch(H.x0 + 1, FL + 3, sz);
+    b.torch(H.x1 - 1, FL + 3, sz);
+  }
+  // the royal carpet: door → dais
+  for (let z = 20; z <= H.z1 - 1; z++) {
+    for (let x = 47; x <= 49; x++) b.set(x, G, z, "red_carpet");
+  }
+
+  // ---- the throne: dais, gold, braziers — moved here block-for-block in
+  // spirit from the city keep (the lesson, restaged at room scale)
+  b.fill(40, FL, 16, 56, FL, 22, "marble");
+  b.fill(43, FL + 1, 17, 53, FL + 1, 21, "marble");
+  b.fill(45, FL + 2, 18, 51, FL + 2, 20, "marble");
+  for (const [cy, cz] of [
+    [FL, 22],
+    [FL + 1, 21],
+    [FL + 2, 20],
+  ] as const) {
+    for (let x = 47; x <= 49; x++) b.set(x, cy, cz, "red_carpet");
+  }
+  b.set(COURT_THRONE.x, FL + 3, COURT_THRONE.z, "gold_block"); // seat
+  b.fill(COURT_THRONE.x, FL + 3, COURT_THRONE.z - 1, COURT_THRONE.x, FL + 6, COURT_THRONE.z - 1, "gold_block"); // back
+  b.set(COURT_THRONE.x - 1, FL + 3, COURT_THRONE.z, "gold_block"); // arms
+  b.set(COURT_THRONE.x + 1, FL + 3, COURT_THRONE.z, "gold_block");
+  for (const bx of [44, 52] as const) {
+    b.set(bx, FL + 2, 19, "dark_bricks");
+    b.set(bx, FL + 3, 19, "ember_crystal");
+  }
+  for (const bx of [42, 54] as const) {
+    b.set(bx, FL, 23, "dark_bricks");
+    b.set(bx, FL + 1, 23, "ember_crystal");
+  }
+  // two more brazier pairs light the nave's length
+  for (const [bx, bz] of [
+    [40, 30],
+    [56, 30],
+    [40, 40],
+    [56, 40],
+  ] as const) {
+    b.set(bx, FL, bz, "dark_bricks");
+    b.set(bx, FL + 1, bz, "ember_crystal");
+  }
+
+  // ---- THE SET TABLE (story bible W7 landmark 1): a state dinner forty
+  // years stale, untouched — two long boards flanking the carpet, candles
+  // still burning. The First Tyrant's contempt, staged in blocks.
+  for (const tx of [42, 54] as const) {
+    b.fill(tx - 1, FL, 34, tx + 1, FL, 46, "marble");
+    for (const cz of [36, 44] as const) b.set(tx, FL + 1, cz, "gold_block");
+    b.set(tx, FL + 1, 40, "lantern");
+  }
+  for (const bx of [45, 51] as const) {
+    for (const bz of [34, 37, 40, 43, 46] as const) b.set(bx, FL, bz, "planks");
+  }
+
+  // ---- the wings: treasury (SW) and the Oathbound barracks (SE), the last
+  // muster's quarters — partitioned off the hall's south corners
+  for (const wing of [
+    { x0: H.x0 + 1, x1: 38, wall: 38, door: true },
+    { x0: 58, x1: H.x1 - 1, wall: 58, door: true },
+  ]) {
+    for (let z = 47; z <= H.z1 - 1; z++) {
+      for (let y = FL; y <= FL + 5; y++) {
+        if (z === 51 || z === 52) continue; // forced doorway
+        b.set(wing.wall, y, z, "marble");
+      }
+    }
+    for (let x = wing.x0; x <= wing.x1; x++) {
+      for (let y = FL; y <= FL + 5; y++) b.set(x, y, 46, "marble");
+    }
+  }
+  // treasury: what the tribute never bought back
+  for (const [gx, gz, h] of [
+    [30, 50, 2],
+    [31, 50, 1],
+    [30, 51, 1],
+    [34, 53, 1],
+    [29, 56, 1],
+    [33, 49, 1],
+  ] as const) {
+    for (let y = 0; y < h; y++) b.set(gx, FL + y, gz, "gold_block");
+  }
+  b.set(36, FL, 55, "rubble");
+  b.set(30, FL + 3, 53, "lantern");
+  features.caches.push({ x: 32.5, y: FL, z: 52.5, table: "cache_royal", respawnSec: 900 });
+  // barracks: cots made, racks racked — nobody was ever dismissed
+  for (const [px, pz] of [
+    [61, 49],
+    [64, 49],
+    [67, 49],
+  ] as const) {
+    b.fill(px, FL, pz, px + 1, FL, pz, "planks");
+  }
+  b.set(68, FL, 55, "iron_bars");
+  b.set(68, FL, 54, "iron_bars");
+  b.set(60, FL, 55, "hay");
+  b.set(63, FL + 3, 52, "lantern");
+
+  // ---- THE BREACH (story bible W7 landmark 3): raw mountain rock torn open
+  // bordering the throne wall. The First Tyrant left the way it came, and
+  // left it open. Dressing only — its portal to the White Waste is batch 8.
+  for (let x = COURT_BREACH.x0; x <= COURT_BREACH.x1; x++) {
+    const ragged = Math.floor(hash2(seed ^ 0xb43c, x, 7) * 3);
+    b.fill(x, FL, H.z0, x, FL + 8 - ragged, H.z0, 0);
+  }
+  const tunnelFloor = (z: number): number => FL + Math.floor((13 - z) / 3);
+  for (let z = 13; z >= 4; z--) {
+    const half = z >= 10 ? 3 : z >= 7 ? 2 : 1;
+    const fy = tunnelFloor(z);
+    for (let x = 35 - half; x <= 35 + half; x++) {
+      b.fill(x, fy, z, x, fy + 3, z, 0);
+      const r = hash2(seed ^ 0xb43d, x, z);
+      const floor = z <= 7 ? (r < 0.15 ? "ice" : r < 0.6 ? "snow" : "ash") : r < 0.4 ? "rubble" : "ash";
+      b.set(x, fy - 1, z, floor);
+    }
+  }
+  // the collapse the way is dug through — passable dressing stops here
+  for (const [rx, rz, rh] of [
+    [34, 4, 3],
+    [36, 4, 2],
+    [35, 3, 3],
+  ] as const) {
+    b.fill(rx, tunnelFloor(rz), rz, rx, tunnelFloor(rz) + rh - 1, rz, "rubble");
+  }
+  b.world.setIfAir(34, tunnelFloor(6), 6, id("blue_crystal"));
+  b.world.setIfAir(36, tunnelFloor(7), 7, id("blue_crystal"));
+
+  // ---- the FORECOURT: the outer court the processional crosses — weathered
+  // where the hall is pristine (the Tyrant tidied the lesson, not the yard)
+  for (let z = H.z1 + 1; z <= 90; z++) {
+    for (let x = 30; x <= 66; x++) {
+      const r = hash2(seed ^ 0xf0c7, x, z);
+      b.set(x, G, z, r < 0.08 ? "rubble" : r < 0.2 ? "path" : r < 0.3 ? "mossy_cobblestone" : "cobblestone");
+    }
+  }
+  // marble banner posts pace the approach; one pair still carries lanterns
+  for (const pz of [64, 72, 80] as const) {
+    for (const px of [44, 52] as const) {
+      b.fill(px, FL, pz, px, FL + 1, pz, "marble");
+      b.set(px, FL + 2, pz, pz === 72 ? "lantern" : "banner");
+    }
+  }
+  // the ruined outer curtain, broken at the portal's back
+  for (let x = 30; x <= 66; x++) {
+    if (x >= 44 && x <= 52) continue;
+    const bite = Math.floor(hash2(seed ^ 0xf0c8, x, 92) * 3);
+    for (let y = FL; y <= FL + 2 - bite; y++) aged(x, y, 92);
+  }
+  // war scars on the yard's fringes
+  rubbleMoundAt(b, seed, 36, 64, 2, FL);
+  rubbleMoundAt(b, seed, 60, 76, 2, FL);
+  for (const [sx, sz] of [
+    [24, 68],
+    [72, 60],
+    [70, 86],
+    [26, 88],
+  ] as const) {
+    b.paintCircle(sx, sz, 1.8, "ash");
+    b.fill(sx, FL, sz, sx, FL + 1 + Math.floor(hash2(seed ^ 0xf0c9, sx, sz) * 2), sz, "charred_log");
+  }
+  // sparse ash + rubble over the open ground outside the yard
+  for (let i = 0; i < 40; i++) {
+    const rx = 4 + Math.floor(hash2(seed ^ 0xf0ca, i, 1) * 88);
+    const rz = 36 + Math.floor(hash2(seed ^ 0xf0ca, i, 2) * 56);
+    if (rx >= 30 && rx <= 66 && rz <= 92) continue; // keep the yard itself
+    if (!b.world.solidAt(rx, G, rz)) continue;
+    b.world.setIfAir(rx, FL, rz, id(hash2(seed ^ 0xf0cb, rx, rz) < 0.6 ? "rubble" : "ash"));
+  }
+}
+
+/** rubbleMound, shared shape (the city builder keeps its own local copy). */
+function rubbleMoundAt(b: Builder, seed: number, cx: number, cz: number, r: number, baseY: number): void {
+  for (let z = cz - r; z <= cz + r; z++) {
+    for (let x = cx - r; x <= cx + r; x++) {
+      const d = Math.hypot(x - cx, z - cz);
+      if (d > r + 0.4) continue;
+      const h = Math.max(0, Math.round((1 - d / (r + 1)) * 2 + hash2(seed ^ 0x9b1e, x, z) * 0.9));
+      for (let y = 0; y < h; y++) b.set(x, baseY + y, z, "rubble");
+    }
+  }
 }
