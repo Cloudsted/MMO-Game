@@ -39,9 +39,9 @@
   },
   "portals": [
     {
-      "id": "depths-dungeon",
-      "label": "Sunken Crypt",
-      "target": "dungeon",
+      "id": "depths-ossuary",
+      "label": "The Ossuary Galleries",
+      "target": "ossuary_galleries",
       "x": 48,
       "z": 90,
       "r": 2.2
@@ -59,7 +59,8 @@
       "mobs": [
         {
           "mob": "bone_bat",
-          "weight": 1
+          "weight": 1,
+          "level": 12
         }
       ],
       "maxAlive": 6,
@@ -80,7 +81,8 @@
       "mobs": [
         {
           "mob": "bone_bat",
-          "weight": 1
+          "weight": 1,
+          "level": 12
         }
       ],
       "maxAlive": 5,

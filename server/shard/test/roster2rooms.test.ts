@@ -199,7 +199,10 @@ describe("roster-2 spawn tables", () => {
   it("crypt_depths reuses the shipped bestiary at rank — no new defs needed", () => {
     const def = loadRoomDef("crypt_depths");
     const leveled = def.spawnTables.flatMap((t) => t.mobs.filter((m) => m.level !== undefined));
-    expect(leveled.length).toBe(7); // skeleton 14, restless_bones 13, harrower 14, stitcher 14, ghoul 14, mourner 13, warden 14
+    // skeleton 14, restless_bones 13, harrower 14, stitcher 14, ghoul 14,
+    // mourner 13, warden 14, + bone_bat 12 ×2 (batch 5 rebased bone_bat 12→10
+    // for the Ossuary Galleries; the cloisters carry the old level as overrides)
+    expect(leveled.length).toBe(9);
     const skel = resolveMob(reg.mobs["skeleton"]!, 14, SCALING);
     expect(skel.name).toContain("Deathless Legionary");
     expect(skel.attacks.map((a) => a.ability)).toContain("reap");

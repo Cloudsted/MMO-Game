@@ -428,8 +428,8 @@ export class RoomSim {
           }
           break;
         case "spawnMobs":
-          this.summonWave(boss, act.mob, act.count, act.radius);
-          this.log.info(`event ${ev.id}: wave of ${act.count}x ${act.mob}`);
+          this.summonWave(boss, act.mob, act.count, act.radius, undefined, { xp: true, loot: true }, act.level);
+          this.log.info(`event ${ev.id}: wave of ${act.count}x ${act.mob}${act.level ? ` @L${act.level}` : ""}`);
           break;
         case "setRoomTimer":
           if (this.onExpireRequest) {
@@ -475,7 +475,8 @@ export class RoomSim {
     count: number,
     radius: number,
     text?: string,
-    grants: { xp: boolean; loot: boolean } = { xp: true, loot: true }
+    grants: { xp: boolean; loot: boolean } = { xp: true, loot: true },
+    level?: number
   ): void {
     const b = around.brain;
     let spawned = 0;
@@ -495,7 +496,7 @@ export class RoomSim {
         z = cz;
         break;
       }
-      const minion = this.spawnMob(mobId, x, z, "");
+      const minion = this.spawnMob(mobId, x, z, "", level);
       if (!minion) continue;
       minion.brain!.summonerId = around.id;
       minion.brain!.grantsXp = grants.xp;

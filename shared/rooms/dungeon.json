@@ -3,17 +3,8 @@
   "name": "Sunken Crypt",
   "type": "dungeon",
   "biome": "dungeon",
-  "persistence": "ephemeral",
+  "persistence": "stateful",
   "fixedTime": 0.92,
-  "lifecycle": {
-    "lifetimeSec": 3000,
-    "downtimeSec": 240,
-    "warnAtSecLeft": [
-      300,
-      60,
-      10
-    ]
-  },
   "size": {
     "w": 64,
     "h": 64
@@ -47,8 +38,8 @@
     },
     {
       "id": "dungeon-depths",
-      "label": "Vaults of Morvane",
-      "target": "crypt_depths",
+      "label": "The Ossuary Galleries",
+      "target": "ossuary_galleries",
       "x": 46,
       "z": 6,
       "r": 2.2
@@ -156,7 +147,7 @@
         1,
         1
       ],
-      "respawnSec": 99999
+      "respawnSec": 900
     },
     {
       "id": "side-galleries",
@@ -228,14 +219,14 @@
       "on": { "kind": "bossHpBelowPct", "mob": "minotaur_boss", "pct": 0.5 },
       "actions": [
         { "kind": "announce", "text": "The Gravelord bellows — the crypt's dead rally to him!" },
-        { "kind": "spawnMobs", "mob": "skeleton", "count": 3, "radius": 6 }
+        { "kind": "spawnMobs", "mob": "skeleton", "count": 3, "radius": 6, "level": 6 }
       ]
     },
     {
       "id": "gravelord-gate",
       "on": { "kind": "bossDeath", "mob": "minotaur_boss" },
       "actions": [
-        { "kind": "announce", "text": "The Gravelord falls — the way to the Vaults of Morvane grinds open!" },
+        { "kind": "announce", "text": "The Gravelord is down. The lower stair stands open — the tribute-road runs DEEPER." },
         { "kind": "openPortal", "portalId": "dungeon-depths" }
       ]
     }

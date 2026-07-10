@@ -1837,6 +1837,170 @@
       }
     ]
   },
+  "old_kiln_drops": {
+    "gold": [
+      200,
+      340
+    ],
+    "rolls": [
+      2,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 30,
+        "table": "weapons_rift"
+      },
+      {
+        "weight": 20,
+        "table": "armor_fine",
+        "minRarity": "rare"
+      },
+      {
+        "weight": 25,
+        "item": "greater_health_potion",
+        "qty": [
+          2,
+          3
+        ]
+      },
+      {
+        "weight": 15,
+        "item": "greater_mana_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 10,
+        "item": "ember_core",
+        "qty": [
+          1,
+          2
+        ]
+      }
+    ],
+    "guaranteed": [
+      {
+        "weight": 1,
+        "item": "kiln_gallstone",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 1,
+        "table": "weapons_rift",
+        "minRarity": "rare"
+      }
+    ]
+  },
+  "cache_emberfells": {
+    "gold": [
+      18,
+      40
+    ],
+    "rolls": [
+      1,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 26,
+        "table": "weapons_steel"
+      },
+      {
+        "weight": 8,
+        "table": "weapons_rift"
+      },
+      {
+        "weight": 22,
+        "item": "ember_core",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 20,
+        "item": "greater_health_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 14,
+        "item": "greater_mana_potion",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 10,
+        "item": "ancient_coin",
+        "qty": [
+          1,
+          1
+        ]
+      }
+    ]
+  },
+  "cache_ossuary_galleries": {
+    "gold": [
+      20,
+      45
+    ],
+    "rolls": [
+      1,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 24,
+        "table": "weapons_steel"
+      },
+      {
+        "weight": 10,
+        "table": "weapons_rift"
+      },
+      {
+        "weight": 24,
+        "item": "spirit_essence",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 18,
+        "item": "greater_mana_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 14,
+        "item": "greater_health_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 10,
+        "item": "bone_charm",
+        "qty": [
+          1,
+          1
+        ]
+      }
+    ]
+  },
   "cache_stranglers_march": {
     "gold": [
       12,

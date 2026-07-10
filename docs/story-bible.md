@@ -719,7 +719,33 @@ m:ss)" as diegesis; zero new tech, per proposal).
 
 ---
 
-### E3 — **The Emberfells** (`NEW room`, working name "Volcanic Foothills") · L8–10
+### E3 — **The Emberfells** (`emberfells`) · L8–10 — **SHIPPED (batch 5, 2026-07-09)**
+
+> **SHIPPED as designed** (world-redesign batch 5): room `emberfells` (288²
+> volcanic, stateful, survey seed 91101 — the central lava basin sits between
+> the two gates, so the direct ray crosses ~52 lava columns and the haul-road
+> must bend). Splices desert⇄cinderrift (`desert-emberfells` ⇄
+> `emberfells-desert`, `emberfells-cinderrift` ⇄ `cinderrift-emberfells` —
+> twin-gate arrivals all four ways). Landmarks shipped: the Sunscour
+> GRADIENT (the south third is still half a desert, dying by mid-room), the
+> HAUL-ROAD (charred-log sleepers, bleached-bone bridges over the lava —
+> the Cinderrift road material, same wound), the POUR-TERRACES (slag benches
+> ascending east, mossy at the oldest lip), and the OLD KILN'S ADIT (a slag
+> cone with an iron-grated mouth breathing ember-light over an ash trough
+> ringed in obsidian-tipped vomit cones). **The Old Kiln** L11 shipped as a
+> NEW def on the slagback sprite: golem_slam / `slag_spew` (a sticking lob —
+> strafing beats it) / magma_vents / the INTERRUPTIBLE slag_gorge self-feed;
+> death line verbatim; guaranteed **`kiln_gallstone`** (value 75) + rift
+> rare. Husk work-gangs clock in along the road at L8-9 (ash_husk rebased
+> 11→8 with an L11 "of the Long Shift" rank so the rift's shifts are
+> untouched); the 50% rally IS the work-gang answering. DEVIATION: the
+> Throat setpiece stays in the Sunscour (its grid is golden-locked) — its
+> bone road now walks you to the Emberfells gate, and the fells' own bone
+> bridges carry the "same wound" the rest of the way. DEVIATION: the E1
+> Kaharat border-gate (⚿) is NOT yet wired — the desert⇄fells edge ships
+> always-open per the proposal's node row; the gate belongs to the E1
+> Sunscour rework. Proven by `scripts/emberfells-probe.mjs` + screenshots
+> tools/out/emberfells-{transition-3,kiln2-2,kiln3-3}.png.
 
 **The tyrant's slag-heap, with a landscape attached.** Between the Sunscour
 and the Cinderrift climb terraced foothills — but the terraces aren't
@@ -836,6 +862,13 @@ men" — and one of them is trying to make one anyway.
 
 ### N1 — **The Tithe Crypt** (`dungeon`, was "Sunken Crypt") · L6–8
 
+> **Batch 5 note (2026-07-09):** the crypt is **STATEFUL** now (its
+> ephemerality was a systems proof — proposal node row shipped), the
+> Gravelord cycles on 900 s (his gate opens and reseals on that rhythm),
+> his gate leads to the **Ossuary Galleries** (N2, shipped), and his death
+> announce is this entry's line verbatim. The "Tithe Crypt" rename stays
+> [PROPOSAL]; the First Draft stays unbuilt.
+
 **Where Greywatch's tribute goes down the stair.** [PROPOSAL — rename from
 "Sunken Crypt"; keeping the old name is acceptable but the new one carries
 the room's re-theme.] The crypt is Greywatch's own necropolis — and the
@@ -876,7 +909,34 @@ IN TRANSIT.
 
 ---
 
-### N2 — **The Ossuary Galleries** (`NEW room`, working name kept) · L9–11
+### N2 — **The Ossuary Galleries** (`ossuary_galleries`) · L9–11 — **SHIPPED (batch 5, 2026-07-09)**
+
+> **SHIPPED as designed** (world-redesign batch 5): room `ossuary_galleries`
+> (128² preset dungeon, stateful, fixedTime 0.93). Splices the crypt branch:
+> the Gravelord's `dungeon-depths` gate (kept exactly, bossDeath
+> minotaur_boss) now opens INTO the galleries, whose far gate
+> `ossuary-depths` ⇄ `depths-ossuary` continues to the Vaults. The route
+> S-bends through every gallery (walk/euclid 1.35; the east flank is
+> collapsed): torch-lit entrance court → ledger-niche spine (tally lights
+> going corpse-candle green) → the grading-hall's staggered shelf rows →
+> the stitchery (the half-finished courtier ON the master table) → the
+> cull-rows (hook-beams, chains, braziers) → the railed DOWN-SHAFT (dug
+> past seeing, freight chain still rigged) beside the Court gate, where
+> **THE Bone Warden** stands his post — the existing def at L12 via spawn
+> override + a boss rank ("of the Galleries", 791 hp, boss ×8 xp), with
+> his L9 crypt-miniboss and L14 depths resolves reconciled byte-identical.
+> Death line verbatim ("The Court's door is unattended"). The **mourner's
+> chapel** ☆ shipped hidden behind a 1-wide rubble-screened crack off the
+> dead-cart lane's dead-end spur: benches knelt out of true, ONE candle,
+> the Pallid Mourner at the bible's 6/rank-13 (the L13 Wrung Shade —
+> entering IS the trap). Caches: the Warden's strongshelf + behind the
+> chapel altar, both on `cache_ossuary_galleries` (steel+rift, ½-tier up).
+> N1's persistence flip rode along: the Sunken Crypt is STATEFUL, the
+> Gravelord on a 900 s cycle (the door-ajar window). DEVIATION: the
+> ossuary⇄Court edge ships UN-gated per the proposal node row (⇄ pale
+> court) — the announce line stands, and the ⚿ Court gate belongs to the
+> Court split batch. Proven by `scripts/ossuary-probe.mjs` + screenshots
+> tools/out/ossuary-{galleries2-3,warden-3,chapel2-2}.png.
 
 **The sorting-house of the Pale Court.** Below the Gravelord's door the
 tribute is PROCESSED: stitchers grade the dead like cloth, wardens shelve
@@ -1028,7 +1088,7 @@ tithe-road that used to cross it, plowed under.
 `quartermaster_grole` (W2), `elder_strangler` (W3, mantrap sprite),
 `veshka_broodmother` (W4), `old_wallbreaker` (W5), `barrow_alpha` (W5,
 gravehound sprite), `ser_osmund` (W6, sentinel sprite), ~~`sarquun` (E2)~~
-(SHIPPED batch 2), `old_kiln` (E3, slagback sprite), `first_draft` (N1, ogre sprite),
+(SHIPPED batch 2), ~~`old_kiln` (E3, slagback sprite)~~ (SHIPPED batch 5), `first_draft` (N1, ogre sprite),
 `cold_curator` (N3, medusa sprite), `first_tyrant` (W8), `rime_warden`
 (W8), plus White Waste trash [PROPOSAL, all UNVERIFIED sprites from the
 catalog]: winter/spectral centaur (`centaur_c_1.png`), snow harpy

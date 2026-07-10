@@ -1,8 +1,10 @@
 /**
- * Temp-dungeon lifecycle verification: enter the dungeon as an admin bot,
- * force expiry with /expire, and confirm the whole arc: collapse warning →
- * eviction → reconnect lands in the HUB → the master holds the dungeon down
- * (portal sealed) → the dungeon reopens fresh after the downtime.
+ * Ephemeral-room lifecycle verification: enter crypt_depths as an admin bot
+ * (batch 5 flipped the dungeon STATEFUL, so the Vaults are the expiry-arc
+ * proof room now — admin /room skips the Gravelord+ossuary walk), force
+ * expiry with /expire, and confirm the whole arc: collapse warning →
+ * eviction → reconnect lands in the HUB → the master holds the room down →
+ * it reopens fresh after the downtime.
  *
  * Fast run: restart the stack with MMO_DOWNTIME_OVERRIDE_SEC=20 first.
  *
@@ -91,9 +93,11 @@ function enterRoom(wsUrl, ticket) {
 }
 
 
-async function dungeonStatus() {
+const ROOM = "crypt_depths"; // the ephemeral proof room (the dungeon is stateful now)
+
+async function roomStatus() {
   const status = await api("/api/status");
-  return status.rooms.find((r) => r.roomId === "dungeon");
+  return status.rooms.find((r) => r.roomId === ROOM);
 }
 
 const main = async () => {
@@ -109,24 +113,18 @@ const main = async () => {
   let { ws, state } = await enterRoom(grant.wsUrl, grant.ticket);
   log(`entered ${state.roomId}`);
 
-  if (state.roomId !== "dungeon") {
-    if (state.roomId !== "hub") fail(`expected hub start, got ${state.roomId}`);
-    const portal = state.portals.find((p) => p.target === "dungeon");
-    if (!portal) fail("hub has no dungeon portal");
-    if (portal.open === false) fail("dungeon portal is sealed at test start — wait for it to reopen");
-    // Greywatch rebuild: the crypt arch sits INSIDE the walls on the plaza
-    // ring — these legacy gate waypoints are harmless (BFS routes anyway)
-    // (waypoints keep the straight-line walker off the wall collision band)
-    if (!(await goTo(ws, state, 64, 93))) fail("never reached the inner gate");
-    if (!(await goTo(ws, state, 64, 100))) fail("never passed the gate");
-    if (!(await goTo(ws, state, portal.x, portal.z))) fail("never reached the dungeon portal");
-    ws.send(JSON.stringify({ t: "usePortal", portalId: portal.id }));
+  if (state.roomId !== ROOM) {
+    // crypt_depths sits behind the Gravelord gate + the Ossuary Galleries —
+    // the lifecycle arc is the subject here, so admin /room jumps straight in
+    // (ossuary-probe walks the real route)
+    state.transfer = null;
+    ws.send(JSON.stringify({ t: "chat", text: `/room ${ROOM}` }));
     for (let i = 0; i < 100 && !state.transfer; i++) await sleep(100);
-    if (!state.transfer) fail("no transfer grant into the dungeon");
+    if (!state.transfer) fail(`no transfer grant into ${ROOM} (admin? room open?)`);
     ws.close();
     ({ ws, state } = await enterRoom(state.transfer.wsUrl, state.transfer.ticket));
-    if (state.roomId !== "dungeon") fail(`transfer landed in ${state.roomId}`);
-    log("inside the dungeon");
+    if (state.roomId !== ROOM) fail(`transfer landed in ${state.roomId}`);
+    log(`inside ${ROOM}`);
   }
 
   // force a fast expiry and watch the arc
@@ -141,30 +139,30 @@ const main = async () => {
   log(`evicted: "${state.evicted}"`);
   ws.close();
 
-  // master should hold the dungeon down
+  // master should hold the room down
   await sleep(2500);
-  let d = await dungeonStatus();
-  if (d) fail(`dungeon still assigned after expiry: ${JSON.stringify(d)}`);
-  log("master shows the dungeon down (in downtime)");
+  let d = await roomStatus();
+  if (d) fail(`${ROOM} still assigned after expiry: ${JSON.stringify(d)}`);
+  log(`master shows ${ROOM} down (in downtime)`);
 
-  // reconnect lands in the hub (eviction report set roomId=hub)
+  // reconnect lands in the hub (eviction report set roomId=hub). The hub has
+  // no portal to crypt_depths (its gate lives in the Ossuary Galleries — the
+  // sealed-portal read is ossuary-probe's job); master status is the oracle.
   grant = await api("/api/enter", { characterId: character.id }, token);
   ({ ws, state } = await enterRoom(grant.wsUrl, grant.ticket));
   if (state.roomId !== "hub") fail(`reconnect landed in ${state.roomId}, expected hub`);
-  const dungeonPortal = state.portals.find((p) => p.target === "dungeon");
-  log(`reconnected to the hub; dungeon portal open=${dungeonPortal?.open}`);
-  if (dungeonPortal?.open !== false) fail("hub portal should show the dungeon sealed during downtime");
+  log("reconnected to the hub while the room holds down");
 
   // wait for the reopen (downtime override recommended: 20s)
-  log("waiting for the dungeon to reopen...");
+  log(`waiting for ${ROOM} to reopen...`);
   const reopenDeadline = Date.now() + 300000;
   while (Date.now() < reopenDeadline) {
-    d = await dungeonStatus();
+    d = await roomStatus();
     if (d && d.status === "open") break;
     await sleep(2000);
   }
-  if (!d || d.status !== "open") fail("dungeon never reopened");
-  log("dungeon reopened fresh — LIFECYCLE OK");
+  if (!d || d.status !== "open") fail(`${ROOM} never reopened`);
+  log(`${ROOM} reopened fresh — LIFECYCLE OK`);
   ws.close();
   process.exit(0);
 };

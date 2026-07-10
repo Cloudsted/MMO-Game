@@ -203,9 +203,9 @@ const minoDead = await fight(ws, state, mino.id);
 expect(minoDead, `Gravelord killed (bot hp ${state.stats?.hp}, died=${state.died})`);
 expect(chatWith(state, "bellows"), "half-health rally announced (\"bellows\")");
 expect(skeletonsNearBoss() > skeletonsBefore, `rally adds appeared near the boss (${skeletonsBefore} -> ${skeletonsNearBoss()})`);
-expect(chatWith(state, "grinds open"), "gate-opening announced (\"grinds open\")");
-const opened = state.portalStates.find((p) => p.target === "crypt_depths" && p.open === true);
-expect(!!opened, "portalState {crypt_depths, open:true} replicated");
+expect(chatWith(state, "stands open"), "gate-opening announced (\"the lower stair stands open\")");
+const opened = state.portalStates.find((p) => p.target === "ossuary_galleries" && p.open === true);
+expect(!!opened, "portalState {ossuary_galleries, open:true} replicated");
 
 // ---- 3. walk through the event-opened gate ----
 state.transfer = null;
@@ -217,7 +217,12 @@ expect(!!tDepths, "event-opened portal grants a transfer");
 if (!tDepths) { log("RESULT: FAIL"); process.exit(1); }
 ws.close();
 ({ ws, state } = await enterRoom(tDepths.wsUrl, tDepths.ticket));
-expect(state.roomId === "crypt_depths", `arrived in ${state.roomId}`);
+// batch 5: the Gravelord's gate now opens into the Ossuary Galleries — the
+// full crypt→ossuary→depths through-walk is ossuary-probe's job; this probe
+// hops on by admin /room to keep its subject the EVENT ARC (gate + collapse)
+expect(state.roomId === "ossuary_galleries", `arrived in ${state.roomId} (the spliced sorting-house)`);
+({ ws, state } = await gotoRoom(ws, state, "crypt_depths"));
+expect(state.roomId === "crypt_depths", `hopped on to ${state.roomId}`);
 
 // ---- 4. kill Morvane: summons mid-fight, collapse re-armed to 60s ----
 await gearUp(ws, state); // fresh potions for the harder fight

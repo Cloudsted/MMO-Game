@@ -1,0 +1,230 @@
+{
+  "id": "emberfells",
+  "name": "The Emberfells",
+  "type": "wilderness",
+  "biome": "volcanic",
+  "wind": 0.55,
+  "persistence": "stateful",
+  "size": {
+    "w": 288,
+    "h": 288
+  },
+  "spawn": {
+    "x": 200,
+    "z": 256,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 91101,
+    "base": 13,
+    "amplitude": 9,
+    "frequency": 0.026,
+    "plateauRadius": 8,
+    "waterLevel": 9,
+    "liquid": "lava",
+    "treeDensity": 0.25
+  },
+  "flags": {
+    "safeZone": true,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "emberfells-desert",
+      "label": "The Sunscour",
+      "target": "desert",
+      "x": 200,
+      "z": 262,
+      "r": 2.2
+    },
+    {
+      "id": "emberfells-cinderrift",
+      "label": "The Cinderrift",
+      "target": "cinderrift",
+      "x": 72,
+      "z": 28,
+      "r": 2.2
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "raptor-fringe",
+      "region": {
+        "kind": "circle",
+        "x": 168,
+        "z": 240,
+        "r": 15
+      },
+      "mobs": [
+        {
+          "mob": "raptor",
+          "weight": 1,
+          "level": 8
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [2, 3],
+      "respawnSec": 50
+    },
+    {
+      "id": "husk-haul-south",
+      "region": {
+        "kind": "circle",
+        "x": 212,
+        "z": 208,
+        "r": 14
+      },
+      "mobs": [
+        {
+          "mob": "ash_husk",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [2, 3],
+      "respawnSec": 50
+    },
+    {
+      "id": "pickers-slagfield",
+      "region": {
+        "kind": "circle",
+        "x": 60,
+        "z": 192,
+        "r": 14
+      },
+      "mobs": [
+        {
+          "mob": "sandpicker",
+          "weight": 1,
+          "level": 8
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [2, 4],
+      "respawnSec": 55
+    },
+    {
+      "id": "slag-benches",
+      "region": {
+        "kind": "circle",
+        "x": 166,
+        "z": 164,
+        "r": 12
+      },
+      "mobs": [
+        {
+          "mob": "slagback_troll",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 3,
+      "packSize": [1, 2],
+      "respawnSec": 120
+    },
+    {
+      "id": "husk-haul-north",
+      "region": {
+        "kind": "circle",
+        "x": 92,
+        "z": 128,
+        "r": 13
+      },
+      "mobs": [
+        {
+          "mob": "ash_husk",
+          "weight": 1,
+          "level": 9
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [2, 3],
+      "respawnSec": 55
+    },
+    {
+      "id": "spark-drifts",
+      "region": {
+        "kind": "circle",
+        "x": 110,
+        "z": 52,
+        "r": 14
+      },
+      "mobs": [
+        {
+          "mob": "fire_elemental",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [1, 2],
+      "respawnSec": 65
+    },
+    {
+      "id": "kiln-adit",
+      "region": {
+        "kind": "circle",
+        "x": 118,
+        "z": 95,
+        "r": 5
+      },
+      "mobs": [
+        {
+          "mob": "old_kiln",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [1, 1],
+      "respawnSec": 900
+    }
+  ],
+  "prefabs": [
+    {
+      "prefab": "mine_adit",
+      "count": 2,
+      "minSpacing": 70
+    },
+    {
+      "prefab": "abandoned_camp",
+      "count": 3,
+      "minSpacing": 50,
+      "ruinBias": 1.5
+    },
+    {
+      "prefab": "ruined_watchtower",
+      "count": 2,
+      "minSpacing": 70,
+      "ruinBias": 1
+    },
+    {
+      "prefab": "graveyard",
+      "count": 1,
+      "minSpacing": 0
+    },
+    {
+      "prefab": "wayshrine",
+      "count": 2,
+      "minSpacing": 25,
+      "nearPortals": true
+    }
+  ],
+  "events": [
+    {
+      "id": "kiln-rally",
+      "on": { "kind": "bossHpBelowPct", "mob": "old_kiln", "pct": 0.5 },
+      "actions": [
+        { "kind": "announce", "text": "The Old Kiln bellows down its adit — the work-gang shambles in to feed it." },
+        { "kind": "spawnMobs", "mob": "ash_husk", "count": 3, "radius": 7, "level": 9 }
+      ]
+    },
+    {
+      "id": "kiln-cold",
+      "on": { "kind": "bossDeath", "mob": "old_kiln" },
+      "actions": [
+        { "kind": "announce", "text": "The Old Kiln goes cold. First time in living memory the fells aren't smoking." }
+      ]
+    }
+  ],
+  "npcs": []
+}

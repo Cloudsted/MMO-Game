@@ -175,10 +175,11 @@ describe("crypt_depths / Vaults of Morvane (L12-15, ephemeral)", () => {
     // start where arrivals actually land: the paired-portal offset toward
     // spawn (the portal CENTER column sits under the arch lintel, which
     // standY reads as the arch top — same property the bot lib has; bots
-    // path to the trigger radius, not the center column)
-    const dungeon = loadRoomDef("dungeon");
-    const via = dungeon.portals.find((p) => p.target === "crypt_depths")!;
-    const arrive = computePortalArrival(def, "dungeon", via)!;
+    // path to the trigger radius, not the center column). Batch 5: arrivals
+    // now come DOWN from the Ossuary Galleries, not the crypt directly.
+    const ossuary = loadRoomDef("ossuary_galleries");
+    const via = ossuary.portals.find((p) => p.target === "crypt_depths")!;
+    const arrive = computePortalArrival(def, "ossuary_galleries", via)!;
     // the dais top is three 1-block steps up — BFS must land ON it
     expect(reachable(world, arrive.x, arrive.z, 48, 16)).toBe(true);
     // the return portal is enterable: a cell inside its trigger radius
@@ -198,8 +199,10 @@ describe("portal graph (auto-pairing both ways)", () => {
   const pairs: Array<[string, string]> = [
     ["forest", "stranglers_march"], // batch 4: the march spliced the old forest↔gloomfen edge
     ["stranglers_march", "gloomfen"],
-    ["desert", "cinderrift"],
-    ["dungeon", "crypt_depths"],
+    ["desert", "emberfells"], // batch 5: the Emberfells spliced the old desert↔cinderrift edge
+    ["emberfells", "cinderrift"],
+    ["dungeon", "ossuary_galleries"], // batch 5: the Ossuary spliced the old crypt↔depths edge
+    ["ossuary_galleries", "crypt_depths"],
   ];
 
   it.each(pairs)("%s ↔ %s arrive at each other's twin gates", (parentId, childId) => {
@@ -233,10 +236,11 @@ describe("portal graph (auto-pairing both ways)", () => {
     // under the arch lintel, which standY reads as the arch top)
     expect(reachable(world, dungeon.spawn.x, dungeon.spawn.z, 46, 7)).toBe(true);
     expect(Math.hypot(46.5 - portal.x, 7.5 - portal.z)).toBeLessThanOrEqual(portal.r);
-    // the return arrival (paired-portal offset toward dungeon spawn) is also reachable
-    const depths = loadRoomDef("crypt_depths");
-    const up = depths.portals[0]!;
-    const arrive = computePortalArrival(dungeon, "crypt_depths", up)!;
+    // the return arrival (paired-portal offset toward dungeon spawn) is also
+    // reachable — batch 5: travellers now come back UP from the Ossuary
+    const ossuary = loadRoomDef("ossuary_galleries");
+    const up = ossuary.portals.find((p) => p.target === "dungeon")!;
+    const arrive = computePortalArrival(dungeon, "ossuary_galleries", up)!;
     expect(reachable(world, dungeon.spawn.x, dungeon.spawn.z, arrive.x, arrive.z)).toBe(true);
   });
 });

@@ -92,6 +92,12 @@ function authoredExclusions(def: RoomDef): Rect[] {
     });
     out.push({ x0: CINDER_ROAD.x - 3, z0: CINDER_ROAD.z0 - 2, x1: CINDER_ROAD.x + 3, z1: CINDER_ROAD.z1 + 2 });
   }
+  if (def.id === "emberfells") {
+    // the Old Kiln's adit court, the pour-terraces, and the haul-road corridor
+    out.push(EMBER_ADIT_EXCLUSION);
+    out.push(EMBER_TERRACE_EXCLUSION);
+    out.push(...emberRoadExclusions());
+  }
   return out;
 }
 
@@ -137,6 +143,12 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult 
       break;
     case "greenhood_run":
       buildGreenhoodRun(b, def, features);
+      break;
+    case "emberfells":
+      buildEmberfells(b, def, features);
+      break;
+    case "ossuary_galleries":
+      buildOssuaryGalleries(b, def, features);
       break;
   }
   // every portal gets a stone archway + a path apron facing the room spawn —
@@ -2096,6 +2108,508 @@ function buildCinderrift(b: Builder, def: RoomDef, features: ScatterResult): voi
   if (hooks.spawnRegion) {
     features.bindings.push({ tableId: "furnace-arena", x: hooks.spawnRegion.x, z: hooks.spawnRegion.z });
   }
+}
+
+// ---------------------------------------------------------------------------
+// THE EMBERFELLS (E3, world-redesign batch 5; story bible §6 E3) — the
+// volcanic foothills spliced between the Sunscour and the Cinderrift: where
+// the sand starts to burn. The terraces aren't geology — they're POUR-LINES,
+// generations of slag tipped downslope from the rift above. Seed 91101 was
+// SURVEYED (batch-4 discipline): its central lava basin sits square between
+// the two gates, so the direct gate→gate ray crosses ~67 lava columns and
+// the haul-road MUST bend around the basin's east shoulder — the owner's
+// no-straight-lines rule enforced by the terrain itself.
+//   1. the Sunscour gradient — the south third repaints dark rock to sand on
+//      a hash ramp (the desert bleeding in; it dies out by mid-room);
+//   2. the HAUL-ROAD — the ore road up to the rift, bending east around the
+//      basin then crossing west at z≈149 behind it; charred-log sleepers rut
+//      the dry stretches, bleached bone bridges the lava runs (the
+//      Cinderrift bone-road material, on purpose: same wound);
+//   3. the POUR-TERRACES — stepped slag benches descending west into the
+//      basin, oldest (mossiest) at the bottom; the slag-adit trolls den here;
+//   4. the OLD KILN'S ADIT — a slag-vomit cone on the basin's north rim,
+//      mouth breathing ember-light, trough court swept with ash and bone:
+//      the boss arena is its feeding trough.
+// DETERMINISM: layout constants fixed; every ragged edge is hash2(seed^salt).
+// ---------------------------------------------------------------------------
+const EMBER_ROAD: Array<[number, number]> = [
+  [200, 262], // the Sunscour gate apron
+  [204, 224],
+  [214, 192], // climbing the basin's east shoulder
+  [220, 152],
+  [150, 149], // the long west crossing behind the basin
+  [100, 148],
+  [96, 110], // turning north past the Kiln's spur
+  [80, 64],
+  [72, 34],
+  [72, 28], // the Cinderrift gate apron
+];
+const EMBER_SPUR: Array<[number, number]> = [
+  [96, 104],
+  [112, 97], // the ore spur to the Kiln's trough court
+];
+const EMBER_ADIT = { x: 118, z: 88 }; // slag-cone center; trough court south of it
+const EMBER_TERRACES = { x0: 148, z0: 152, x1: 184, z1: 174 }; // pour-line benches
+const EMBER_ADIT_EXCLUSION: Rect = { x0: 104, z0: 76, x1: 134, z1: 106 };
+const EMBER_TERRACE_EXCLUSION: Rect = { x0: EMBER_TERRACES.x0 - 3, z0: EMBER_TERRACES.z0 - 3, x1: EMBER_TERRACES.x1 + 3, z1: EMBER_TERRACES.z1 + 3 };
+
+function emberRoadExclusions(): Rect[] {
+  const out: Rect[] = [];
+  for (const seg of [EMBER_ROAD, EMBER_SPUR]) {
+    for (let i = 0; i < seg.length - 1; i++) {
+      const [ax, az] = seg[i]!;
+      const [bx, bz] = seg[i + 1]!;
+      out.push({ x0: Math.min(ax, bx) - 4, z0: Math.min(az, bz) - 4, x1: Math.max(ax, bx) + 4, z1: Math.max(az, bz) + 4 });
+    }
+  }
+  return out;
+}
+
+function buildEmberfells(b: Builder, def: RoomDef, features: ScatterResult): void {
+  const seed = def.terrain.seed;
+  const wl = def.terrain.waterLevel ?? 9;
+  const w = b.world;
+  const SAND = id("sand");
+  const SANDSTONE = id("sandstone");
+  const DARK = id("dark_stone");
+  const ASH = id("ash");
+  const OBSIDIAN = id("obsidian");
+
+  // rects the dressing passes must not touch (prefab scatter ran before us)
+  const keepOut: Rect[] = [EMBER_ADIT_EXCLUSION, EMBER_TERRACE_EXCLUSION];
+  for (const p of features.placements) {
+    const pd = PREFABS[p.prefab];
+    if (!pd) continue;
+    const rw = p.rot % 2 ? pd.footprint.d : pd.footprint.w;
+    const rd = p.rot % 2 ? pd.footprint.w : pd.footprint.d;
+    keepOut.push({ x0: p.ox - 2, z0: p.oz - 2, x1: p.ox + rw + 1, z1: p.oz + rd + 1 });
+  }
+  const inKeepOut = (x: number, z: number): boolean =>
+    keepOut.some((r) => x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1);
+
+  // --- 1. the Sunscour gradient: the south third is still half a desert ---
+  // sandF: 0 at z≤190 (the fells rule) → 1 by z≥262 (the desert gate)
+  const sandF = (z: number): number => Math.min(1, Math.max(0, (z - 190) / 72));
+  for (let z = 190; z < def.size.h; z++) {
+    const f = sandF(z);
+    if (f <= 0) continue;
+    for (let x = 0; x < def.size.w; x++) {
+      const g = b.g(x, z);
+      if (g <= wl) continue; // lava banks stay dark
+      if (inKeepOut(x, z)) continue;
+      const s = w.get(x, g, z);
+      if (s !== DARK && s !== ASH) continue; // only natural volcanic floor
+      if (hash2(seed ^ 0x5c01, x, z) < f * 0.9) {
+        w.set(x, g, z, hash2(seed ^ 0x5c02, x, z) < 0.06 ? SANDSTONE : SAND);
+      }
+    }
+  }
+
+  // --- 2. the haul-road: ash/path on dry ground, bleached bone over lava ---
+  const roadCell = (x: number, z: number, sleeper: boolean): void => {
+    const g = b.g(x, z);
+    if (g <= wl) {
+      w.set(x, wl + 1, z, id("bone_block")); // the bone bridges (rift material)
+    } else {
+      b.clearAbove(x, z, x, z, g, 10);
+      if (sleeper) w.set(x, g, z, id("charred_log")); // haul-sleepers rut the road
+      else w.set(x, g, z, hash2(seed ^ 0x5c03, x, z) < 0.55 ? id("path") : ASH);
+    }
+  };
+  for (const seg of [EMBER_ROAD, EMBER_SPUR]) {
+    for (let i = 0; i < seg.length - 1; i++) {
+      const [ax, az] = seg[i]!;
+      const [bx, bz] = seg[i + 1]!;
+      const len = Math.max(Math.abs(bx - ax), Math.abs(bz - az));
+      for (let t = 0; t <= len; t++) {
+        const cx = Math.round(ax + ((bx - ax) * t) / len);
+        const cz = Math.round(az + ((bz - az) * t) / len);
+        const sleeper = t % 9 === 4 && b.g(cx, cz) > wl;
+        for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) roadCell(cx + dx, cz + dz, sleeper);
+      }
+    }
+  }
+
+  // --- 3. the pour-terraces: stepped slag benches, oldest at the bottom ---
+  const T = EMBER_TERRACES;
+  for (let z = T.z0; z <= T.z1; z++) {
+    for (let x = T.x0; x <= T.x1; x++) {
+      const bench = Math.floor((x - T.x0) / 6); // 0..6, ascending east
+      const ty = 12 + bench;
+      // ragged bench lips: some columns keep their natural height (clear
+      // their snags per-column at their OWN g — the Greywatch clearAbove trap)
+      if (hash2(seed ^ 0x5c04, x, z) < 0.05) {
+        b.clearAbove(x, z, x, z, b.g(x, z), 12);
+        continue;
+      }
+      for (let y = Math.max(1, ty + 1); y < WORLD_HEIGHT; y++) w.set(x, y, z, 0);
+      for (let y = Math.max(1, ty - 4); y < ty; y++) {
+        if (!w.solidAt(x, y, z)) w.set(x, y, z, DARK);
+      }
+      const r = hash2(seed ^ 0x5c05, x, z);
+      if (bench <= 1) {
+        // the oldest pours: dull, mossed over
+        w.set(x, ty, z, r < 0.3 ? id("mossy_cobblestone") : DARK);
+        if (r > 0.9) w.setIfAir(x, ty + 1, z, id("moss_carpet"));
+      } else if (bench >= 5) {
+        // the freshest lips still cooling
+        w.set(x, ty, z, r < 0.5 ? ASH : DARK);
+        if (r > 0.975) w.setIfAir(x, ty + 1, z, id("ember_crystal"));
+      } else {
+        w.set(x, ty, z, r < 0.25 ? ASH : r > 0.92 ? OBSIDIAN : DARK);
+      }
+    }
+  }
+
+  // --- 4. the Old Kiln's adit: slag-vomit cone, breathing mouth, trough ---
+  const A = EMBER_ADIT;
+  const G0 = b.g(A.x, A.z);
+  // per-column snag/decoration clear at each column's OWN surface (a blanket
+  // clearAbove at G0 would shave every higher column — the Greywatch trap)
+  for (let z = A.z - 12; z <= A.z + 16; z++) {
+    for (let x = A.x - 12; x <= A.x + 12; x++) {
+      b.clearAbove(x, z, x, z, b.g(x, z), 14);
+    }
+  }
+  // the cone (raises only — the basin's rim stays as generated below it)
+  for (let dz = -9; dz <= 9; dz++) {
+    for (let dx = -9; dx <= 9; dx++) {
+      const d = Math.hypot(dx, dz);
+      if (d > 9) continue;
+      const jitter = hash2(seed ^ 0x5c06, A.x + dx, A.z + dz) * 0.8;
+      const top = G0 + Math.max(0, Math.round((9 - d) * 0.85 - jitter));
+      for (let y = Math.max(1, b.g(A.x + dx, A.z + dz)); y <= top; y++) {
+        w.set(A.x + dx, y, A.z + dz, d > 7.5 && hash2(seed ^ 0x5c07, dx, dz) < 0.4 ? ASH : DARK);
+      }
+    }
+  }
+  // the trough court south of the mouth (the arena floor) — slag-bodied:
+  // flatten() would underfill with DIRT, and the court's east lip drops 4
+  // blocks to the lava lobe (a brown retaining wall read wrong on camera)
+  for (let z = A.z + 4; z <= A.z + 14; z++) {
+    for (let x = A.x - 8; x <= A.x + 8; x++) {
+      for (let y = G0 + 1; y < WORLD_HEIGHT; y++) w.set(x, y, z, 0);
+      for (let y = Math.max(1, G0 - 4); y < G0; y++) {
+        if (!w.solidAt(x, y, z)) w.set(x, y, z, DARK);
+      }
+      w.set(x, G0, z, ASH);
+    }
+  }
+  // the mouth: a 3-wide adit dug south-facing into the cone
+  b.fill(A.x - 1, G0 + 1, A.z - 2, A.x + 1, G0 + 3, A.z + 4, 0);
+  b.fill(A.x - 1, G0 + 1, A.z - 3, A.x + 1, G0 + 3, A.z - 3, "dark_bricks"); // the kiln face
+  b.set(A.x, G0 + 1, A.z - 3, "iron_bars"); // the grate it feeds through
+  b.set(A.x, G0 + 2, A.z - 3, "iron_bars");
+  b.set(A.x - 1, G0 + 1, A.z - 2, "ember_crystal"); // the mouth breathes ember-light
+  b.set(A.x + 1, G0 + 1, A.z - 2, "ember_crystal");
+  // slag-vomit cones ringing the trough
+  for (const [cx, cz, ch] of [
+    [A.x - 6, A.z + 6, 3],
+    [A.x + 7, A.z + 7, 2],
+    [A.x - 3, A.z + 12, 2],
+    [A.x + 4, A.z + 13, 3],
+    [A.x + 9, A.z + 2, 2],
+  ] as const) {
+    for (let dy = 0; dy < ch; dy++) {
+      const r = ch - 1 - dy === 0 ? 0 : 1;
+      for (let dx = -r; dx <= r; dx++) {
+        for (let dz = -r; dz <= r; dz++) {
+          if (Math.abs(dx) + Math.abs(dz) > r) continue;
+          w.set(cx + dx, G0 + 1 + dy, cz + dz, dy === ch - 1 ? OBSIDIAN : DARK);
+        }
+      }
+    }
+    w.setIfAir(cx, G0 + ch + 1, cz, id("ember_crystal"));
+  }
+  // what feeding leaves: bone in the ash
+  for (const [bx, bz] of [
+    [A.x - 5, A.z + 9],
+    [A.x + 2, A.z + 8],
+    [A.x + 6, A.z + 11],
+  ] as const) {
+    w.setIfAir(bx, G0 + 1, bz, id("bone_block"));
+  }
+  b.set(A.x - 7, G0 + 1, A.z + 13, "skull_pile");
+}
+
+// ---------------------------------------------------------------------------
+// THE OSSUARY GALLERIES (N2, world-redesign batch 5; story bible §6 N2) —
+// the sorting-house of the Pale Court, spliced between the Sunken Crypt's
+// Gravelord gate and the Vaults of Morvane. Below the Gravelord's door the
+// tribute is PROCESSED: stitchers grade the dead like cloth, wardens shelve
+// them, harrowers cull the stock. 128² PRESET (buildCrypt technique, biome
+// dungeon, fixedTime 0.93): the route between the two gates S-BENDS through
+// every gallery — entrance court → ledger-niche spine → the grading-hall's
+// staggered shelf rows → the stitchery → the cull-rows → the down-shaft
+// platform where THE Bone Warden stands his post beside the Court gate.
+// The dead-cart service lane east of the hall is collapsed mid-way (rubble):
+// its south spur dead-ends at the hidden chapel — the one room in the
+// galleries that isn't industrial (☆ the Pallid Mourner; one candle).
+// Light = language: torches at the door, lanterns where artisans work,
+// braziers at the Warden's post, bog-candles between, ONE candle in the
+// chapel. Convention: G = 12 (flat dungeon slab), FL = G+1.
+// ---------------------------------------------------------------------------
+const OSS_COURT = { x0: 50, z0: 104, x1: 80, z1: 122 };
+const OSS_HALL = { x0: 38, z0: 44, x1: 90, z1: 72 }; // the grading-hall
+const OSS_STITCHERY = { x0: 24, z0: 16, x1: 52, z1: 36 };
+const OSS_CULL = { x0: 70, z0: 18, x1: 96, z1: 40 }; // the cull-rows
+const OSS_PLATFORM = { x0: 96, z0: 8, x1: 122, z1: 36 }; // down-shaft + the Warden's post
+const OSS_SHAFT = { x0: 102, z0: 12, x1: 109, z1: 19 }; // the freight shaft (pit)
+const OSS_CHAPEL = { x0: 100, z0: 78, x1: 118, z1: 96 }; // the mourner's chapel (hidden)
+const OSS_LANE = { x: 94, z0: 78, z1: 104 }; // the dead-cart lane (x..x+4 wide)
+
+function buildOssuaryGalleries(b: Builder, def: RoomDef, features: ScatterResult): void {
+  const seed = def.terrain.seed;
+  const G = b.g(def.spawn.x, def.spawn.z);
+  const FL = G + 1;
+  const M = 2;
+  const X1 = def.size.w - 1 - M;
+  const Z1 = def.size.h - 1 - M;
+  const w = b.world;
+
+  // perimeter: dark-brick gallery walls, bitten with age
+  b.wallRun(M, M, X1, M, FL, 5, "dark_bricks");
+  b.wallRun(M, Z1, X1, Z1, FL, 5, "dark_bricks");
+  b.wallRun(M, M, M, Z1, FL, 5, "dark_bricks");
+  b.wallRun(X1, M, X1, Z1, FL, 5, "dark_bricks");
+  for (let i = 0; i < 48; i++) {
+    const t = hash2(seed ^ 0x0551, i, 0);
+    const side = i % 4;
+    const along = Math.floor(hash2(seed ^ 0x0552, i, 1) * (def.size.w - 2 * M - 2)) + M + 1;
+    const [x, z] = side === 0 ? [along, M] : side === 1 ? [along, Z1] : side === 2 ? [M, along] : [X1, along];
+    b.fill(x, FL + 3 + Math.floor(t * 2), z, x, FL + 5, z, 0);
+  }
+
+  /** Walled gallery: cleared, floored, dark-brick walls with hash-bitten tops. */
+  const gallery = (x0: number, z0: number, x1: number, z1: number, floor: string, salt: number): void => {
+    b.clearAbove(x0 - 1, z0 - 1, x1 + 1, z1 + 1, G, 10);
+    b.flatten(x0, z0, x1, z1, G, floor);
+    for (let x = x0; x <= x1; x++) {
+      for (const z of [z0, z1]) {
+        const h = 4 - (hash2(seed ^ salt, x, z) < 0.25 ? 1 : 0);
+        b.fill(x, FL, z, x, FL + h - 1, z, "dark_bricks");
+      }
+    }
+    for (let z = z0 + 1; z <= z1 - 1; z++) {
+      for (const x of [x0, x1]) {
+        const h = 4 - (hash2(seed ^ salt ^ 0x77, x, z) < 0.25 ? 1 : 0);
+        b.fill(x, FL, z, x, FL + h - 1, z, "dark_bricks");
+      }
+    }
+  };
+  /** Full-height doorway (a lintel reads as a wall to the BFS/standing grid). */
+  const door = (x0: number, z0: number, x1: number, z1: number): void => {
+    b.fill(x0, FL, z0, x1, FL + 4, z1, 0);
+  };
+
+  // --- the entrance court: the dead-cart terminus (torch-lit, the warm end) ---
+  b.clearAbove(OSS_COURT.x0 - 1, OSS_COURT.z0 - 1, OSS_COURT.x1 + 1, OSS_COURT.z1 + 1, G, 10);
+  b.flatten(OSS_COURT.x0, OSS_COURT.z0, OSS_COURT.x1, OSS_COURT.z1, G, "path");
+  for (const [tx, tz] of [
+    [56, 118],
+    [72, 118],
+    [56, 106],
+    [72, 106],
+  ] as const) {
+    b.set(tx, FL, tz, "dark_bricks");
+    b.torch(tx, FL + 1, tz);
+  }
+  // the last dead-cart, abandoned at the terminus
+  b.set(75, FL, 112, "planks");
+  b.set(76, FL, 112, "planks");
+  b.set(75, FL + 1, 112, "bone_block");
+  b.set(77, FL, 112, "hay");
+
+  // --- the spine: ledger-niches (tally marks, not names) up to the hall ---
+  b.flatten(61, 74, 67, 104, G, "crypt_slate");
+  for (let z = 78; z <= 100; z += 6) {
+    for (const x of [60, 68]) {
+      b.fill(x, FL, z, x, FL + 2, z, "dark_bricks");
+      b.set(x, FL + 1, z, "bone_block"); // the shelved tribute
+      if (z === 78 || z === 96) w.setIfAir(x, FL + 3, z, id("chain"));
+    }
+    // tally light: warm at the door, corpse-candles deeper
+    if (z >= 96) b.torch(z % 12 === 0 ? 60 : 68, FL + 3, z);
+    else b.set(z % 12 === 0 ? 60 : 68, FL + 3, z, "bog_candle");
+  }
+  // intake stacks flank the spine where the fresh tribute waits
+  for (const [sx, sz] of [
+    [56, 84],
+    [57, 92],
+    [71, 80],
+    [72, 96],
+  ] as const) {
+    b.set(sx, FL, sz, "bone_block");
+    if (hash2(seed ^ 0x0553, sx, sz) < 0.5) b.set(sx, FL + 1, sz, "skull_pile");
+  }
+
+  // --- the grading-hall: sorted bone by size and quality, shelf-stamped ---
+  const H = OSS_HALL;
+  gallery(H.x0, H.z0, H.x1, H.z1, "crypt_slate", 0x0554);
+  door(62, H.z1, 66, H.z1); // south door off the spine
+  door(42, H.z0, 46, H.z0); // north-west door to the stitchery
+  // shelf rows (2 high — jump-proof), gaps staggered so the crossing zig-zags
+  for (const [sz, gap] of [
+    [50, 74],
+    [55, 50],
+    [60, 74],
+    [65, 50],
+  ] as const) {
+    for (let x = H.x0 + 3; x <= H.x1 - 3; x++) {
+      if (x >= gap && x <= gap + 3) continue; // the aisle gap
+      b.fill(x, FL, sz, x, FL + 1, sz, "bone_block");
+      const r = hash2(seed ^ 0x0555, x, sz);
+      if (r < 0.12) b.set(x, FL + 2, sz, "skull_pile");
+      else if (r > 0.985) w.setIfAir(x, FL + 2, sz, id("web"));
+    }
+    // a corpse-candle at each aisle gap — the graders' light
+    b.set(gap - 1, FL + 2, sz, "bog_candle");
+  }
+  b.set(H.x0 + 2, FL, H.z0 + 2, "skull_pile");
+  b.set(H.x1 - 2, FL, H.z1 - 2, "skull_pile");
+
+  // --- the stitchery: work-tables, sinew spools, one half-finished courtier ---
+  const S = OSS_STITCHERY;
+  gallery(S.x0, S.z0, S.x1, S.z1, "stone", 0x0556);
+  door(42, S.z1, 46, S.z1); // south door from the hall corridor
+  door(S.x1, 20, S.x1, 24); // east door to the cull-rows corridor
+  b.flatten(41, 36, 47, 44, G, "crypt_slate"); // the connecting corridor
+  for (const [tx, tz] of [
+    [30, 22],
+    [30, 28],
+    [40, 22],
+    [40, 28],
+  ] as const) {
+    b.fill(tx, FL, tz, tx + 2, FL, tz, "planks"); // a work-table
+    const r = hash2(seed ^ 0x0557, tx, tz);
+    if (r < 0.5) b.set(tx + 1, FL + 1, tz, "bone_block"); // the work in progress
+    else b.set(tx + 2, FL + 1, tz, "web"); // sinew spools
+  }
+  // THE TABLEAU: the half-finished courtier on the master table
+  b.fill(35, FL, 32, 37, FL, 32, "marble");
+  b.set(35, FL + 1, 32, "skull_pile");
+  b.set(36, FL + 1, 32, "bone_block");
+  b.set(37, FL + 1, 32, "banner"); // dressed before it is done
+  // the artisans work by real light (lanterns, not candles)
+  for (const [lx, lz] of [
+    [27, 25],
+    [43, 25],
+    [36, 34],
+  ] as const) {
+    b.fill(lx, FL, lz, lx, FL + 2, lz, "log");
+    b.set(lx, FL + 3, lz, "lantern");
+  }
+
+  // --- the cull-rows: the harrowers' floor — chains, hooks, culled stock ---
+  const C = OSS_CULL;
+  gallery(C.x0, C.z0, C.x1, C.z1, "crypt_slate", 0x0558);
+  door(C.x0, 20, C.x0, 24); // west door from the stitchery corridor
+  b.flatten(53, 20, 69, 24, G, "crypt_slate"); // the connecting corridor
+  door(C.x1, 24, C.x1, 26); // east door onto the platform
+  for (let x = C.x0 + 4; x <= C.x1 - 4; x += 5) {
+    b.fill(x, FL + 3, C.z0 + 1, x, FL + 3, C.z1 - 1, "log"); // the hook-beams
+    for (let z = C.z0 + 3; z <= C.z1 - 3; z += 4) {
+      if (hash2(seed ^ 0x0559, x, z) < 0.55) w.setIfAir(x, FL + 2, z, id("chain"));
+    }
+  }
+  for (const [px, pz] of [
+    [75, 36],
+    [86, 22],
+    [91, 34],
+  ] as const) {
+    b.set(px, FL, pz, "bone_block");
+    b.set(px, FL + 1, pz, "skull_pile"); // the culled stock, heaped
+  }
+  b.set(74, FL, 20, "dark_bricks");
+  b.set(74, FL + 1, 20, "brazier"); // the harrowers' fire
+
+  // --- the down-shaft platform: the freight shaft + the Warden's post ---
+  const P = OSS_PLATFORM;
+  b.clearAbove(P.x0 - 1, P.z0 - 1, P.x1 + 1, P.z1 + 1, G, 12);
+  b.flatten(P.x0, P.z0, P.x1, P.z1, G, "crypt_slate");
+  // the shaft: dug to bedrock-clamp depth — the tribute goes further down
+  // than the players do (scale by implication; the rail is 2 high, jump-proof)
+  const SH = OSS_SHAFT;
+  const pit = b.digFloorY(G, 40);
+  for (let z = SH.z0; z <= SH.z1; z++) {
+    for (let x = SH.x0; x <= SH.x1; x++) {
+      for (let y = pit + 1; y <= G; y++) w.set(x, y, z, 0);
+      w.set(x, pit, z, id("dark_stone"));
+    }
+  }
+  for (let x = SH.x0 - 1; x <= SH.x1 + 1; x++) {
+    for (const z of [SH.z0 - 1, SH.z1 + 1]) b.fill(x, FL, z, x, FL + 1, z, "iron_bars");
+  }
+  for (let z = SH.z0; z <= SH.z1; z++) {
+    for (const x of [SH.x0 - 1, SH.x1 + 1]) b.fill(x, FL, z, x, FL + 1, z, "iron_bars");
+  }
+  // the freight beam + chain, still rigged; a glint far below
+  b.fill(SH.x0 - 1, FL + 4, 15, SH.x1 + 1, FL + 4, 15, "log");
+  for (let y = FL + 3; y > pit + 2; y--) w.setIfAir(105, y, 15, id("chain"));
+  w.setIfAir(106, pit + 1, 16, id("blue_crystal"));
+  // the Warden's post: tally-desk, braziers, and the Court gate behind him
+  b.set(110, FL, 30, "planks");
+  b.set(111, FL, 30, "planks");
+  b.set(110, FL + 1, 30, "bookshelf"); // the intake ledger
+  for (const [bx, bz] of [
+    [108, 27],
+    [118, 27],
+  ] as const) {
+    b.set(bx, FL, bz, "dark_bricks");
+    b.set(bx, FL + 1, bz, "brazier");
+  }
+  // the Warden's strongshelf: the sorted best of the tribute (cache 1)
+  b.fill(117, FL, 11, 119, FL + 2, 11, "bookshelf");
+  b.set(118, FL, 13, "bone_block");
+  features.caches.push({ x: 118.5, y: FL, z: 14.5, table: "cache_ossuary_galleries", respawnSec: 900 });
+
+  // --- the dead-cart lane: collapsed mid-way; its spur hides the chapel ---
+  const L = OSS_LANE;
+  b.clearAbove(L.x - 1, L.z0 - 3, L.x + 4, L.z1 + 1, G, 10);
+  b.flatten(L.x, L.z0, L.x + 4, L.z1, G, "path");
+  b.flatten(78, 104, L.x + 4, 106, G, "path"); // the connector off the court
+  // the collapse: the whole east flank is buried north of the chapel — the
+  // roof came down from the hall's east wall to the perimeter, so the only
+  // way north is THROUGH the galleries (the route stays an S); the chapel
+  // survived on the south side, which is why nobody sorted it
+  for (let x = 91; x <= X1 - 1; x++) {
+    b.fill(x, FL, 76, x, FL + 1 + (hash2(seed ^ 0x055a, x, 0) < 0.5 ? 1 : 0), 77, "rubble");
+  }
+  w.setIfAir(L.x + 1, FL, 80, id("rubble"));
+  w.setIfAir(L.x + 3, FL, 92, id("moss_carpet"));
+
+  // --- the mourner's chapel: unsorted, unswept, one candle (☆ hidden) ---
+  const CH = OSS_CHAPEL;
+  gallery(CH.x0, CH.z0, CH.x1, CH.z1, "stone", 0x055b);
+  // the crack: a 1-wide slip in the west wall, screened by rubble
+  b.fill(CH.x0, FL, 86, CH.x0, FL + 3, 87, 0);
+  w.setIfAir(CH.x0 - 1, FL, 85, id("rubble"));
+  w.setIfAir(CH.x0 - 1, FL, 88, id("rubble"));
+  // benches, knelt out of true
+  for (const bz of [83, 91]) {
+    for (let x = 104; x <= 111; x++) {
+      if (hash2(seed ^ 0x055c, x, bz) < 0.7) b.set(x, FL, bz, "planks");
+    }
+  }
+  // the altar, and the one candle in the galleries that mourns
+  b.fill(114, FL, 86, 115, FL, 88, "marble");
+  b.set(114, FL + 1, 87, "bog_candle");
+  // grief the Court can't process: moss, webs, roots through the ceiling line
+  for (let z = CH.z0 + 1; z <= CH.z1 - 1; z++) {
+    for (let x = CH.x0 + 1; x <= CH.x1 - 1; x++) {
+      const r = hash2(seed ^ 0x055d, x, z);
+      if (r < 0.1) w.setIfAir(x, G, z, id("moss_carpet"));
+      else if (r > 0.985) w.setIfAir(x, FL + 2, z, id("web"));
+    }
+  }
+  w.setIfAir(103, FL + 3, 80, id("hanging_moss"));
+  w.setIfAir(112, FL + 3, 94, id("hanging_moss"));
+  // the offering nobody collects (cache 2, behind the altar)
+  features.caches.push({ x: 116.5, y: FL, z: 87.5, table: "cache_ossuary_galleries", respawnSec: 600 });
+
+  // stray glow deep in the galleries: the shaft draws the eye north
+  b.world.setIfAir(98, FL, 40, id("blue_crystal"));
+  b.world.setIfAir(120, FL, 33, id("blue_crystal"));
 }
 
 // ---------------------------------------------------------------------------

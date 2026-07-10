@@ -1560,6 +1560,167 @@ show their block tile).
     the picket's bite at the Run landing, road plank-crossing feel, and
     the L5-7 pace between the wood and the fen.
 
+- 2026-07-09 **THE EMBERFELLS + THE OSSUARY GALLERIES** (world-redesign batch
+  5, proposal Part 5 step 5 — the batch-4 splice recipe applied to the other
+  two branches; story bible §6 E3 + N2). Rooms 14 and 15, plus the Sunken
+  Crypt's persistence flip. NOT COMMITTED — working-tree batch.
+  - **Room `emberfells`** (288² volcanic wilderness, L8-10, STATEFUL, seed
+    **91101** — survey-picked like the march: its central lava basin sits
+    square between the two gates, so the direct gate→gate ray crosses ~52
+    lava columns and the spawn→Kiln ray ~72 (both test-locked); lava 5.4%,
+    wl 9, treeDensity 0.25 charred snags). Splices desert⇄cinderrift:
+    desert's `desert-cinderrift` → **`desert-emberfells`** (same spot
+    144,32); cinderrift's `cinderrift-desert` → **`cinderrift-emberfells`**
+    (same spot 144,278); fells gates `emberfells-desert` (200,262) +
+    `emberfells-cinderrift` (72,28) — deliberately off any shared axis.
+    Auto-pairing lands twin-gate arrivals (3.2 m) on all four directions.
+    Builder `buildEmberfells`: (1) the SUNSCOUR GRADIENT — south third
+    repaints dark rock→sand on a hash ramp (66% sand at the desert gate →
+    0% by mid-room); (2) the HAUL-ROAD — 10 waypoints bending east around
+    the basin then crossing west at z≈149, charred-log sleepers on dry
+    stretches, bone_block bridges over lava (the Cinderrift road material —
+    same wound); (3) the POUR-TERRACES (148-184 × 152-174) — slag benches
+    ascending east in 1-block risers, mossy at the oldest lip, ash+ember at
+    the freshest; (4) the OLD KILN'S ADIT — a slag cone at (118,88), mouth
+    grated in iron bars breathing ember-light, obsidian-tipped vomit cones
+    ringing an ash trough court (slag-BODIED terrace fill: flatten()'s dirt
+    underlayer read as a brown retaining wall on camera — repainted DARK).
+    Tables: raptor L8 fringe / ash_husk L8+L9 haul-gangs / sandpicker L8
+    (lights its r8 — first time reachable) / slagback_troll L10 benches /
+    fire_elemental L10 drifts.
+  - **The Old Kiln** (new mob `old_kiln`, L11 = band-top+1, sprite
+    slagback_troll REUSED — re-eyeballed teal hulk w/ rust slag-plates,
+    height 2.4, zero client sprite work): hp 730 (boss trend: Gravelord 679
+    < 730 < 775), dmg 29, moveSpeed 1.7, aggro 12, leash 26 (it defends the
+    adit). Kit = golem_slam / NEW `slag_spew` (AoE lob, slow 0.3×2s, NOT
+    predictive — strafing beats it) / magma_vents (pillars) / slag_gorge
+    (the slagback signature: gated + INTERRUPTIBLE self-heal = the
+    counterplay). xp **2573** = round(8·(14+2·11^2.1)) — identical to its
+    L11 peer Grelmoss, on purpose. Loot `old_kiln_drops`: guaranteed
+    **`kiln_gallstone`** (value 75 — beak 60 < gallstone < spiral_horn
+    ladder; icon [5,63] bloodstone_baguette, verify-icons 0 errors +
+    eyeballed on iconproof-54) + weapons_rift rare (T3 at L11). Events: 50%
+    rally (ash_husk ×3 **at L9** — see the engine add below) + the bible's
+    death line verbatim.
+  - **Room `ossuary_galleries`** (128² PRESET dungeon, L9-11, STATEFUL,
+    biome dungeon, fixedTime 0.93, seed 91777 flat slab). Splices the crypt
+    branch: dungeon's gated `dungeon-depths` → target ossuary_galleries
+    (**id + spot + bossDeath minotaur_boss gate kept EXACTLY**, announce
+    re-worded to the bible line "the lower stair stands open"); depths'
+    `depths-dungeon` → **`depths-ossuary`** (same spot 48,90). Builder
+    `buildOssuaryGalleries` S-BENDS the route (walk/euclid 1.35,
+    test-locked ≥1.3): torch-lit entrance court + dead-cart → ledger-niche
+    spine (tally lights go corpse-candle green as you go deeper — light =
+    language) → the GRADING-HALL (2-high bone shelf rows with staggered
+    aisle gaps: the crossing zig-zags) → the STITCHERY (work tables, sinew
+    spools, the half-finished courtier ON the marble master table, lanterns
+    — artisans get real light) → the CULL-ROWS (hook-beams + chains,
+    braziers) → the DOWN-SHAFT platform (a railed pit dug to bedrock clamp,
+    freight beam + chain still rigged, a blue-crystal glint at the bottom —
+    the tribute goes further down than the players do) where **THE Bone
+    Warden stands his post beside the Court gate**. The east flank is
+    collapsed (rubble line hall-wall→perimeter at z 76-77) so the only way
+    north is through the galleries; the dead-cart lane's south spur
+    dead-ends at the **hidden chapel** (1-wide crack behind rubble, benches
+    knelt out of true, ONE bog-candle on the marble altar, moss/webs — the
+    grief the Court can't process). Caches ×2 on NEW `cache_ossuary_
+    galleries` (steel+rift, the ½-tier convention): the Warden's
+    strongshelf (900 s) + behind the chapel altar (600 s).
+  - **THE Bone Warden at L12** (existing def elevated, per the plan): the
+    ossuary's `warden-post` spawns him at level 12; NEW rank at 12
+    {hpMult 1.45, xpMult 2.2183, aggroRadius 12, "of the Galleries"} →
+    resolves 791 hp / 30 dmg / xp **3066** = round(8·(14+2·12^2.1)) — a
+    real room boss. **RECONCILIATION** (the batch's subtle math): ranks
+    stack cumulatively, so the existing L14 "Ossuary Warden" rank's
+    multipliers were DIVIDED by the boss bump (hpMult 1.1→0.75862069,
+    xpMult 1.11→0.50038314) — crypt_depths' L14 resolve is byte-identical
+    (779 hp / 2100 xp / same kit), and the dungeon's warden-door L9
+    miniboss spawns the base def, untouched. Loot stays wraith_drops
+    (spirit_essence IS the room's proof per the bible; a boss table on the
+    def would leak to his L9 dungeon post). Events: 50% shift-bell
+    (restless_bones ×3 at L10) + death announce verbatim ("The Court's
+    door is unattended") — the ossuary⇄depths edge is deliberately
+    UN-gated (proposal row: ⇄ pale court; the bible's ⚿ Court gate rides
+    the Court split batch). Side boss: the **Pallid Mourner chapel** — 1
+    maxAlive, 900 s, level 13 = the existing r13 Wrung Shade (the bible's
+    "6/rank 13" call; entering the chapel IS the trap at aggro 12).
+  - **Rebases (mobs never scale down; ±1 documented precision)**:
+    `ash_husk` 11→8 (175/18/172; r11 xpMult 1.1689 "of the Long Shift" →
+    259/25/322, pre-retune 260/25/322), `fire_elemental` 12→10 (138/23/266;
+    r12 1.0518 "Stoked" → 179/28/383, pre 180/28/383), `slagback_troll`
+    13→10 (256/23/532; slag_gorge MOVED to a new r13 "Ore-Gorged" xpMult
+    1.0586 — the young fells troll hasn't the gut for the gorge, and the
+    rank isn't a no-op — → 379/31/902 w/ identical kit; r15 Cinderhide
+    ember_burst override 26→19 keeps the L15 resolve at 32 dmg exactly),
+    `bone_bat` 12→10 (85/15/266; r12 1.0518 → 110/18/383 EXACT),
+    `grave_harrower` 12→11 (298/25/643; the xp re-anchor FOLDED into the
+    existing r14 — xpMult 1.0186, shadow_lance override 30→27 — L14
+    resolves 508/34/1049 + lance 37 EXACT, no new rank). Cinderrift/
+    crypt_depths carry matching `level` overrides (husk 11, elemental 12,
+    slagback 13, bat 12) so both rooms' fights are byte-equivalent.
+  - **Engine add (proposal Part 4 flagged, one zod line)**: room-event
+    `spawnMobs` actions take an optional **`level`** — summonWave passes it
+    through to spawnMob. Without it, a rebased def's event waves silently
+    spawn at the NEW base level in rooms tuned for the old one (cinderrift's
+    furnace-rally husks would have dropped L11→L8). Users: cinderrift rally
+    (ash_husk 11), dungeon gravelord-rally (skeleton **6** — restores the
+    pre-retune wave that batch 1's skeleton rebase silently weakened),
+    emberfells kiln-rally (9), ossuary warden-shift (10). Ability summons
+    still pass no level (the registry chain-guard comment holds).
+  - **PERSISTENCE FLIP: `dungeon` (Sunken Crypt) ephemeral → STATEFUL** —
+    lifecycle block removed (no expiry arc), and the Gravelord's boss-hall
+    respawnSec 99999 → **900**: in an ephemeral room 99999 meant "once per
+    instance"; in a stateful room it would open the gate once, forever. The
+    boss cycle IS the door-ajar window now (the greenhood/Thrace pattern).
+    sundered_city deliberately untouched (its flip belongs to the Court
+    split — its collapse event must not dangle). `lifecycle-bot.mjs`
+    re-pointed at **crypt_depths** (admin /room entry — the walk is
+    ossuary-probe's job); boss-events-probe updated (the Gravelord gate now
+    lands in the ossuary; it /room-hops on to depths for the Morvane leg).
+  - **rank-coverage tool FIXED**: its hardcoded room list had silently
+    rotted through four batches (maw/greenhood/march never counted) — now
+    loadRoomDefs() + the new event `level`. Honest coverage: **23/34**
+    ranked mobs live (batch adds ash_husk/fire_elemental/bone_bat ranks,
+    all reachable; flips sandpicker r8 + slagback r13 reachable).
+  - Goldens: NEW emberfells + ossuary_galleries entries; **every other room
+    held byte-identical** (the four spliced rooms' changes are data-only).
+    Wire/client: ZERO protocol changes; client = 2 AudioEngine bed cases
+    (emberfells→wind_storm/wild, ossuary→drone_crypt/dungeon).
+  - Verified: typecheck, **561 vitest** (45 new across emberfells.test.ts +
+    ossuary_galleries.test.ts; worldgen3 pairs re-pointed, bosses/roster2
+    splice updates), `emberfells-probe.mjs` FULL PASS live (17 checks:
+    twin gates both edges at 3.2 m, the bending haul-road walked with 0
+    corrections, returnToHub, the Kiln alive L11 at its trough + an L10
+    bench troll), `ossuary-probe.mjs` FULL PASS live (24 checks: sealed
+    boot — incl. the /spawnmob RESTAGE path a stateful Gravelord needs —
+    → kill → "stands open" + portalState → twin-gate arrival → the S-route
+    walked with the probe's own floor-gap BFS (the cull-row hook-beams
+    read as walls to lib goTo's top-solid heightAt — players walk under
+    them) → Warden L12/791 at his post → through to depths and back,
+    landing beside his post → the chapel Shade L13 → home), re-pointed
+    lifecycle-bot PASS (full crypt_depths expiry arc), boss-events-probe
+    PASS (updated arc incl. rally count + 72 s collapse), travel-bot +
+    march-probe regression PASS. Screenshots tools/out/:
+    emberfells-transition-3 (sand-to-cinder gradient + snags + raptor),
+    emberfells-kiln2-2 (the adit mouth + vomit cones), emberfells-kiln3-3
+    (the Old Kiln looming over the camera), ossuary-galleries2-3 (torch
+    court → candle-lit spine → hall), ossuary-warden-3 (THE Warden beside
+    the Vaults arch, braziers lit), ossuary-chapel2-2 (the Wrung Shade in
+    the chapel, ghouls prowling past the crack).
+  - Probe traps paid: a portal's ARCH LINE columns read as walls to bots
+    (lintel tops the heightmap) — stand ONE row off the line, INSIDE the
+    2.2 m trigger (a 3.2 m stand point silently fails usePortal); overhead
+    dressing (hook-beams) needs the greenhood floor-gap BFS; a boss staged
+    for screenshots WILL walk to the character — camera on the approach
+    axis, or he shoots from off-frame.
+  - Owner feel-checks pending: the Kiln fight solo at L10-11 (interrupt
+    window on slag_gorge, slag_spew dodge read), fells lava-crossing feel
+    on the bone bridges, the pour-terrace read from the road, ossuary pack
+    density on the S-route (the intake swarm ate an idle L30 probe char),
+    whether the L13 chapel Shade is a fair "hidden horror" for an at-band
+    L10, and the Gravelord's new 900 s cycle (his gate now opens/reseals
+    on a rhythm instead of once per instance).
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -1646,6 +1807,32 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-09 **THE EMBERFELLS + THE OSSUARY GALLERIES (world-redesign batch
+  5, WORKING TREE — not committed)** — rooms 14 and 15 (see the decisions-log
+  entry): the batch-4 splice recipe on the other two branches. **The
+  Emberfells** (288² volcanic, L8-10, survey seed 91101) splices
+  desert⇄cinderrift — Sunscour gradient, bending haul-road over bone
+  bridges, pour-terraces, and **The Old Kiln** (L11 slag-troll boss:
+  slam/spew/vents + the interruptible ore-gorge; guaranteed
+  `kiln_gallstone`). **The Ossuary Galleries** (128² preset dungeon, L9-11)
+  splices crypt⇄depths behind the (kept) Gravelord gate — S-bent galleries
+  (court → spine → grading-hall → stitchery → cull-rows → down-shaft),
+  **THE Bone Warden at L12** (existing def + boss rank; his L9 dungeon and
+  L14 depths resolves reconciled byte-identical), the hidden Pallid-Mourner
+  chapel (r13 Wrung Shade), 2 caches on `cache_ossuary_galleries`. Rides
+  along: the **Sunken Crypt is STATEFUL** (lifecycle removed, Gravelord
+  respawn 900 = the door-ajar window; lifecycle-bot re-pointed at
+  crypt_depths), event `spawnMobs` gained an optional `level` (proposal
+  Part 4 flagged add), 5 rebases-with-ranks (ash_husk 8, fire_elemental 10,
+  slagback 10, bone_bat 10, grave_harrower 11 — deep resolves all within
+  ±1), rank-coverage tool fixed (23/34 live). Verified: typecheck, **561
+  vitest** (45 new; goldens = exactly 2 new entries, all 13 existing held),
+  emberfells-probe + ossuary-probe + lifecycle-bot + boss-events-probe +
+  travel-bot + march-probe ALL PASS live, 5 screenshot scenes
+  (tools/out/emberfells-{transition-3,kiln2-2,kiln3-3}.png,
+  ossuary-{galleries2-3,warden-3,chapel2-2}.png). Owner feel-checks in the
+  decisions-log entry.
 
 - 2026-07-09 **THE STRANGLER'S MARCH SHIPPED (world-redesign batch 4)** —
   the 13th room (see the decisions-log entry): a 240² proc+authored

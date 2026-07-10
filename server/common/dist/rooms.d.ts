@@ -342,15 +342,18 @@ export declare const RoomEventActionSchema: z.ZodDiscriminatedUnion<"kind", [z.Z
     mob: z.ZodString;
     count: z.ZodNumber;
     radius: z.ZodDefault<z.ZodNumber>;
+    level: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     kind: "spawnMobs";
     mob: string;
     count: number;
     radius: number;
+    level?: number | undefined;
 }, {
     kind: "spawnMobs";
     mob: string;
     count: number;
+    level?: number | undefined;
     radius?: number | undefined;
 }>, z.ZodObject<{
     kind: z.ZodLiteral<"setRoomTimer">;
@@ -410,15 +413,18 @@ export declare const RoomEventSchema: z.ZodObject<{
         mob: z.ZodString;
         count: z.ZodNumber;
         radius: z.ZodDefault<z.ZodNumber>;
+        level: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         kind: "spawnMobs";
         mob: string;
         count: number;
         radius: number;
+        level?: number | undefined;
     }, {
         kind: "spawnMobs";
         mob: string;
         count: number;
+        level?: number | undefined;
         radius?: number | undefined;
     }>, z.ZodObject<{
         kind: z.ZodLiteral<"setRoomTimer">;
@@ -457,6 +463,7 @@ export declare const RoomEventSchema: z.ZodObject<{
         mob: string;
         count: number;
         radius: number;
+        level?: number | undefined;
     } | {
         kind: "setRoomTimer";
         sec: number;
@@ -481,6 +488,7 @@ export declare const RoomEventSchema: z.ZodObject<{
         kind: "spawnMobs";
         mob: string;
         count: number;
+        level?: number | undefined;
         radius?: number | undefined;
     } | {
         kind: "setRoomTimer";
@@ -850,15 +858,18 @@ export declare const RoomDefSchema: z.ZodObject<{
             mob: z.ZodString;
             count: z.ZodNumber;
             radius: z.ZodDefault<z.ZodNumber>;
+            level: z.ZodOptional<z.ZodNumber>;
         }, "strip", z.ZodTypeAny, {
             kind: "spawnMobs";
             mob: string;
             count: number;
             radius: number;
+            level?: number | undefined;
         }, {
             kind: "spawnMobs";
             mob: string;
             count: number;
+            level?: number | undefined;
             radius?: number | undefined;
         }>, z.ZodObject<{
             kind: z.ZodLiteral<"setRoomTimer">;
@@ -897,6 +908,7 @@ export declare const RoomDefSchema: z.ZodObject<{
             mob: string;
             count: number;
             radius: number;
+            level?: number | undefined;
         } | {
             kind: "setRoomTimer";
             sec: number;
@@ -921,6 +933,7 @@ export declare const RoomDefSchema: z.ZodObject<{
             kind: "spawnMobs";
             mob: string;
             count: number;
+            level?: number | undefined;
             radius?: number | undefined;
         } | {
             kind: "setRoomTimer";
@@ -1112,6 +1125,7 @@ export declare const RoomDefSchema: z.ZodObject<{
             mob: string;
             count: number;
             radius: number;
+            level?: number | undefined;
         } | {
             kind: "setRoomTimer";
             sec: number;
@@ -1274,6 +1288,7 @@ export declare const RoomDefSchema: z.ZodObject<{
             kind: "spawnMobs";
             mob: string;
             count: number;
+            level?: number | undefined;
             radius?: number | undefined;
         } | {
             kind: "setRoomTimer";

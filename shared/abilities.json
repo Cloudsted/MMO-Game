@@ -941,6 +941,26 @@
     "manaCost": 0,
     "fx": "firebolt"
   },
+  "slag_spew": {
+    "kind": "projectile",
+    "dmgClass": "magic",
+    "castTimeMs": 1000,
+    "recoverMs": 380,
+    "projSpeed": 15,
+    "maxRange": 26,
+    "aoeRadius": 2.6,
+    "impactFx": "explosion",
+    "projScale": 1.6,
+    "debuff": {
+      "slowPct": 0.3,
+      "durMs": 2000
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 4200,
+    "manaCost": 0,
+    "fx": "firebolt"
+  },
   "grave_rot": {
     "kind": "melee",
     "windupMs": 640,

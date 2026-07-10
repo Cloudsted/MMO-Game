@@ -271,8 +271,9 @@ describe("entity-linked room events", () => {
     sim.applyDamage(a.session.entity, mino, 999_999);
     expect(mino.combat!.act).toBe("dead");
     expect(sim.portalsWire().find((p) => p.id === "dungeon-depths")!.open).toBe(true);
-    expect(a.messages.some((m) => m.t === "portalState" && m.target === "crypt_depths" && m.open)).toBe(true);
-    expect(a.messages.some((m) => m.t === "chat" && m.text.includes("grinds open"))).toBe(true);
+    // batch 5: the depths gate now leads through the Ossuary Galleries
+    expect(a.messages.some((m) => m.t === "portalState" && m.target === "ossuary_galleries" && m.open)).toBe(true);
+    expect(a.messages.some((m) => m.t === "chat" && m.text.includes("stands open"))).toBe(true);
     // the gate is usable now
     a.session.entity.pos.x = 46;
     a.session.entity.pos.z = 6.5;
@@ -282,7 +283,7 @@ describe("entity-linked room events", () => {
     expect(sim.portalsWire().find((p) => p.id === "dungeon-depths")!.open).toBe(false);
     expect(sim.validatePortalUse(a.session, "dungeon-depths")).toBeNull();
     const lastState = [...a.messages].reverse().find((m) => m.t === "portalState");
-    expect(lastState).toMatchObject({ target: "crypt_depths", open: false });
+    expect(lastState).toMatchObject({ target: "ossuary_galleries", open: false });
   });
 
   it("keeps an event-opened gate sealed while the destination room is down", () => {
@@ -290,9 +291,9 @@ describe("entity-linked room events", () => {
     const a = joinRoom(sim);
     const mino = [...sim.allEntities()].find((e) => e.kind === "mob" && e.brain?.mobId === "minotaur_boss")!;
     sim.applyDamage(a.session.entity, mino, 999_999); // event says open...
-    sim.setRoomStatus("crypt_depths", false); // ...but the room is collapsed
+    sim.setRoomStatus("ossuary_galleries", false); // ...but the room is down
     expect(sim.portalsWire().find((p) => p.id === "dungeon-depths")!.open).toBe(false);
-    sim.setRoomStatus("crypt_depths", true);
+    sim.setRoomStatus("ossuary_galleries", true);
     expect(sim.portalsWire().find((p) => p.id === "dungeon-depths")!.open).toBe(true);
   });
 

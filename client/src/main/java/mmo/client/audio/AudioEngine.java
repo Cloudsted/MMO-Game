@@ -272,6 +272,14 @@ public class AudioEngine {
                 bed = "drone_dungeon"; // the smugglers' warren under the wood
                 playlist = "dungeon";
             }
+            case "emberfells" -> {
+                bed = "wind_storm"; // furnace wind off the rift above
+                playlist = "wild";
+            }
+            case "ossuary_galleries" -> {
+                bed = "drone_crypt"; // the sorting-house under the crypt
+                playlist = "dungeon";
+            }
             case "desert" -> {
                 bed = "wind_desert";
                 playlist = "wild";

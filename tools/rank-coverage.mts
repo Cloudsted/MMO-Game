@@ -5,8 +5,9 @@
  *   npx tsx tools/rank-coverage.mts
  *
  * A rank only fires when something spawns the mob at or above its `atLevel`.
- * Spawn tables carry an optional `level`; summonWave and room events do not (they
- * spawn at the def's base level). So a rank above every spawn level is either
+ * Spawn tables and room-event spawnMobs actions carry an optional `level`;
+ * ability summons do not (they spawn at the def's base level). So a rank
+ * above every spawn level is either
  *   (a) a deliberate hook reserved for a future, deeper room — the way
  *       thrace_redcap's L12 rank waits for the Gloomfen to claim him, or
  *   (b) a mistake: a rank the designer meant to fire in this room and didn't.
@@ -14,27 +15,27 @@
  * This tool cannot tell (a) from (b). It just tells you the number, which is the
  * thing that silently rots. Not a test — a report.
  */
-import { RegistryService, loadRoomDef } from "@fantasy-mmo/common";
-
-const ROOMS = ["hub", "forest", "desert", "dungeon", "gloomfen", "cinderrift", "crypt_depths", "sundered_city", "grounds", "atelier"];
+import { RegistryService, loadRoomDefs } from "@fantasy-mmo/common";
 
 const reg = new RegistryService();
 const maxSpawnLevel = new Map<string, number>();
 
-for (const roomId of ROOMS) {
-  const def = loadRoomDef(roomId);
+// EVERY room def (a hardcoded list here silently rotted through four batches
+// of new rooms — the report undercounted maw/greenhood_run/stranglers_march)
+for (const def of loadRoomDefs().values()) {
   for (const t of def.spawnTables) {
     for (const m of t.mobs) {
       const lvl = m.level ?? reg.mobs[m.mob]!.level;
       maxSpawnLevel.set(m.mob, Math.max(maxSpawnLevel.get(m.mob) ?? -1, lvl));
     }
   }
-  // room events spawn at the def's own level (RoomEventActionSchema has no level)
+  // room-event waves spawn at their optional `level` (batch-5 engine add),
+  // else at the def's own base level
   for (const ev of def.events ?? []) {
     for (const a of ev.actions) {
       if (a.kind !== "spawnMobs") continue;
-      const base = reg.mobs[a.mob]?.level ?? -1;
-      maxSpawnLevel.set(a.mob, Math.max(maxSpawnLevel.get(a.mob) ?? -1, base));
+      const lvl = a.level ?? reg.mobs[a.mob]?.level ?? -1;
+      maxSpawnLevel.set(a.mob, Math.max(maxSpawnLevel.get(a.mob) ?? -1, lvl));
     }
   }
 }

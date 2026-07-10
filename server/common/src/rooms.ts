@@ -169,12 +169,16 @@ export const RoomEventActionSchema = z.discriminatedUnion("kind", [
   /** unseal this room's portal; it RESEALS when the trigger mob respawns
    *  (kill the guardian → the way deeper opens until the guardian returns) */
   z.object({ kind: z.literal("openPortal"), portalId: z.string() }),
-  /** the room summons a wave around the trigger mob (mid-fight adds) */
+  /** the room summons a wave around the trigger mob (mid-fight adds).
+   *  `level` resolves the wave at a spawn level like a spawn-table override
+   *  (proposal Part 4 flagged add — without it a rebased def's event waves
+   *  silently spawn at the NEW base level in rooms tuned for the old one) */
   z.object({
     kind: z.literal("spawnMobs"),
     mob: z.string(),
     count: z.number().int().positive(),
     radius: z.number().positive().default(6),
+    level: z.number().int().optional(),
   }),
   /** lifecycle rooms: re-arm the collapse timer so the room closes in `sec`
    *  seconds — extends a shorter remainder, cuts a longer one (boss kill →

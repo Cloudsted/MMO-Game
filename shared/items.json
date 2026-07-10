@@ -878,6 +878,16 @@
         21
       ]
     },
+    "kiln_gallstone": {
+      "name": "Kiln Gallstone",
+      "kind": "trophy",
+      "value": 75,
+      "stack": 10,
+      "icon": [
+        5,
+        63
+      ]
+    },
     "war_medal": {
       "name": "War Medal",
       "kind": "trophy",

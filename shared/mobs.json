@@ -429,16 +429,19 @@
   "ash_husk": {
     "name": "Ash-Choked Husk",
     "sprite": "ash_husk",
-    "level": 11,
-    "hp": 260,
-    "damage": 25,
+    "level": 8,
+    "hp": 175,
+    "damage": 18,
     "moveSpeed": 1.9,
     "ability": "skeleton_slash",
+    "ranks": [
+      { "atLevel": 11, "xpMult": 1.1689, "titleSuffix": "of the Long Shift" }
+    ],
     "aggroRadius": 11,
     "attackRange": 2,
     "leashRadius": 38,
     "fleeAtHpPct": 0,
-    "xp": 322,
+    "xp": 172,
     "loot": "husk_drops",
     "sounds": {
       "idle": "ash_husk_idle",
@@ -450,16 +453,19 @@
   "fire_elemental": {
     "name": "Cinder Elemental",
     "sprite": "fire_elemental",
-    "level": 12,
-    "hp": 180,
-    "damage": 28,
+    "level": 10,
+    "hp": 138,
+    "damage": 23,
     "moveSpeed": 2.6,
     "ability": "elemental_bolt",
+    "ranks": [
+      { "atLevel": 12, "xpMult": 1.0518, "titleSuffix": "Stoked" }
+    ],
     "aggroRadius": 12,
     "attackRange": 12,
     "leashRadius": 36,
     "fleeAtHpPct": 0,
-    "xp": 383,
+    "xp": 266,
     "loot": "fire_elemental_drops",
     "sounds": {
       "idle": "fire_elemental_idle",
@@ -471,16 +477,19 @@
   "bone_bat": {
     "name": "Crypt Shrieker",
     "sprite": "bone_bat",
-    "level": 12,
-    "hp": 110,
-    "damage": 18,
+    "level": 10,
+    "hp": 85,
+    "damage": 15,
     "moveSpeed": 4.6,
     "ability": "raptor_bite",
+    "ranks": [
+      { "atLevel": 12, "xpMult": 1.0518, "titleSuffix": "Deep-Nest" }
+    ],
     "aggroRadius": 13,
     "attackRange": 1.7,
     "leashRadius": 40,
     "fleeAtHpPct": 0,
-    "xp": 383,
+    "xp": 266,
     "loot": "bone_bat_drops",
     "sounds": {
       "idle": "bone_bat_idle",
@@ -1243,6 +1252,13 @@
     ],
     "ranks": [
       {
+        "atLevel": 12,
+        "hpMult": 1.45,
+        "xpMult": 2.2183,
+        "aggroRadius": 12,
+        "titleSuffix": "of the Galleries"
+      },
+      {
         "atLevel": 14,
         "add": [
           {
@@ -1250,9 +1266,9 @@
             "weight": 2
           }
         ],
-        "hpMult": 1.1,
+        "hpMult": 0.75862069,
         "moveSpeedMult": 1.05,
-        "xpMult": 1.11,
+        "xpMult": 0.50038314,
         "attackRange": 22,
         "leashRadius": 46,
         "titleSuffix": "Ossuary Warden"
@@ -1274,9 +1290,9 @@
   "grave_harrower": {
     "name": "Grave Harrower",
     "sprite": "grave_harrower",
-    "level": 12,
-    "hp": 340,
-    "damage": 28,
+    "level": 11,
+    "hp": 298,
+    "damage": 25,
     "moveSpeed": 2.4,
     "attacks": [
       {
@@ -1305,12 +1321,13 @@
           },
           {
             "ability": "shadow_lance",
-            "damage": 30,
+            "damage": 27,
             "minRange": 4,
             "weight": 2
           }
         ],
         "hpMult": 1.15,
+        "xpMult": 1.0186,
         "titleSuffix": "Deathless Harrower"
       }
     ],
@@ -1318,7 +1335,7 @@
     "attackRange": 14,
     "leashRadius": 30,
     "fleeAtHpPct": 0,
-    "xp": 766,
+    "xp": 643,
     "loot": "wraith_drops",
     "sounds": {
       "idle": "wraith_idle",
@@ -1577,28 +1594,34 @@
   "slagback_troll": {
     "name": "Slagback Troll",
     "sprite": "slagback_troll",
-    "level": 13,
-    "hp": 380,
-    "damage": 31,
+    "level": 10,
+    "hp": 256,
+    "damage": 23,
     "moveSpeed": 2.7,
     "attacks": [
       {
         "ability": "cleave",
-        "damage": 31,
         "weight": 3
-      },
-      {
-        "ability": "slag_gorge",
-        "weight": 4
       }
     ],
     "ranks": [
+      {
+        "atLevel": 13,
+        "add": [
+          {
+            "ability": "slag_gorge",
+            "weight": 4
+          }
+        ],
+        "xpMult": 1.0586,
+        "titleSuffix": "Ore-Gorged"
+      },
       {
         "atLevel": 15,
         "add": [
           {
             "ability": "ember_burst",
-            "damage": 26,
+            "damage": 19,
             "minRange": 6,
             "weight": 2
           }
@@ -1611,8 +1634,51 @@
     "attackRange": 16,
     "leashRadius": 30,
     "fleeAtHpPct": 0,
-    "xp": 902,
+    "xp": 532,
     "loot": "husk_drops",
+    "sounds": {
+      "idle": "cinder_golem_boss_idle",
+      "attack": "cinder_golem_boss_attack",
+      "hurt": "cinder_golem_boss_hurt",
+      "die": "cinder_golem_boss_die"
+    }
+  },
+  "old_kiln": {
+    "name": "The Old Kiln",
+    "sprite": "slagback_troll",
+    "level": 11,
+    "hp": 730,
+    "damage": 29,
+    "moveSpeed": 1.7,
+    "attacks": [
+      {
+        "ability": "golem_slam",
+        "weight": 4
+      },
+      {
+        "ability": "slag_spew",
+        "damage": 22,
+        "minRange": 4,
+        "weight": 3
+      },
+      {
+        "ability": "magma_vents",
+        "damage": 16,
+        "minRange": 2,
+        "weight": 3
+      },
+      {
+        "ability": "slag_gorge",
+        "weight": 4
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 12,
+    "attackRange": 13,
+    "leashRadius": 26,
+    "fleeAtHpPct": 0,
+    "xp": 2573,
+    "loot": "old_kiln_drops",
     "sounds": {
       "idle": "cinder_golem_boss_idle",
       "attack": "cinder_golem_boss_attack",
