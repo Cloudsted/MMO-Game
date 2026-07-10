@@ -23,3 +23,7 @@ logs/
 # OS
 Thumbs.db
 .DS_Store
+
+# local launchers (run-client.cmd holds login credentials)
+run-stack.cmd
+run-client.cmd

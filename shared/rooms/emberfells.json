@@ -1,6 +1,7 @@
 {
   "id": "emberfells",
   "name": "The Emberfells",
+  "levelBand": { "min": 8, "max": 10 },
   "type": "wilderness",
   "biome": "volcanic",
   "wind": 0.55,

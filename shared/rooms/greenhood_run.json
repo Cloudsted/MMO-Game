@@ -1,6 +1,7 @@
 {
   "id": "greenhood_run",
   "name": "The Greenhood Run",
+  "levelBand": { "min": 4, "max": 6 },
   "type": "dungeon",
   "biome": "ruin",
   "wind": 0,

@@ -1,6 +1,7 @@
 {
   "id": "crypt_depths",
   "name": "Vaults of Morvane",
+  "levelBand": { "min": 12, "max": 14 },
   "type": "dungeon",
   "biome": "dungeon",
   "wind": 0,

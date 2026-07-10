@@ -1,6 +1,8 @@
 {
   "id": "cinderrift",
   "name": "The Cinderrift",
+
+  "levelBand": { "min": 11, "max": 13 },
   "type": "wilderness",
   "biome": "volcanic",
   "wind": 0.3,

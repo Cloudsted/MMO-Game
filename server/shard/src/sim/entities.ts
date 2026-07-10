@@ -148,6 +148,9 @@ export interface Entity {
   lootView?: LootView;
   /** npc registry id (dialog/shop lookup) */
   npcId?: string;
+  /** resolved boss/miniboss flag (set at spawn from ResolvedMob.boss) —
+   *  replicates so clients keep boss nameplates visible at range */
+  boss?: boolean;
 }
 
 let nextId = 1;
@@ -178,6 +181,7 @@ export function toFull(e: Entity, now: number): EntityFull {
     act: e.combat?.act,
     actMs: actMs(e, now),
     loot: e.kind === "loot" ? (e.lootView ?? []) : undefined,
+    boss: e.boss ? true : undefined,
   };
 }
 

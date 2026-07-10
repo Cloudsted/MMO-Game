@@ -1,6 +1,8 @@
 {
   "id": "desert",
   "name": "The Sunscour",
+
+  "levelBand": { "min": 4, "max": 7 },
   "type": "wilderness",
   "biome": "desert",
   "wind": 0.85,

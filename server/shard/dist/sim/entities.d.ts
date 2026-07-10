@@ -126,6 +126,9 @@ export interface Entity {
     lootView?: LootView;
     /** npc registry id (dialog/shop lookup) */
     npcId?: string;
+    /** resolved boss/miniboss flag (set at spawn from ResolvedMob.boss) —
+     *  replicates so clients keep boss nameplates visible at range */
+    boss?: boolean;
 }
 export declare function allocEntityId(): number;
 export declare function toFull(e: Entity, now: number): EntityFull;

@@ -33,6 +33,11 @@ public class RemotePlayer {
     public String anim = "idle";
     public int hp = -1, maxHp = -1;
     public int level = 0;
+    /** boss/miniboss flag from replication — nameplate stays visible at range */
+    public final boolean boss;
+    /** ms epoch until which this entity counts as "in combat" for the
+     *  nametag system (stamped by WorldScreen on dmg events, both sides) */
+    public long combatUntil = 0;
     public float yaw;
     /** interpolated render position */
     public final Vector3 pos = new Vector3();
@@ -91,6 +96,7 @@ public class RemotePlayer {
         this.hp = e.hp;
         this.maxHp = e.maxHp;
         this.level = e.level;
+        this.boss = e.boss;
         this.lootItems = e.lootItems;
         this.lootRarities = e.lootRarities;
         setAct(e.act, e.actMs);

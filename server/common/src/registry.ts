@@ -253,6 +253,11 @@ export const MobRankSchema = z.object({
    *  def (the Bone Warden kept wraith_drops for exactly this reason before
    *  ranks could carry loot). Last applicable rank wins. */
   loot: z.string().optional(),
+  /** boss/miniboss override at this rank (replicates to clients — boss
+   *  nameplates stay visible at range). Explicit false demotes: the
+   *  frostplate revenant is a side boss at its r15 Unbound tier but an
+   *  ordinary elite again as the r21 Tithe-Collector. Last present wins. */
+  boss: z.boolean().optional(),
 });
 export type MobRankDef = z.infer<typeof MobRankSchema>;
 
@@ -275,6 +280,10 @@ export const MobDefSchema = z.object({
   fleeAtHpPct: z.number(),
   xp: z.number(),
   loot: z.string(),
+  /** boss/miniboss marker (main + side bosses per the node table) — rides
+   *  entity replication so clients keep the nameplate visible at range.
+   *  Rank `boss` overrides for rank-elevated bosses (the Unfinished King). */
+  boss: z.boolean().optional(),
   /** client vocal sound groups in the audio manifest (all optional; omitted = silent category) */
   sounds: z
     .object({
@@ -318,6 +327,8 @@ export interface ResolvedMob {
   fleeAtHpPct: number;
   /** loot table at this level (rank `loot` override, else the def's) */
   loot: string;
+  /** boss/miniboss at this level (def `boss`, rank-overridable) */
+  boss: boolean;
 }
 
 /**
@@ -344,6 +355,7 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
   let attacks = mobAttacks(def).slice();
   let name = def.name;
   let loot = def.loot;
+  let boss = def.boss ?? false;
   let aggroRadius = def.aggroRadius;
   let attackRange = def.attackRange;
   let leashRadius = def.leashRadius;
@@ -368,6 +380,7 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
     if (rank.titleSuffix) name = `${def.name} ${rank.titleSuffix}`;
     if (rank.name) name = rank.name; // full override wins over the suffix
     if (rank.loot) loot = rank.loot;
+    if (rank.boss !== undefined) boss = rank.boss; // explicit false demotes
   }
 
   // A per-attack `damage` override is authored RELATIVE to the def's base level
@@ -393,6 +406,7 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
     leashRadius,
     fleeAtHpPct,
     loot,
+    boss,
   };
 }
 

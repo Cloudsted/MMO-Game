@@ -105,7 +105,29 @@ public class WorldScreen extends ScreenAdapter {
 
     private final IntMap<RemotePlayer> remotes = new IntMap<>();
 
-    private record Portal(String id, String label, String target, float x, float z, float r) {}
+    // ---- nametag declutter (modern-MMO priority + proximity + fade) ----
+    // Default: aimed target and bosses get full tags at range; players keep
+    // social-range names; npcs/mobs only reveal close up or while fighting.
+    // MMO_NAMETAGS=all restores the old always-on tags (debug/screenshots).
+    private final boolean nametagsAll = "all".equals(System.getenv("MMO_NAMETAGS"));
+    private static final float TAG_AIM_RANGE = 40f;      // soft-target picker reach
+    private static final float TAG_BOSS_RANGE = 45f;     // bosses are landmarks
+    private static final float TAG_PLAYER_RANGE = 25f;   // player names (social)
+    private static final float TAG_MOB_HP_RANGE = 25f;   // damaged/in-combat mob bars
+    private static final float TAG_MOB_NAME_RANGE = 8f;  // mob name+level (close)
+    private static final float TAG_NPC_RANGE = 10f;      // npc names (interaction)
+    private static final float TAG_COMBAT_LINGER_S = 5f; // recent-combat window
+    private static final int TAG_CAP = 12;               // hard cap on visible tags
+    /** screen-center soft target this frame (full tag, highest priority) */
+    private RemotePlayer aimedEntity = null;
+    /** one tag decision per entity per frame (see planTags) */
+    private record TagPlan(RemotePlayer rp, boolean name, boolean hpBar, float alpha,
+                           int priority, float dist) {}
+
+    /** bandMin/bandMax = the DESTINATION room's suggested level band from the
+     *  portals wire (0/0 = none — hub/grounds/atelier targets carry no band) */
+    private record Portal(String id, String label, String target, float x, float z, float r,
+                          int bandMin, int bandMax) {}
     private final List<Portal> portals = new ArrayList<>();
     private final List<Decal> portalGlows = new ArrayList<>();
     private final java.util.Map<String, Boolean> portalOpen = new java.util.HashMap<>(); // by target room
@@ -421,10 +443,17 @@ public class WorldScreen extends ScreenAdapter {
                     portalReopenAt.clear();
                     for (JsonElement el : Protocol.arr(msg, "portals")) {
                         JsonObject p = el.getAsJsonObject();
+                        int bandMin = 0, bandMax = 0;
+                        if (p.has("band") && !p.get("band").isJsonNull()) {
+                            JsonObject b = p.getAsJsonObject("band");
+                            bandMin = b.get("min").getAsInt();
+                            bandMax = b.get("max").getAsInt();
+                        }
                         Portal portal = new Portal(
                             p.get("id").getAsString(), p.get("label").getAsString(),
                             p.get("target").getAsString(),
-                            p.get("x").getAsFloat(), p.get("z").getAsFloat(), p.get("r").getAsFloat());
+                            p.get("x").getAsFloat(), p.get("z").getAsFloat(), p.get("r").getAsFloat(),
+                            bandMin, bandMax);
                         portals.add(portal);
                         portalOpen.put(portal.target(), !p.has("open") || p.get("open").getAsBoolean());
                         if (p.has("reopenInSec"))
@@ -636,6 +665,15 @@ public class WorldScreen extends ScreenAdapter {
                 int tgt = e.get("tgt").getAsInt();
                 int amount = e.get("amount").getAsInt();
                 boolean crit = e.get("crit").getAsBoolean();
+                // nametag system: both sides of a hit count as "in combat"
+                // for a few seconds (mob hp bars show during a fight)
+                long combatUntil = System.currentTimeMillis() + (long) (TAG_COMBAT_LINGER_S * 1000);
+                RemotePlayer tgtRp = remotes.get(tgt);
+                if (tgtRp != null) tgtRp.combatUntil = combatUntil;
+                if (e.has("src")) {
+                    RemotePlayer srcRp = remotes.get(e.get("src").getAsInt());
+                    if (srcRp != null) srcRp.combatUntil = combatUntil;
+                }
                 if (tgt == selfId) {
                     game.audio.play("hit");
                     selfHitFlash = 1f;
@@ -1636,6 +1674,127 @@ public class WorldScreen extends ScreenAdapter {
         sr.line(x0, y1, z0, x0, y1, z1); sr.line(x1, y1, z0, x1, y1, z1);
     }
 
+    /** Screen-center soft target: nearest living entity inside a narrow view
+     *  cone (≈2.3° + close-range forgiveness) out to TAG_AIM_RANGE, with a
+     *  voxel line-of-sight check so a wall never "targets" what's behind it. */
+    private RemotePlayer pickAimedEntity() {
+        if (world == null) return null;
+        RemotePlayer best = null;
+        float bestAlong = Float.MAX_VALUE;
+        Vector3 dir = cam.direction;
+        for (RemotePlayer rp : remotes.values()) {
+            if ("loot".equals(rp.kind) || rp.isDead()) continue;
+            float cx = rp.pos.x - cam.position.x;
+            float cy = rp.pos.y + rp.height * 0.6f - cam.position.y;
+            float cz = rp.pos.z - cam.position.z;
+            float along = cx * dir.x + cy * dir.y + cz * dir.z; // metres along the view ray
+            if (along < 0.5f || along > TAG_AIM_RANGE) continue;
+            float px = cx - dir.x * along, py = cy - dir.y * along, pz = cz - dir.z * along;
+            float perp = (float) Math.sqrt(px * px + py * py + pz * pz);
+            if (perp > 0.45f + along * 0.04f) continue;
+            if (along < bestAlong) {
+                bestAlong = along;
+                best = rp;
+            }
+        }
+        if (best != null && headOccluded(best)) return null;
+        return best;
+    }
+
+    /** Cheap voxel ray camera → head. 0.5 m steps; ~0.75 m skipped at BOTH
+     *  ends so the camera's own block / the entity's block never occlude
+     *  (the AudioEngine occlusion precedent). Budget: only ever run for the
+     *  aim pick + the ≤TAG_CAP capped tag survivors. */
+    private boolean headOccluded(RemotePlayer rp) {
+        if (world == null) return false;
+        float dx = rp.pos.x - cam.position.x;
+        float dy = rp.pos.y + rp.height * 0.85f - cam.position.y;
+        float dz = rp.pos.z - cam.position.z;
+        float len = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (len < 1.5f) return false;
+        dx /= len;
+        dy /= len;
+        dz /= len;
+        for (float t = 0.75f; t < len - 0.75f; t += 0.5f) {
+            if (world.solidAt(cam.position.x + dx * t, cam.position.y + dy * t, cam.position.z + dz * t)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Alpha ramp over the far ~25% of a tag range (1 inside, → 0 at range). */
+    private static float tagFade(float dist, float range) {
+        return MathUtils.clamp((range - dist) / (0.25f * range), 0f, 1f);
+    }
+
+    /**
+     * One tag decision per entity: what shows (name / hp bar), how faded, and
+     * at what priority — aimed (0) > boss (1) > player (2) > npc (3) > mob (4).
+     * Sorted by priority then distance, hard-capped at TAG_CAP, then the
+     * survivors are occlusion-culled (aimed already passed its LOS check).
+     * MMO_NAMETAGS=all restores the old always-on behavior (no cap, no cull).
+     */
+    private List<TagPlan> planTags() {
+        List<TagPlan> plans = new ArrayList<>();
+        long nowMs = System.currentTimeMillis();
+        for (RemotePlayer rp : remotes.values()) {
+            if ("loot".equals(rp.kind) || rp.isDead()) continue;
+            tmp.set(rp.pos.x, rp.pos.y + rp.height, rp.pos.z);
+            if (!cam.frustum.pointInFrustum(tmp)) continue;
+            float dist = tmp.dst(cam.position);
+            boolean hasHp = rp.hp >= 0 && rp.maxHp > 0 && !"npc".equals(rp.kind);
+            boolean inCombat = hasHp && (rp.hp < rp.maxHp || rp.combatUntil > nowMs);
+            boolean name, hpBar;
+            float alpha = 1f;
+            int priority;
+            if (nametagsAll) {
+                if (dist > 40f) continue; // the pre-declutter behavior
+                name = true;
+                hpBar = hasHp;
+                priority = 5;
+            } else if (rp == aimedEntity) {
+                name = true;
+                hpBar = hasHp;
+                priority = 0;
+            } else if (rp.boss) {
+                if (dist > TAG_BOSS_RANGE) continue;
+                name = true;
+                hpBar = hasHp;
+                alpha = tagFade(dist, TAG_BOSS_RANGE);
+                priority = 1;
+            } else if ("player".equals(rp.kind)) {
+                if (dist > TAG_PLAYER_RANGE) continue;
+                name = true;
+                hpBar = hasHp && inCombat;
+                alpha = tagFade(dist, TAG_PLAYER_RANGE);
+                priority = 2;
+            } else if ("npc".equals(rp.kind)) {
+                if (dist > TAG_NPC_RANGE) continue;
+                name = true;
+                hpBar = false;
+                alpha = tagFade(dist, TAG_NPC_RANGE);
+                priority = 3;
+            } else { // ordinary mob: quiet until close, damaged, or fighting
+                name = dist <= TAG_MOB_NAME_RANGE;
+                hpBar = hasHp && inCombat && dist <= TAG_MOB_HP_RANGE;
+                if (!name && !hpBar) continue;
+                alpha = name ? tagFade(dist, TAG_MOB_NAME_RANGE) : tagFade(dist, TAG_MOB_HP_RANGE);
+                priority = 4;
+            }
+            if (alpha <= 0.02f) continue;
+            plans.add(new TagPlan(rp, name, hpBar, alpha, priority, dist));
+        }
+        if (!nametagsAll) {
+            plans.sort((a, b) -> a.priority() != b.priority()
+                ? Integer.compare(a.priority(), b.priority())
+                : Float.compare(a.dist(), b.dist()));
+            if (plans.size() > TAG_CAP) plans.subList(TAG_CAP, plans.size()).clear();
+            plans.removeIf(tp -> tp.rp() != aimedEntity && headOccluded(tp.rp()));
+        }
+        return plans;
+    }
+
     private void drawHud(boolean ready) {
         int w = vw, h = vh; // virtual canvas — batches are projected to it
 
@@ -1655,40 +1814,45 @@ public class WorldScreen extends ScreenAdapter {
             shapes.end();
         }
 
+        // nametag declutter: one plan per entity (aimed > boss > player > npc
+        // > mob, distance-faded, capped, occlusion-culled) drives BOTH passes
+        aimedEntity = pickAimedEntity();
+        List<TagPlan> tagPlans = planTags();
+
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        for (RemotePlayer rp : remotes.values()) {
-            if (rp.hp < 0 || rp.maxHp <= 0 || "npc".equals(rp.kind) || rp.isDead()) continue;
+        for (TagPlan tp : tagPlans) {
+            if (!tp.hpBar()) continue;
+            RemotePlayer rp = tp.rp();
             tmp.set(rp.pos.x, rp.pos.y + rp.height + 0.22f, rp.pos.z);
-            if (cam.position.dst2(tmp) > 40 * 40) continue;
-            if (!cam.frustum.pointInFrustum(tmp)) continue;
             cam.project(tmp); // window pixels → virtual canvas
             tmp.x /= uiScale;
             tmp.y /= uiScale;
-            float bw = 44, bh = 5;
+            float bw = rp.boss ? 56 : 44, bh = 5;
             float frac = MathUtils.clamp(rp.hp / (float) rp.maxHp, 0f, 1f);
-            shapes.setColor(0f, 0f, 0f, 0.6f);
+            shapes.setColor(0f, 0f, 0f, 0.6f * tp.alpha());
             shapes.rect(tmp.x - bw / 2f - 1, tmp.y - 1, bw + 2, bh + 2);
-            shapes.setColor(1f - frac * 0.7f, 0.15f + frac * 0.65f, 0.15f, 0.95f);
+            shapes.setColor(1f - frac * 0.7f, 0.15f + frac * 0.65f, 0.15f, 0.95f * tp.alpha());
             shapes.rect(tmp.x - bw / 2f, tmp.y, bw * frac, bh);
         }
         shapes.end();
 
         hudBatch.begin();
-        // name tags (players + mobs + npcs; loot bags get a prompt instead)
-        for (RemotePlayer rp : remotes.values()) {
-            if ("loot".equals(rp.kind) || rp.isDead()) continue;
+        // name tags (plan-driven; loot bags get a prompt instead)
+        for (TagPlan tp : tagPlans) {
+            if (!tp.name()) continue;
+            RemotePlayer rp = tp.rp();
             tmp.set(rp.pos.x, rp.pos.y + rp.height + 0.3f, rp.pos.z);
-            if (cam.position.dst2(tmp) > 40 * 40) continue;
-            if (!cam.frustum.pointInFrustum(tmp)) continue;
             cam.project(tmp);
             tmp.x /= uiScale;
             tmp.y /= uiScale;
             String tag = rp.name != null ? rp.name : "";
             if ("mob".equals(rp.kind) && rp.level > 0) tag += "  (" + rp.level + ")";
+            // color BEFORE setText — GlyphLayout bakes colors (see LESSONS.md)
+            if (rp.boss) font.setColor(1f, 0.8f, 0.35f, tp.alpha());
+            else if ("mob".equals(rp.kind)) font.setColor(1f, 0.75f, 0.6f, tp.alpha());
+            else if ("npc".equals(rp.kind)) font.setColor(0.65f, 1f, 0.75f, tp.alpha());
+            else font.setColor(1f, 1f, 1f, tp.alpha());
             layout.setText(font, tag);
-            if ("mob".equals(rp.kind)) font.setColor(1f, 0.75f, 0.6f, 1f);
-            else if ("npc".equals(rp.kind)) font.setColor(0.65f, 1f, 0.75f, 1f);
-            else font.setColor(1f, 1f, 1f, 1f);
             font.draw(hudBatch, layout, tmp.x - layout.width / 2f, tmp.y + layout.height + 8);
         }
         // portal labels (sealed destinations say so)
@@ -1715,18 +1879,32 @@ public class WorldScreen extends ScreenAdapter {
                         text = p.label() + "  (locked)";
                     }
                 }
-                layout.setText(font, text);
+                // color BEFORE setText — GlyphLayout bakes it (see LESSONS.md)
                 if (open) font.setColor(0.55f, 0.9f, 1f, 1f);
                 else font.setColor(0.75f, 0.6f, 0.6f, 1f);
+                layout.setText(font, text);
                 font.draw(hudBatch, layout, tmp.x - layout.width / 2f, tmp.y + layout.height);
+                // suggested level band on its own line (composes with any
+                // lock suffix above), colored vs the local player's level
+                if (p.bandMin() > 0) {
+                    String band = p.bandMin() == p.bandMax()
+                        ? "Lv " + p.bandMin()
+                        : "Lv " + p.bandMin() + "-" + p.bandMax();
+                    int below = p.bandMin() - ui.level; // how far under the door
+                    if (below <= 0) font.setColor(0.45f, 1f, 0.5f, 1f);        // at level
+                    else if (below <= 2) font.setColor(1f, 0.62f, 0.18f, 1f);  // 1-2 under
+                    else font.setColor(1f, 0.28f, 0.22f, 1f);                  // 3+ under
+                    layout.setText(font, band);
+                    font.draw(hudBatch, layout, tmp.x - layout.width / 2f, tmp.y - 4);
+                }
             }
         }
 
-        // pvp zone warning
+        // pvp zone warning (color BEFORE setText — GlyphLayout bakes it)
         if (ready && inPvpZone(pos.x, pos.z)) {
             font.getData().setScale(2f); // pixel font: integer scales only
-            layout.setText(font, "!! PvP ZONE - deaths drop everything, free for all !!");
             font.setColor(1f, 0.3f, 0.25f, 0.75f + 0.25f * MathUtils.sin(glowTime * 5f));
+            layout.setText(font, "!! PvP ZONE - deaths drop everything, free for all !!");
             font.draw(hudBatch, layout, w / 2f - layout.width / 2f, h - 34);
             font.getData().setScale(1f);
         }
@@ -1740,8 +1918,8 @@ public class WorldScreen extends ScreenAdapter {
                 hint = "LMB break block";
             }
             if (hint != null) {
-                layout.setText(font, hint);
                 font.setColor(0.7f, 1f, 0.75f, 0.9f);
+                layout.setText(font, hint);
                 font.draw(hudBatch, layout, w / 2f - layout.width / 2f, h * 0.24f);
             }
         }
@@ -1766,15 +1944,15 @@ public class WorldScreen extends ScreenAdapter {
                 }
             }
             if (prompt != null) {
-                layout.setText(font, prompt);
                 font.setColor(0.7f, 0.95f, 1f, 1f);
+                layout.setText(font, prompt);
                 font.draw(hudBatch, layout, w / 2f - layout.width / 2f, h * 0.28f);
             }
         }
         // status flash
         if (statusFlash != null && statusFlashT > 0) {
-            layout.setText(font, statusFlash);
             font.setColor(1f, 0.95f, 0.7f, Math.min(1f, statusFlashT));
+            layout.setText(font, statusFlash);
             font.draw(hudBatch, layout, w / 2f - layout.width / 2f, h * 0.34f);
         }
 

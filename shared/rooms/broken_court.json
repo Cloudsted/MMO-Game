@@ -1,6 +1,7 @@
 {
   "id": "broken_court",
   "name": "The Broken Court",
+  "levelBand": { "min": 17, "max": 19 },
   "type": "dungeon",
   "biome": "ruin",
   "wind": 0.3,

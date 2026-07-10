@@ -1,6 +1,8 @@
 {
   "id": "sundering_fields",
   "name": "The Sundering Fields",
+
+  "levelBand": { "min": 11, "max": 13 },
   "type": "wilderness",
   "biome": "grass",
   "wind": 0.6,

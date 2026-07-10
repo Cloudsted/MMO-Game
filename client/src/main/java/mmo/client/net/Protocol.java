@@ -32,6 +32,9 @@ public final class Protocol {
         public int level = 0;
         public String act = "idle";
         public float actMs = 0;
+        /** mobs: resolved boss/miniboss flag — boss nameplates stay visible
+         *  at range (absent on the wire = false) */
+        public boolean boss = false;
         /** loot bags: visible contents, rarest first (null = not a bag /
          *  empty = gold only). Parallel arrays of item id + rarity. */
         public String[] lootItems = null;
@@ -53,6 +56,7 @@ public final class Protocol {
             if (o.has("level") && !o.get("level").isJsonNull()) e.level = o.get("level").getAsInt();
             if (o.has("act") && !o.get("act").isJsonNull()) e.act = o.get("act").getAsString();
             if (o.has("actMs") && !o.get("actMs").isJsonNull()) e.actMs = o.get("actMs").getAsFloat();
+            if (o.has("boss") && !o.get("boss").isJsonNull()) e.boss = o.get("boss").getAsBoolean();
             if (o.has("loot") && !o.get("loot").isJsonNull()) {
                 JsonArray arr = o.getAsJsonArray("loot");
                 e.lootItems = new String[arr.size()];

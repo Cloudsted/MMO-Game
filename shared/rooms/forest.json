@@ -1,6 +1,8 @@
 {
   "id": "forest",
   "name": "The Kingless Wood",
+
+  "levelBand": { "min": 1, "max": 4 },
   "type": "wilderness",
   "biome": "grass",
   "wind": 1,

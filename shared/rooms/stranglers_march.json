@@ -1,6 +1,8 @@
 {
   "id": "stranglers_march",
   "name": "The Strangler's March",
+
+  "levelBand": { "min": 5, "max": 7 },
   "type": "wilderness",
   "biome": "swamp",
   "wind": 0.8,

@@ -1,6 +1,8 @@
 {
   "id": "gloomfen",
   "name": "The Gloomfen",
+
+  "levelBand": { "min": 8, "max": 10 },
   "type": "wilderness",
   "biome": "swamp",
   "wind": 0.45,

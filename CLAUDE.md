@@ -2270,6 +2270,70 @@ show their block tile).
     Current state), tooltip/HUD/arch screenshots (tools/out/batch9-*.png,
     arch-*.png, tour-*.png).
 
+- 2026-07-10 **PORTAL LEVEL BANDS + NAMETAG DECLUTTER** (owner UX batch,
+  uncommitted working-tree). Two features: suggested level ranges on every
+  portal, and a modern-MMO priority/proximity/fade rework of entity name
+  tags + hp bars (the old always-on tags were a wall of text in crowds).
+  - **Level bands (Part A)**: `RoomDefSchema.levelBand {min,max}` (optional;
+    refine max≥min) authored on all 16 combat rooms per the proposal's final
+    node table (forest 1-4 … white_waste 20-24; hub/grounds/atelier none —
+    the table is test-locked in `levelband.test.ts`). `PortalWire.band` = the
+    DESTINATION room's band, resolved once per RoomSim boot into a
+    `targetBands` map (loadRoomDefs in the ctor) and spread into
+    `portalsWire()`. `portalState` deliberately does NOT carry it — bands are
+    static per portal and the client caches them from the `portals` msg
+    (portalState only mutates open/reopenInSec). Client: `Portal` record +=
+    bandMin/bandMax; the label renders a SECOND line `Lv 1-4` (composes with
+    "(sealed)"/"(locked - opens in m:ss)" without overflow), colored vs the
+    local player's level (ui.level): green ≥min, orange 1-2 below, red 3+
+    below.
+  - **Boss flag (Part B wire)**: `MobDefSchema.boss` + `MobRankSchema.boss`
+    (rank override, explicit false DEMOTES — frostplate_revenant is a boss
+    at r15 Unbound but an elite again as the r21 Tithe-Collector) →
+    `ResolvedMob.boss` → `Entity.boss` stamped at spawnMob →
+    `EntityFull.boss` (optional, absent = normal; static per life so no
+    delta path). Authored on the 18 dedicated boss defs + rank-level for
+    the four rank-elevated ones (bone_warden@12, forge_prototype@17,
+    pallid_mourner@13, cinder_nightmare@17). The loot-guarantee heuristic
+    was rejected: it misses rime_warden (deliberately guarantee-less pair
+    loot), THE Bone Warden (kept wraith_drops), the Riderless, the Shade.
+  - **Nametag system (client-only, WorldScreen)**: one `TagPlan` per entity
+    per frame drives BOTH the hp-bar shapes pass and the name-text pass.
+    Priorities: **aimed target 0 > boss 1 > player 2 > npc 3 > mob 4**.
+    Aimed = screen-center soft target (`pickAimedEntity`: ≤40 m, ~2.3° cone
+    + 0.45 m close-range forgiveness, nearest along the ray, LOS-checked)
+    → full tag always. Bosses: name+hp ≤45 m (landmarks; 56 px bar, gold
+    name). Players: name ≤25 m, hp bar only damaged/in-combat. NPCs: name
+    ≤10 m. Ordinary mobs: NO name by default — hp bar only while damaged
+    (hp<max) or within 5 s of a dmg event (either side; `combatUntil`
+    stamped in handleEvent) ≤25 m; name+level fade in ≤8 m. Distance fade =
+    alpha ramp over the far 25% of each range; hard cap 12 plans (priority
+    then distance); capped survivors are occlusion-culled by a voxel ray
+    (0.5 m steps, 0.75 m skipped both ends — the AudioEngine precedent; ≤13
+    rays/frame total). `MMO_NAMETAGS=all` restores always-on (docs in
+    TESTING.md; used for the before/after screenshots).
+  - **Trap re-paid (GlyphLayout color bake)**: the new colored band line
+    left the shared `font` red/green, and the latent setText-before-
+    setColor call sites in drawHud (PvP banner, build hint, [E] prompt,
+    status flash) started rendering in the band's color — the first live
+    screenshot showed a RED "[E] Talk to" prompt. All drawHud text now
+    colors BEFORE setText (the portal-label loop had the same latent bug —
+    open/sealed labels swapped colors one frame behind).
+  - Verified: typecheck, **691 vitest** (14 new: levelband.test.ts +
+    portalband.test.ts; all goldens held — bands/boss flags don't touch
+    gen), client compiles, live session stack on alt ports (master 4100,
+    rooms 4310+, session mongod 27018 — the owner's 4000/27017 stack was
+    up and untouched), wire probe 8/8 (bands on hub portals, boss:true on
+    Thrace + bone_warden@12, absent on slime), screenshots tools/out/:
+    portal-band-hub-2 (green Lv 1-4 + orange Lv 4-7 at L3),
+    portal-band-hub2-2 (red Lv 6-8), portal-band-locked-2 ("The Greenhood
+    Run (locked)" + orange band over the fort palisade, 23 mobs in
+    interest and ZERO tag clutter), nametags-before/after/aimed/hponly.
+    New staging tool `scripts/stage-nametags.mjs` (TESTING.md).
+  - Owner feel-checks pending: the 8 m mob-name radius (too shy?), the 12
+    cap in raid packs, band colors at other levels, whether player names
+    at 25 m read right in the hub crowd, boss gold-name tint.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -2356,6 +2420,20 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-10 **PORTAL LEVEL BANDS + NAMETAG DECLUTTER shipped (uncommitted
+  working tree)** — see the decisions-log entry. Every portal label now
+  shows the destination's suggested band (`Lv 8-10`, green/orange/red vs
+  the viewer's level; composes with sealed/locked suffixes), and entity
+  name tags/hp bars run a modern priority system (aimed target > bosses >
+  players > npcs > mobs, distance fade, 12-tag cap, voxel occlusion cull;
+  `MMO_NAMETAGS=all` restores always-on). New wire: `PortalWire.band`,
+  `EntityFull.boss` (from mobs.json `boss` + rank overrides). Verified:
+  typecheck, **691 vitest** (14 new), wire probe 8/8 on a live alt-port
+  session stack, screenshots tools/out/portal-band-*.png +
+  nametags-*.png. **The client changed — relaunch run-client.cmd.**
+  Owner feel-checks: 8 m mob-name radius, the 12-tag cap in raids, band
+  colors, boss gold tint.
 
 - 2026-07-10 **WORLD REDESIGN COMPLETE — batches 0-9 (branch world-redesign)**.
   The "Three Roads" overhaul shipped end to end: proposal marked COMPLETE

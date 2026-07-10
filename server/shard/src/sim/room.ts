@@ -218,6 +218,9 @@ export class RoomSim {
   private liveTables: SpawnTable[];
   /** prefab loot caches the room tick keeps stocked */
   private caches: CacheState[];
+  /** destination-room suggested level bands (target room def levelBand),
+   *  resolved once at boot — portal labels render them client-side */
+  private targetBands = new Map<string, { min: number; max: number }>();
 
   constructor(public def: RoomDef, snapshot: RoomState | null = null) {
     this.log = makeLogger(`room/${def.id}`);
@@ -259,6 +262,15 @@ export class RoomSim {
       for (const c of this.caches) c.lastLootedAt = snapshot.caches[c.key] ?? 0;
     }
     if (this.caches.length > 0) this.log.info(`${this.caches.length} prefab loot cache(s) registered`);
+    // destination level bands for portal labels (bands live on ROOM defs;
+    // a portal to a band-less room — hub/grounds — simply carries none)
+    if (this.def.portals.length > 0) {
+      const all = loadRoomDefs();
+      for (const p of this.def.portals) {
+        const band = all.get(p.target)?.levelBand;
+        if (band) this.targetBands.set(p.target, band);
+      }
+    }
     this.initSpawners(snapshot);
     this.initNpcs();
     this.restoreDrops(snapshot);
@@ -383,6 +395,7 @@ export class RoomSim {
       pos: { x: gx, y: this.world.floorY(gx, gz), z: gz, yaw: Math.random() * Math.PI * 2 },
       renderable: { sprite: def.sprite, anim: "idle", name: r.name },
       level: r.level,
+      ...(r.boss ? { boss: true } : {}),
       health: { hp: r.hp, maxHp: r.hp },
       combat: freshCombat(),
       brain: {
@@ -835,7 +848,13 @@ export class RoomSim {
     return this.def.portals.map((p) => {
       const open = this.portalOpen(p);
       const reopenInSec = open ? undefined : this.reopenInSecOf(p.target);
-      return { ...p, open, ...(reopenInSec !== undefined ? { reopenInSec } : {}) };
+      const band = this.targetBands.get(p.target);
+      return {
+        ...p,
+        open,
+        ...(reopenInSec !== undefined ? { reopenInSec } : {}),
+        ...(band ? { band } : {}),
+      };
     });
   }
 

@@ -210,6 +210,13 @@ export const RoomDefSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
   type: z.enum(["hub", "wilderness", "dungeon", "building"]),
+  /** suggested character-level band (the proposal's node table). Portals
+   *  pointing AT this room surface it on their labels ("Lv 8-10", colored
+   *  vs the viewer's level). Omit on safe rooms (hub/grounds/atelier). */
+  levelBand: z
+    .object({ min: z.number().int().positive(), max: z.number().int().positive() })
+    .refine((b) => b.max >= b.min, "levelBand.max must be >= min")
+    .optional(),
   biome: z.string(),
   /** Ambient wind strength for client foliage sway (0 = still, e.g. dungeons).
    *  Purely visual; sent to the client in the `world` message. ~1 = gentle. */

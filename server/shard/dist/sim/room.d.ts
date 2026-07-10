@@ -114,6 +114,9 @@ export declare class RoomSim {
     private liveTables;
     /** prefab loot caches the room tick keeps stocked */
     private caches;
+    /** destination-room suggested level bands (target room def levelBand),
+     *  resolved once at boot — portal labels render them client-side */
+    private targetBands;
     constructor(def: RoomDef, snapshot?: RoomState | null);
     /** Validate event refs (room defs aren't cross-checked against the mob
      *  registry at load) and seal event-gated portals while their trigger

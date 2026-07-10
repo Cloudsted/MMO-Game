@@ -1,6 +1,7 @@
 {
   "id": "white_waste",
   "name": "The White Waste",
+  "levelBand": { "min": 20, "max": 24 },
   "type": "dungeon",
   "biome": "ruin",
   "wind": 0.9,

@@ -1,6 +1,7 @@
 {
   "id": "ossuary_galleries",
   "name": "The Ossuary Galleries",
+  "levelBand": { "min": 9, "max": 11 },
   "type": "dungeon",
   "biome": "dungeon",
   "wind": 0,

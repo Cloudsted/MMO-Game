@@ -302,7 +302,8 @@
         "id": "n"
       },
       "portals": {
-        "portals": "a<{id:s,label:s,target:s,x:n,z:n,r:n}>"
+        "$comment": "open=false when the destination is down or boss-sealed; reopenInSec = countdown to a timed reopen; band = the DESTINATION room's suggested level band (def levelBand), absent for safe targets",
+        "portals": "a<{id:s,label:s,target:s,x:n,z:n,r:n,open:b,reopenInSec:n?,band:{min:n,max:n}?}>"
       },
       "transferFailed": {
         "reason": "s"
@@ -461,7 +462,9 @@
       "act": "s?",
       "actMs": "n?",
       "loot": "a<{item:s,rarity:s}>?",
-      "$comment2": "loot = bag contents for kind=loot (rarest first, max 3; [] = gold only) so clients render the actual dropped items"
+      "boss": "b?",
+      "$comment2": "loot = bag contents for kind=loot (rarest first, max 3; [] = gold only) so clients render the actual dropped items",
+      "$comment3": "boss = resolved boss/miniboss flag on mobs (mobs.json `boss`, rank-overridable); clients keep boss nameplates visible at range. Absent = normal mob"
     },
     "EntityDelta": {
       "id": "n",

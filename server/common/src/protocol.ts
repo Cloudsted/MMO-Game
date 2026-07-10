@@ -71,6 +71,9 @@ export const EntityFullSchema = z.object({
   actMs: z.number().optional(),
   /** loot bags only: visible contents ([] = gold-only bag → sack sprite) */
   loot: LootViewSchema.optional(),
+  /** mobs only: resolved boss/miniboss flag (mobs.json `boss`, rank-overridable)
+   *  — clients keep boss nameplates visible at range. Absent = normal. */
+  boss: z.boolean().optional(),
 });
 export type EntityFull = z.infer<typeof EntityFullSchema>;
 
@@ -373,6 +376,10 @@ export interface PortalWire {
    *  (clients count down locally from receipt; absent = no known timer,
    *  e.g. boss-guarded seals) */
   reopenInSec?: number;
+  /** DESTINATION room's suggested level band (its def's levelBand, resolved
+   *  server-side) — labels render "Lv 8-10" colored vs the viewer's level.
+   *  Absent for band-less targets (hub/grounds/atelier). */
+  band?: { min: number; max: number };
 }
 
 export interface RegionWire {

@@ -521,6 +521,25 @@ export declare const RoomDefSchema: z.ZodObject<{
     id: z.ZodString;
     name: z.ZodString;
     type: z.ZodEnum<["hub", "wilderness", "dungeon", "building"]>;
+    /** suggested character-level band (the proposal's node table). Portals
+     *  pointing AT this room surface it on their labels ("Lv 8-10", colored
+     *  vs the viewer's level). Omit on safe rooms (hub/grounds/atelier). */
+    levelBand: z.ZodOptional<z.ZodEffects<z.ZodObject<{
+        min: z.ZodNumber;
+        max: z.ZodNumber;
+    }, "strip", z.ZodTypeAny, {
+        min: number;
+        max: number;
+    }, {
+        min: number;
+        max: number;
+    }>, {
+        min: number;
+        max: number;
+    }, {
+        min: number;
+        max: number;
+    }>>;
     biome: z.ZodString;
     /** Ambient wind strength for client foliage sway (0 = still, e.g. dungeons).
      *  Purely visual; sent to the client in the `world` message. ~1 = gentle. */
@@ -1154,6 +1173,10 @@ export declare const RoomDefSchema: z.ZodObject<{
             remove: boolean;
         } | undefined;
     }[];
+    levelBand?: {
+        min: number;
+        max: number;
+    } | undefined;
     fixedTime?: number | undefined;
     lifecycle?: {
         downtimeSec: number;
@@ -1239,6 +1262,10 @@ export declare const RoomDefSchema: z.ZodObject<{
             remove?: boolean | undefined;
         } | undefined;
     }[];
+    levelBand?: {
+        min: number;
+        max: number;
+    } | undefined;
     wind?: number | undefined;
     nightLight?: number | undefined;
     fixedTime?: number | undefined;

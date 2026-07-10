@@ -1,6 +1,7 @@
 {
   "id": "dungeon",
   "name": "Sunken Crypt",
+  "levelBand": { "min": 6, "max": 8 },
   "type": "dungeon",
   "biome": "dungeon",
   "persistence": "stateful",

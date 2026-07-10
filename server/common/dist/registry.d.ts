@@ -10,13 +10,13 @@ export declare const RaritySchema: z.ZodObject<{
     color: z.ZodString;
     weight: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
+    weight: number;
     mult: number;
     color: string;
-    weight: number;
 }, {
+    weight: number;
     mult: number;
     color: string;
-    weight: number;
 }>;
 export type RarityDef = z.infer<typeof RaritySchema>;
 /** The five equipment slots, fixed order (wire/DB equipment arrays index by it). */
@@ -75,8 +75,8 @@ export declare const ItemDefSchema: z.ZodObject<{
     }>>;
 }, "strip", z.ZodTypeAny, {
     value: number;
+    kind: "building" | "weapon" | "armor" | "trinket" | "consumable" | "trophy" | "misc";
     name: string;
-    kind: "weapon" | "armor" | "trinket" | "consumable" | "building" | "trophy" | "misc";
     stack: number;
     icon: [number, number];
     armor?: number | undefined;
@@ -97,8 +97,8 @@ export declare const ItemDefSchema: z.ZodObject<{
     } | undefined;
 }, {
     value: number;
+    kind: "building" | "weapon" | "armor" | "trinket" | "consumable" | "trophy" | "misc";
     name: string;
-    kind: "weapon" | "armor" | "trinket" | "consumable" | "building" | "trophy" | "misc";
     stack: number;
     icon: [number, number];
     armor?: number | undefined;
@@ -155,14 +155,14 @@ export declare const AbilityDefSchema: z.ZodObject<{
         burnMs: z.ZodDefault<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
         count: number;
-        spacing: number;
         radius: number;
+        spacing: number;
         staggerMs: number;
         burnMs: number;
     }, {
         count: number;
-        spacing: number;
         radius: number;
+        spacing: number;
         staggerMs?: number | undefined;
         burnMs?: number | undefined;
     }>>;
@@ -199,19 +199,19 @@ export declare const AbilityDefSchema: z.ZodObject<{
         grantsXp: z.ZodDefault<z.ZodBoolean>;
         grantsLoot: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
+        mob: string;
         count: number;
         radius: number;
-        mob: string;
         cap: number;
         grantsXp: boolean;
         grantsLoot: boolean;
         text?: string | undefined;
     }, {
-        count: number;
         mob: string;
+        count: number;
         radius?: number | undefined;
-        cap?: number | undefined;
         text?: string | undefined;
+        cap?: number | undefined;
         grantsXp?: boolean | undefined;
         grantsLoot?: boolean | undefined;
     }>>;
@@ -257,8 +257,8 @@ export declare const AbilityDefSchema: z.ZodObject<{
     heal?: number | undefined;
     pillars?: {
         count: number;
-        spacing: number;
         radius: number;
+        spacing: number;
         staggerMs: number;
         burnMs: number;
     } | undefined;
@@ -280,9 +280,9 @@ export declare const AbilityDefSchema: z.ZodObject<{
         dotTotal?: number | undefined;
     } | undefined;
     summon?: {
+        mob: string;
         count: number;
         radius: number;
-        mob: string;
         cap: number;
         grantsXp: boolean;
         grantsLoot: boolean;
@@ -307,8 +307,8 @@ export declare const AbilityDefSchema: z.ZodObject<{
     heal?: number | undefined;
     pillars?: {
         count: number;
-        spacing: number;
         radius: number;
+        spacing: number;
         staggerMs?: number | undefined;
         burnMs?: number | undefined;
     } | undefined;
@@ -330,11 +330,11 @@ export declare const AbilityDefSchema: z.ZodObject<{
         dotTotal?: number | undefined;
     } | undefined;
     summon?: {
-        count: number;
         mob: string;
+        count: number;
         radius?: number | undefined;
-        cap?: number | undefined;
         text?: string | undefined;
+        cap?: number | undefined;
         grantsXp?: boolean | undefined;
         grantsLoot?: boolean | undefined;
     } | undefined;
@@ -495,7 +495,13 @@ export declare const MobRankSchema: z.ZodObject<{
      *  def (the Bone Warden kept wraith_drops for exactly this reason before
      *  ranks could carry loot). Last applicable rank wins. */
     loot: z.ZodOptional<z.ZodString>;
+    /** boss/miniboss override at this rank (replicates to clients — boss
+     *  nameplates stay visible at range). Explicit false demotes: the
+     *  frostplate revenant is a side boss at its r15 Unbound tier but an
+     *  ordinary elite again as the r21 Tithe-Collector. Last present wins. */
+    boss: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
+    remove: string[];
     atLevel: number;
     add: {
         weight: number;
@@ -503,7 +509,6 @@ export declare const MobRankSchema: z.ZodObject<{
         damage?: number | undefined;
         minRange?: number | undefined;
     }[];
-    remove: string[];
     hpMult: number;
     damageMult: number;
     moveSpeedMult: number;
@@ -515,16 +520,17 @@ export declare const MobRankSchema: z.ZodObject<{
     leashRadius?: number | undefined;
     titleSuffix?: string | undefined;
     loot?: string | undefined;
+    boss?: boolean | undefined;
 }, {
     atLevel: number;
     name?: string | undefined;
+    remove?: string[] | undefined;
     add?: {
         ability: string;
         weight?: number | undefined;
         damage?: number | undefined;
         minRange?: number | undefined;
     }[] | undefined;
-    remove?: string[] | undefined;
     hpMult?: number | undefined;
     damageMult?: number | undefined;
     moveSpeedMult?: number | undefined;
@@ -535,6 +541,7 @@ export declare const MobRankSchema: z.ZodObject<{
     leashRadius?: number | undefined;
     titleSuffix?: string | undefined;
     loot?: string | undefined;
+    boss?: boolean | undefined;
 }>;
 export type MobRankDef = z.infer<typeof MobRankSchema>;
 export declare const MobDefSchema: z.ZodObject<{
@@ -620,7 +627,13 @@ export declare const MobDefSchema: z.ZodObject<{
          *  def (the Bone Warden kept wraith_drops for exactly this reason before
          *  ranks could carry loot). Last applicable rank wins. */
         loot: z.ZodOptional<z.ZodString>;
+        /** boss/miniboss override at this rank (replicates to clients — boss
+         *  nameplates stay visible at range). Explicit false demotes: the
+         *  frostplate revenant is a side boss at its r15 Unbound tier but an
+         *  ordinary elite again as the r21 Tithe-Collector. Last present wins. */
+        boss: z.ZodOptional<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
+        remove: string[];
         atLevel: number;
         add: {
             weight: number;
@@ -628,7 +641,6 @@ export declare const MobDefSchema: z.ZodObject<{
             damage?: number | undefined;
             minRange?: number | undefined;
         }[];
-        remove: string[];
         hpMult: number;
         damageMult: number;
         moveSpeedMult: number;
@@ -640,16 +652,17 @@ export declare const MobDefSchema: z.ZodObject<{
         leashRadius?: number | undefined;
         titleSuffix?: string | undefined;
         loot?: string | undefined;
+        boss?: boolean | undefined;
     }, {
         atLevel: number;
         name?: string | undefined;
+        remove?: string[] | undefined;
         add?: {
             ability: string;
             weight?: number | undefined;
             damage?: number | undefined;
             minRange?: number | undefined;
         }[] | undefined;
-        remove?: string[] | undefined;
         hpMult?: number | undefined;
         damageMult?: number | undefined;
         moveSpeedMult?: number | undefined;
@@ -660,6 +673,7 @@ export declare const MobDefSchema: z.ZodObject<{
         leashRadius?: number | undefined;
         titleSuffix?: string | undefined;
         loot?: string | undefined;
+        boss?: boolean | undefined;
     }>, "many">>;
     aggroRadius: z.ZodNumber;
     attackRange: z.ZodNumber;
@@ -667,6 +681,10 @@ export declare const MobDefSchema: z.ZodObject<{
     fleeAtHpPct: z.ZodNumber;
     xp: z.ZodNumber;
     loot: z.ZodString;
+    /** boss/miniboss marker (main + side bosses per the node table) — rides
+     *  entity replication so clients keep the nameplate visible at range.
+     *  Rank `boss` overrides for rank-elevated bosses (the Unfinished King). */
+    boss: z.ZodOptional<z.ZodBoolean>;
     /** client vocal sound groups in the audio manifest (all optional; omitted = silent category) */
     sounds: z.ZodOptional<z.ZodObject<{
         idle: z.ZodOptional<z.ZodString>;
@@ -685,18 +703,19 @@ export declare const MobDefSchema: z.ZodObject<{
         die?: string | undefined;
     }>>;
 }, "strip", z.ZodTypeAny, {
+    level: number;
     name: string;
+    sprite: string;
     damage: number;
     aggroRadius: number;
     fleeAtHpPct: number;
     attackRange: number;
     leashRadius: number;
     loot: string;
-    sprite: string;
-    level: number;
     hp: number;
     moveSpeed: number;
     ranks: {
+        remove: string[];
         atLevel: number;
         add: {
             weight: number;
@@ -704,7 +723,6 @@ export declare const MobDefSchema: z.ZodObject<{
             damage?: number | undefined;
             minRange?: number | undefined;
         }[];
-        remove: string[];
         hpMult: number;
         damageMult: number;
         moveSpeedMult: number;
@@ -716,9 +734,11 @@ export declare const MobDefSchema: z.ZodObject<{
         leashRadius?: number | undefined;
         titleSuffix?: string | undefined;
         loot?: string | undefined;
+        boss?: boolean | undefined;
     }[];
     xp: number;
     ability?: string | undefined;
+    boss?: boolean | undefined;
     attacks?: {
         weight: number;
         ability: string;
@@ -732,19 +752,20 @@ export declare const MobDefSchema: z.ZodObject<{
         die?: string | undefined;
     } | undefined;
 }, {
+    level: number;
     name: string;
+    sprite: string;
     damage: number;
     aggroRadius: number;
     fleeAtHpPct: number;
     attackRange: number;
     leashRadius: number;
     loot: string;
-    sprite: string;
-    level: number;
     hp: number;
     moveSpeed: number;
     xp: number;
     ability?: string | undefined;
+    boss?: boolean | undefined;
     attacks?: {
         ability: string;
         weight?: number | undefined;
@@ -754,13 +775,13 @@ export declare const MobDefSchema: z.ZodObject<{
     ranks?: {
         atLevel: number;
         name?: string | undefined;
+        remove?: string[] | undefined;
         add?: {
             ability: string;
             weight?: number | undefined;
             damage?: number | undefined;
             minRange?: number | undefined;
         }[] | undefined;
-        remove?: string[] | undefined;
         hpMult?: number | undefined;
         damageMult?: number | undefined;
         moveSpeedMult?: number | undefined;
@@ -771,6 +792,7 @@ export declare const MobDefSchema: z.ZodObject<{
         leashRadius?: number | undefined;
         titleSuffix?: string | undefined;
         loot?: string | undefined;
+        boss?: boolean | undefined;
     }[] | undefined;
     sounds?: {
         idle?: string | undefined;
@@ -806,6 +828,8 @@ export interface ResolvedMob {
     fleeAtHpPct: number;
     /** loot table at this level (rank `loot` override, else the def's) */
     loot: string;
+    /** boss/miniboss at this level (def `boss`, rank-overridable) */
+    boss: boolean;
 }
 /**
  * Evaluate `def` at `level`. Stats compound per level above the def's base
