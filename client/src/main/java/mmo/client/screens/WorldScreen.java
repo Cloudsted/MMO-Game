@@ -155,6 +155,8 @@ public class WorldScreen extends ScreenAdapter {
     private float selfAnimTime = 0;
     private final boolean noEntityShadows = "1".equals(System.getenv("MMO_DEBUG_NO_SHADOWS"));
     private String roomName = "";
+    /** room DISPLAY name from the welcome msg (falls back to the id) — HUD/minimap text */
+    private String roomDisplay = "";
     private boolean safeZone = true;
     private boolean welcomed = false;
     private String exitMessage = null;
@@ -324,6 +326,9 @@ public class WorldScreen extends ScreenAdapter {
                     selfId = msg.get("selfId").getAsInt();
                     if (msg.has("sprite")) selfSprite = msg.get("sprite").getAsString();
                     roomName = msg.get("roomId").getAsString();
+                    // display name ("Greywatch", not "hub") for the HUD/minimap;
+                    // roomName (the id) keeps driving audio beds, particles, hub checks
+                    roomDisplay = msg.has("roomName") ? msg.get("roomName").getAsString() : roomName;
                     ui.roomId = roomName; // death screen wording depends on the room
                     safeZone = !msg.has("safeZone") || msg.get("safeZone").getAsBoolean();
                     buildingEnabled = msg.has("buildingEnabled") && msg.get("buildingEnabled").getAsBoolean();
@@ -935,7 +940,7 @@ public class WorldScreen extends ScreenAdapter {
         if (!welcomed || ui.dead || ui.anyWindowOpen()) return;
         if (heldBuildingPiece() != null) {
             if (!buildingEnabled) {
-                flash("building only works in the Building Grounds");
+                flash("building only works in the Freehold");
             } else if (aimHit && placeCellFree()) {
                 socket.sendSafe(Protocol.blockPlace(ui.held, aimPrev[0], aimPrev[1], aimPrev[2]));
                 viewmodel.playUse();
@@ -1782,7 +1787,8 @@ public class WorldScreen extends ScreenAdapter {
         font.setColor(1f, 1f, 1f, 0.85f);
         String status = ready
             ? String.format("%s @ %s   pos %.1f, %.1f   players nearby: %d   mobs: %d   %d fps   %s",
-                game.characterName != null ? game.characterName : "?", roomName,
+                game.characterName != null ? game.characterName : "?",
+                roomDisplay.isEmpty() ? roomName : roomDisplay,
                 pos.x, pos.z, playerCount, mobCount, Gdx.graphics.getFramesPerSecond(), timeLabel(dayNight.timeOfDay()))
             : (leaving ? "traveling..." : "entering world...");
         font.draw(hudBatch, status, 10, h - 10);
@@ -1812,7 +1818,8 @@ public class WorldScreen extends ScreenAdapter {
         }
         List<float[]> portalDots = new ArrayList<>();
         for (Portal p : portals) portalDots.add(new float[] { p.x(), p.z() });
-        ui.render(hudBatch, shapes, font, cam, pos.x, pos.z, yaw, dots, portalDots, safeZone, roomName);
+        ui.render(hudBatch, shapes, font, cam, pos.x, pos.z, yaw, dots, portalDots, safeZone,
+            roomDisplay.isEmpty() ? roomName : roomDisplay);
     }
 
     private static String timeLabel(float t) {

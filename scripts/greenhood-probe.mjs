@@ -36,7 +36,7 @@ import { readFileSync } from "node:fs";
 import { loadEnv, makeWorldTracker, sleep, goTo } from "./lib.mjs";
 
 loadEnv();
-const MASTER = `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
+const MASTER = process.env.MMO_MASTER_ORIGIN ?? `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
 const ADMIN_KEY = process.env.ADMIN_KEY ?? "";
 
 async function api(path, body, token) {

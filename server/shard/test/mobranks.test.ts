@@ -258,7 +258,7 @@ describe("the Thornhollow Company ladder", () => {
     const fen = resolveMob(reg.mobs["bandit"]!, 10, SCALING);
     expect(fen.hp).toBeGreaterThan(forest.hp * 2);
     expect(fen.xp).toBeGreaterThan(forest.xp * 2);
-    expect(fen.name).toBe("Thornhollow Cutthroat Bloodletter");
+    expect(fen.name).toBe("Greenhood Cutthroat Bloodletter");
     expect(resolveMob(reg.mobs["hollow_cowl"]!, 9, SCALING).name).toBe("Hollow Cowl Priest");
   });
 

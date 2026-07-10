@@ -12,7 +12,7 @@ import WebSocket from "ws";
 import { loadEnv, sleep } from "./lib.mjs";
 
 loadEnv();
-const MASTER = `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
+const MASTER = process.env.MMO_MASTER_ORIGIN ?? `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
 const arg = (name, dflt) => {
   const i = process.argv.indexOf(`--${name}`);
   return i >= 0 ? Number(process.argv[i + 1]) : dflt;

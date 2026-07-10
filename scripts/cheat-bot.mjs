@@ -1,7 +1,7 @@
 // Proves server authority: a client that teleports gets corrected back.
 import WebSocket from "ws";
 
-const MASTER = "http://127.0.0.1:4000";
+const MASTER = process.env.MMO_MASTER_ORIGIN ?? "http://127.0.0.1:4000";
 
 async function api(path, body, token) {
   const res = await fetch(`${MASTER}${path}`, {

@@ -2319,9 +2319,12 @@ export type EffectWire = {
     mag: number;
     durMs: number;
 };
-export type ServerToClient = {
+export type ServerToClient = 
+/** roomName = the room's DISPLAY name (def.name — "Greywatch", not "hub"); the HUD/minimap render it */
+{
     t: "welcome";
     roomId: string;
+    roomName: string;
     selfId: number;
     name: string;
     sprite: string;

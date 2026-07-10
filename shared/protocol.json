@@ -264,6 +264,7 @@
     "serverToClient": {
       "welcome": {
         "roomId": "s",
+        "roomName": "s",
         "selfId": "n",
         "name": "s",
         "sprite": "s",

@@ -15,7 +15,7 @@ import { resolve } from "node:path";
 import { loadEnv, makeWorldTracker, ROOT, sleep } from "./lib.mjs";
 
 loadEnv();
-const MASTER = `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
+const MASTER = process.env.MMO_MASTER_ORIGIN ?? `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
 const ROOMS = ["forest", "gloomfen", "desert"]; // first room with a usable crossing wins
 
 const registry = JSON.parse(readFileSync(resolve(ROOT, "shared", "blocks.json"), "utf8").replace(/^﻿/, ""));

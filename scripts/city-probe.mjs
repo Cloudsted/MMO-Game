@@ -451,7 +451,7 @@ expect(!!maera, "Maera the Chronicler stands at the gate");
 
 // ---- 3. population sweep at the L14-16 band ----
 await tp(ws, state, 70, 172); await sleep(1500);
-const marauders = liveMobs(state, "Warband Marauder");
+const marauders = liveMobs(state, "Ashpicker Marauder");
 expect(marauders.length > 0 && marauders.every((m) => m.level === 14), `marauders L14 at the war-camp (${marauders.length})`);
 const riderless = [...state.ents.values()].filter((e) => e.kind === "mob" && e.level === 17 && e.act !== "dead" && (e.name ?? "").includes("Cinder Nightmare"));
 expect(riderless.length > 0, `the Riderless (L17) prowls the burned market (${riderless.length})`);

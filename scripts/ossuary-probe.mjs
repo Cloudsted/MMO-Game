@@ -307,7 +307,7 @@ for (let i = 0; i < 30 && state.portals.length === 0; i++) await sleep(100);
 let gate = state.portals.find((p) => p.id === "dungeon-depths");
 expect(!!gate && gate.target === "ossuary_galleries", "the Gravelord's gate now targets the Ossuary Galleries");
 await gearUp(ws, state);
-let mino = findMob(state, "Gravelord Minotaur");
+let mino = findMob(state, "The Gravelord");
 if (!mino || gate?.open !== false) {
   // stateful dungeon: a prior kill leaves the boss on his 900s timer and the
   // gate open — restage via /spawnmob (spawnMob → onBossSpawned reseals)
@@ -315,7 +315,7 @@ if (!mino || gate?.open !== false) {
   await tp(ws, state, 46, 16);
   ws.send(JSON.stringify({ t: "chat", text: "/spawnmob minotaur_boss 1" }));
   await sleep(1500);
-  mino = findMob(state, "Gravelord Minotaur");
+  mino = findMob(state, "The Gravelord");
 }
 // portalState carries {target, open} — the /spawnmob restage broadcasts the reseal
 const sealedState = [...state.portalStates].reverse().find((p) => p.target === "ossuary_galleries");

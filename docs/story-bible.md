@@ -97,11 +97,15 @@ What people actually do with them:
 - **Travel.** The arches simply connect places. Caravans used them before the
   Dividing; tribute carts used them during; hunters use them now. Every arch
   hums faintly. Every arch pair is stable. Nobody has ever made a new one.
-- **The arches.** Auto-stamped portal arches should eventually read as
-  natural formations — weathered standing stone, crystal-seamed rock — not
-  masonry (owner follow-up; client/builder polish item). Story supports this:
-  people BUILT AROUND the arches (Greywatch's wall bows outward to enclose
-  its cluster), never the reverse.
+- **The arches.** **SHIPPED (batch 9, 2026-07-10):** the auto-stamped portal
+  arch now reads as a NATURAL formation — weathered standing rock (stone
+  mottled with dark stone, deterministic) with blue-crystal glints where the
+  masonry arch used to carry torches, plus a crystal shard at each standing
+  stone's foot. The solid volume is cell-identical to the old arch (BFS/
+  pairing/apron behavior untouched); this moved every room's golden grid hash
+  in the one documented mass GOLDEN_UPDATE (goldenhash.test.ts). Story
+  supports this: people BUILT AROUND the arches (Greywatch's wall bows
+  outward to enclose its cluster), never the reverse.
 - **Travel culture & superstition.** You don't whistle under an arch. You
   step through right-foot-first if you plan to come back. Coins are left on
   the portal-stone for the returned dead (§5); the coins are always gone by
@@ -178,6 +182,27 @@ candlelight. This tension is ambient in townsfolk dialog, never a quest.
 > four, the crypt stair at six"); the hub's arch labels read "The Kingless
 > Wood" / "The Sunscour" / "The Sunken Crypt" (Tithe Crypt rename [PROPOSAL]
 > not yet shipped) / "The Freehold".
+
+> **SHIPPED 2026-07-10 (batch 9, the story dress pass):** room DISPLAY names
+> now ship on the wire (`welcome.roomName`) and the client HUD/minimap show
+> them — arriving anywhere says the bible name, not the room id. Display
+> renames landed with it: forest → **"The Kingless Wood"**, desert → **"The
+> Sunscour"**, gloomfen → **"The Gloomfen"**, grounds → **"The Freehold"**
+> (dungeon keeps "Sunken Crypt" — the Tithe Crypt rename stays [PROPOSAL];
+> crypt_depths keeps "Vaults of Morvane" — the Pale Court rename belongs to
+> the unshipped N3 rework). The §7 non-proposal mob re-themes landed too:
+> `bandit` → "Greenhood Cutthroat", `bandit_enforcer` → "Greenhood
+> Enforcer", `marauder` → "Ashpicker Marauder", `minotaur_boss` → "The
+> Gravelord" (`cinder_golem_boss` stays "Furnace Golem" — Vulkhar is
+> [PROPOSAL]). Dialog additions shipped: Bren's Sunscour guidance ("The
+> Sunscour runs four to seven... Water is worth more than gold out there.
+> Carry both."), Mara's horn-refusal line ("Pelts, tusks, gel — I pay board
+> rate on all of it. Not the horn..."), Corvyn's bounty-paperwork line
+> ("Sell your proof to any shop in the city... The paperwork is my hunt. Go
+> run yours.") + the Charter credo ("Obedience failed. Defiance failed.
+> We're the third thing."), and Ysolde's tithe-collector foreshadowing (§4
+> table line 5, verbatim). Item flavor text shipped for all 21 trophies
+> (§9). Keeper Fenn [PROPOSAL] remains unshipped (new NPC, unratified).
 
 ### Hub NPC recast table (every existing id, plus Maera & Ysolde)
 
@@ -306,10 +331,10 @@ smuggling tunnel east (the Run).
 > batch 4): the east door exited to the FOREST NORTH until the Strangler's
 > March landed — `greenhood-out` now targets `stranglers_march` at the
 > chute-mouth mound (28.5,148.5) in the march's west, and the trapdoor
-> mound + stump-lantern dressing moved there with it (§6 W3). "Corvyn will want to
-> read it first" flavor text NOT yet on the trophy (item flavor text is a
-> story-dress-pass item). Proven by `scripts/greenhood-probe.mjs` (full arc
-> live) + screenshots tools/out/greenhood-*.png.
+> mound + stump-lantern dressing moved there with it (§6 W3). "Corvyn will
+> want to read it first" flavor text SHIPPED (batch 9, resolved). Proven by
+> `scripts/greenhood-probe.mjs` (full arc live) + screenshots
+> tools/out/greenhood-*.png.
 
 **The company's smuggling tunnel** — a 96² preset warren of shored galleries,
 cache-rooms, and a buried pre-Dividing cellar the company broke into and
@@ -372,8 +397,8 @@ agents' payments move west. One-way exits to the Marchland (─▶).
 > `march-forest`, `march-gloomfen` ⇄ gloomfen `gloomfen-march` (the old
 > forest gate, retargeted data-only). Proven by `scripts/march-probe.mjs`
 > (full arc live) + screenshots tools/out/march-{gate,transition,elder,
-> mound}-*.png. DEVIATIONS: trophy flavor text not shipped (story-dress
-> pass item, as W2); the Elder shares the `mantrap` sprite per this
+> mound}-*.png. DEVIATIONS: trophy flavor text SHIPPED (batch 9, resolved);
+> the Elder shares the `mantrap` sprite per this
 > entry's "arena framing, not scale" call — boss readability at the
 > farmstead is an owner feel-check.
 
@@ -1157,6 +1182,18 @@ exit — the most dramatic door in the game (proposal reconnection #3).
 
 ### The Freehold (`grounds`, was "Building Grounds") · safe · building room
 
+> **SHIPPED 2026-07-10 (batch 9):** display name → **"The Freehold"** (HUD
+> shows it; hub arch already read "The Freehold", the return arch reads
+> "Greywatch — the Last Free City" — both verified). Light dressing landed:
+> a 1-high palisade boundary fence across the portal approach with a
+> 3-wide gate gap (symbolic and jumpable — a fence in a building room must
+> never trap a builder), a notice-board tableau beside the gate (log posts,
+> plank board, reading lamp), and the claim-stone at the room's center
+> (stone plinth, marble cap, Charter banner on a path circle). The
+> tithe-road-plowed-under dress was SKIPPED (kept small on purpose). The
+> three user-facing "Building Grounds" strings (build-deny chat line, client
+> flash, tooltip hint) now say "the Freehold".
+
 **The first acre back.** Keep working name **"The Freehold"** — the Charter
 petitioned, the Council shrugged, Jib planted a fence: the first ground
 formally claimed BACK from the divided world. Building here is the story:
@@ -1284,7 +1321,24 @@ opens over exactly one main boss's body.
 Zero mechanics change (owner decision): trophies sell to vendors exactly as
 today — the FICTION is that selling proof anywhere in Greywatch "collects
 the bounty" (the Charter reimburses the merchants; Corvyn has one dialog
-line about the paperwork). Description re-themes ride any content batch:
+line about the paperwork — shipped, batch 9). Description re-themes ride
+any content batch:
+
+> **SHIPPED 2026-07-10 (batch 9):** `ItemDefSchema` gained optional `desc`;
+> the tooltip renders it as a muted wrapped line under the name. ALL 21
+> shipped trophies carry their §9/§6 lines verbatim (test-enforced:
+> items.test.ts requires a desc on every trophy AND greps every desc against
+> the mysteries register — no portal talk, no far door, "tyrant" only ever
+> after "first"). Four lines were AUTHORED this batch for trophies the bible
+> had no words for, recorded here as canon:
+> - `boar_tusk` — "Bounty proof, wood mark. Every boar is some king's
+>   property, technically. Mara doesn't ask."
+> - `raptor_talon` — "Bounty proof, sand mark. The pride runs raptors as
+>   beaters. The Charter pays for fewer beaters."
+> - `wallbreaker_clasp` — "Off the yoke of the beast that broke Valdrenn's
+>   gates. Gorren can't name the metal. The Charter pays anyway."
+> - `osmunds_gauntlet` — "Ser Osmund's. He held the door forty years past
+>   the end of it. Maera wrote down the part that mattered."
 
 - `slime_gel` — "Bounty proof, wood mark. Pays better if it hasn't leaked."
 - `wolf_pelt` — "Bounty proof, wood mark. Winter-thick. Kess buys these."

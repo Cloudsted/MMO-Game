@@ -17,7 +17,7 @@ import { loadEnv, makeWorldTracker, ROOT, sleep } from "./lib.mjs";
 loadEnv();
 const MODIFIERS = JSON.parse(readFileSync(resolve(ROOT, "shared", "modifiers.json"), "utf8").replace(/^﻿/, ""));
 const CAPS = JSON.parse(readFileSync(resolve(ROOT, "shared", "constants.json"), "utf8").replace(/^﻿/, "")).items.mods.caps;
-const MASTER = `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
+const MASTER = process.env.MMO_MASTER_ORIGIN ?? `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
 let failures = 0;
 const ok = (cond, label) => {
   console.log(`${cond ? "PASS" : "FAIL"}  ${label}`);

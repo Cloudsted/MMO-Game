@@ -706,7 +706,7 @@ export class RoomSim {
 
   handleBlockPlace(session: PlayerSession, slot: number, x: number, y: number, z: number): void {
     if (!this.def.flags.buildingEnabled) {
-      this.system(session, "Building isn't allowed here — try the Building Grounds.");
+      this.system(session, "Building isn't allowed here — try the Freehold.");
       return;
     }
     if (session.entity.combat!.act === "dead") return;
@@ -1081,6 +1081,7 @@ export class RoomSim {
     send({
       t: "welcome",
       roomId: this.def.id,
+      roomName: this.def.name, // display name — the HUD/minimap show this, never the id
       selfId: entity.id,
       name: character.name,
       sprite: entity.renderable.sprite, // client casts the local player's shadow with it

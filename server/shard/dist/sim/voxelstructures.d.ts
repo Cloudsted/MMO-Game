@@ -68,12 +68,22 @@ export declare class Builder {
     /** Actual BUILT surface at a column (highest solid block y) — authored
      *  ground included, where g() only knows the natural noise. */
     groundAt(x: number, z: number): number;
-    /** Stone portal archway: two pillars + lintel, plus a path apron.
-     *  Arches stamp AFTER the authored builders, so a portal standing on dug or
-     *  raised ground (the Wellhead crater pan, the Maw basin) must anchor to the
-     *  BUILT surface — the natural g() would float it 8-16 blocks in the air.
-     *  The >2 guard keeps every portal on natural/flattened ground on the
-     *  byte-identical legacy path (golden-hash-verified). */
+    /** NATURAL portal arch (owner canon rule 1, deferred since day one and paid
+     *  in the batch-9 story dress pass: the arches were never BUILT — weathered
+     *  standing rock, crystal-seamed, not masonry; people built around them).
+     *  The SOLID volume is cell-identical to the old masonry arch — pillars at
+     *  ±2 (fl..fl+3), spanning slab at fl+4, capstone at fl+5 — so BFS/pairing/
+     *  apron behavior is untouched. Only materials changed (stone weathered with
+     *  dark_stone bites, deterministic via hash2), the pillar-top torches became
+     *  blue-crystal glints (non-solid glow in the SAME cells), and one crystal
+     *  shard grows at each pillar's foot (non-solid cross on the apron).
+     *  Anchoring keeps the batch-2 rule: arches stamp AFTER the authored
+     *  builders, so a portal on dug/raised ground (the Wellhead crater pan, the
+     *  Maw basin) anchors to the BUILT surface via groundAt() — the natural g()
+     *  would float it 8-16 blocks in the air; the >2 guard keeps portals on
+     *  natural/flattened ground on the legacy anchor path.
+     *  NOTE: this restyle moved EVERY room's golden grid hash — the one
+     *  documented mass GOLDEN_UPDATE (goldenhash.test.ts, 2026-07-10). */
     portalArch(px: number, pz: number, alongX: boolean): void;
     /** Thatch-roofed plank house with log posts, windows, a torch inside. */
     house(x0: number, z0: number, w: number, d: number, groundY: number, doorSide: "n" | "s" | "e" | "w"): void;

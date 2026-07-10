@@ -228,3 +228,50 @@ describe("equipment wire schemas", () => {
     expect(withEquip.t === "ticket" && withEquip.character.equipment![1]!.mods).toEqual({ thorns: 3 });
   });
 });
+
+/**
+ * STORY-DRESS CANON GUARD (world-redesign batch 9 — the flavor-text pass).
+ * Item flavor lines are trophies-as-receipts: each one must TEACH a world
+ * fact, and none may violate the Deliberate Mysteries register
+ * (story bible §10): no line names the First Tyrant (a title, never a
+ * proper name — the batch-8 white_waste guard, extended to item text),
+ * no line explains a portal, and no line opens the far door.
+ */
+describe("item flavor text — bible §9 bounty-proof lines + mysteries register", () => {
+  const BOUNTY_PROOFS = [
+    "slime_gel", "wolf_pelt", "boar_tusk", "raptor_talon", "venom_sac",
+    "ancient_coin", "ember_core", "spirit_essence", "bone_charm", "war_medal",
+    "royal_seal", "sundered_crown", "spiral_horn", "greenhood_ledger_page",
+    "strangler_heartroot", "undertide_beak_shard", "kiln_gallstone",
+    "wallbreaker_clasp", "osmunds_gauntlet", "unfinished_sigil", "the_winter_tithe",
+  ];
+
+  it("every trophy is a legible bounty receipt (nonempty desc)", () => {
+    for (const id of BOUNTY_PROOFS) {
+      const def = reg.items[id];
+      expect(def, id).toBeDefined();
+      expect(def!.kind, id).toBe("trophy");
+      expect(def!.desc && def!.desc.length > 10, `${id} needs a flavor line`).toBe(true);
+    }
+    // and nothing tagged trophy shipped without one
+    for (const [id, def] of Object.entries(reg.items)) {
+      if (def.kind === "trophy") expect(def.desc, `trophy ${id} has no desc`).toBeTruthy();
+    }
+  });
+
+  it("no desc breaks the mysteries register (§10.1 portals, §10.3 the First, §10.5 the far door)", () => {
+    for (const [id, def] of Object.entries(reg.items)) {
+      if (!def.desc) continue;
+      const text = def.desc.toLowerCase();
+      // §10.3: the First Tyrant is a TITLE — "tyrant" only ever follows "first"
+      let i = -1;
+      while ((i = text.indexOf("tyrant", i + 1)) >= 0) {
+        expect(["first ", "first-", "first_"], `${id}: names the tyrant`).toContain(text.slice(Math.max(0, i - 6), i));
+      }
+      // §10.1: nobody explains a portal, ever — item text doesn't even mention them
+      expect(text, `${id}: item text must not touch the portal mystery`).not.toMatch(/portal|the arches|arch-stone/);
+      // §10.5: the far door is shown, never opened — and never written about
+      expect(text, `${id}: the far door stays shut`).not.toMatch(/far door|past the waste|beyond the waste|north of the waste/);
+    }
+  });
+});

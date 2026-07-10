@@ -27,6 +27,9 @@ export declare const EQUIPPABLE_KINDS: readonly ["weapon", "armor", "trinket"];
 export declare function isEquippable(kind: string): boolean;
 export declare const ItemDefSchema: z.ZodObject<{
     name: z.ZodString;
+    /** One flavor line (story bible §9 voice) — the tooltip renders it muted
+     *  under the name. Trophies-as-bounty-proof carry these; anything may. */
+    desc: z.ZodOptional<z.ZodString>;
     /** trophy: no use action — sell-fodder. armor: wearable (slot+armor value).
      *  trinket: offhand-only passive modifier carrier (no armor, no durability). */
     kind: z.ZodEnum<["weapon", "consumable", "building", "trophy", "misc", "armor", "trinket"]>;
@@ -77,6 +80,7 @@ export declare const ItemDefSchema: z.ZodObject<{
     stack: number;
     icon: [number, number];
     armor?: number | undefined;
+    desc?: string | undefined;
     ability?: string | undefined;
     damage?: number | undefined;
     slot?: "head" | "chest" | "legs" | "feet" | "offhand" | undefined;
@@ -98,6 +102,7 @@ export declare const ItemDefSchema: z.ZodObject<{
     stack: number;
     icon: [number, number];
     armor?: number | undefined;
+    desc?: string | undefined;
     ability?: string | undefined;
     damage?: number | undefined;
     slot?: "head" | "chest" | "legs" | "feet" | "offhand" | undefined;

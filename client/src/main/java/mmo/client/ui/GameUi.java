@@ -803,10 +803,12 @@ public class GameUi {
         font.draw(batch, mana + "/" + maxMana, hbX + hbW / 2f + 12, barY + barH - 3);
         font.getData().setScale(1f);
 
-        // room name over minimap
+        // room name over minimap — display names can be long ("Valdrenn, the
+        // Fallen Capital"), so clamp the centered label onto the screen
         layout.setText(font, roomName + (safeZone ? "  (safe)" : ""));
         font.setColor(0.8f, 0.9f, 1f, 0.9f);
-        font.draw(batch, layout, mmX + mmSize / 2f - layout.width / 2f, mmY - 6 + 0);
+        float rnX = MathUtils.floor(Math.max(4f, Math.min(mmX + mmSize / 2f - layout.width / 2f, w - layout.width - 4f)));
+        font.draw(batch, layout, rnX, mmY - 6 + 0);
 
         // chat panel (bottom-left)
         float cy = 84;
@@ -997,6 +999,11 @@ public class GameUi {
 
         List<TipLine> tip = new ArrayList<>();
         tip.add(new TipLine(capitalized(s.rarity) + " " + def.name, reg.rarityColor(s.rarity), 1f));
+        // flavor line (bible §9 voice): muted, word-wrapped under the name block
+        if (def.desc != null) {
+            Color muted = new Color(0.62f, 0.6f, 0.55f, 1f);
+            for (String line : wrapText(def.desc, 42)) tip.add(new TipLine(line, muted, 1f));
+        }
         float rarityMult = reg.rarityMults.getOrDefault(s.rarity, 1f);
         if ("weapon".equals(def.kind)) {
             if (def.damage > 0) {
@@ -1055,14 +1062,15 @@ public class GameUi {
             "Regenerates " + (int) def.effectHotTotal + " health over " + (int) (def.effectHotDurMs / 1000) + "s",
             new Color(0.6f, 1f, 0.6f, 1f), 1f));
         if (def.effectCureDot) tip.add(new TipLine("Cures poison", new Color(0.65f, 0.95f, 0.5f, 1f), 1f));
-        if ("trophy".equals(def.kind)) tip.add(new TipLine("Trinket — merchants pay well.", new Color(0.75f, 0.7f, 0.85f, 1f), 1f));
+        // §9 fiction: selling proof anywhere in Greywatch "collects the bounty"
+        if ("trophy".equals(def.kind)) tip.add(new TipLine("Bounty proof — any merchant collects it.", new Color(0.75f, 0.7f, 0.85f, 1f), 1f));
         if (def.block != null) tip.add(new TipLine("Places: " + capitalized(def.block.replace('_', ' ')), new Color(0.8f, 0.85f, 0.7f, 1f), 1f));
         int worth = Math.max(1, Math.round(def.value * rarityMult));
         tip.add(new TipLine("Worth " + worth + "g", new Color(1f, 0.85f, 0.4f, 1f), 1f));
         String hint = switch (def.kind) {
             case "weapon" -> "RMB equip";
             case "consumable" -> "RMB use";
-            case "building" -> "LMB places (Building Grounds)";
+            case "building" -> "LMB places (The Freehold)";
             case "armor", "trinket" -> "RMB equip · RMB worn = unequip";
             default -> null;
         };
@@ -1138,6 +1146,22 @@ public class GameUi {
         }
         font.getData().setScale(1f);
         batch.end();
+    }
+
+    /** Greedy word-wrap for flavor lines — tooltips draw one TipLine per row. */
+    private static List<String> wrapText(String text, int maxChars) {
+        List<String> lines = new ArrayList<>();
+        StringBuilder cur = new StringBuilder();
+        for (String word : text.split(" ")) {
+            if (cur.length() > 0 && cur.length() + 1 + word.length() > maxChars) {
+                lines.add(cur.toString());
+                cur.setLength(0);
+            }
+            if (cur.length() > 0) cur.append(' ');
+            cur.append(word);
+        }
+        if (cur.length() > 0) lines.add(cur.toString());
+        return lines;
     }
 
     /** Roll quality color, keyed on the same rounded % the text shows. */

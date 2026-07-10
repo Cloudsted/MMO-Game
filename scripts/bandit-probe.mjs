@@ -23,7 +23,7 @@ import WebSocket from "ws";
 import { loadEnv, sleep } from "./lib.mjs";
 
 loadEnv();
-const MASTER = `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
+const MASTER = process.env.MMO_MASTER_ORIGIN ?? `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
 const USER = "bandit_probe";
 const ADMIN_KEY = process.env.ADMIN_KEY ?? "";
 
@@ -129,7 +129,7 @@ cmd("/spawnmob bandit 1");
 await sleep(600);
 cmd("/spawnmob hollow_cowl 1 11");
 await sleep(1600);
-const victim = byName("Thornhollow Cutthroat")[0];
+const victim = byName("Greenhood Cutthroat")[0];
 const priest = byName("Priest")[0];
 
 if (!victim || !priest) {
@@ -173,10 +173,10 @@ if (!victim || !priest) {
 // ---------------------------------------------------------------- 2
 console.log("\n2. every new mob spawns, replicates, and carries its new sprite");
 const ROSTER = [
-  ["bandit", "Thornhollow Cutthroat", "bandit"],
+  ["bandit", "Greenhood Cutthroat", "bandit"],
   ["greenhood_poacher", "Greenhood Poacher", "bandit_poacher"],
   ["powder_brigand", "Powder Brigand", "bandit_bombardier"],
-  ["bandit_enforcer", "Bandit Enforcer", "bandit_enforcer"],
+  ["bandit_enforcer", "Greenhood Enforcer", "bandit_enforcer"],
   ["hollow_cowl", "Hollow Cowl", "bandit_mystic"],
   ["thrace_redcap", "Thrace the Redcap", "bandit_chief"],
   ["camp_cur", "Camp Cur", "camp_cur"],
@@ -207,7 +207,7 @@ check(/Bloodletter/.test(e2), "L12 cutthroat is a Bloodletter", e2);
 check(/thrust/.test(e2) && !/bandit_slash/.test(e2), "L12 cutthroat swapped slash for thrust", e2);
 
 const blood = byName("Bloodletter")[0];
-const baseCut = byName("Thornhollow Cutthroat").find((m) => m.level === 3);
+const baseCut = byName("Greenhood Cutthroat").find((m) => m.level === 3);
 check(blood?.level === 12, "scaled cutthroat replicates L12", `level=${blood?.level}`);
 check(!!baseCut && !!blood && blood.maxHp > baseCut.maxHp * 2,
   "scaled cutthroat has >2x base hp", `${baseCut?.maxHp} -> ${blood?.maxHp}`);

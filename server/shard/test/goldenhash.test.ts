@@ -79,30 +79,49 @@ const UPDATE = process.env.GOLDEN_UPDATE === "1";
  *  climb); broken_court FEATURES held (its treasury cache is unchanged —
  *  the waste's two cache_royal wings live in the NEW entry). Every other
  *  room held byte-identical.
+ *
+ *  ═══ 2026-07-10 BATCH 9 — THE ONE LEGITIMATE MASS GOLDEN_UPDATE ═══════════
+ *  The NATURAL PORTAL ARCH restyle (owner canon rule 1, deferred since day
+ *  one: arches are weathered rock + blue-crystal glints, not masonry —
+ *  voxelstructures.ts portalArch) touches the auto-stamped arch at EVERY
+ *  portal, so EVERY portal-bearing room's GRID hash moved in one recorded
+ *  sweep. The verification that this update hides nothing else:
+ *    · atelier (the only room with NO portals) is BYTE-IDENTICAL — grid AND
+ *      features — proving the sweep is the arch change and only the arch
+ *      change (plus grounds, which also took the batch-9 Freehold dressing:
+ *      boundary fence + notice board + claim-stone).
+ *    · every room's FEATURES hash HELD (scatter/caches/bindings run before
+ *      arches and don't read arch blocks).
+ *    · the arch's SOLID volume is cell-identical to the old masonry arch, so
+ *      every BFS/pairing/apron/reachability test passed UNMODIFIED.
+ *  Do not cite this entry as precedent for updating hashes you can't
+ *  explain room-by-room — its legitimacy IS the atelier/features control.
+ *  ══════════════════════════════════════════════════════════════════════════
+ *
  *  atelier/dungeon/grounds/hub/maw
  *  share a features hash: it is the hash of the EMPTY ScatterResult — no
  *  prefab scatter. greenhood_run has no scatter either, but its authored
  *  caches ride the features handle, so its hash differs.) */
 const GOLDEN: Record<string, { grid: string; features: string }> = {
   atelier: { grid: "a5a2f7b6d3f36a836370c123b136e9db477cda33", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
-  broken_court: { grid: "0878f14fc5d0d7a2fa973e305ca5301bd38cc324", features: "35d68df7bb65002ec459140d1219f1548baff40e" },
-  cinderrift: { grid: "3f559fbb5131ec058becb54bdb2c4ff5fbaf265e", features: "64fd739a989b4a5014c437d9e235aa6c81726653" },
-  crypt_depths: { grid: "4ebf6b0f596bb8fba7690bb48aec26cc6f393213", features: "2f8b38a89da3d19331960f0781803646b57af960" },
-  desert: { grid: "aff409b0bd4eec1683fd5e8b1163268d045ebe1a", features: "f908e575dd8e4b5f1fea511bc7a034d1a02ccb55" },
-  dungeon: { grid: "ca34988c68a1b7720ef8bcaeda7c6f835fd1d9ec", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
-  emberfells: { grid: "1d958a3c423a87ccfee68c2f0a42f86088ba17fd", features: "4608f78baf0ca48c66686e051d638693a41ce3aa" },
-  forest: { grid: "ebadbef57df8650f9f564bcf2632c8190ce8b6dd", features: "4ce7137d3ce38a1e7f0981d8342b2f57b3060ed4" },
-  foundry: { grid: "7aff669f1a485d8cb718ddf625581d8ef205f8d1", features: "6c4725467c0187a91bc129fdddf81b885bc8b3db" },
-  gloomfen: { grid: "5802ef6c1b976fe379cffee154e0317c8fa1a797", features: "986429b8853b04c7dd3a5dc6c6c37572f0201e1f" },
-  greenhood_run: { grid: "6892ee8672400bd3f7f41b11959d9f9ab3165cb4", features: "3d75f2e784f6244c6660eba46e1709d9b4836f29" },
-  grounds: { grid: "493920fcf3e0e14da80e2661dca4cf63dbcc7b14", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
-  hub: { grid: "4064b6b1c8ad30e642ba19a2d150fb5d2174345b", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
-  maw: { grid: "75b9919c5b5493a24bc0fcd6295950063edc63be", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
-  ossuary_galleries: { grid: "93449a63b6693ded27ebf70ca746a35fde76a247", features: "5024f7cc83d4530fd86438cdea1fd188a55473b0" },
-  stranglers_march: { grid: "0e82fe8cd0cc9cd0d28406e0e0a2aff14d8ec3e7", features: "e9737c696504c7800346841a71b1a234b1a61134" },
-  sundered_city: { grid: "cbbb29c3b2ba66a949be8f3cf1e7a1668dd4a953", features: "bf6a11e455e64f48a5650907e6b6ee9dbba02aca" },
-  sundering_fields: { grid: "b1056c9c6aeecb85da195bd857e577e6e9b2a711", features: "450d747d7d4032586dc92699a8b1bc289ce1be3b" },
-  white_waste: { grid: "e36ecc1920a0a1273db69b13f7a00dff4710715c", features: "ceda4a5d28bc4038b72c26f109d40b1e43b43d79" },
+  broken_court: { grid: "11488a7bc783bad4eba322569a31c3408f3dc0e7", features: "35d68df7bb65002ec459140d1219f1548baff40e" },
+  cinderrift: { grid: "bd598f680867da26b0de536cb97614a301ef5a15", features: "64fd739a989b4a5014c437d9e235aa6c81726653" },
+  crypt_depths: { grid: "e53667d642d3ad6d14815ab2d2a6e5216def3160", features: "2f8b38a89da3d19331960f0781803646b57af960" },
+  desert: { grid: "eca195a445488168e3f6b00cbb6ad0882cd17e11", features: "f908e575dd8e4b5f1fea511bc7a034d1a02ccb55" },
+  dungeon: { grid: "d877dc5637398046bc6f4cf37c3384a366cb09ee", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
+  emberfells: { grid: "21b8a45d7b87817dd6fda1e849c0dbbd18cbfd31", features: "4608f78baf0ca48c66686e051d638693a41ce3aa" },
+  forest: { grid: "ebbb73d83f366b050c0bfff5e19ca79390fc13d4", features: "4ce7137d3ce38a1e7f0981d8342b2f57b3060ed4" },
+  foundry: { grid: "3c97b4804675e8666fd54d9a9223098eef5a0532", features: "6c4725467c0187a91bc129fdddf81b885bc8b3db" },
+  gloomfen: { grid: "1030b99171288f0055cce414b32e9f3ccbdb2d7f", features: "986429b8853b04c7dd3a5dc6c6c37572f0201e1f" },
+  greenhood_run: { grid: "e9b2f22aeea06e8188a712f7412ccb5339bf1409", features: "3d75f2e784f6244c6660eba46e1709d9b4836f29" },
+  grounds: { grid: "b693aefd61e55f4d226e8106ff22f4a90741be62", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
+  hub: { grid: "9f57c806ca659d139eaf61123e7c0246ce0ad09a", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
+  maw: { grid: "436940f9ea5cc907647163fc3b29ea1a526b6d3f", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
+  ossuary_galleries: { grid: "f4ebafffc7bb061bd10acc81ae5c391f59652245", features: "5024f7cc83d4530fd86438cdea1fd188a55473b0" },
+  stranglers_march: { grid: "713f923b346674b4b5cf67778204f307a039d9d8", features: "e9737c696504c7800346841a71b1a234b1a61134" },
+  sundered_city: { grid: "52f369e17fc0db469e8b2c4241ddde7415ad8dc6", features: "bf6a11e455e64f48a5650907e6b6ee9dbba02aca" },
+  sundering_fields: { grid: "e887f73bf37cab682198d7ff51eef5d13079dd94", features: "450d747d7d4032586dc92699a8b1bc289ce1be3b" },
+  white_waste: { grid: "0c229fcdaabb032ee2e6b947ff212b0606a678d4", features: "ceda4a5d28bc4038b72c26f109d40b1e43b43d79" },
 };
 
 function hashRoom(world: VoxelWorld): { grid: string; features: string } {

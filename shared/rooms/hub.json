@@ -40,7 +40,8 @@
       "dialog": [
         "Bread for the road, potions for when the road bites back.",
         "Every party I provision goes up on that beam in chalk. The ones that come home, I cross out. Don't make me leave chalk standing.",
-        "The Council still drives cattle to the desert's edge every new moon. Call it 'the arrangement' if you like. I call it feeding the thing that starves us."
+        "The Council still drives cattle to the desert's edge every new moon. Call it 'the arrangement' if you like. I call it feeding the thing that starves us.",
+        "Pelts, tusks, gel — I pay board rate on all of it. Not the horn. If you're carrying Aelthir's horn, keep it wrapped and keep it moving."
       ],
       "shop": { "items": ["bread", "health_potion", "mana_potion", "antidote"], "buys": true }
     },
@@ -86,6 +87,7 @@
         "Three doors out of Greywatch, staggered like the board says: the Kingless Wood at level one, the Sunscour at four, the crypt stair at six. Walk them in that order.",
         "The Kingless Wood first, greenhorn — marks at one through four, and the only crown out there is a poacher's red cap.",
         "Past the wood's north gate lies the Strangler's March — old farmland the fen is drinking. March marks run five to seven. Past the far dyke it's fen rules — eight and up.",
+        "The Sunscour runs four to seven — the pride hunts the surface and the sand hides worse. Water is worth more than gold out there. Carry both.",
         "Die past the wall and the stone brings you home. Your gear stays where you fell — the stone keeps no luggage. Run back quick."
       ]
     },
@@ -122,7 +124,9 @@
       "dialog": [
         "The Charter asks three things: take the mark, bring the proof, tell the truth about what you saw. The last one's hardest.",
         "We are two years old. The tyrants are older than the roads. Plan accordingly — start at the board, left column, top.",
-        "No one has ever felled a king. Understand what it means when it happens — and it WILL — the tribute, the Council, the map, all of it changes. Be the change, hunter."
+        "No one has ever felled a king. Understand what it means when it happens — and it WILL — the tribute, the Council, the map, all of it changes. Be the change, hunter.",
+        "Sell your proof to any shop in the city — Gorren, Mara, whoever pays best. The Charter squares it with them after. The paperwork is my hunt. Go run yours.",
+        "Obedience failed. Defiance failed. We're the third thing."
       ]
     },
     {

@@ -42,7 +42,7 @@
     }
   },
   "bandit": {
-    "name": "Thornhollow Cutthroat",
+    "name": "Greenhood Cutthroat",
     "sprite": "bandit",
     "level": 3,
     "hp": 68,
@@ -211,7 +211,7 @@
     }
   },
   "minotaur_boss": {
-    "name": "Gravelord Minotaur",
+    "name": "The Gravelord",
     "sprite": "minotaur",
     "level": 9,
     "hp": 596,
@@ -595,7 +595,7 @@
     }
   },
   "marauder": {
-    "name": "Warband Marauder",
+    "name": "Ashpicker Marauder",
     "sprite": "marauder",
     "level": 13,
     "hp": 290,
@@ -970,7 +970,7 @@
     }
   },
   "bandit_enforcer": {
-    "name": "Bandit Enforcer",
+    "name": "Greenhood Enforcer",
     "sprite": "bandit_enforcer",
     "level": 4,
     "hp": 127,

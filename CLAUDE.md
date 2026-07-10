@@ -2198,6 +2198,78 @@ show their block tile).
     Consider whether the Waste needs a repair vendor, higher T4/T5
     durability, or that's the intended attrition.
 
+- 2026-07-10 **STORY DRESS PASS + CLOSEOUT** (world-redesign batch 9, the
+  FINAL batch — proposal Part 5 step 9; story bible is the spec, its
+  SHIPPED notes updated in the same batch). The overhaul is COMPLETE.
+  - **Item flavor text** (small engine add): `ItemDefSchema` += optional
+    `desc` (one bible-§9-voiced line); client `ItemRegistry.Item.desc` +
+    the GameUi tooltip renders it as a muted word-wrapped line block under
+    the name (new `wrapText` helper — tooltips draw one TipLine per row;
+    scale 1, no new font scales). ALL 21 trophies carry lines (17 bible
+    verbatim + 4 authored this batch and recorded into §9: boar_tusk,
+    raptor_talon, wallbreaker_clasp, osmunds_gauntlet). The generic trophy
+    tooltip line is now "Bounty proof — any merchant collects it." (§9
+    fiction). **Canon guard test** (items.test.ts): every trophy MUST have
+    a desc, and every item desc is grepped against the mysteries register —
+    "tyrant" only ever after "first", no portal talk, no far door.
+  - **Dialog sweep** (bible §4/§6 diff vs shipped JSONs — a script extracted
+    every quoted bible line and checked presence): shipped Ysolde's line 5
+    (the tithe-collector foreshadowing, verbatim), Bren's Sunscour guidance
+    (marks 4-7 + "water is worth more than gold"), Mara's spiral-horn
+    refusal (the §6 W1 mystery performance), Corvyn's bounty-paperwork line
+    + the Charter credo ("Obedience failed. Defiance failed. We're the
+    third thing."). Keeper Fenn [PROPOSAL] deliberately NOT added (new NPC,
+    unratified). The unshipped Grelmoss/Kaharat gate announces belong to
+    the unbuilt W4/E1 reworks, not dialog.
+  - **Display names**: `welcome` msg += `roomName` (def.name — protocol.ts
+    type + shared/protocol.json + room.ts); client keeps the room ID for
+    audio beds/particles/hub checks and shows `roomDisplay` on the HUD
+    status line + minimap label (label now clamps on-screen — long names
+    like "Valdrenn, the Fallen Capital" used to spill off the right edge).
+    Bible-mandated renames: forest → **The Kingless Wood**, desert → **The
+    Sunscour**, gloomfen → **The Gloomfen**, grounds → **The Freehold**
+    (+ 3 stale "Gloomfen Marsh" portal labels); §7 mob re-themes: bandit →
+    **Greenhood Cutthroat**, bandit_enforcer → **Greenhood Enforcer**,
+    marauder → **Ashpicker Marauder**, minotaur_boss → **The Gravelord**
+    (probe name-refs updated). NOT renamed (unratified [PROPOSAL] /
+    unshipped reworks): "Vulkhar" (cinder_golem_boss), "Tithe Crypt"
+    (dungeon), "The Pale Court" (crypt_depths).
+  - **NATURAL PORTAL ARCHES** (owner canon rule 1, deferred since day one):
+    `portalArch` restyled — weathered standing rock (stone mottled with
+    dark_stone via hash2, deterministic) + blue-crystal glints in the exact
+    cells the torches held + a crystal shard at each stone's foot. SOLID
+    volume cell-identical to the old masonry arch → every BFS/pairing/
+    apron test passed UNMODIFIED; batch-2 groundAt anchoring kept. This
+    moved EVERY portal-bearing room's golden grid hash — the one documented
+    mass GOLDEN_UPDATE (goldenhash.test.ts): atelier (no portals) held
+    byte-identical and ALL features hashes held, which is the proof the
+    sweep hides nothing. room.test.ts's arch test now asserts rock + glints
+    + no masonry/torches in the arch volume. Verified day+night screenshots
+    (tools/out/arch-day-2.png, arch-night-2.png).
+  - **The Freehold**: display name + light dressing in buildGroundsPavilion
+    (1-high jumpable palisade fence across the portal approach w/ 3-wide
+    gate gap, notice-board tableau by the gate, claim-stone at room center:
+    stone/marble/banner). The 3 user-facing "Building Grounds" strings now
+    say "the Freehold". Return-portal labels verified both ways.
+  - **[::1] playbook hardening**: EVERY script in scripts/ now honors
+    `MMO_MASTER_ORIGIN` (batch 6 started the rollout piecemeal; batch 9
+    finished it — 21 more scripts patched).
+  - **Fixes the closeout regression forced**: (1) `applyMove` (mobs.ts) now
+    refuses candidate steps that land ON a leaf block (leaves/dead_leaves) —
+    canopy tops form 1-block staircases and chasing/returning mobs climbed
+    them one leaf at a time until they stood on treetops (mob-floor-probe
+    caught 6/321 mobs treed in the redesigned forest/desert; a mob already
+    ON leaves may still walk off, so nothing strands). (2) `enchant-probe`
+    modernized to the weaving era (it had been stale since DEEP MAGIC
+    WEAVING: 12 tiered offers + maxTier, `tier` on the enchant msg, tiered
+    price mirror, capacity refusal instead of the dead one-enchant rule).
+    (3) minimap room label clamps on-screen (long display names spilled
+    off the right edge).
+  - Verified: typecheck, **677 vitest** green ×2 (goldens stable across two
+    runs), the FULL-WORLD regression sweep + world tour (scorecard in
+    Current state), tooltip/HUD/arch screenshots (tools/out/batch9-*.png,
+    arch-*.png, tour-*.png).
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -2285,179 +2357,65 @@ Quick reference only — the stories behind these (and more) live in
 
 ## Current state
 
-- 2026-07-10 **THE WHITE WASTE (world-redesign batch 8, WORKING TREE — not
-  committed)** — room 19, the FINALE, the snow/ice debut (see the
-  decisions-log entry + story bible §6 W8 SHIPPED note): a 160² preset
-  glacial trough above Valdrenn behind the Broken Court's now-OPENING
-  breach (King's death → announce → openPortal → 60 s window — the
-  Morvane escape-gate pattern; the court-side gate counts down while the
-  waste cycles). The climb-out shelf → the paved bending tribute-road past
-  frozen tribute from every region → the Rime Wardens' spatially-gated
-  arena pass (L21 twins, pair hp ≈ one L21 solo boss, ×4 xp each) → the
-  unpaid pile → the ice amphitheater tribute-court (2× cache_royal wings)
-  → **THE FIRST TYRANT** L24 (UNNAMED by canon, test-enforced; hp 4829 /
-  dmg 86 = Vaelric's group anchor ×1.14/1.11⁵; xp 19164 finale ×12; tops
-  every boss in the game; pillars + predictive slowing AoE + leveled
-  collector/shade rallies; guaranteed mythic_relic + `the_winter_tithe`
-  value 500) → THE FAR DOOR (ice slab, shown-never-opened, BFS-enforced).
-  Frost band: pale_courser L20 + snow_harpy L21 (new, sprites VERIFIED) +
-  wraith r20 "Waste-Shade" + frostplate r21 "Tithe-Collector" (both
-  re-anchored to the curve exactly; shipped lower-room resolves
-  byte-identical, test-locked). Verified: typecheck, **675 vitest** (31
-  new), goldens = broken_court grid + NEW white_waste only, verify-icons 0
-  errors, rank-coverage 31/37, client compiles (direct javac — the [::1]
-  playbook again), **waste-probe.mjs FULL PASS** (the whole two-room arc
-  live incl. both cycles; 3 bots is the winning raid count) + city-probe
-  two-stage + travel-bot regressions, 5 screenshot scenes
-  (tools/out/waste-*.png). Owner feel-checks in the decisions-log entry.
-
-- 2026-07-10 **THE SUNDERING FIELDS + THE FOUNDRY + MORVANE'S ESCAPE GATE
-  (world-redesign batch 7, committed 6b23be3)** — rooms 17 and 18
-  and the graph's final reconnections (see the decisions-log entry): **The
-  Sundering Fields** (288² proc+setpieces, L11-13, survey seed 92001)
-  splices gloomfen⇄city on BOTH roads and adds the fields⇄foundry edge —
-  north-facing trench crescents with firing steps/berms/stakes, the
-  sledge-furrow ending at the war-sledge arena, mustering stones, the toll
-  arch's chains, besieger camps, the mass barrow; **Old Wallbreaker** (L14,
-  boss_giant_1 sprite VERIFIED, hp 1083 = the golem's peer, xp 4195,
-  slam/siege-charge/rubble-shock, guaranteed `wallbreaker_clasp`) + **the
-  Barrow Alpha** (L13 side boss, ×5 xp 2254, interruptible no-loot
-  `barrow_howl`). **The Foundry** (160² preset interior, L14-16, stateful)
-  behind a NEW sealed cinderrift gate (opens on the Furnace Golem's death,
-  bible announce verbatim) and junctioned to the fields + the city's east
-  breach (authored 240,128 landing preserved) — the assembly line ends at a
-  headless throne-sized frame; **THE UNFINISHED KING** = forge_prototype
-  elevated by an L17 boss rank using NEW rank `name`+`loot` overrides
-  (engine add: resolveMob + kill-time loot via resolvedMobOf; cinderrift's
-  base-14 prototypes byte-identical) — 1495 hp / 6251 xp / guaranteed
-  `unfinished_sigil`. **The escape gate**: crypt_depths' far gate boots
-  sealed, TEARS open on Morvane's death (verbatim announce + the 60 s
-  collapse IS the window), one-way authored landing at Valdrenn's new
-  collapsed postern (210.5,110.5). Verified: typecheck, **644 vitest** (50
-  new; goldens = 2 NEW + cinderrift/crypt_depths/sundered_city documented
-  dressing deltas, all else held), client compiles, fields-probe +
-  foundry-probe + the escape-extended boss-events-probe ALL PASS live +
-  travel-bot/march-probe/full city-probe regressions, 5 screenshot scenes
-  (tools/out/fields-trenches6-3, fields-wallbreaker4-2, fields-
-  wallbreaker3-2, foundry-floor-1/2, foundry-king-2, escape-landing-3).
-  NOTE: this session's sandbox fenced IPv4 loopback AGAIN — the batch-6
-  [::1] playbook (MMO_MASTER_ORIGIN / SHARD_GAME_BIND / session mongod on
-  ::1:27018, direct-javac client) ran the whole verification. Owner
-  feel-checks in the decisions-log entry.
-
-- 2026-07-09 **THE BROKEN COURT SPLIT (world-redesign batch 6, WORKING TREE —
-  not committed)** — the 16th room (see the decisions-log entry): Vaelric's
-  throne complex split out of the Sundered City into **`broken_court`** (96²
-  preset cycling finale: forecourt → processional → the restaged throne hall
-  with the set table + THE BREACH as dressing; ephemeral, 900 s downtime,
-  60 s collapse on the King's death; Vaelric at L19 = 2508 hp / 11798 xp
-  exactly on the finale formula via a rank xpMult, L18 rally waves), and
-  **Valdrenn, the Fallen Capital** is now STATEFUL at L14-16 behind **Ser
-  Osmund, the Gatekeeper** (new L17 pure-melee duelist, black-knight sprite,
-  6251 xp / 1495 hp on the formulas, guaranteed `osmunds_gauntlet`) holding
-  the keep-turned-gatehouse; his death opens `city-court`, his 900 s respawn
-  reseals it. Bible dressing: Maera's camp, proclamation banners, the
-  mountain BREACH GLIMPSE over the castle. Verified: typecheck, **589
-  vitest** (28 new; goldens = sundered_city + NEW broken_court only),
-  client compiles, **city-probe.mjs reworked into the two-stage arc — FULL
-  PASS live** (incl. countdown gate, fresh reopen, reseal), travel-bot +
-  ossuary-probe PASS, 4 screenshot scenes (tools/out/court-throne-1,
-  court-king-1, city-gatehouse-1/2, city-street*). NOTE: this session's
-  sandbox fenced IPv4 loopback — the live stack ran over [::1] via new env
-  knobs (MMO_MASTER / MMO_MASTER_ORIGIN / SHARD_GAME_BIND) and a
-  session-local mongod on ::1:27018 (the owner's data untouched); gradle
-  needed a direct-javac fallback. Owner feel-checks in the decisions-log
-  entry.
-
-- 2026-07-09 **THE EMBERFELLS + THE OSSUARY GALLERIES (world-redesign batch
-  5, WORKING TREE — not committed)** — rooms 14 and 15 (see the decisions-log
-  entry): the batch-4 splice recipe on the other two branches. **The
-  Emberfells** (288² volcanic, L8-10, survey seed 91101) splices
-  desert⇄cinderrift — Sunscour gradient, bending haul-road over bone
-  bridges, pour-terraces, and **The Old Kiln** (L11 slag-troll boss:
-  slam/spew/vents + the interruptible ore-gorge; guaranteed
-  `kiln_gallstone`). **The Ossuary Galleries** (128² preset dungeon, L9-11)
-  splices crypt⇄depths behind the (kept) Gravelord gate — S-bent galleries
-  (court → spine → grading-hall → stitchery → cull-rows → down-shaft),
-  **THE Bone Warden at L12** (existing def + boss rank; his L9 dungeon and
-  L14 depths resolves reconciled byte-identical), the hidden Pallid-Mourner
-  chapel (r13 Wrung Shade), 2 caches on `cache_ossuary_galleries`. Rides
-  along: the **Sunken Crypt is STATEFUL** (lifecycle removed, Gravelord
-  respawn 900 = the door-ajar window; lifecycle-bot re-pointed at
-  crypt_depths), event `spawnMobs` gained an optional `level` (proposal
-  Part 4 flagged add), 5 rebases-with-ranks (ash_husk 8, fire_elemental 10,
-  slagback 10, bone_bat 10, grave_harrower 11 — deep resolves all within
-  ±1), rank-coverage tool fixed (23/34 live). Verified: typecheck, **561
-  vitest** (45 new; goldens = exactly 2 new entries, all 13 existing held),
-  emberfells-probe + ossuary-probe + lifecycle-bot + boss-events-probe +
-  travel-bot + march-probe ALL PASS live, 5 screenshot scenes
-  (tools/out/emberfells-{transition-3,kiln2-2,kiln3-3}.png,
-  ossuary-{galleries2-3,warden-3,chapel2-2}.png). Owner feel-checks in the
-  decisions-log entry.
-
-- 2026-07-09 **THE STRANGLER'S MARCH SHIPPED (world-redesign batch 4)** —
-  the 13th room (see the decisions-log entry): a 240² proc+authored
-  swamp-edge (seed 90031 — its own hydrology forces the road to bend)
-  spliced between forest and gloomfen, killing the L1-4 → L8-10 cliff.
-  Drowning-wood gradient (oaks south, murk + pale snags north), bending
-  road with plank crossings, snapped tithe-road causeway, drowned drystone
-  fields, the strangled farmstead housing **the Elder Strangler** (L8
-  rooted boss: slowing lash / spore lob / root pillars / 50% bloom rally;
-  guaranteed `strangler_heartroot`), and the Greenhood Run's climb-out
-  re-pointed to a chute-mouth mound in the march west (watched by a
-  poacher picket). mantrap + bog_serpent rebased 9→6 with L9 gloomfen
-  overrides resolving at pre-retune values. Verified: typecheck, **516
-  vitest** (23 new; goldens moved for forest grid + the new room ONLY),
-  `march-probe.mjs` full-arc live PASS, travel-bot + updated
-  greenhood-probe PASS, rank-coverage 18/31 (both new ranks reachable),
-  4 screenshot scenes (tools/out/march-*.png). Zero client changes.
-  Owner feel-checks in the decisions-log entry.
-
-- 2026-07-09 **THE GREENHOOD RUN SHIPPED (world-redesign batch 3)** — the
-  12th room (see the decisions-log entry): the poacher fort is fixed-anchored
-  at (308,148) on a surveyed dry shelf with a walled portal yard inside it;
-  the `forest-greenhood` gate boots sealed behind Thrace, opens on his death
-  ("the Run is lit"), and reseals on his 900 s respawn — the door-ajar
-  window. Behind it: a 96² stateful preset warren (shored lantern galleries,
-  kennel row, bunkroom, the pre-Dividing cellar, 3 stocked caches) ending in
-  **Quartermaster Grole** (L7 boss ×8 xp, powder/fuse-line/muster kit,
-  guaranteed `greenhood_ledger_page` bounty proof) and a ONE-WAY climb-out
-  to a trapdoor mound in the forest north (new computePortalArrival branch:
-  exitX/exitZ without exitPortalId = authored one-way landing; batch 4
-  re-points it to the Marchland). Verified: typecheck, **492 vitest** (26
-  new; goldens forest+greenhood_run only), client compiles,
-  `scripts/greenhood-probe.mjs` full-arc live PASS (20 checks), 4 screenshot
-  scenes (tools/out/greenhood-*.png incl. the "(locked)" gate label and
-  Grole mid-muster). Owner feel-checks in the decisions-log entry.
-
-- 2026-07-09 **THE MAW SHIPPED (world-redesign batch 2)** — the 11th room
-  (see the decisions-log entry): the Wellhead Crater ☆ in the Sunscour's
-  far-SW dunes descends to an always-open portal whose lock is the Maw's own
-  600 s downtime countdown; the Maw is a 96² preset cycling arena (dried-sea
-  basin: strand-lines, salt pan, shipwrecks, tentacle-breaches) holding
-  **Sarquun, the Undertide** — L9 group-leaning event tyrant (chomp /
-  predictive slowing gout / geyser pillars), guaranteed
-  `undertide_beak_shard` bounty proof. bossDeath → 60 s collapse → 600 s
-  downtime → fresh. En route: `portalArch` now anchors to BUILT ground when
-  it differs from natural (dug/raised portal sites no longer float — the
-  probe caught both crater arches hovering). Verified: **466 vitest**
-  (13 new; goldens desert+maw only), typecheck, client compiles,
-  `scripts/maw-probe.mjs` full-cycle live PASS, 3 screenshot scenes
-  (tools/out/maw-{crater,arena,locked}-*.png incl. the ticking countdown
-  label). Owner feel-checks in the decisions-log entry. NOTE: `claude_test`
-  exists on the fresh DB with an unknown password — screenshot staging used
-  `claude_test2:devpass1`.
-
-- 2026-07-09 **GREYWATCH SHIPPED (world-redesign batch 1b)** — the hub is now
-  the bible's Last Free City (see the decisions-log entry): five authored
-  districts, arches inside the bowed wall, portal-stone spawn, full NPC
-  recast (+ Corvyn & Ivo), "Greywatch" naming across room def / return-portal
-  labels / client strings. Verified: 452 vitest (hub golden hash updated —
-  only hub moved), typecheck, client compiles, travel/return/build bots live,
-  4 screenshot scenes (tools/out/greywatch-*.png, day + night). Owner
-  feel-checks pending: plaza density, the bow read from outside the gate,
-  Corvyn/Ivo stand-in sprites, "The Sunken Crypt" arch label (Tithe Crypt
-  rename is still [PROPOSAL]).
+- 2026-07-10 **WORLD REDESIGN COMPLETE — batches 0-9 (branch world-redesign)**.
+  The "Three Roads" overhaul shipped end to end: proposal marked COMPLETE
+  (docs/world-redesign-proposal.md has the final node table), the story
+  bible is the live catalog (every SHIPPED note current as of batch 9), and
+  the per-batch engineering records live in the decisions log above (one
+  entry per batch, 1b-9). What the world IS now:
+  - **19 rooms** (17 playable + Freehold + Atelier), three staggered hub
+    doors (Wood L1 · Sunscour L4 · Crypt L6), seven depths per mainline,
+    every border-gate opening over exactly one boss's body:
+    | Road | Rooms (band → boss) |
+    |---|---|
+    | hub | **Greywatch** (safe; portal-stone respawn, bounty board) |
+    | west | Kingless Wood 1-4 (Thrace L5 ⚿) → Greenhood Run 4-6 (Grole L7, ─▶) → Strangler's March 5-7 (Elder Strangler L8) → The Gloomfen 8-10 (Grelmoss L11) → Sundering Fields 11-13 (Wallbreaker L14 / Barrow Alpha L13) → Valdrenn 14-16 (Ser Osmund L17 ⚿ / the Riderless) → Broken Court 17-19 ◉ (Vaelric L19, solo peak) → **White Waste 20-24 ◉ (THE FIRST TYRANT L24, group finale / Rime Wardens L21×2)** |
+    | east | The Sunscour 4-7 (Kaharat L8 / Sekhat L10 ☆) → the Maw ~9 ◉ (Sarquun) + Emberfells 8-10 (Old Kiln L11) → Cinderrift 11-13 (Furnace Golem L14 ⚿ / Frostplate Revenant L15) → Foundry 14-16 (Unfinished King L17) ⇄ fields/city |
+    | north | Sunken Crypt 6-8 (The Gravelord L9 ⚿) → Ossuary Galleries 9-11 (Bone Warden L12 / Pallid Mourner ☆) → Vaults of Morvane 12-14 ◉ (Morvane L15, ─▶ 60 s escape gate → Valdrenn postern) |
+  - **Reconnections**: Run→March chute (one-way), Foundry⇄Fields⇄City merge
+    at L14-16, Morvane's escape gate (60 s collapse window), the Court's
+    breach → Waste (escape-window pattern), waste-home → the portal-stone.
+  - **The knobs**: one xp formula `xp(L) = round(role × (14 + 2·L^2.1))` (roles
+    ×1/×1.5/×2/×4/×5/×8/×12); scaling hp 1.14^Δ / dmg 1.11^Δ, maxLevelBonus
+    8; boss respawnSec = every gate's door-ajar window (900 s); cycling
+    downtimes maw 600 s / court + waste 900 s (master env
+    MMO_DOWNTIME_OVERRIDE_SEC for tests); shard capacity 24; golden-hash
+    net over all 19 rooms (goldenhash.test.ts — batch 9 holds the one
+    documented mass update, arch restyle).
+  - **Batch 9 (story dress) closeout regression** — the FULL probe table on
+    one [::1] session stack, ALL PASS: travel, cheat, return, combat, build
+    + lifecycle (passed after registering their bot accounts on the fresh
+    session DB), roomgraph, march, greenhood (rerun — first run died to
+    vault-pack variance at the tally-vault door, the probe's known-hard
+    leg), emberfells, boss-events (incl. Morvane's escape leg), ossuary,
+    fields, foundry, maw (full cycle), bandit, equip, enchant (after the
+    batch-9 probe modernization), mob-floor (after the leaf fix), wade,
+    separation, city (both stages incl. countdown gate + fresh reopen +
+    reseal), kill-test. **waste-probe: the full COMBAT arc passed 3×**
+    (sealed boot → king raid → breach window → one-way landing → snow wire
+    → frost-band names → warden pair → Tyrant kill w/ both leveled rallies
+    → guaranteed tithe+mythic loot → T-30 → evict → downtime), but its
+    WALKOUT-inside-60s leg failed all three runs: the staged raid burns
+    the Tyrant in ~14 s, so ALL FIVE rally adds outlive him and chain-slow
+    the loot-burdened bot across the court — it never reaches the arch in
+    the window (the raiders died to the same pile mid-loot). The arch
+    itself is INTACT: a direct reproduction (stand at the probe's exact
+    (60,71.4) point, usePortal waste-home) GRANTS and lands at the
+    portal-stone. Owner feel-check: an over-fast Tyrant burn leaves the
+    tribute alive for the escape — drama or a trap? The probe's cycle
+    assertion also can't run after a mid-session master restart: an
+    ADOPTED room (registered by a pre-existing shard) drops out of
+    /api/status entirely during downtime instead of showing 'down' — the
+    cycle machinery itself passed on this boot via maw-probe (full cycle)
+    and city-probe (countdown + reopen + reseal), and the sandbox's
+    ~60-min task reaper is what forced the master restart (see LESSONS).
+    Plus the world TOUR: one flagship screenshot per room,
+    tools/out/tour-<room>-2.png ×18, and the arch day/night + tooltip
+    verification shots (batch9-tooltip-2, arch-day-2, arch-night-2).
+  - Owner feel-checks pending (accumulated, see each batch's decisions-log
+    entry): fight difficulty at every boss tier, the batch-9 flavor-text
+    voice, arch look in every biome, Freehold dressing scale, minimap
+    display-name lengths at scale 1.
 
 - 2026-07-09 **DEEP MAGIC WEAVING shipped** (see the decisions-log entry +
   `docs/enchanting-design.md`). The enchanter is now tiered/slotted/quality-

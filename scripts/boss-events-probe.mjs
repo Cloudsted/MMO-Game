@@ -193,7 +193,7 @@ expect(chatWith(state, "guardian"), "sealed portal denied with the guardian mess
 
 // ---- 2. kill the Gravelord: rally at 50%, gate opens on death ----
 await gearUp(ws, state);
-const mino = findMob(state, "Gravelord Minotaur");
+const mino = findMob(state, "The Gravelord");
 expect(!!mino, `Gravelord found at ${mino ? `${mino.x.toFixed(0)},${mino.z.toFixed(0)}` : "?"}`);
 if (!mino) { log("RESULT: FAIL"); process.exit(1); }
 

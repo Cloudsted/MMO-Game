@@ -338,12 +338,22 @@ export class Builder {
     return this.g(x, z);
   }
 
-  /** Stone portal archway: two pillars + lintel, plus a path apron.
-   *  Arches stamp AFTER the authored builders, so a portal standing on dug or
-   *  raised ground (the Wellhead crater pan, the Maw basin) must anchor to the
-   *  BUILT surface — the natural g() would float it 8-16 blocks in the air.
-   *  The >2 guard keeps every portal on natural/flattened ground on the
-   *  byte-identical legacy path (golden-hash-verified). */
+  /** NATURAL portal arch (owner canon rule 1, deferred since day one and paid
+   *  in the batch-9 story dress pass: the arches were never BUILT — weathered
+   *  standing rock, crystal-seamed, not masonry; people built around them).
+   *  The SOLID volume is cell-identical to the old masonry arch — pillars at
+   *  ±2 (fl..fl+3), spanning slab at fl+4, capstone at fl+5 — so BFS/pairing/
+   *  apron behavior is untouched. Only materials changed (stone weathered with
+   *  dark_stone bites, deterministic via hash2), the pillar-top torches became
+   *  blue-crystal glints (non-solid glow in the SAME cells), and one crystal
+   *  shard grows at each pillar's foot (non-solid cross on the apron).
+   *  Anchoring keeps the batch-2 rule: arches stamp AFTER the authored
+   *  builders, so a portal on dug/raised ground (the Wellhead crater pan, the
+   *  Maw basin) anchors to the BUILT surface via groundAt() — the natural g()
+   *  would float it 8-16 blocks in the air; the >2 guard keeps portals on
+   *  natural/flattened ground on the legacy anchor path.
+   *  NOTE: this restyle moved EVERY room's golden grid hash — the one
+   *  documented mass GOLDEN_UPDATE (goldenhash.test.ts, 2026-07-10). */
   portalArch(px: number, pz: number, alongX: boolean): void {
     const natural = this.g(px, pz);
     const actual = this.groundAt(px, pz);
@@ -361,14 +371,30 @@ export class Builder {
     }
     const dx = alongX ? 0 : 2;
     const dz = alongX ? 2 : 0;
-    // pillars
-    this.fill(px - dx, fl, pz - dz, px - dx, fl + 3, pz - dz, "stone_bricks");
-    this.fill(px + dx, fl, pz + dz, px + dx, fl + 3, pz + dz, "stone_bricks");
-    // lintel spanning the pillars
-    this.fill(px - dx, fl + 4, pz - dz, px + dx, fl + 4, pz + dz, "stone_bricks");
-    this.set(px, fl + 5, pz, "stone_bricks");
-    this.torch(px - dx, fl + 4 + 1, pz - dz);
-    this.torch(px + dx, fl + 4 + 1, pz + dz);
+    // weathered rock: stone mottled with dark_stone, deterministic per cell
+    const rock = (x: number, y: number, z: number) =>
+      hash2(this.def.terrain.seed ^ 0x0a2c, x * 7 + y, z * 11 + y) < 0.35 ? "dark_stone" : "stone";
+    // standing stones (the old pillar cells)
+    for (let y = fl; y <= fl + 3; y++) {
+      this.set(px - dx, y, pz - dz, rock(px - dx, y, pz - dz));
+      this.set(px + dx, y, pz + dz, rock(px + dx, y, pz + dz));
+    }
+    // the spanning slab + capstone — rough rock in the old lintel cells
+    for (let i = -2; i <= 2; i++) {
+      const x = px + (alongX ? 0 : i);
+      const z = pz + (alongX ? i : 0);
+      this.set(x, fl + 4, z, rock(x, fl + 4, z));
+    }
+    this.set(px, fl + 5, pz, rock(px, fl + 5, pz));
+    // the crystal seam the rock grew around: glints at the stone tops
+    // (the exact cells the torches held — non-solid glow, cool not warm)
+    this.set(px - dx, fl + 5, pz - dz, "blue_crystal");
+    this.set(px + dx, fl + 5, pz + dz, "blue_crystal");
+    // and a shard at each standing stone's foot, on the apron
+    const ox = alongX ? 0 : 1;
+    const oz = alongX ? 1 : 0;
+    this.set(px - dx - ox, fl, pz - dz - oz, "blue_crystal");
+    this.set(px + dx + ox, fl, pz + dz + oz, "blue_crystal");
   }
 
   /** Thatch-roofed plank house with log posts, windows, a torch inside. */
@@ -2041,6 +2067,35 @@ function buildGroundsPavilion(b: Builder, def: RoomDef): void {
     b.torch(px, FL + 3, pz);
   }
   b.fill(x0, FL + 3, z0, x0 + 7, FL + 3, z0 + 5, "thatch");
+
+  // THE FREEHOLD (story bible §6: "the first acre back") — light dressing only,
+  // batch 9. A boundary fence with a gate on the portal approach (Jib's
+  // "a door that locks from the inside", made of palisade), a notice-board
+  // beside the gate (the Charter's claim, posted), and the claim-stone at the
+  // room's center. 1-high fence: symbolic, jumpable, never traps a builder.
+  const gx = def.spawn.x; // 48 — the portal approach line
+  for (let x = gx - 8; x <= gx + 8; x++) {
+    if (Math.abs(x - gx) <= 1) continue; // the gate gap (portal apron path)
+    const g = b.g(x, 88);
+    b.clearAbove(x, 88, x, 88, g, 8);
+    b.set(x, g + 1, 88, "palisade");
+  }
+  // notice board: two log posts + a plank board at head height, facing the gate
+  const bg = b.g(gx - 4, 87);
+  b.clearAbove(gx - 5, 87, gx - 3, 87, bg, 6);
+  b.set(gx - 5, bg + 1, 87, "log");
+  b.set(gx - 3, bg + 1, 87, "log");
+  b.fill(gx - 5, bg + 2, 87, gx - 3, bg + 2, 87, "planks");
+  b.torch(gx - 4, bg + 3, 87); // a reading lamp on the board's top rail
+  // the claim-stone: FREE GROUND — HELD BY THE CHARTER (stone, marble, banner)
+  const cx = Math.floor(def.size.w / 2);
+  const cz = Math.floor(def.size.h / 2);
+  const cg = b.g(cx, cz);
+  b.clearAbove(cx - 1, cz - 1, cx + 1, cz + 1, cg);
+  b.paintCircle(cx, cz, 1.6, "path");
+  b.set(cx, cg + 1, cz, "stone");
+  b.set(cx, cg + 2, cz, "marble");
+  b.set(cx, cg + 3, cz, "banner");
 }
 
 // ---------------------------------------------------------------------------

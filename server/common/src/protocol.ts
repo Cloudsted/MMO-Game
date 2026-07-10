@@ -421,7 +421,8 @@ export type EffectWire =
   | { kind: "hot"; item: string; mag: number; durMs: number };
 
 export type ServerToClient =
-  | { t: "welcome"; roomId: string; selfId: number; name: string; sprite: string; spawn: { x: number; y: number; z: number; yaw: number }; timeOfDay: number; ents: EntityFull[]; safeZone: boolean; regions: RegionWire[]; buildingEnabled: boolean }
+  /** roomName = the room's DISPLAY name (def.name — "Greywatch", not "hub"); the HUD/minimap render it */
+  | { t: "welcome"; roomId: string; roomName: string; selfId: number; name: string; sprite: string; spawn: { x: number; y: number; z: number; yaw: number }; timeOfDay: number; ents: EntityFull[]; safeZone: boolean; regions: RegionWire[]; buildingEnabled: boolean }
   /** voxel world header: dimensions + how many chunk payloads follow */
   | { t: "world"; w: number; h: number; height: number; waterLevel: number | null; chunks: number; wind: number; nightLight: number }
   /** deflated 16×16×height block chunks (base64 raw-deflate), batched */

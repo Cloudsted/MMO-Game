@@ -1,10 +1,50 @@
 # World Redesign Proposal — "Three Roads" (Tyrant Titans)
 
-> Status: DIRECTION LOCKED (2026-07-09, branch `world-redesign`). Owner forks
-> decided: **story base = THE TYRANT TITANS** (two earlier god/sea premises
-> rejected — see git history), **the frozen-waste endgame included**, **full
-> authored hub rebuild**. The living story catalog is `docs/story-bible.md`;
-> this doc holds the structure, pacing, and build plan.
+> ## Status: ✅ COMPLETE (2026-07-10, branch `world-redesign`, batches 0–9)
+>
+> Every build-order step shipped: the regression net (0), the data retune
+> (1), the Greywatch rebuild (1b), the Maw (2), the Greenhood Run (3), the
+> Strangler's March (4), the Emberfells + Ossuary Galleries (5), the Broken
+> Court split (6), the Sundering Fields + Foundry + Morvane's escape gate
+> (7), the White Waste finale (8), and the story dress pass (9: item flavor
+> text, dialog sweep, natural portal arches, the Freehold, HUD display
+> names, full-world regression + world tour). Final node table with REAL
+> names below; per-batch records live in CLAUDE.md's decisions log and the
+> bible's SHIPPED notes.
+>
+> ### Final node table (as shipped)
+>
+> | # | Room id | Display name | Band | Main boss / Side boss | Type |
+> |---|---|---|---|---|---|
+> | 0 | `hub` | **Greywatch** (the Last Free City) | safe | — | authored hub |
+> | W1 | `forest` | **The Kingless Wood** | 1–4 | Thrace the Redcap L5 (⚿ fort gate) / Aelthir, the Unmarred L8☆ | wild 480² |
+> | W2 | `greenhood_run` | **The Greenhood Run** | 4–6 | Quartermaster Grole L7 | preset warren, ─▶ march |
+> | W3 | `stranglers_march` | **The Strangler's March** | 5–7 | The Elder Strangler L8 | proc splice 240² |
+> | W4 | `gloomfen` | **The Gloomfen** | 8–10 | Grelmoss, the Crowned Mire L11 / (Veshka ☆ unbuilt) | wild 320² |
+> | W5 | `sundering_fields` | **The Sundering Fields** | 11–13 | Old Wallbreaker L14 / The Barrow Alpha L13 | proc+setpieces 288² |
+> | W6 | `sundered_city` | **Valdrenn, the Fallen Capital** | 14–16 | Ser Osmund, the Gatekeeper L17 (⚿ court gate) / The Riderless L17 | preset, stateful |
+> | W7 | `broken_court` | **The Broken Court** | 17–19 | Vaelric, the Sundered King L19 (solo peak; ⚿ breach) | ◉ cycling 96² |
+> | W8 | `white_waste` | **The White Waste** | 20–24 | **THE FIRST TYRANT** L24 (group) / The Rime Wardens L21×2 | ◉ cycling finale |
+> | E1 | `desert` | **The Sunscour** | 4–7 | Kaharat, the Red Mane L8 / Sekhat the Ninth L10☆ | wild 480² |
+> | E2 | `maw` | **The Maw** | ~9 event | Sarquun, the Undertide (group-leaning) | ◉ cycling arena |
+> | E3 | `emberfells` | **The Emberfells** | 8–10 | The Old Kiln L11 | proc splice 288² |
+> | E4 | `cinderrift` | **The Cinderrift** | 11–13 | Furnace Golem L14 (⚿ foundry gate; "Vulkhar" rename [PROPOSAL]) / Frostplate Revenant L15 | wild 288² |
+> | E5 | `foundry` | **The Foundry** | 14–16 | The Unfinished King L17 (rank elevation) | preset interior |
+> | N1 | `dungeon` | **Sunken Crypt** ("Tithe Crypt" [PROPOSAL]) | 6–8 | The Gravelord L9 (⚿ ossuary gate) / (First Draft ☆ unbuilt) | stateful |
+> | N2 | `ossuary_galleries` | **The Ossuary Galleries** | 9–11 | The Bone Warden L12 / The Pallid Mourner ☆ | preset 128² |
+> | N3 | `crypt_depths` | **Vaults of Morvane** ("Pale Court" rename with the N3 rework) | 12–14 | Morvane the Hollow L15 (─▶ escape gate) / (Cold Curator ☆ unbuilt) | ◉ collapse cycle |
+> | — | `grounds` | **The Freehold** | safe | — | building room |
+> | — | `atelier` | The Atelier | admin | — | prefab lab |
+>
+> Deliberately unbuilt (bible-catalogued growth hooks): Veshka (W4), the
+> First Draft (N1), the Cold Curator (N3), Keeper Fenn (W1), the W4/E1
+> territory-line gates (fen⇄fields and desert⇄fells stay open thoroughfares).
+>
+> Original direction-lock note: owner forks decided — **story base = THE
+> TYRANT TITANS** (two earlier god/sea premises rejected — see git history),
+> **the frozen-waste endgame included**, **full authored hub rebuild**. The
+> living story catalog is `docs/story-bible.md`; this doc holds the
+> structure, pacing, and build plan.
 
 ## Why (the owner's directive)
 

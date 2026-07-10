@@ -31,6 +31,9 @@ export function isEquippable(kind: string): boolean {
 
 export const ItemDefSchema = z.object({
   name: z.string(),
+  /** One flavor line (story bible §9 voice) — the tooltip renders it muted
+   *  under the name. Trophies-as-bounty-proof carry these; anything may. */
+  desc: z.string().optional(),
   /** trophy: no use action — sell-fodder. armor: wearable (slot+armor value).
    *  trinket: offhand-only passive modifier carrier (no armor, no durability). */
   kind: z.enum(["weapon", "consumable", "building", "trophy", "misc", "armor", "trinket"]),

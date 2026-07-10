@@ -152,6 +152,17 @@ with the toolchain javac directly (`~/.gradle/jdks/...` + the dependency
 jars from `~/.gradle/caches/modules-2`, ONE lwjgl version only, plus
 `src/main/resources` and slf4j-api on the classpath).
 
+**Addendum (batch 9): the sandbox also reaps background tasks at ~60
+minutes.** The session mongod and master — the two oldest background tasks —
+were killed mid-waste-probe almost exactly an hour after launch, one minute
+apart. The stack proved resilient (bots kept fighting on their RoomHost
+sockets; a restarted master re-adopted all 19 rooms and the shard
+reconnected) but master-held state (downtime schedules, reopenInSec) is
+lost, which kills any cycling-lifecycle probe leg. Rule: before starting a
+probe longer than ~20 minutes, RESTART the stack processes so their 60-min
+lease outlives the probe — and treat a sudden ECONNREFUSED from a
+long-running session process as the reaper, not a crash.
+
 ## libGDX / rendering
 
 - `TextureRegionDrawable.tint()` returns a **SpriteDrawable** — assigning it
@@ -557,6 +568,18 @@ must pre-check the same gate, or the server must buffer/answer.
   every combat system working at once. When a staged scene changes state by
   itself, list what SHOULD act on it (mob aggro, loot expiry, respawns)
   before suspecting the code.
+- **A probe comparing against a renamed schema field goes green on
+  `undefined === undefined` — and verifies nothing from then on.** The
+  Deep-Weaving rework renamed `modifier.enchant.mag` to `enchant.tiers[]`;
+  enchant-probe kept asserting `mods.hpRegen === mod.enchant.mag`, and since
+  the enchant message ALSO silently gained a required `tier` field, NO
+  enchant landed — both sides were `undefined` and the check PASSED for two
+  days of batches while four sibling checks failed. Rules: probes must
+  assert the ACTION HAPPENED (gold moved, the mod value is a number) before
+  asserting equalities that can both be undefined; and a system rework's
+  batch must rerun (or update) the system's own probe in the same batch —
+  "the vitest suite covers it" leaves the probe to rot (batch 9's
+  full-table sweep is what finally caught it).
 
 ## Concurrent sessions on one working tree
 

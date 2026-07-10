@@ -239,14 +239,32 @@ describe("RoomSim", () => {
     expect(sim.world.solidAt(64, 13, 80)).toBe(false); // the plaza inside
   });
 
-  it("builds a stone archway at every portal", () => {
-    const bricks = BLOCK.stone_bricks!.id;
+  it("raises a NATURAL arch at every portal — weathered rock + crystal glints, no masonry (canon rule 1)", () => {
+    const rock = [BLOCK.stone!.id, BLOCK.dark_stone!.id];
+    const glint = BLOCK.blue_crystal!.id;
     for (const p of sim.def.portals) {
-      const fl = sim.world.terrainHeight(sim.def, Math.round(p.x), Math.round(p.z)) + 1;
+      const px = Math.round(p.x);
+      const pz = Math.round(p.z);
+      const fl = sim.world.terrainHeight(sim.def, px, pz) + 1;
       const alongX = Math.abs(sim.def.spawn.x - p.x) > Math.abs(sim.def.spawn.z - p.z);
       const [dx, dz] = alongX ? [0, 2] : [2, 0];
-      expect(sim.world.get(Math.round(p.x) - dx, fl, Math.round(p.z) - dz)).toBe(bricks);
-      expect(sim.world.get(Math.round(p.x) + dx, fl, Math.round(p.z) + dz)).toBe(bricks);
+      // standing stones fill the OLD pillar cells (solid volume unchanged —
+      // BFS/pairing/apron behavior must not move), but read as rock
+      for (let y = fl; y <= fl + 3; y++) {
+        expect(rock).toContain(sim.world.get(px - dx, y, pz - dz));
+        expect(rock).toContain(sim.world.get(px + dx, y, pz + dz));
+      }
+      expect(rock).toContain(sim.world.get(px, fl + 4, pz)); // spanning slab
+      // no masonry anywhere in the arch volume
+      for (let y = fl; y <= fl + 5; y++)
+        for (let i = -2; i <= 2; i++) {
+          const id = sim.world.get(px + (alongX ? 0 : i), y, pz + (alongX ? i : 0));
+          expect(id).not.toBe(BLOCK.stone_bricks!.id);
+          expect(id).not.toBe(BLOCK.torch!.id); // glints are crystal now, not flame
+        }
+      // blue-crystal glints where the torches used to burn
+      expect(sim.world.get(px - dx, fl + 5, pz - dz)).toBe(glint);
+      expect(sim.world.get(px + dx, fl + 5, pz + dz)).toBe(glint);
     }
   });
 

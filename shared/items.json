@@ -627,6 +627,7 @@
     },
     "wolf_pelt": {
       "name": "Wolf Pelt",
+      "desc": "Bounty proof, wood mark. Winter-thick. Kess buys these.",
       "kind": "trophy",
       "value": 6,
       "stack": 10,
@@ -637,6 +638,7 @@
     },
     "boar_tusk": {
       "name": "Boar Tusk",
+      "desc": "Bounty proof, wood mark. Every boar is some king's property, technically. Mara doesn't ask.",
       "kind": "trophy",
       "value": 5,
       "stack": 10,
@@ -647,6 +649,7 @@
     },
     "raptor_talon": {
       "name": "Raptor Talon",
+      "desc": "Bounty proof, sand mark. The pride runs raptors as beaters. The Charter pays for fewer beaters.",
       "kind": "trophy",
       "value": 9,
       "stack": 10,
@@ -657,6 +660,7 @@
     },
     "slime_gel": {
       "name": "Slime Gel",
+      "desc": "Bounty proof, wood mark. Pays better if it hasn't leaked.",
       "kind": "trophy",
       "value": 2,
       "stack": 10,
@@ -667,6 +671,7 @@
     },
     "venom_sac": {
       "name": "Venom Sac",
+      "desc": "Bounty proof off Veshka's brood. Do not squeeze.",
       "kind": "trophy",
       "value": 14,
       "stack": 10,
@@ -677,6 +682,7 @@
     },
     "ember_core": {
       "name": "Ember Core",
+      "desc": "Proof off the forge-dead. Warm for weeks.",
       "kind": "trophy",
       "value": 25,
       "stack": 10,
@@ -687,6 +693,7 @@
     },
     "spirit_essence": {
       "name": "Spirit Essence",
+      "desc": "Proof off the galleries' workforce. It pulls faintly toward the down-shaft. Sell it before it decides.",
       "kind": "trophy",
       "value": 30,
       "stack": 10,
@@ -697,6 +704,7 @@
     },
     "ancient_coin": {
       "name": "Ancient Coin",
+      "desc": "Sekhat's mint. The sands paid in these, until the sands were the payment.",
       "kind": "trophy",
       "value": 20,
       "stack": 10,
@@ -707,6 +715,7 @@
     },
     "bone_charm": {
       "name": "Bone Charm",
+      "desc": "Bounty proof from the tithe-road down. Kess won't touch them.",
       "kind": "trophy",
       "value": 12,
       "stack": 10,
@@ -850,6 +859,7 @@
     },
     "undertide_beak_shard": {
       "name": "Undertide Beak Shard",
+      "desc": "A flake off the thing that drank a sea. Proof enough for anyone.",
       "kind": "trophy",
       "value": 60,
       "stack": 10,
@@ -860,6 +870,7 @@
     },
     "greenhood_ledger_page": {
       "name": "Greenhood Ledger Page",
+      "desc": "Bounty proof — and evidence. Corvyn will want to read it first.",
       "kind": "trophy",
       "value": 40,
       "stack": 10,
@@ -870,6 +881,7 @@
     },
     "strangler_heartroot": {
       "name": "Strangler Heartroot",
+      "desc": "Proof. Still moving. Sell it quickly.",
       "kind": "trophy",
       "value": 50,
       "stack": 10,
@@ -880,6 +892,7 @@
     },
     "kiln_gallstone": {
       "name": "Kiln Gallstone",
+      "desc": "A gut-stone off the Furnace-King's oldest mouth. Gorren will pay to study the alloy.",
       "kind": "trophy",
       "value": 75,
       "stack": 10,
@@ -890,6 +903,7 @@
     },
     "war_medal": {
       "name": "War Medal",
+      "desc": "Bounty proof, and a man's whole war. The Charter pays either way.",
       "kind": "trophy",
       "value": 28,
       "stack": 10,
@@ -900,6 +914,7 @@
     },
     "royal_seal": {
       "name": "Royal Seal of Valdrenn",
+      "desc": "Valdrenn's own. Forty years void; worth more that way.",
       "kind": "trophy",
       "value": 45,
       "stack": 10,
@@ -910,6 +925,7 @@
     },
     "sundered_crown": {
       "name": "The Sundered Crown",
+      "desc": "The crown of the last man who was ever a king. Everyone understands why the Charter overpays.",
       "kind": "trophy",
       "value": 400,
       "stack": 1,
@@ -920,6 +936,7 @@
     },
     "the_winter_tithe": {
       "name": "The Winter Tithe",
+      "desc": "What the First was owed. Paid in full, at last, in the only coin that was ever going to settle it.",
       "kind": "trophy",
       "value": 500,
       "stack": 1,
@@ -930,6 +947,7 @@
     },
     "wallbreaker_clasp": {
       "name": "Wallbreaker's Yoke-Clasp",
+      "desc": "Off the yoke of the beast that broke Valdrenn's gates. Gorren can't name the metal. The Charter pays anyway.",
       "kind": "trophy",
       "value": 100,
       "stack": 10,
@@ -940,6 +958,7 @@
     },
     "unfinished_sigil": {
       "name": "The Unfinished Sigil",
+      "desc": "A king's seal, half-engraved. The Charter pays double for questions this good.",
       "kind": "trophy",
       "value": 180,
       "stack": 10,
@@ -950,6 +969,7 @@
     },
     "osmunds_gauntlet": {
       "name": "Ser Osmund's Gauntlet",
+      "desc": "Ser Osmund's. He held the door forty years past the end of it. Maera wrote down the part that mattered.",
       "kind": "trophy",
       "value": 140,
       "stack": 10,
@@ -960,6 +980,7 @@
     },
     "spiral_horn": {
       "name": "Aelthir's Spiral Horn",
+      "desc": "Aelthir's. Mara won't buy it. Mara won't say why.",
       "kind": "trophy",
       "value": 350,
       "stack": 1,

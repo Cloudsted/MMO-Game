@@ -17,7 +17,7 @@ const flag = (name, dflt) => {
   return i >= 0 ? argv[i + 1] : dflt;
 };
 const SECONDS = Number(flag("seconds", 300));
-const MASTER = flag("master", `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`);
+const MASTER = flag("master", process.env.MMO_MASTER_ORIGIN ?? `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`);
 
 async function api(path, body, token) {
   const res = await fetch(`${MASTER}${path}`, {

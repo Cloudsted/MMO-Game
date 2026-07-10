@@ -4,9 +4,17 @@
  * only through intents: "move toward X", "use ability at Y". That seam is
  * where behavior trees swap in later.
  */
-import { isSolidBlock, type AbilityDef, type ResolvedMob, type SpawnTable } from "@fantasy-mmo/common";
+import { BLOCK, isSolidBlock, type AbilityDef, type ResolvedMob, type SpawnTable } from "@fantasy-mmo/common";
 import type { Entity } from "./entities.js";
 import type { VoxelWorld } from "./voxel.js";
+
+/** Canopy blocks a mob must never STEP onto (lazy — BLOCK fills at registry
+ *  load, after module init). Walking OFF one is always allowed. */
+let LEAF_IDS: Set<number> | null = null;
+function isLeafBlock(id: number): boolean {
+  if (!LEAF_IDS) LEAF_IDS = new Set([BLOCK.leaves!.id, BLOCK.dead_leaves!.id]);
+  return LEAF_IDS.has(id);
+}
 
 const STICKINESS_BONUS = 8; // score bonus for the current target (anti ping-pong)
 const THREAT_WEIGHT = 2; // score per point of damage dealt
@@ -307,6 +315,12 @@ export function applyMove(
       if (surf - ny > WADE_DEPTH) ny = surf - 1;
     }
     if (ny - e.pos.y > 1.05 || e.pos.y - ny > maxDrop) continue;
+    // never step ONTO a tree canopy: leaf tops form 1-block staircases, and a
+    // chasing/returning mob can climb one leaf at a time until it stands on
+    // the treetop (the batch-9 full-world regression caught wolves/weavers
+    // doing exactly this). A mob already ON leaves may keep moving (it can
+    // always walk out), but no candidate step lands on a leaf block.
+    if (isLeafBlock(world.get(Math.floor(nx), Math.round(ny) - 1, Math.floor(nz))) && !isLeafBlock(world.get(Math.floor(e.pos.x), Math.round(e.pos.y) - 1, Math.floor(e.pos.z)))) continue;
     // steps and shallow drops snap like stairs; deeper drops walk OFF the
     // ledge at the current height — applyGravity then pulls the mob down
     // over the following ticks (no more instant teleport-to-the-floor)

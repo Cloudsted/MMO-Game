@@ -1,8 +1,9 @@
 /**
- * Enchanter wire probe: walks to Selvara in the hub, checks her menu rides
- * the dialog, buys Regeneration I for the authoritative price, proves the
- * one-enchant-per-item refusal, and confirms enchanted items sell for more
- * than plain ones (perk sell bonus).
+ * Enchanter wire probe (weaving era — batch 9 modernized it to the DEEP
+ * MAGIC WEAVING rules): walks to Selvara in the hub, checks her 12-offer
+ * tiered menu rides the dialog, weaves Regeneration I for the authoritative
+ * tiered price, proves the capacity refusal (an iron sword is T2 = ONE
+ * enchant slot), and confirms enchanted items sell for more than plain ones.
  *
  *   node scripts/make-admin.mjs enchbot   (once, after first register)
  *   node scripts/enchant-probe.mjs
@@ -13,7 +14,7 @@ import WebSocket from "ws";
 import { goTo, loadEnv, makeWorldTracker, ROOT, sleep } from "./lib.mjs";
 
 loadEnv();
-const MASTER = `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
+const MASTER = process.env.MMO_MASTER_ORIGIN ?? `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`;
 let failures = 0;
 const ok = (cond, label) => {
   console.log(`${cond ? "PASS" : "FAIL"}  ${label}`);
@@ -97,29 +98,31 @@ ok(selvaraId !== undefined, "Selvara replicated in the hub");
 ws.send(JSON.stringify({ t: "talk", id: selvaraId }));
 await sleep(600);
 ok(dialog?.name === "Selvara the Enchanter", "talk opened her dialog");
-ok((dialog?.enchant?.offers ?? []).length === 4, "dialog carries 4 enchant offers");
+ok((dialog?.enchant?.offers ?? []).length === 12, "dialog carries the 12 weavable offers");
+ok(dialog?.enchant?.maxTier === 2, "Selvara weaves to the second degree");
 
 const swordIdx = slots.findIndex((s) => s && s.item === "iron_sword" && !s.mods);
 ok(swordIdx >= 0, "an unmodified iron sword to enchant");
 const goldBefore = gold;
-ws.send(JSON.stringify({ t: "enchant", npc: selvaraId, slot: swordIdx, enchantId: "hpRegen" }));
+ws.send(JSON.stringify({ t: "enchant", npc: selvaraId, slot: swordIdx, enchantId: "hpRegen", tier: 1 }));
 await sleep(700);
 const sword = slots[swordIdx];
 const mod = modifiers.hpRegen;
-ok(sword?.mods?.hpRegen === mod.enchant.mag, `Regeneration I applied (${JSON.stringify(sword?.mods)})`);
+ok(sword?.mods?.hpRegen === mod.enchant.tiers[0], `Regeneration I applied (${JSON.stringify(sword?.mods)})`);
 const rarityMult = itemsFile.rarities[sword?.rarity ?? "common"].mult;
 const expectedPrice = Math.ceil(
-  itemsFile.items.iron_sword.value * rarityMult * mod.enchant.priceMult * constants.enchanting.priceValueMult + constants.enchanting.priceBase
+  itemsFile.items.iron_sword.value * rarityMult * mod.enchant.priceMult * (constants.enchanting.tierPriceMult["1"] ?? 1)
+    * constants.enchanting.priceValueMult + constants.enchanting.priceBase
 );
 ok(goldBefore - gold === expectedPrice, `charged the authoritative price (${goldBefore - gold}g = ${expectedPrice}g)`);
 
 // second enchant on the same item: refused, nothing charged
 const goldMid = gold;
-ws.send(JSON.stringify({ t: "enchant", npc: selvaraId, slot: swordIdx, enchantId: "manaRegen" }));
+ws.send(JSON.stringify({ t: "enchant", npc: selvaraId, slot: swordIdx, enchantId: "manaRegen", tier: 1 }));
 await sleep(700);
-ok(Object.keys(slots[swordIdx]?.mods ?? {}).length === 1, "second enchant refused (one modifier only)");
+ok(Object.keys(slots[swordIdx]?.mods ?? {}).length === 1, "second enchant refused (a T2 sword holds ONE weaving)");
 ok(gold === goldMid, "no gold taken for the refusal");
-ok(chats.some((t) => /already bears an enchantment/i.test(t)), "she explains the refusal in chat");
+ok(chats.some((t) => /no room for another weaving/i.test(t)), "she explains the refusal in chat");
 
 // the perk raises the sell price: enchanted vs plain at the weaponsmith.
 // /give runs the mod lottery (4% at common) — retry until a plain one lands
@@ -132,7 +135,7 @@ for (let tries = 0; tries < 5 && plainIdx < 0; tries++) {
 if (plainIdx < 0) {
   console.log("[enchbot] plain /give sword rolled mods by luck — skipping the sell-delta check");
 } else {
-  await goTo(ws, state, 52, 52, 2.5); // Gorren the Smith
+  await goTo(ws, state, 44, 55, 2.0); // Gorren the Smith (43,54 — Market Row, batch-1b rebuild)
   const smithId = [...npcs.entries()].find(([, name]) => name.includes("Gorren"))?.[0];
   ok(smithId !== undefined, "found the weaponsmith");
   const g0 = gold;

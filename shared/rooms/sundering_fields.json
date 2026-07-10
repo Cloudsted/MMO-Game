@@ -33,7 +33,7 @@
   "portals": [
     {
       "id": "fields-gloomfen-road",
-      "label": "Gloomfen Marsh — Old North Road",
+      "label": "The Gloomfen — Old North Road",
       "target": "gloomfen",
       "x": 144,
       "z": 262,
@@ -42,7 +42,7 @@
     },
     {
       "id": "fields-gloomfen-west",
-      "label": "Gloomfen Marsh — Drowned West Road",
+      "label": "The Gloomfen — Drowned West Road",
       "target": "gloomfen",
       "x": 40,
       "z": 236,

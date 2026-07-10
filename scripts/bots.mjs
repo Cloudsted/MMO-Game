@@ -22,7 +22,7 @@ const flag = (name, dflt) => {
 };
 const N = Number(flag("n", 3));
 const SECONDS = Number(flag("seconds", 30));
-const MASTER = flag("master", `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`);
+const MASTER = flag("master", process.env.MMO_MASTER_ORIGIN ?? `http://127.0.0.1:${process.env.MASTER_PORT ?? 4000}`);
 // --room <id>: pre-stage the bots' character rows in Mongo so /api/enter
 // drops them straight into that room (multi-room load tests). Bot accounts
 // are namespaced per room so concurrent batches don't collide.

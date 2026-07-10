@@ -15,6 +15,8 @@ import java.util.Map;
 public final class ItemRegistry {
     public static final class Item {
         public final String id, name, kind, ability, block;
+        /** one flavor line (story bible §9 voice) — tooltip renders it muted; null = none */
+        public final String desc;
         /** armor: equipment slot (head/chest/legs/feet/offhand); trinkets
          *  implicitly go offhand; null = not wearable */
         public final String slot;
@@ -36,6 +38,7 @@ public final class ItemRegistry {
         Item(String id, JsonObject o) {
             this.id = id;
             name = o.get("name").getAsString();
+            desc = o.has("desc") ? o.get("desc").getAsString() : null;
             kind = o.get("kind").getAsString();
             ability = o.has("ability") ? o.get("ability").getAsString() : null;
             block = o.has("block") ? o.get("block").getAsString() : null;
