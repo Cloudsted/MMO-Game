@@ -534,12 +534,18 @@ expect(
 );
 expect(state.terrain.get(48, 16, 19) === SOLID_ID_BY_NAME("gold_block"), `gold throne decodes at (48,16,19) [id ${state.terrain.get(48, 16, 19)}]`);
 expect(state.terrain.get(48, 19, 14) === SOLID_ID_BY_NAME("stained_glass"), `stained-glass rose window decodes at (48,19,14) [id ${state.terrain.get(48, 19, 14)}]`);
+// batch 8 opened the breach: the dead-end became the torn portal chamber and
+// the arch's path apron paves the portal's own circle — sample the chamber
+// ring around it (same window as broken_court.test)
 let white = 0;
-for (let z = 4; z <= 7; z++) for (let x = 33; x <= 37; x++) for (let y = 13; y <= 16; y++) {
-  const b = state.terrain.get(x, y, z);
-  if (b === SOLID_ID_BY_NAME("snow") || b === SOLID_ID_BY_NAME("ice")) white++;
+for (let z = 1; z <= 7; z++) for (let x = 31; x <= 39; x++) {
+  if (Math.hypot(x - 35, z - 4) <= 3.2) continue; // the arch apron
+  for (let y = 14; y <= 17; y++) {
+    const b = state.terrain.get(x, y, z);
+    if (b === SOLID_ID_BY_NAME("snow") || b === SOLID_ID_BY_NAME("ice")) white++;
+  }
 }
-expect(white >= 4, `the BREACH wears the Waste's colors (${white} snow/ice cells in the tunnel)`);
+expect(white >= 6, `the BREACH wears the Waste's colors (${white} snow/ice cells in the torn chamber)`);
 
 // ---- 7. the processional + the King, three-strong ----
 log("raising the raid (raider1 + raider2)...");
@@ -573,7 +579,8 @@ expect(state.maxAdds > sentinelsBefore, `rally/summon adds joined the fight (${s
 const waveLevels = [...(state.addLevels ?? [])].concat(...raiders.map((r) => [...(r.state.addLevels ?? [])]));
 expect(waveLevels.includes(18), `the rally waves answered at L18 (levels seen: ${[...new Set(waveLevels)].join(",") || "none"} — the event's level field)`);
 expect(chatWith(state, "the mountain is OPEN"), "death announce: the court falls silent, the mountain is open");
-for (const r of raiders) r.ws.close();
+// raiders stay CONNECTED through the loot — the crown bag is often
+// owner-locked to one of them (closed after the loot section below)
 
 // loot the king for the crown (SENTINEL bags litter the carpet too — prefer
 // the bag whose replicated loot view carries the crown)
@@ -591,17 +598,27 @@ const bagsNearDais = () =>
     });
 let sawBag = bagsNearDais().length > 0;
 const lootDeadline = Date.now() + 45_000; // the collapse gives us ~a minute
-while (!gotCrown() && Date.now() < lootDeadline) {
+// boss bags are OWNER-LOCKED 30 s to the top damage dealer — often a RAIDER
+// (batch 8 lesson): every raid bot attempts the pickup, and the crown counts
+// wherever it lands
+const crownAnywhere = () =>
+  gotCrown() || raiders.some((r) => (r.state.inv?.slots ?? []).some((s) => s && s.item === "sundered_crown"));
+while (!crownAnywhere() && Date.now() < lootDeadline) {
   const bags = bagsNearDais();
   if (!bags.length) { await sleep(1000); continue; }
   sawBag = true;
   const bag = bags[0];
-  await moveToward(ws, state, bag.x, bag.z, 1.5, 8000);
-  ws.send(JSON.stringify({ t: "pickup", id: bag.id }));
+  await Promise.all([
+    moveToward(ws, state, bag.x, bag.z, 1.5, 8000).then(() => ws.send(JSON.stringify({ t: "pickup", id: bag.id }))),
+    ...raiders.map((r) =>
+      moveToward(r.ws, r.state, bag.x, bag.z, 1.8, 8000).then(() => r.ws.send(JSON.stringify({ t: "pickup", id: bag.id }))).catch(() => {})
+    ),
+  ]);
   await sleep(1500);
 }
 expect(sawBag, "loot bags dropped near the dais");
-expect(gotCrown(), "looted The Sundered Crown from the King's bag");
+expect(crownAnywhere(), "looted The Sundered Crown from the King's bag");
+for (const r of raiders) try { r.ws.close(); } catch {}
 
 // the one-minute collapse: warnings then evict
 const warned30 = async () => { for (let i = 0; i < 45 * 10; i++) { if (chatWith(state, "collapses in 30 seconds")) return true; await sleep(100); } return false; };

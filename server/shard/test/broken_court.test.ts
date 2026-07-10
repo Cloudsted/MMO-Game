@@ -129,10 +129,32 @@ describe("broken_court preset gen", () => {
     for (const [label, x, z] of targets) {
       expect(reach.has(key(x, z)), label).toBe(true);
     }
-    // the breach climbs INTO the mountain and dead-ends at the collapse —
-    // dressing only until batch 8 opens the way to the White Waste
+    // the breach climbs INTO the mountain and ends at the torn-open portal
+    // chamber (batch 8 opened it: the White Waste door lives here now)
     expect(reach.get(key(35, 6))!).toBeGreaterThan(reach.get(key(35, 12))!);
-    expect(reach.has(key(35, 2))).toBe(false); // no way through
+    expect(reach.has(key(35, 4)), "the court-waste portal chamber").toBe(true);
+    expect(reach.has(key(35, 0))).toBe(false); // the mountain still walls the room
+  });
+
+  it("the breach chamber is open to the SKY (the portal's standY must be its floor)", () => {
+    // greenhood rule: a roofed portal chamber strands arrivals/glow on the cap.
+    // (The exact portal column sits under its own arch LINTEL — every portal
+    // does; sample the chamber cells beside the arch line.)
+    for (const [x, z] of [
+      [34, 3],
+      [36, 5],
+      [34, 6],
+      [36, 2],
+    ] as const) {
+      let top = -1;
+      for (let y = 46; y >= 1; y--) {
+        if (world.solidAt(x, y - 1, z) && !world.solidAt(x, y, z) && !world.solidAt(x, y + 1, z)) {
+          top = y;
+          break;
+        }
+      }
+      expect(top, `top walkable gap at ${x},${z}`).toBe(16); // the chamber floor, not the massif top
+    }
   });
 
   it("staged the throne room: gold throne, rose window, braziers, the stale dinner", () => {
@@ -147,16 +169,19 @@ describe("broken_court preset gen", () => {
   });
 
   it("wears the Waste's colors inside the breach (snow/ice, nowhere else in the room's south)", () => {
-    // the tunnel's deep floor is dusted white — the first cold in the game's south
+    // the torn chamber's floor is dusted white outside the arch's path apron
+    // — the first cold in the game's south (batch 8: the apron now paves the
+    // portal's own circle, so sample the chamber ring around it)
     let white = 0;
-    for (let z = 4; z <= 7; z++) {
-      for (let x = 33; x <= 37; x++) {
+    for (let z = 1; z <= 7; z++) {
+      for (let x = 31; x <= 39; x++) {
+        if (Math.hypot(x - 35, z - 4) <= 3.2) continue; // the arch apron
         const under = world.floorY(x + 0.5, z + 0.5) - 1;
         const b = world.get(x, under, z);
         if (b === BLOCK.snow!.id || b === BLOCK.ice!.id) white++;
       }
     }
-    expect(white).toBeGreaterThanOrEqual(4);
+    expect(white).toBeGreaterThanOrEqual(6);
   });
 
   it("the king can pathfind off his dais and around the set table", () => {
@@ -183,10 +208,13 @@ describe("Vaelric at L19 — the finale, re-anchored", () => {
     );
   });
 
-  it("tops every boss in the game — the L19 solo-content peak", () => {
+  it("tops every boss below the Waste — the L19 SOLO-content peak", () => {
+    // batch 8: the First Tyrant (L24, explicit GROUP content) now sits above
+    // him by design — the proposal is explicit that the King stays the solo
+    // peak and the White Waste is group content above him.
     const r = resolveMob(king, 19, SCALE);
     for (const [id, other] of Object.entries(reg.mobs)) {
-      if (id === "sundered_king") continue;
+      if (id === "sundered_king" || id === "first_tyrant") continue;
       const authored = resolveMob(other, undefined, SCALE);
       expect(r.hp, id).toBeGreaterThan(authored.hp);
       expect(r.xp, id).toBeGreaterThan(authored.xp);

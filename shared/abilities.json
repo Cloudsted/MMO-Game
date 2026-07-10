@@ -1357,5 +1357,42 @@
     "cooldownMs": 28000,
     "manaCost": 0,
     "fx": "firebolt"
+  },
+  "winters_writ": {
+    "kind": "pillars",
+    "castTimeMs": 900,
+    "recoverMs": 400,
+    "pillars": {
+      "count": 5,
+      "spacing": 2.2,
+      "radius": 2.2,
+      "staggerMs": 170,
+      "burnMs": 1500
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 9000,
+    "manaCost": 0,
+    "fx": "frost"
+  },
+  "deep_winter": {
+    "kind": "projectile",
+    "castTimeMs": 1100,
+    "recoverMs": 350,
+    "projSpeed": 30,
+    "maxRange": 44,
+    "predictive": true,
+    "aoeRadius": 2.6,
+    "impactFx": "explosion",
+    "projScale": 2.0,
+    "debuff": {
+      "slowPct": 0.5,
+      "durMs": 3000
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 5200,
+    "manaCost": 0,
+    "fx": "frost"
   }
 }

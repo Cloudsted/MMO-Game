@@ -292,6 +292,10 @@ public class AudioEngine {
                 bed = "drone_dungeon"; // the shift that never stops
                 playlist = "dungeon";
             }
+            case "white_waste" -> {
+                bed = "wind_storm"; // the wind that scours the top of the world
+                playlist = "dungeon";
+            }
             case "desert" -> {
                 bed = "wind_desert";
                 playlist = "wild";

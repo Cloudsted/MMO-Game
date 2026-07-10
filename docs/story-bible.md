@@ -633,7 +633,49 @@ still holding court, alone, forever. He is the L19 solo-content peak.
 
 ---
 
-### W8 — **The White Waste** (`NEW room`, working name kept) · L20–24 · ◉ group finale
+### W8 — **The White Waste** (`NEW room`, working name kept) · L20–24 · ◉ group finale — **SHIPPED (batch 8, 2026-07-10)**
+
+> **SHIPPED as designed** (world-redesign batch 8): room `white_waste` (160²
+> preset glacial trough, ephemeral {no lifetimeSec, downtimeSec 900}, fixedTime
+> 0.36 cold raking daylight). The Broken Court's breach OPENED: the dead-end
+> collapse became a torn-open portal chamber under a sky shaft; `court-waste`
+> boots SEALED and the King's death event now runs announce → openPortal →
+> setRoomTimer 60 (the escape-window pattern — kill Vaelric, climb through
+> before the court resets). Layout: arrival shelf (one-way landing 80.5,148.5)
+> → bending paved tribute-road past the frozen tribute stations (fen crates /
+> forge cargo / desert wares / bone paddocks / wagon wrecks) → the RIME
+> WARDENS' gate (an ice wall pinches the valley; the ONLY way through is
+> their arena, doors offset — spatial gating, no portal) → the UNPAID PILE
+> (set apart, snowed under, Valdrenn's banners — landmark 3 verbatim) → the
+> tribute-court amphitheater (ice benches, blue-lit colonnade, sorted-payment
+> sectors, cache_royal wings ×2) → THE FAR DOOR (the pass climbs north and
+> ends at a sheer ancient-ice slab, blue light under it — register §10.5,
+> shown, never opened; test-enforced impassable). THE FIRST TYRANT L24
+> (hp 4829 / dmg 86 = Vaelric's group anchor up the 1.14/1.11 trend; xp
+> 19164 = finale ×12; tops every boss in the game, test-enforced): kit
+> rime_cleave + NEW winters_writ (pillars) + NEW deep_winter (predictive
+> exploding AoE, 50% slow — the cold court controls space); rallies 66/33%
+> deliver the tribute LIVING (Tithe-Collectors L21, Waste-Shades L20 — the
+> batch-5 leveled event waves). Sprite `demonking_full_wings_1.png` VERIFIED
+> (ice-blue demon lord, pale bat wings). Rime Wardens L21 ×2
+> (`gargoyle_1.png` VERIFIED — statues that animate; pair hp 2×1262 ≈ one
+> L21 solo boss; miniboss ×4 xp each; loot table deliberately has NO
+> guaranteed slot). Trash: Pale Courser L20 (`centaur_c_1.png` VERIFIED),
+> Snow Harpy L21 (`harpy_b_1.png` grounded sheet — no flying tech, the fly
+> sheet stays unused), Waste-Shades = wraith rank L20 name-override,
+> Tithe-Collector = frostplate_revenant rank L21 (the Δ8 cap exactly; the
+> re-theme table's foreshadowing paid off). Death announce verbatim; trophy
+> `the_winter_tithe` (value 500, tops the ladder) + guaranteed mythic_relic.
+> **The waste's EXIT (bible was silent):** a one-way arch home to Greywatch,
+> landing beside the portal-stone (64.5,80.5) — chosen because the court
+> cycles away beneath you (returning there would strand arrivals in its
+> downtime), and because "the arches take you home" IS the respawn-mystery
+> motif (§10.6, kept unexplained — the second announce says the arch "will
+> carry you home", usage not explanation). Deviations from this section:
+> a second death-announce line (the exit hint) and a rally-2 line were
+> authored new; the tribute-court shipped as a full amphitheater rather
+> than a colonnade-only court. Proven by scripts/waste-probe.mjs (the full
+> two-room arc live incl. both cycles) + screenshots tools/out/waste-*.png.
 
 **The top of the world, where the tribute goes.** Snow/ice blocks debut.
 A glacial preset: the tithe-roads of every region converge here — you
@@ -1191,10 +1233,12 @@ tithe-road that used to cross it, plowed under.
 ~~`barrow_alpha` (W5, gravehound sprite)~~ (SHIPPED batch 7),
 `ser_osmund` (W6, sentinel sprite), ~~`sarquun` (E2)~~
 (SHIPPED batch 2), ~~`old_kiln` (E3, slagback sprite)~~ (SHIPPED batch 5), `first_draft` (N1, ogre sprite),
-`cold_curator` (N3, medusa sprite), `first_tyrant` (W8), `rime_warden`
-(W8), plus White Waste trash [PROPOSAL, all UNVERIFIED sprites from the
-catalog]: winter/spectral centaur (`centaur_c_1.png`), snow harpy
-(`harpy_b_1.png` + fly sheet), and re-ranked wraiths as "waste-shades."
+`cold_curator` (N3, medusa sprite), ~~`first_tyrant` (W8)~~ (SHIPPED batch
+8), ~~`rime_warden` (W8)~~ (SHIPPED batch 8), plus White Waste trash
+(SHIPPED batch 8, all sprites contact-sheet VERIFIED): `pale_courser`
+(`centaur_c_1.png`), `snow_harpy` (`harpy_b_1.png` grounded; the fly sheet
+stays unused — no flying tech), wraith rank L20 "Waste-Shade", and
+frostplate_revenant rank L21 "Tithe-Collector".
 
 ---
 
@@ -1213,8 +1257,8 @@ catalog]: winter/spectral centaur (`centaur_c_1.png`), snow harpy
 | W6 Valdrenn | Ser Osmund, the Gatekeeper [PROPOSAL] | main — oath as a lock; opens court gate | 17 | NEW `ser_osmund` | `oathbound_sentinel` (shipped) |
 | W6 | The Riderless | side — the king's burning horse | 17 | `cinder_nightmare` @ rank | `cinder_nightmare` (shipped) |
 | W7 Broken Court | Vaelric, the Sundered King | main — the second dead king; solo peak; opens the breach | 19 (retune 18→19) | `sundered_king` | `sundered_king` (shipped) |
-| W8 White Waste | THE FIRST TYRANT | main FINALE — group L24; unnamed by canon | 24 | NEW `first_tyrant` | `demonking_full_wings_1.png` — UNVERIFIED [PROPOSAL] |
-| W8 | The Rime Wardens | gate guardians | ~21 | NEW `rime_warden` | `gargoyle_1.png` — UNVERIFIED (fallback: frostplate re-palette) |
+| W8 White Waste | THE FIRST TYRANT | main FINALE — group L24; unnamed by canon | 24 | `first_tyrant` (SHIPPED batch 8) | `demonking_full_wings_1.png` — VERIFIED (tools/out/sheets/waste-demonking_full_wings_1-chars.png) |
+| W8 | The Rime Wardens | gate guardians (pair) | 21 | `rime_warden` (SHIPPED batch 8) | `gargoyle_1.png` — VERIFIED (tools/out/sheets/waste-gargoyle_1-chars.png) |
 | E1 Sunscour | Kaharat, the Red Mane | main TYRANT — pride king; opens Emberfells gate | 8 (retune 9→8) | `kaharat` | `kaharat` (shipped) |
 | E1 | Sekhat the Ninth | side ☆ tomb — the first dead king | 10 | `sekhat` | `sekhat` (shipped) |
 | E2 The Maw | Sarquun, the Undertide | main TYRANT — cycling arena; drank the sea | 9 event (group-leaning) | `sarquun` (SHIPPED batch 2) | `boss_kraken_1.png` — VERIFIED (tools/out/sheets/kraken-chars.png) |
@@ -1253,10 +1297,11 @@ line about the paperwork). Description re-themes ride any content batch:
 - `sundered_crown` — "The crown of the last man who was ever a king. Everyone understands why the Charter overpays."
 - `spiral_horn` — "Aelthir's. Mara won't buy it. Mara won't say why." (deliberately the ONE proof a vendor refuses — mystery performance)
 - [PROPOSAL new tyrant proofs]: `red_mane_tuft`, `crownmoss_sprig`
-  (Grelmoss), `undertide_beak_shard`, `furnace_heart` (Vulkhar),
-  `pale_signet` (Morvane), `the_winter_tithe` (the First Tyrant — "What
-  the First was owed. Paid in full, at last, in the only coin that was
-  ever going to settle it.")
+  (Grelmoss), ~~`undertide_beak_shard`~~ (SHIPPED batch 2),
+  `furnace_heart` (Vulkhar), `pale_signet` (Morvane),
+  ~~`the_winter_tithe`~~ (SHIPPED batch 8, value 500 — tops the ladder,
+  test-enforced) (the First Tyrant — "What the First was owed. Paid in
+  full, at last, in the only coin that was ever going to settle it.")
 
 ---
 

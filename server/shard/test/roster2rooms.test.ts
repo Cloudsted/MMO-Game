@@ -142,10 +142,14 @@ describe("roster-2 spawn tables", () => {
             expect(entry.level, `${t.id}/${entry.mob}: level below the def`).toBeGreaterThan(mob.level - 1);
             const base = resolveMob(mob, undefined, SCALING);
             const deep = resolveMob(mob, entry.level, SCALING);
-            if ((mob.ranks ?? []).length > 0) {
-              // a ranked def MUST cross a threshold — otherwise the level is a
-              // silent stat nudge and the design intent (new buttons, new
-              // title, new nerve) never fires
+            const firstRank = Math.min(...(mob.ranks ?? []).map((r) => r.atLevel), Infinity);
+            if ((mob.ranks ?? []).length > 0 && entry.level >= firstRank) {
+              // an override at or past a def's rank ladder MUST cross a
+              // threshold — otherwise the level is a silent stat nudge and the
+              // design intent (new buttons, new title, new nerve) never fires.
+              // (An override BELOW the first rank is the rankless-style stat
+              // nudge and is validated as one in the else branch — the city's
+              // L15 chapel wraiths predate the wraith's L20 Waste-Shade rank.)
               const crossed = (mob.ranks ?? []).some((r) => r.atLevel <= entry.level!);
               expect(crossed, `${t.id}: ${entry.mob} @L${entry.level} crosses no rank`).toBe(true);
               const changed =

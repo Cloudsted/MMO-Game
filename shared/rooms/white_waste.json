@@ -1,0 +1,157 @@
+{
+  "id": "white_waste",
+  "name": "The White Waste",
+  "type": "dungeon",
+  "biome": "ruin",
+  "wind": 0.9,
+  "persistence": "ephemeral",
+  "fixedTime": 0.36,
+  "nightLight": 1.6,
+  "lifecycle": {
+    "downtimeSec": 900,
+    "warnAtSecLeft": [30, 10]
+  },
+  "size": {
+    "w": 160,
+    "h": 160
+  },
+  "spawn": {
+    "x": 80,
+    "z": 148,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 93411,
+    "base": 10,
+    "amplitude": 0,
+    "frequency": 0.02
+  },
+  "flags": {
+    "safeZone": false,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "waste-home",
+      "label": "Greywatch — the Last Free City",
+      "target": "hub",
+      "x": 60,
+      "z": 70,
+      "r": 2.2,
+      "exitX": 64.5,
+      "exitZ": 80.5
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "courser-field-west",
+      "region": { "kind": "circle", "x": 48, "z": 118, "r": 10 },
+      "mobs": [{ "mob": "pale_courser", "weight": 1 }],
+      "maxAlive": 4,
+      "packSize": [2, 3],
+      "respawnSec": 240
+    },
+    {
+      "id": "courser-field-east",
+      "region": { "kind": "circle", "x": 100, "z": 124, "r": 9 },
+      "mobs": [{ "mob": "pale_courser", "weight": 1 }],
+      "maxAlive": 3,
+      "packSize": [2, 3],
+      "respawnSec": 240
+    },
+    {
+      "id": "harpy-tribute-piles",
+      "region": { "kind": "circle", "x": 66, "z": 122, "r": 12 },
+      "mobs": [{ "mob": "snow_harpy", "weight": 1 }],
+      "maxAlive": 3,
+      "packSize": [1, 2],
+      "respawnSec": 240
+    },
+    {
+      "id": "harpy-tarn",
+      "region": { "kind": "circle", "x": 92, "z": 113, "r": 8 },
+      "mobs": [{ "mob": "snow_harpy", "weight": 1 }],
+      "maxAlive": 2,
+      "packSize": [1, 2],
+      "respawnSec": 240
+    },
+    {
+      "id": "shades-unpaid-pile",
+      "region": { "kind": "circle", "x": 100, "z": 70, "r": 8 },
+      "mobs": [{ "mob": "wraith", "weight": 1, "level": 20 }],
+      "maxAlive": 2,
+      "packSize": [1, 2],
+      "respawnSec": 300
+    },
+    {
+      "id": "shades-court",
+      "region": { "kind": "circle", "x": 80, "z": 50, "r": 8 },
+      "mobs": [{ "mob": "wraith", "weight": 1, "level": 20 }],
+      "maxAlive": 3,
+      "packSize": [1, 2],
+      "respawnSec": 300
+    },
+    {
+      "id": "collector-post-road",
+      "region": { "kind": "circle", "x": 58, "z": 106, "r": 3 },
+      "mobs": [{ "mob": "frostplate_revenant", "weight": 1, "level": 21 }],
+      "maxAlive": 1,
+      "packSize": [1, 1],
+      "respawnSec": 420
+    },
+    {
+      "id": "collector-post-court",
+      "region": { "kind": "circle", "x": 80, "z": 74, "r": 3 },
+      "mobs": [{ "mob": "frostplate_revenant", "weight": 1, "level": 21 }],
+      "maxAlive": 1,
+      "packSize": [1, 1],
+      "respawnSec": 420
+    },
+    {
+      "id": "rime-wardens",
+      "region": { "kind": "circle", "x": 83, "z": 85, "r": 4 },
+      "mobs": [{ "mob": "rime_warden", "weight": 1 }],
+      "maxAlive": 2,
+      "packSize": [2, 2],
+      "respawnSec": 900
+    },
+    {
+      "id": "the-first-tyrant",
+      "region": { "kind": "circle", "x": 80, "z": 33, "r": 2 },
+      "mobs": [{ "mob": "first_tyrant", "weight": 1 }],
+      "maxAlive": 1,
+      "packSize": [1, 1],
+      "respawnSec": 99999
+    }
+  ],
+  "events": [
+    {
+      "id": "first-tyrant-rally-1",
+      "on": { "kind": "bossHpBelowPct", "mob": "first_tyrant", "pct": 0.66 },
+      "actions": [
+        { "kind": "announce", "text": "The First Tyrant is owed. The tribute comes to it — living." },
+        { "kind": "spawnMobs", "mob": "frostplate_revenant", "count": 2, "radius": 8, "level": 21 }
+      ]
+    },
+    {
+      "id": "first-tyrant-rally-2",
+      "on": { "kind": "bossHpBelowPct", "mob": "first_tyrant", "pct": 0.33 },
+      "actions": [
+        { "kind": "announce", "text": "The snow gives up its dead. Forty years of tribute stands up around you." },
+        { "kind": "spawnMobs", "mob": "wraith", "count": 3, "radius": 9, "level": 20 }
+      ]
+    },
+    {
+      "id": "first-tyrant-falls",
+      "on": { "kind": "bossDeath", "mob": "first_tyrant" },
+      "actions": [
+        { "kind": "announce", "text": "THE FIRST TYRANT IS DEAD. Every land has a king. One of them, now, is no one's." },
+        { "kind": "announce", "text": "The court is coming down. The arch on the pass will carry you home. One minute. RUN." },
+        { "kind": "setRoomTimer", "sec": 60 }
+      ]
+    }
+  ],
+  "npcs": []
+}

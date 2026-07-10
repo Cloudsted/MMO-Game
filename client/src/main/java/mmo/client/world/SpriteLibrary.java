@@ -114,6 +114,12 @@ public class SpriteLibrary {
         // batch 7 (the Sundering Fields): the siege-beast — over the King,
         // under Sarquun
         heights.put("old_wallbreaker", 2.7f);
+        // batch 8 (the White Waste): the finale — the First Tyrant's
+        // silhouette out-classes every shipped boss
+        heights.put("first_tyrant", 3.0f);
+        heights.put("rime_warden", 2.1f);
+        heights.put("pale_courser", 2.4f);
+        heights.put("snow_harpy", 1.7f);
     }
 
     public PlayerSheet sheet(String key) {

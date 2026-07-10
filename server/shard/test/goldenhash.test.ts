@@ -73,13 +73,19 @@ const UPDATE = process.env.GOLDEN_UPDATE === "1";
  *  dais; features held), and sundered_city grid (the collapsed-postern
  *  escape landing in the graveyard quarter; features held). gloomfen held
  *  byte-identical — its re-targets are data-only.
+ *  broken_court grid updated + the NEW white_waste entry added 2026-07-10
+ *  for batch 8 (THE WHITE WASTE): the breach's dead-end collapse became the
+ *  torn-open portal chamber (sky shaft + the court-waste arch + a regraded
+ *  climb); broken_court FEATURES held (its treasury cache is unchanged —
+ *  the waste's two cache_royal wings live in the NEW entry). Every other
+ *  room held byte-identical.
  *  atelier/dungeon/grounds/hub/maw
  *  share a features hash: it is the hash of the EMPTY ScatterResult — no
  *  prefab scatter. greenhood_run has no scatter either, but its authored
  *  caches ride the features handle, so its hash differs.) */
 const GOLDEN: Record<string, { grid: string; features: string }> = {
   atelier: { grid: "a5a2f7b6d3f36a836370c123b136e9db477cda33", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
-  broken_court: { grid: "9ecceac6c38d882d925cca023f230f6c2050ceaa", features: "35d68df7bb65002ec459140d1219f1548baff40e" },
+  broken_court: { grid: "0878f14fc5d0d7a2fa973e305ca5301bd38cc324", features: "35d68df7bb65002ec459140d1219f1548baff40e" },
   cinderrift: { grid: "3f559fbb5131ec058becb54bdb2c4ff5fbaf265e", features: "64fd739a989b4a5014c437d9e235aa6c81726653" },
   crypt_depths: { grid: "4ebf6b0f596bb8fba7690bb48aec26cc6f393213", features: "2f8b38a89da3d19331960f0781803646b57af960" },
   desert: { grid: "aff409b0bd4eec1683fd5e8b1163268d045ebe1a", features: "f908e575dd8e4b5f1fea511bc7a034d1a02ccb55" },
@@ -96,6 +102,7 @@ const GOLDEN: Record<string, { grid: string; features: string }> = {
   stranglers_march: { grid: "0e82fe8cd0cc9cd0d28406e0e0a2aff14d8ec3e7", features: "e9737c696504c7800346841a71b1a234b1a61134" },
   sundered_city: { grid: "cbbb29c3b2ba66a949be8f3cf1e7a1668dd4a953", features: "bf6a11e455e64f48a5650907e6b6ee9dbba02aca" },
   sundering_fields: { grid: "b1056c9c6aeecb85da195bd857e577e6e9b2a711", features: "450d747d7d4032586dc92699a8b1bc289ce1be3b" },
+  white_waste: { grid: "e36ecc1920a0a1273db69b13f7a00dff4710715c", features: "ceda4a5d28bc4038b72c26f109d40b1e43b43d79" },
 };
 
 function hashRoom(world: VoxelWorld): { grid: string; features: string } {

@@ -41,6 +41,16 @@
       "z": 88,
       "r": 2.2,
       "exitPortalId": "city-court"
+    },
+    {
+      "id": "court-waste",
+      "label": "The White Waste",
+      "target": "white_waste",
+      "x": 35,
+      "z": 4,
+      "r": 2.2,
+      "exitX": 80.5,
+      "exitZ": 148.5
     }
   ],
   "spawnTables": [
@@ -75,6 +85,7 @@
       "on": { "kind": "bossDeath", "mob": "sundered_king" },
       "actions": [
         { "kind": "announce", "text": "Vaelric is done. The court falls silent — and behind the throne, the mountain is OPEN. One minute. RUN." },
+        { "kind": "openPortal", "portalId": "court-waste" },
         { "kind": "setRoomTimer", "sec": 60 }
       ]
     }

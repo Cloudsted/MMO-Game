@@ -509,6 +509,14 @@
     "damage": 30,
     "moveSpeed": 2.8,
     "ability": "wraith_touch",
+    "ranks": [
+      {
+        "atLevel": 20,
+        "damageMult": 0.85,
+        "xpMult": 0.8075,
+        "name": "Waste-Shade"
+      }
+    ],
     "aggroRadius": 11,
     "attackRange": 2.2,
     "leashRadius": 36,
@@ -1693,6 +1701,14 @@
         "aggroRadius": 18,
         "leashRadius": 80,
         "titleSuffix": "Unbound"
+      },
+      {
+        "atLevel": 21,
+        "damageMult": 0.75,
+        "xpMult": 0.7641,
+        "aggroRadius": 11,
+        "leashRadius": 26,
+        "name": "Tithe-Collector"
       }
     ],
     "aggroRadius": 14,
@@ -2497,6 +2513,147 @@
       "attack": "bog_serpent_attack",
       "hurt": "bog_serpent_hurt",
       "die": "bog_serpent_die"
+    }
+  },
+  "pale_courser": {
+    "name": "Pale Courser",
+    "sprite": "pale_courser",
+    "level": 20,
+    "hp": 620,
+    "damage": 46,
+    "moveSpeed": 4.0,
+    "attacks": [
+      {
+        "ability": "horn_charge",
+        "weight": 2
+      },
+      {
+        "ability": "wraith_touch",
+        "damage": 40,
+        "weight": 3
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 11,
+    "attackRange": 2.6,
+    "leashRadius": 28,
+    "fleeAtHpPct": 0,
+    "xp": 1093,
+    "loot": "waste_trash_drops",
+    "sounds": {
+      "idle": "gravehound_idle",
+      "attack": "gravehound_attack",
+      "hurt": "gravehound_hurt",
+      "die": "gravehound_die"
+    }
+  },
+  "snow_harpy": {
+    "name": "Snow Harpy",
+    "sprite": "snow_harpy",
+    "level": 21,
+    "hp": 500,
+    "damage": 40,
+    "moveSpeed": 3.4,
+    "attacks": [
+      {
+        "ability": "raptor_bite",
+        "weight": 3
+      },
+      {
+        "ability": "wisp_bolt",
+        "damage": 34,
+        "minRange": 4,
+        "weight": 2
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 12,
+    "attackRange": 13,
+    "leashRadius": 30,
+    "fleeAtHpPct": 0,
+    "xp": 1210,
+    "loot": "waste_trash_drops",
+    "sounds": {
+      "idle": "bone_bat_idle",
+      "attack": "bone_bat_attack",
+      "hurt": "bone_bat_hurt",
+      "die": "bone_bat_die"
+    }
+  },
+  "rime_warden": {
+    "name": "Rime Warden",
+    "sprite": "rime_warden",
+    "level": 21,
+    "hp": 1262,
+    "damage": 36,
+    "moveSpeed": 2.4,
+    "attacks": [
+      {
+        "ability": "rime_cleave",
+        "weight": 3
+      },
+      {
+        "ability": "iron_bash",
+        "weight": 2
+      },
+      {
+        "ability": "rime_shard",
+        "damage": 30,
+        "minRange": 5,
+        "weight": 2
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 10,
+    "attackRange": 12,
+    "leashRadius": 26,
+    "fleeAtHpPct": 0,
+    "xp": 4840,
+    "loot": "rime_warden_drops",
+    "sounds": {
+      "idle": "cinder_golem_boss_idle",
+      "attack": "cinder_golem_boss_attack",
+      "hurt": "cinder_golem_boss_hurt",
+      "die": "cinder_golem_boss_die"
+    }
+  },
+  "first_tyrant": {
+    "name": "The First Tyrant",
+    "sprite": "first_tyrant",
+    "level": 24,
+    "hp": 4829,
+    "damage": 86,
+    "moveSpeed": 2.6,
+    "attacks": [
+      {
+        "ability": "rime_cleave",
+        "weight": 3
+      },
+      {
+        "ability": "winters_writ",
+        "damage": 48,
+        "minRange": 3,
+        "weight": 3
+      },
+      {
+        "ability": "deep_winter",
+        "damage": 56,
+        "minRange": 4,
+        "weight": 3
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 14,
+    "attackRange": 14,
+    "leashRadius": 30,
+    "fleeAtHpPct": 0,
+    "xp": 19164,
+    "loot": "first_tyrant_drops",
+    "sounds": {
+      "idle": "minotaur_boss_idle",
+      "attack": "minotaur_boss_attack",
+      "hurt": "minotaur_boss_hurt",
+      "die": "minotaur_boss_die"
     }
   }
 }

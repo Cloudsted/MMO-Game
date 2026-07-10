@@ -2036,6 +2036,168 @@ show their block tile).
     tune, and the escape run's 60 s (24 s bot pace leaves ~36 s of loot
     margin — is that generous enough for a first-timer).
 
+- 2026-07-10 **THE WHITE WASTE** (world-redesign batch 8, proposal Part 5
+  step 8 — the finale; story bible §6 W8, SHIPPED note there). Room 19: the
+  frozen high waste above Valdrenn, the snow/ice debut, and THE FIRST
+  TYRANT — deliberately UNNAMED in every string (mysteries register §10.3;
+  test-enforced). NOT COMMITTED — working-tree batch.
+  - **Room `white_waste`** (160² preset glacial trough, biome ruin base-10
+    slab the builder owns entirely; EPHEMERAL {no lifetimeSec, downtimeSec
+    900, warn [30,10]}; fixedTime **0.36** — full-skylight readability per
+    LESSONS but off-noon so the raking sun models the snow relief; wind
+    0.9). `buildWhiteWaste` south→north: the ARRIVAL SHELF (a +4 rock-bodied
+    terrace under the south rim — the one-way landing at (80.5,148.5), the
+    first sight of the whole valley) → the paved BENDING tribute-road
+    (stone/cracked bricks, wind-scoured, snow-drifted; dead lantern posts
+    with ONE still lit) past frozen TRIBUTE STATIONS — the world's regions
+    as one cargo manifest: fen crates (rotting planks/hay/reeds), forge
+    cargo (dark bricks/iron bars/obsidian/one dead ember), desert wares
+    (sandstone brick bales), bone paddocks, three wagon wrecks, a frozen
+    tarn → the RIME WARDENS' GATE (a full-height ice wall pinches the
+    valley; the ONLY way through is their walled arena, south door x74 /
+    north door x86 OFFSET so every crossing walks the guardians' floor —
+    spatial gating, no portal; test-enforced: BFS with the arena refused
+    reaches NOTHING north of z78) → the UNPAID PILE set apart (marble+gold
+    under snow, Valdrenn's banners — the Nine-Day War's cause, no dialog) →
+    the TRIBUTE-COURT (ice amphitheater sunk 2, ICE-bodied benches — never
+    flatten, the emberfells dirt-underlayer lesson — blue-lit colonnade,
+    sorted-payment sectors: grain west / cattle-bone east / weapon-wagons
+    NE; TWO cache_royal wings at 900 s — the tribute IS royal goods) → the
+    dais with a seat of ANCIENT ICE (the counter-image of the gold throne)
+    → THE FAR DOOR: the pass climbs north in rock steps and stops at a
+    sheer full-height ice slab, blue crystals leaking light under it —
+    shown, never opened (register §10.5; BFS-enforced impassable, z≤4
+    unreachable). One portal only: `waste-home`, a one-way arch (exitX/Z,
+    no exitPortalId) landing beside Greywatch's portal-stone (64.5,80.5) —
+    the court cycles away beneath you, and "the arches take you home" is
+    the respawn-mystery motif (§10.6; the announce says the arch "will
+    carry you home" — usage, never explanation).
+  - **The breach OPENS** (broken_court): the batch-6 dead-end collapse
+    became a torn-open portal chamber — the climb regraded (tunnelFloor
+    (13-z)/2, chamber feet FL+3 = 16 so the chamber floor sits >2 above the
+    natural slab and **portalArch takes its AUTHORED-site path** — at +2 it
+    goes legacy and RAZES the chamber floor with clearAbove; the apron
+    repaints the same level so the z8→z7 step stays legal), carved open to
+    the SKY (the greenhood open-shaft rule; the arch's own lintel still
+    tops the exact portal column — test the FLANKING cells). `court-waste`
+    boots SEALED; the King's death event now runs announce → **openPortal**
+    → setRoomTimer 60 (the Morvane escape-window pattern: kill Vaelric,
+    climb through before the court resets). The court-side gate shows the
+    "(locked - opens in m:ss)" countdown while the waste is down — verified
+    live (reopenInSec=88 on the wire; portalState carries `target`, not
+    `id` — a probe trap paid twice now).
+  - **Mobs L20-24** (sprites contact-sheet VERIFIED per Layer-4, sheets in
+    tools/out/sheets/waste-*.png): `pale_courser` L20 (centaur_c_1 single —
+    slate spectral centaur; horn_charge + wraith_touch, 4.0 m/s leash 28),
+    `snow_harpy` L21 (harpy_b_1 grounded — no flying tech, fly sheet
+    unused; raptor_bite + wisp_bolt minRange 4 mixed kit), **Waste-Shade**
+    = wraith rank L20 (name override; damageMult 0.85, xpMult 0.8075 →
+    trash ×1 curve EXACTLY = 1093; the city's L15 chapel wraiths sit BELOW
+    the first rank — roster2rooms' crossed-a-rank invariant grew a
+    below-first-rank branch for exactly this), **Tithe-Collector** =
+    frostplate_revenant rank L21 (the Δ8 cap exactly; the bible's re-theme
+    paid off — the First Tyrant's collector stands posts here; damageMult
+    0.75 → 60, xpMult 0.7641 → elite ×2 = 2420 EXACTLY, disposition post
+    leash 26 overrides the Unbound's 80; the shipped Cinderrift r15 resolve
+    is byte-identical, test-locked).
+  - **The Rime Wardens** (`rime_warden` L21 ×2, gargoyle_1 — statues that
+    animate, marble plinths dressing their post): the TWO-AT-ONCE fight IS
+    the mechanic — **pair hp 2×1262 ≈ ONE L21 solo boss** (osmund
+    1495×1.14⁴ = 2525), dmg 36 each (pair pressure 72 > Vaelric's 51 —
+    group content), rime_cleave + iron_bash + rime_shard minRange 5 (a
+    kited warden SHOOTS frost — splitting the pair is punished), **xp
+    miniboss ×4 each = 4840** (×5 was rejected: the pair already pays 9680
+    ≈ half the finale per pass; ×4 keeps the gate a toll, not a farm),
+    shared table maxAlive 2 packSize [2,2] respawn 900, loot
+    `rime_warden_drops` with **NO guaranteed slot** (the boss-table
+    invariant: guaranteed loot only on solitary mobs).
+  - **THE FIRST TYRANT** L24 (`first_tyrant`, demonking_full_wings_1 — the
+    ice-blue horned demon lord, pale bat wings; billboard height 3.0, over
+    every shipped boss): **hp 4829 / dmg 86 = Vaelric's group anchor
+    (2508/51@19) up the plain 1.14/1.11 trend ×5 levels; xp 19164 =
+    round(12·(14+2·24^2.1))** — tops every boss in the game on hp AND xp
+    (test-enforced; broken_court's king guard now excludes it — the King
+    stays the SOLO peak, the Waste is group content above him). Kit
+    CONTROLS space: rime_cleave (0.45 slow, the full-86 anchor hit) + NEW
+    `winters_writ` (5-pillar marching line, override 48) + NEW
+    `deep_winter` (predictive exploding AoE, projScale 2.0, 50%×3 s slow,
+    override 56) — the spells were tuned DOWN from the raw trend (64/72)
+    after live raids: splash-on-everyone at trend damage turned any melee
+    group into a 30-second wipe regardless of size; control comes from the
+    slows and the pillars' AREA, the melee cleave keeps the trend's teeth
+    (the sarquun/vaelric override precedent). Rallies deliver the tribute
+    LIVING — 66% = 2
+    Tithe-Collectors L21, 33% = 3 Waste-Shades L20 (the batch-5 leveled
+    event waves); death → the bible's payoff verbatim + an exit-hint line +
+    setRoomTimer 60 → 900 s downtime → fresh. Loot `first_tyrant_drops`:
+    guaranteed **mythic_relic (the T5) + `the_winter_tithe` (value 500 —
+    tops the trophy ladder, invariant updated) + an epic weapons_royal**;
+    gold 600-900. Sounds reuse minotaur_boss groups; wardens
+    cinder_golem_boss; courser gravehound; harpy bone_bat. Client:
+    4 build-assets entries + SpriteLibrary heights (3.0/2.1/2.4/1.7) +
+    AudioEngine white_waste → wind_storm/dungeon bed.
+  - Goldens: broken_court grid (the breach opened; features held) + NEW
+    white_waste; all 17 other rooms byte-identical. Snow/ice tiles needed
+    ZERO pipeline work (maw salt-crust + breach dressing had proven them).
+  - Verified: typecheck, **675 vitest** (29 new in white_waste.test.ts + 2
+    broken_court additions; mobranks lists/ladder + roster2rooms
+    below-first-rank branch), verify-icons 0 errors (the_winter_tithe =
+    icon [3,63] diamond_pear, eyeballed — a frozen tear), rank-coverage
+    31/37 (both new ranks live), sprite-proof eyeballed, client compiles
+    (direct javac — IPv4 loopback fenced AGAIN; full [::1] playbook incl.
+    session mongod on ::1:27018). **`scripts/waste-probe.mjs` FULL PASS
+    live** (48 checks, ~25 min, master with MMO_DOWNTIME_OVERRIDE_SEC=90):
+    sealed boot + guardian denial → 5-bot king raid → "the mountain is
+    OPEN" + portalState → the breach climb WALKED + all five bots through
+    inside the 60 s window (raider transfers PARALLELIZED — serial
+    tp+waitTransfer once ate the whole window) → one-way shelf landing +
+    snow decoding on the wire → the bending road walked with the frost
+    band verified (Courser L20 / Harpy L21 / Tithe-Collector L21 rank NAME
+    on the wire) → the warden PAIR fight → the court-approach sweep, one
+    pull at a time → THE FIRST TYRANT raid kill (**5 bots: main + 4
+    raiders — the winning count for CRUDE stand-and-swing bots wearing
+    iron + admin staging enchants; smaller/naked raids wiped in ~20-30 s,
+    and a human group that dodges the telegraphs needs fewer**; both
+    leveled rallies observed mid-fight; the kill takes ~20 s once the raid
+    survives to swing) → winter tithe + mythic looted from the bag → one
+    bot OUT via the home arch to the portal-stone (64.5,80.5) → T-30
+    warning + evict for the rest → the cycle: fresh court boots SEALED,
+    re-kill reads reopenInSec on the still-shut breach → the waste reopens
+    FRESH with the Tyrant back at 4829. Regressions: city-probe two-stage
+    FULL PASS (its breach-snow sample re-windowed around the new arch
+    apron) + travel-bot PASS. Screenshots tools/out/waste-{vista,road,
+    gate,court,fardoor}-*.png (the court shot is the flagship; snow/ice
+    render check rode along).
+  - Probe traps paid this batch (the finale took ~15 attempts — each of
+    these was a full-arc rerun): `portalState` messages carry **`target`**
+    (the destination room id), never the portal id; a walkRoute `within`
+    of 2.4 strands a bot OUTSIDE a portal's 2.2 m trigger — finish with an
+    explicit sub-radius moveToward; **slow debuffs turn optimistic move
+    packets into correction storms** (the greenhood enforcer lesson — the
+    probe's moveToward now backs off to a slowed-legal step for 1.8 s
+    after any `correct`); a raid where only the main runs the fight loop
+    is decoys, not a raid; bots parked inside overlapping aggro fields die
+    before their fight starts (survey the park spot against EVERY
+    region+aggro radius); **weapon durability silently breaks mid-arc**
+    (the raid punched an unmoving boss for minutes — re-/give fresh
+    weapons before the finale); boss bags are OWNER-LOCKED 30 s to the top
+    damage dealer (EVERY bot attempts the pickup; the guarantee counts
+    wherever it lands); the Tyrant dies where the CHASE ends, not on its
+    dais (search the whole court for the bag); and a drink threshold ABOVE
+    max hp turns the raid into potion-chugging statues that never swing
+    AND never log.
+  - Owner feel-checks pending: the L20-24 chip damage solo (everything up
+    here assumes a group), the warden pair's CC stacking (rime_cleave 45% +
+    iron_bash 50%), deep_winter's dodge window at projScale 2.0, whether
+    snow-over-everything reads varied enough at ground level, the 900 s
+    reset pacing, the far door's "there is more world" read — and **weapon
+    durability over the full endgame arc**: the probe's epic kingsrend wore
+    OUT (broke) across king + wardens + approach + finale in one run (bots
+    swing ~2× a player's rate, but the arc is long and the breakage is
+    silent mid-fight — the raid punched an unmoving boss for minutes).
+    Consider whether the Waste needs a repair vendor, higher T4/T5
+    durability, or that's the intended attrition.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -2123,8 +2285,34 @@ Quick reference only — the stories behind these (and more) live in
 
 ## Current state
 
+- 2026-07-10 **THE WHITE WASTE (world-redesign batch 8, WORKING TREE — not
+  committed)** — room 19, the FINALE, the snow/ice debut (see the
+  decisions-log entry + story bible §6 W8 SHIPPED note): a 160² preset
+  glacial trough above Valdrenn behind the Broken Court's now-OPENING
+  breach (King's death → announce → openPortal → 60 s window — the
+  Morvane escape-gate pattern; the court-side gate counts down while the
+  waste cycles). The climb-out shelf → the paved bending tribute-road past
+  frozen tribute from every region → the Rime Wardens' spatially-gated
+  arena pass (L21 twins, pair hp ≈ one L21 solo boss, ×4 xp each) → the
+  unpaid pile → the ice amphitheater tribute-court (2× cache_royal wings)
+  → **THE FIRST TYRANT** L24 (UNNAMED by canon, test-enforced; hp 4829 /
+  dmg 86 = Vaelric's group anchor ×1.14/1.11⁵; xp 19164 finale ×12; tops
+  every boss in the game; pillars + predictive slowing AoE + leveled
+  collector/shade rallies; guaranteed mythic_relic + `the_winter_tithe`
+  value 500) → THE FAR DOOR (ice slab, shown-never-opened, BFS-enforced).
+  Frost band: pale_courser L20 + snow_harpy L21 (new, sprites VERIFIED) +
+  wraith r20 "Waste-Shade" + frostplate r21 "Tithe-Collector" (both
+  re-anchored to the curve exactly; shipped lower-room resolves
+  byte-identical, test-locked). Verified: typecheck, **675 vitest** (31
+  new), goldens = broken_court grid + NEW white_waste only, verify-icons 0
+  errors, rank-coverage 31/37, client compiles (direct javac — the [::1]
+  playbook again), **waste-probe.mjs FULL PASS** (the whole two-room arc
+  live incl. both cycles; 3 bots is the winning raid count) + city-probe
+  two-stage + travel-bot regressions, 5 screenshot scenes
+  (tools/out/waste-*.png). Owner feel-checks in the decisions-log entry.
+
 - 2026-07-10 **THE SUNDERING FIELDS + THE FOUNDRY + MORVANE'S ESCAPE GATE
-  (world-redesign batch 7, WORKING TREE — not committed)** — rooms 17 and 18
+  (world-redesign batch 7, committed 6b23be3)** — rooms 17 and 18
   and the graph's final reconnections (see the decisions-log entry): **The
   Sundering Fields** (288² proc+setpieces, L11-13, survey seed 92001)
   splices gloomfen⇄city on BOTH roads and adds the fields⇄foundry edge —

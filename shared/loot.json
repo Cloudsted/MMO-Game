@@ -2819,5 +2819,43 @@
         ]
       }
     ]
+  },
+  "waste_trash_drops": {
+    "gold": [50, 100],
+    "rolls": [1, 2],
+    "entries": [
+      { "weight": 34 },
+      { "weight": 18, "table": "weapons_rift" },
+      { "weight": 6, "table": "weapons_royal" },
+      { "weight": 22, "item": "greater_health_potion", "qty": [1, 2] },
+      { "weight": 20, "item": "greater_mana_potion", "qty": [1, 2] }
+    ]
+  },
+  "rime_warden_drops": {
+    "gold": [180, 300],
+    "rolls": [2, 2],
+    "entries": [
+      { "weight": 26, "table": "weapons_royal" },
+      { "weight": 10, "table": "weapons_royal", "minRarity": "rare" },
+      { "weight": 20, "item": "royal_seal", "qty": [1, 2] },
+      { "weight": 24, "item": "greater_health_potion", "qty": [1, 2] },
+      { "weight": 20, "item": "greater_mana_potion", "qty": [1, 2] }
+    ]
+  },
+  "first_tyrant_drops": {
+    "gold": [600, 900],
+    "rolls": [2, 3],
+    "entries": [
+      { "weight": 30, "table": "weapons_royal", "minRarity": "rare" },
+      { "weight": 20, "item": "royal_seal", "qty": [1, 2] },
+      { "weight": 15, "item": "mythic_relic", "minRarity": "rare", "qty": [1, 1] },
+      { "weight": 20, "item": "greater_health_potion", "qty": [2, 3] },
+      { "weight": 15, "item": "greater_mana_potion", "qty": [2, 3] }
+    ],
+    "guaranteed": [
+      { "weight": 1, "item": "mythic_relic", "minRarity": "rare", "qty": [1, 1] },
+      { "weight": 1, "item": "the_winter_tithe", "qty": [1, 1] },
+      { "weight": 1, "table": "weapons_royal", "minRarity": "epic" }
+    ]
   }
 }

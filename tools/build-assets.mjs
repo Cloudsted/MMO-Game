@@ -254,6 +254,24 @@ function grabComponent(png, seedX, seedY) {
     // tools/out/sheets/wallbreaker-giant-single-chars.png (107x92 frames,
     // clean single 3x4 grid, all four walk rows, no baked shadow).
     old_wallbreaker: { file: resolve(UNSORTED, "boss_giant_1.png"), single: true },
+    // ---- world-redesign batch 8: The White Waste ----
+    // THE FIRST TYRANT: ice-blue demon lord — pale curved horns, rust-orange
+    // fanged oni face, ice-blue plate, rust-red loincloth, huge pale-blue bat
+    // wings. Verified on tools/out/sheets/waste-demonking_full_wings_1-chars.png
+    // (clean single 3x4, no baked shadow).
+    first_tyrant: { file: resolve(UNSORTED, "demonking_full_wings_1.png"), single: true },
+    // Rime Warden: stone-gray crouched gargoyle — curled ram horns, ribbed
+    // bat wings, blank stone face; a statue until it isn't. Verified on
+    // tools/out/sheets/waste-gargoyle_1-chars.png (clean single 3x4).
+    rime_warden: { file: resolve(UNSORTED, "gargoyle_1.png"), single: true },
+    // Pale Courser: slate-gray spectral centaur, dark wild mane, washed-out
+    // torso. Baked TF shadow ellipse (owner convention, stays). Verified on
+    // tools/out/sheets/waste-centaur_c_1-chars.png (clean single 3x4).
+    pale_courser: { file: resolve(UNSORTED, "centaur_c_1.png"), single: true },
+    // Snow Harpy: blue-crested harpy, brown folded wings, blue scaled legs.
+    // Baked TF shadow ellipse (convention). Verified on
+    // tools/out/sheets/waste-harpy_b_1-chars.png (clean single 3x4).
+    snow_harpy: { file: resolve(UNSORTED, "harpy_b_1.png"), single: true },
   };
   const manifest = {};
   for (const [key, spec] of Object.entries(SHEETS)) {

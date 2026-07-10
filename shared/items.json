@@ -918,6 +918,16 @@
         45
       ]
     },
+    "the_winter_tithe": {
+      "name": "The Winter Tithe",
+      "kind": "trophy",
+      "value": 500,
+      "stack": 1,
+      "icon": [
+        3,
+        63
+      ]
+    },
     "wallbreaker_clasp": {
       "name": "Wallbreaker's Yoke-Clasp",
       "kind": "trophy",

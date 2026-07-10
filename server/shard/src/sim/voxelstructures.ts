@@ -172,6 +172,9 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult 
     case "foundry":
       buildFoundry(b, def, features);
       break;
+    case "white_waste":
+      buildWhiteWaste(b, def, features);
+      break;
   }
   // every portal gets a stone archway + a path apron facing the room spawn —
   // stamped LAST so arches always win over scatter and authored ground
@@ -3873,32 +3876,48 @@ function buildBrokenCourt(b: Builder, def: RoomDef, features: ScatterResult): vo
 
   // ---- THE BREACH (story bible W7 landmark 3): raw mountain rock torn open
   // bordering the throne wall. The First Tyrant left the way it came, and
-  // left it open. Dressing only — its portal to the White Waste is batch 8.
+  // left it open. Batch 8 OPENED it: the old dead-end collapse is gone — the
+  // climb now ends in a torn-open chamber under a ragged sky shaft (the
+  // "mountain is OPEN" made literal, and the open sky is the greenhood rule:
+  // the portal's standY must be the chamber floor, not the massif top). The
+  // `court-waste` portal in it boots SEALED and opens on the King's death.
   for (let x = COURT_BREACH.x0; x <= COURT_BREACH.x1; x++) {
     const ragged = Math.floor(hash2(seed ^ 0xb43c, x, 7) * 3);
     b.fill(x, FL, H.z0, x, FL + 8 - ragged, H.z0, 0);
   }
-  const tunnelFloor = (z: number): number => FL + Math.floor((13 - z) / 3);
-  for (let z = 13; z >= 4; z--) {
-    const half = z >= 10 ? 3 : z >= 7 ? 2 : 1;
+  // the climb gains 3 over the tunnel so the chamber floor sits >2 above the
+  // natural slab — that puts the portal arch on its AUTHORED-site path
+  // (groundAt), where the legacy path would raze the chamber floor
+  const tunnelFloor = (z: number): number => FL + Math.floor((13 - z) / 2);
+  for (let z = 13; z >= 8; z--) {
+    const half = z >= 10 ? 3 : 2;
     const fy = tunnelFloor(z);
     for (let x = 35 - half; x <= 35 + half; x++) {
       b.fill(x, fy, z, x, fy + 3, z, 0);
       const r = hash2(seed ^ 0xb43d, x, z);
-      const floor = z <= 7 ? (r < 0.15 ? "ice" : r < 0.6 ? "snow" : "ash") : r < 0.4 ? "rubble" : "ash";
-      b.set(x, fy - 1, z, floor);
+      b.set(x, fy - 1, z, r < 0.4 ? "rubble" : "ash");
     }
   }
-  // the collapse the way is dug through — passable dressing stops here
-  for (const [rx, rz, rh] of [
-    [34, 4, 3],
-    [36, 4, 2],
-    [35, 3, 3],
-  ] as const) {
-    b.fill(rx, tunnelFloor(rz), rz, rx, tunnelFloor(rz) + rh - 1, rz, "rubble");
+  // the torn chamber: z1-7 at the climb's top step (feet FL+3 = 16
+  // everywhere — the arch apron repaints the same level, so the z8→z7 step
+  // stays legal), carved open to the SKY; ragged rim bites keep the tear
+  // readable from inside the hall
+  const CH = FL + 3; // chamber feet level
+  for (let z = 1; z <= 7; z++) {
+    for (let x = 31; x <= 39; x++) {
+      const rim = x === 31 || x === 39 || z === 1 || z === 7;
+      const bite = rim ? 6 + Math.floor(hash2(seed ^ 0xb43e, x, z) * 10) : WORLD_HEIGHT - 1 - CH;
+      b.fill(x, CH, z, x, Math.min(WORLD_HEIGHT - 1, CH + bite), z, 0);
+      const r = hash2(seed ^ 0xb43d, x, z);
+      b.set(x, CH - 1, z, r < 0.2 ? "ice" : r < 0.65 ? "snow" : "ash");
+    }
   }
-  b.world.setIfAir(34, tunnelFloor(6), 6, id("blue_crystal"));
-  b.world.setIfAir(36, tunnelFloor(7), 7, id("blue_crystal"));
+  // what the tearing left: rubble at the chamber's flanks, cold light
+  b.set(32, CH, 2, "rubble");
+  b.set(38, CH, 3, "rubble");
+  b.set(32, CH, 6, "rubble");
+  b.world.setIfAir(38, CH, 6, id("blue_crystal"));
+  b.world.setIfAir(32, CH + 1, 2, id("blue_crystal"));
 
   // ---- the FORECOURT: the outer court the processional crosses — weathered
   // where the hall is pristine (the Tyrant tidied the lesson, not the yard)
@@ -3952,6 +3971,488 @@ function rubbleMoundAt(b: Builder, seed: number, cx: number, cz: number, r: numb
       const h = Math.max(0, Math.round((1 - d / (r + 1)) * 2 + hash2(seed ^ 0x9b1e, x, z) * 0.9));
       for (let y = 0; y < h; y++) b.set(x, baseY + y, z, "rubble");
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// THE WHITE WASTE (W8, world-redesign batch 8; story bible §6 W8) — the
+// frozen high waste above Valdrenn, where the tribute goes; the debut of the
+// snow/ice blocks and the game's finale. A 160² PRESET glacial trough valley
+// running south (the breach shelf you climb out onto) → north (the far door
+// that never opens). Everything placed has a reason:
+//   · the ARRIVAL SHELF — a raised snow terrace under the south rim, the
+//     first sight of the whole valley (the one-way landing from the Broken
+//     Court's torn breach);
+//   · the TRIBUTE-ROAD — the world's tithe-roads converge here, so the road
+//     is PAVED (stone bricks, wind-scoured, snow-drifted) and it BENDS (the
+//     no-straight-lines rule) past frozen tribute stations from every region:
+//     fen crates, forge cargo, desert wares, bone paddocks, wagon wrecks —
+//     the world economy drawn as one tableau;
+//   · the RIME WARDENS' GATE — a full-height ice wall pinches the valley
+//     shut; the ONLY way north is the wardens' walled arena, its two doors
+//     offset so every crossing walks the guardians' floor (spatial gating —
+//     no portal, no second way);
+//   · the UNPAID PILE — one heap set apart, snowed under, Valdrenn's banners
+//     on it: the tribute that was never sent (the Nine-Day War's cause,
+//     present at the finale, no dialog);
+//   · the TRIBUTE-COURT — a colossal ice amphitheater sunk into the valley
+//     floor, terraced benches, a broken blue-lit colonnade, sorted payment
+//     heaped in sectors around the floor, and the dais where THE FIRST
+//     TYRANT holds court; cache_royal alcoves in the wings (the tribute IS
+//     royal goods);
+//   · the FAR DOOR — behind the dais the pass visibly continues north into a
+//     cleft, climbs, and ends at a sheer ancient-ice slab lit faintly blue.
+//     Shown, never opened (mysteries register §10.5).
+// DETERMINISM: layout constants fixed; every ragged edge is hash2(seed^salt).
+// ---------------------------------------------------------------------------
+const WASTE = {
+  shelf: { x0: 62, x1: 98, z0: 138, z1: 152, rise: 4 }, // arrival terrace
+  ramp: { x0: 74, x1: 86, z0: 130, z1: 138 }, // shelf → valley floor
+  gateZ: { z0: 84, z1: 90 }, // the wardens' wall band
+  arena: { cx: 80, cz: 87, rx: 12, rz: 8 }, // the wardens' court
+  court: { cx: 80, cz: 46, r: 24 }, // the tribute-court amphitheater
+  dais: { x: 80, z: 30 }, // the First Tyrant's seat
+  cleft: { x0: 76, x1: 84, z0: 8, z1: 24 }, // the far door's pass
+  valley: { x0: 28, x1: 132 }, // rim feet east/west
+};
+
+/** The bending tribute-road, arrival ramp → wardens' south door → (arena) →
+ *  north door → the court's processional gap. */
+const WASTE_ROAD: Array<[number, number]> = [
+  [80, 132],
+  [70, 126],
+  [64, 120],
+  [58, 108],
+  [66, 100],
+  [74, 97],
+  // (the arena crossing happens between these two)
+  [86, 79],
+  [82, 72],
+  [80, 66],
+];
+
+function buildWhiteWaste(b: Builder, def: RoomDef, features: ScatterResult): void {
+  const seed = def.terrain.seed;
+  const W = def.size.w;
+  const H = def.size.h;
+  const G = b.g(80, 80); // 10 — flat everywhere (amplitude 0)
+  const FL = G + 1;
+  const SNOW = id("snow");
+  const ICE = id("ice");
+  const DARK = id("dark_stone");
+  const STONE = id("stone");
+
+  // ---- the VALLEY SHELL: rims on every side; the court/cleft/shelf zones
+  // carve their own shapes afterwards. Column-by-column target heights.
+  const rimTop = (x: number, z: number, d: number): number => {
+    // d = how deep into the rim band this column sits (0 at the valley edge)
+    const t = Math.min(1, d / 14);
+    return Math.round(G + 4 + t * 18 + hash2(seed ^ 0x77a1, x, z) * 4);
+  };
+  for (let z = 0; z < H; z++) {
+    for (let x = 0; x < W; x++) {
+      let d = 0;
+      if (x < WASTE.valley.x0) d = Math.max(d, WASTE.valley.x0 - x);
+      if (x > WASTE.valley.x1) d = Math.max(d, x - WASTE.valley.x1);
+      if (z > 152) d = Math.max(d, z - 152); // south rim (behind the shelf)
+      if (z < 22) d = Math.max(d, 22 - z); // north rim (the far door's wall)
+      if (d === 0) continue;
+      // the cleft cuts the north rim; the shelf cuts the south rim
+      if (z < 26 && x >= WASTE.cleft.x0 && x <= WASTE.cleft.x1) continue;
+      if (z > 137 && z <= 152 && x >= WASTE.shelf.x0 && x <= WASTE.shelf.x1) continue;
+      // behind the shelf the rim climbs from SHELF height, not valley height —
+      // the breach mouth bores into this face
+      const shelfBack = z > 152 && x >= WASTE.shelf.x0 && x <= WASTE.shelf.x1;
+      const top = shelfBack
+        ? Math.round(G + WASTE.shelf.rise + 2 + Math.min(1, (z - 152) / 6) * 14 + hash2(seed ^ 0x77a1, x, z) * 3)
+        : rimTop(x, z, d);
+      b.fill(x, FL, z, x, top, z, hash2(seed ^ 0x77a2, x, z) < 0.35 ? ICE : DARK);
+      b.set(x, top + 1, z, SNOW);
+    }
+  }
+
+  // ---- SNOW over everything at valley grade (the biome slab is dirt/stone;
+  // the waste is white). Wind-scour: hash streaks of bare rock where the
+  // wind stripped it; sparse drifts and boulders.
+  for (let z = 0; z < H; z++) {
+    for (let x = 0; x < W; x++) {
+      if (!b.world.solidAt(x, G, z) || b.world.solidAt(x, G + 1, z)) continue;
+      const scour = hash2(seed ^ 0x77a3, Math.floor(x / 5), Math.floor(z / 3));
+      if (scour < 0.07) b.set(x, G, z, hash2(seed ^ 0x77a4, x, z) < 0.5 ? STONE : DARK);
+      else b.set(x, G, z, SNOW);
+      const r = hash2(seed ^ 0x77a5, x, z);
+      if (r < 0.012) b.set(x, FL, z, SNOW); // drift
+      else if (r < 0.017) b.fill(x, FL, z, x, FL + (r < 0.014 ? 1 : 0), z, DARK); // boulder
+    }
+  }
+
+  // ---- the ARRIVAL SHELF + RAMP + BREACH MOUTH (first sight of the waste).
+  // Rock-bodied fills, never flatten() — the emberfells lesson: flatten's
+  // dirt underlayer reads as a brown retaining wall on camera.
+  const SH = G + WASTE.shelf.rise; // shelf surface y (feet 15)
+  const raiseTo = (x: number, z: number, ty: number): void => {
+    b.clearAbove(x, z, x, z, ty);
+    if (ty > G) b.fill(x, FL, z, x, ty - 1, z, DARK);
+    b.set(x, ty, z, SNOW);
+  };
+  for (let z = WASTE.shelf.z0; z <= WASTE.shelf.z1; z++) {
+    for (let x = WASTE.shelf.x0; x <= WASTE.shelf.x1; x++) raiseTo(x, z, SH);
+  }
+  for (let z = WASTE.ramp.z0; z < WASTE.ramp.z1; z++) {
+    const ty = Math.min(SH, G + Math.max(0, Math.floor((z - WASTE.ramp.z0) / 2) + 1));
+    for (let x = WASTE.ramp.x0; x <= WASTE.ramp.x1; x++) raiseTo(x, z, ty);
+  }
+  // the mouth you climbed out of: a dark bore into the south rim, dead air
+  // and rubble two steps in (the tunnel through the mountain, abstracted)
+  for (let z = 153; z <= 157; z++) {
+    for (let x = 77; x <= 83; x++) {
+      b.fill(x, SH + 1, z, x, SH + 3, z, 0);
+      b.set(x, SH, z, hash2(seed ^ 0x77a6, x, z) < 0.4 ? id("ash") : id("rubble"));
+    }
+  }
+  for (let x = 78; x <= 82; x++) b.fill(x, SH + 1, 157, x, SH + 3, 157, "rubble");
+  b.world.setIfAir(78, SH + 1, 155, id("blue_crystal"));
+  // shelf-edge cairns flanking the ramp head — the tribute-road's first marker
+  for (const cx of [72, 88] as const) {
+    b.fill(cx, SH + 1, 139, cx, SH + 2, 139, DARK);
+    b.set(cx, SH + 3, 139, "banner");
+  }
+
+  // ---- the TRIBUTE-ROAD: paved, wind-scoured, drifted — laid as 3-wide
+  // stamps along the waypoint polyline (skips the arena band; the crossing
+  // IS the wardens' floor)
+  const paveAt = (x: number, z: number): void => {
+    if (z >= WASTE.gateZ.z0 - 1 && z <= WASTE.gateZ.z1 + 1) return; // the gate band paves itself
+    const g = b.groundAt(x, z);
+    if (g > G + 1) return; // never pave up a rim/terrace
+    const r = hash2(seed ^ 0x77a7, x, z);
+    b.set(x, g, z, r < 0.14 ? "snow" : r < 0.3 ? "cracked_bricks" : "stone_bricks");
+  };
+  for (let i = 0; i < WASTE_ROAD.length - 1; i++) {
+    const [x0, z0] = WASTE_ROAD[i]!;
+    const [x1, z1] = WASTE_ROAD[i + 1]!;
+    const steps = Math.max(Math.abs(x1 - x0), Math.abs(z1 - z0));
+    for (let s = 0; s <= steps; s++) {
+      const cx = Math.round(x0 + ((x1 - x0) * s) / steps);
+      const cz = Math.round(z0 + ((z1 - z0) * s) / steps);
+      for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) paveAt(cx + dx, cz + dz);
+    }
+  }
+  // dead lantern posts pace the road — the lamplighters never came this far
+  // north; exactly one still burns (the fen's light-language, one last time)
+  for (const [px, pz, lit] of [
+    [66, 126, false],
+    [56, 112, false],
+    [62, 101, true],
+    [84, 75, false],
+  ] as const) {
+    b.fill(px, FL, pz, px, FL + 2, pz, DARK);
+    b.set(px, FL + 3, pz, lit ? "lantern" : "chain");
+  }
+
+  // ---- FROZEN TRIBUTE STATIONS (the manifest of the world, by region)
+  // fen goods: rotting crates, hay, reeds — Ysmere's tithe
+  for (const [cx, cz, h] of [
+    [66, 124, 2],
+    [68, 122, 1],
+    [65, 121, 1],
+    [70, 125, 1],
+  ] as const) {
+    b.fill(cx, FL, cz, cx, FL + h - 1, cz, "rotting_planks");
+    if (h > 1) b.set(cx, FL + h, cz, SNOW);
+  }
+  b.set(69, FL, 120, "hay");
+  b.set(64, FL, 123, "hay");
+  b.set(71, FL, 122, "reeds");
+  b.set(63, FL, 125, "reeds");
+  // forge cargo: dark-brick crates, iron strapping, one dead ember — Ashkaal's
+  for (const [cx, cz, h] of [
+    [52, 112, 2],
+    [50, 110, 1],
+    [54, 109, 1],
+    [51, 115, 1],
+  ] as const) {
+    b.fill(cx, FL, cz, cx, FL + h - 1, cz, "dark_bricks");
+    if (h > 1) b.set(cx, FL + h, cz, SNOW);
+  }
+  b.set(53, FL, 114, "iron_bars");
+  b.set(49, FL, 112, "iron_bars");
+  b.set(52, FL + 2, 112, "obsidian");
+  b.world.setIfAir(55, FL, 111, id("ember_crystal"));
+  // desert wares + bone paddocks: sandstone bales, pens of cattle bone
+  for (const [cx, cz, h] of [
+    [62, 102, 1],
+    [60, 100, 2],
+    [64, 99, 1],
+  ] as const) {
+    b.fill(cx, FL, cz, cx, FL + h - 1, cz, hash2(seed ^ 0x77a8, cx, cz) < 0.5 ? "sandstone_bricks" : "sandstone_tomb_brick");
+    if (h > 1) b.set(cx, FL + h, cz, SNOW);
+  }
+  b.set(61, FL, 104, "hay");
+  for (const [px0, pz0] of [
+    [44, 122],
+    [50, 126],
+  ] as const) {
+    for (let x = px0; x <= px0 + 4; x++) {
+      b.set(x, FL, pz0, "bone_block");
+      b.set(x, FL, pz0 + 3, "bone_block");
+    }
+    for (let z = pz0; z <= pz0 + 3; z++) {
+      b.set(px0, FL, z, "bone_block");
+      b.set(px0 + 4, FL, z, "bone_block");
+    }
+    b.set(px0 + 2, FL, pz0 + 1, "skull_pile");
+  }
+  // wagon wrecks beside the road — four biomes' cargo, one destination
+  for (const [wx, wz, dx] of [
+    [72, 128, 1],
+    [60, 104, -1],
+    [90, 120, 1],
+  ] as const) {
+    for (let i = 0; i < 4; i++) {
+      b.set(wx + i * dx, FL, wz, "charred_log");
+      if (i === 1 || i === 2) b.set(wx + i * dx, FL + 1, wz, "planks");
+    }
+    b.set(wx + dx, FL, wz + 1, "iron_bars");
+    b.set(wx + 2 * dx, FL, wz - 1, "planks");
+  }
+  // the frozen tarn: the water the waste kept
+  for (let z = 108; z <= 120; z++) {
+    for (let x = 86; x <= 102; x++) {
+      const d = Math.hypot((x - 94) / 8, (z - 114) / 5);
+      if (d <= 1) b.set(x, G, z, ICE);
+    }
+  }
+
+  // ---- the RIME WARDENS' GATE: the valley pinched shut; the arena is the
+  // only way through (spatial gating — blocked terrain, no portal)
+  const A = WASTE.arena;
+  const inArena = (x: number, z: number): boolean => {
+    const nx = (x - A.cx) / A.rx;
+    const nz = (z - A.cz) / A.rz;
+    return nx * nx + nz * nz <= 1;
+  };
+  for (let z = WASTE.gateZ.z0; z <= WASTE.gateZ.z1; z++) {
+    for (let x = WASTE.valley.x0 - 14; x <= WASTE.valley.x1 + 14; x++) {
+      if (inArena(x, z)) continue;
+      const top = G + 12 + Math.floor(hash2(seed ^ 0x77a9, x, z) * 3);
+      b.fill(x, FL, z, x, top, z, hash2(seed ^ 0x77aa, x, z) < 0.55 ? ICE : DARK);
+      b.set(x, top + 1, z, SNOW);
+    }
+  }
+  // the arena ring: an 8-high wall on the ellipse boundary, two offset doors
+  for (let z = A.cz - A.rz - 2; z <= A.cz + A.rz + 2; z++) {
+    for (let x = A.cx - A.rx - 2; x <= A.cx + A.rx + 2; x++) {
+      if (inArena(x, z)) continue;
+      const nx = (x - A.cx) / (A.rx + 2);
+      const nz = (z - A.cz) / (A.rz + 2);
+      if (nx * nx + nz * nz > 1) continue;
+      b.fill(x, FL, z, x, G + 8, z, ICE);
+      if ((x + z) % 2 === 0) b.set(x, G + 9, z, ICE);
+    }
+  }
+  // south door at x74, north door at x86 — offset, so the crossing walks the
+  // wardens' floor diagonally
+  for (const [dx0, dx1, dz0, dz1] of [
+    [73, 75, A.cz + A.rz - 3, A.cz + A.rz + 3],
+    [85, 87, A.cz - A.rz - 3, A.cz - A.rz + 3],
+  ] as const) {
+    for (let z = dz0; z <= dz1; z++) {
+      for (let x = dx0; x <= dx1; x++) {
+        if (b.groundAt(x, z) > G) b.fill(x, FL, z, x, G + 12, z, 0);
+        b.set(x, G, z, hash2(seed ^ 0x77ab, x, z) < 0.3 ? "cracked_bricks" : "stone_bricks");
+      }
+    }
+  }
+  // the arena floor: swept ice — the wardens keep their post clean
+  for (let z = A.cz - A.rz; z <= A.cz + A.rz; z++) {
+    for (let x = A.cx - A.rx; x <= A.cx + A.rx; x++) {
+      if (!inArena(x, z)) continue;
+      b.set(x, G, z, hash2(seed ^ 0x77ac, x, z) < 0.8 ? ICE : SNOW);
+    }
+  }
+  // empty plinths flanking the north door — the wardens' posts (the statues
+  // are the mobs; gargoyles animate)
+  for (const [px, pz] of [
+    [81, 83],
+    [88, 84],
+  ] as const) {
+    b.set(px, FL, pz, "marble");
+  }
+  b.world.setIfAir(75, FL, A.cz + A.rz - 4, id("blue_crystal"));
+  b.world.setIfAir(85, FL, A.cz - A.rz + 4, id("blue_crystal"));
+
+  // ---- THE UNPAID PILE (set apart, snowed under, Valdrenn's crest on every
+  // crate): marble and gold under drifts, two banner poles — the tribute
+  // that was never sent
+  for (const [cx, cz, h, block] of [
+    [98, 68, 2, "marble"],
+    [100, 70, 1, "marble"],
+    [102, 68, 1, "marble"],
+    [99, 72, 1, "marble"],
+    [101, 66, 1, "gold_block"],
+    [97, 70, 1, "gold_block"],
+  ] as const) {
+    b.fill(cx, FL, cz, cx, FL + h - 1, cz, block);
+    b.set(cx, FL + h, cz, SNOW);
+  }
+  for (const [px, pz] of [
+    [96, 66],
+    [103, 72],
+  ] as const) {
+    b.fill(px, FL, pz, px, FL + 1, pz, "marble");
+    b.set(px, FL + 2, pz, "banner");
+  }
+
+  // ---- the TRIBUTE-COURT: the amphitheater of ice. Terraced benches ring a
+  // sunken floor; the whole ring reads as a 5-high wall from outside — the
+  // south processional gap and the north cleft are the only ways in.
+  const C = WASTE.court;
+  const CF = G - 2; // court floor surface y (feet 9)
+  const benchY = (r: number): number | null => {
+    if (r < 14) return CF;
+    if (r < 17) return G + 1;
+    if (r < 20) return G + 3;
+    if (r < 23) return G + 5;
+    if (r <= C.r) return G + 4; // outer shoulder
+    return null;
+  };
+  const inLane = (x: number, z: number): boolean => Math.abs(x - C.cx) <= 3 && z > C.cz && z <= 70;
+  const inNorthGap = (x: number, z: number): boolean => Math.abs(x - C.cx) <= 4 && z < C.cz;
+  for (let z = C.cz - C.r; z <= C.cz + C.r; z++) {
+    for (let x = C.cx - C.r; x <= C.cx + C.r; x++) {
+      const r = Math.hypot(x - C.cx, z - C.cz);
+      if (r > C.r) continue;
+      let ty = benchY(r);
+      if (ty === null) continue;
+      if (inNorthGap(x, z) && r >= 14) ty = CF; // the pass runs through, floor-level
+      if (inLane(x, z)) {
+        // the processional: 1-block steps down from the valley to the floor
+        ty = Math.max(CF, Math.min(G, CF + Math.floor((z - (C.cz + 14)) / 3)));
+      }
+      ty = Math.max(MIN_DIG_FLOOR + 1, ty);
+      // ICE-bodied benches (never flatten — the dirt-underlayer lesson);
+      // the sunken floor digs, the benches build
+      b.clearAbove(x, z, x, z, ty);
+      for (let y = ty + 1; y <= G; y++) b.world.set(x, y, z, 0);
+      if (ty > G) b.fill(x, FL, z, x, ty, z, ICE);
+      b.set(x, ty, z, r < 14 || inLane(x, z) ? SNOW : ICE);
+    }
+  }
+  // court floor dressing: swept ice rings around the dais axis
+  for (let z = C.cz - 13; z <= C.cz + 13; z++) {
+    for (let x = C.cx - 13; x <= C.cx + 13; x++) {
+      const r = Math.hypot(x - C.cx, z - C.cz);
+      if (r < 14 && Math.abs(r - 9) < 0.8 && hash2(seed ^ 0x77ad, x, z) < 0.7) b.set(x, CF, z, ICE);
+    }
+  }
+  // the colonnade: ice pillars on the first bench, blue-lit — skip the south
+  // lane and the north gap
+  for (let k = 0; k < 12; k++) {
+    const a = (k * Math.PI) / 6 + 0.26;
+    const px = Math.round(C.cx + Math.cos(a) * 15.5);
+    const pz = Math.round(C.cz + Math.sin(a) * 15.5);
+    if (inLane(px, pz) || inNorthGap(px, pz) || Math.abs(px - C.cx) <= 4) continue;
+    const base = G + 2; // on the first bench
+    b.fill(px, base, pz, px, base + 5, pz, ICE);
+    const ax = px + (px < C.cx ? 1 : -1);
+    b.world.setIfAir(ax, base + 2, pz, id("blue_crystal"));
+  }
+  // sorted payment heaped in sectors around the floor rim: grain west,
+  // cattle-bone east, weapon-wagons northeast — what "tribute" means here
+  for (const [gx, gz] of [
+    [70, 42],
+    [68, 47],
+    [71, 51],
+  ] as const) {
+    b.set(gx, CF + 1, gz, "hay");
+    b.set(gx, CF + 2, gz, SNOW);
+    b.set(gx + 1, CF + 1, gz + 1, "hay");
+  }
+  for (let x = 89; x <= 93; x++) {
+    b.set(x, CF + 1, 44, "bone_block");
+    b.set(x, CF + 1, 49, "bone_block");
+  }
+  b.set(91, CF + 1, 46, "skull_pile");
+  for (const [wx, wz] of [
+    [88, 36],
+    [91, 39],
+  ] as const) {
+    b.set(wx, CF + 1, wz, "planks");
+    b.set(wx + 1, CF + 1, wz, "iron_bars");
+    b.set(wx, CF + 2, wz, "iron_bars");
+  }
+  // ---- the DAIS: marble steps up out of the ice, and a seat of ancient ice
+  // flanked in cold light — the counter-image of Valdrenn's gold throne
+  b.fill(WASTE.dais.x - 4, CF + 1, WASTE.dais.z - 2, WASTE.dais.x + 4, CF + 1, WASTE.dais.z + 2, "marble");
+  b.fill(WASTE.dais.x - 2, CF + 2, WASTE.dais.z - 2, WASTE.dais.x + 2, CF + 2, WASTE.dais.z - 1, "marble");
+  for (let x = WASTE.dais.x - 1; x <= WASTE.dais.x + 1; x++) b.set(x, CF + 1, WASTE.dais.z + 3, "marble"); // step
+  b.set(WASTE.dais.x, CF + 3, WASTE.dais.z - 1, ICE); // the seat
+  b.fill(WASTE.dais.x, CF + 3, WASTE.dais.z - 2, WASTE.dais.x, CF + 5, WASTE.dais.z - 2, ICE); // its back
+  b.set(WASTE.dais.x - 1, CF + 3, WASTE.dais.z - 2, ICE);
+  b.set(WASTE.dais.x + 1, CF + 3, WASTE.dais.z - 2, ICE);
+  b.world.setIfAir(WASTE.dais.x - 2, CF + 2, WASTE.dais.z - 1, id("blue_crystal"));
+  b.world.setIfAir(WASTE.dais.x + 2, CF + 2, WASTE.dais.z - 1, id("blue_crystal"));
+
+  // ---- the WINGS: treasury alcoves cut into the terraces at floor level,
+  // east and west, each with a corridor through the benches so the floor
+  // reaches them — cache_royal-tier by design: the tribute IS royal goods
+  for (const wing of [
+    { x0: 56, x1: 66, cx: 58 },
+    { x0: 94, x1: 104, cx: 102 },
+  ] as const) {
+    for (let z = 44; z <= 48; z++) {
+      for (let x = wing.x0; x <= wing.x1; x++) {
+        b.clearAbove(x, z, x, z, CF);
+        for (let y = CF + 1; y <= G; y++) b.world.set(x, y, z, 0);
+        b.set(x, CF, z, SNOW);
+      }
+    }
+    b.set(wing.cx - 1, CF + 1, 44, "gold_block");
+    b.set(wing.cx + 1, CF + 1, 48, "marble");
+    b.set(wing.cx, CF + 1, 44, "marble");
+    b.world.setIfAir(wing.cx, CF + 2, 44, id("blue_crystal"));
+  }
+  features.caches.push({ x: 58.5, y: CF + 1, z: 46.5, table: "cache_royal", respawnSec: 900 });
+  features.caches.push({ x: 102.5, y: CF + 1, z: 46.5, table: "cache_royal", respawnSec: 900 });
+
+  // ---- THE FAR DOOR (mysteries register §10.5 — shown, never opened): the
+  // pass continues north behind the dais, climbs in steps, and stops at a
+  // sheer slab of ancient ice. Blue light leaks from under it. The notch
+  // stays open above — there is visibly MORE WORLD, and no way to it.
+  for (let z = WASTE.cleft.z0; z <= WASTE.cleft.z1 + 2; z++) {
+    const ty = z > 22 ? CF : Math.min(G + 6, CF + Math.max(0, Math.floor((22 - z) / 2)) + 1);
+    for (let x = WASTE.cleft.x0, e = WASTE.cleft.x1; x <= e; x++) {
+      // rock-bodied steps up into the notch (never flatten — dirt underlayer)
+      b.clearAbove(x, z, x, z, ty, 30);
+      for (let y = ty + 1; y <= G; y++) b.world.set(x, y, z, 0);
+      if (ty > G) b.fill(x, FL, z, x, ty, z, DARK);
+      b.set(x, ty, z, SNOW);
+    }
+  }
+  // the slab itself: full-height ancient ice across the cleft
+  for (let z = 5; z <= 9; z++) {
+    for (let x = WASTE.cleft.x0 - 1; x <= WASTE.cleft.x1 + 1; x++) {
+      b.fill(x, FL, z, x, G + 30 + Math.floor(hash2(seed ^ 0x77ae, x, z) * 3), z, ICE);
+    }
+  }
+  for (const [gx, gz] of [
+    [78, 10],
+    [80, 10],
+    [82, 10],
+  ] as const) {
+    b.world.setIfAir(gx, b.groundAt(gx, gz) + 1, gz, id("blue_crystal"));
+  }
+
+  // ---- war-less scatter: strewn cargo the wind is still burying
+  for (let i = 0; i < 26; i++) {
+    const rx = 34 + Math.floor(hash2(seed ^ 0x77af, i, 1) * 92);
+    const rz = 64 + Math.floor(hash2(seed ^ 0x77af, i, 2) * 70);
+    if (rz >= WASTE.gateZ.z0 - 2 && rz <= WASTE.gateZ.z1 + 2) continue;
+    if (Math.hypot(rx - C.cx, rz - C.cz) <= C.r + 2) continue;
+    if (!b.world.solidAt(rx, G, rz) || b.world.solidAt(rx, FL, rz)) continue;
+    const r = hash2(seed ^ 0x77b0, rx, rz);
+    b.set(rx, FL, rz, r < 0.4 ? "rotting_planks" : r < 0.7 ? "bone_block" : "hay");
   }
 }
 
