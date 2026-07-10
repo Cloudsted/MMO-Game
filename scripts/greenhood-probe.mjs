@@ -14,8 +14,9 @@
  *      (50% audit line best-effort, death announce hard), loot the bag and
  *      assert the guaranteed greenhood_ledger_page trophy.
  *   5. continue past the den to the East Door, usePortal greenhood-out →
- *      the ONE-WAY landing at the forest trapdoor mound (168.5,118.5, on the
- *      mound crown — no portal exists there).
+ *      the ONE-WAY landing at the STRANGLER'S MARCH trapdoor mound
+ *      (28.5,148.5, on the crown — no portal exists there; batch 4
+ *      re-pointed the climb-out from the forest north into the march west).
  *   6. reseal: /spawnmob thrace_redcap (SHORTCUT for the natural 900 s
  *      respawn — the admin command routes through the same spawnMob →
  *      onBossSpawned path as the spawner timer) → the gate reads sealed.
@@ -578,18 +579,22 @@ expect(!!tOut, "the East Door grants a transfer");
 if (!tOut) { log("RESULT: FAIL"); process.exit(1); }
 ws.close();
 ({ ws, state } = await enterRoom(tOut.wsUrl, tOut.ticket));
-expect(state.roomId === "forest", `climbed out into ${state.roomId}`);
-expect(Math.hypot(state.x - 168.5, state.z - 118.5) < 1.5, `landed at the authored mound (${state.x.toFixed(1)},${state.z.toFixed(1)})`);
-expect(Math.abs(state.y - 16) < 1.5, `standing ON the mound crown (y=${state.y.toFixed(1)})`);
+expect(state.roomId === "stranglers_march", `climbed out into ${state.roomId} (batch 4: the March, not the forest)`);
+expect(Math.hypot(state.x - 28.5, state.z - 148.5) < 1.5, `landed at the authored mound (${state.x.toFixed(1)},${state.z.toFixed(1)})`);
+expect(Math.abs(state.y - 17) < 1.5, `standing ON the mound crown (y=${state.y.toFixed(1)})`);
 for (let i = 0; i < 30 && state.portals.length === 0; i++) await sleep(100);
-expect(!state.portals.some((p) => Math.hypot(p.x - 168.5, p.z - 118.5) < 30), "no return portal at the mound (one-way by omission)");
+expect(!state.portals.some((p) => Math.hypot(p.x - 28.5, p.z - 148.5) < 30), "no return portal at the mound (one-way by omission)");
 
 // ---- 6. the gate reseals when Thrace returns ----
+// The climb-out dropped us in the MARCH; the reseal is a FOREST event —
+// /room back first (portals arrive on join and reflect the current seal).
 // SHORTCUT: /spawnmob routes through the same spawnMob → onBossSpawned path
 // as the redcap-hall spawner's natural 900 s respawn, so the reseal is the
 // same code either way. (The stray Thrace is cleaned by the post-probe restart.)
 // (if the natural redcap-hall timer fired while we were underground, the
 // join-time portals already read sealed — same mechanism, still a pass)
+({ ws, state } = await gotoRoom(ws, state, "forest"));
+for (let i = 0; i < 30 && state.portals.length === 0; i++) await sleep(100);
 let resealed = state.portals.some((p) => p.id === "forest-greenhood" && p.open === false);
 if (resealed) {
   log("(gate already resealed by the natural respawn timer while we were underground)");

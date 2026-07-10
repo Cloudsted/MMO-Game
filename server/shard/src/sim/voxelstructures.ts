@@ -11,7 +11,7 @@
  */
 import { BLOCK, WORLD_HEIGHT, type RoomDef } from "@fantasy-mmo/common";
 import { hash2, MIN_DIG_FLOOR, type VoxelWorld } from "./voxel.js";
-import { scatterPrefabs, stampPrefab, type LootCachePoint, type Rect, type ScatterResult } from "./prefabs.js";
+import { PREFABS, scatterPrefabs, stampPrefab, type LootCachePoint, type Rect, type ScatterResult } from "./prefabs.js";
 import {
   buildDrownbell,
   buildLamplightersRoad,
@@ -52,9 +52,16 @@ function authoredExclusions(def: RoomDef): Rect[] {
   }
   if (def.id === "forest") {
     // the Greenhood fort + its portal yard (fixed anchor — the gated door to
-    // the Run needs authored coordinates) and the Run's climb-out mound
+    // the Run needs authored coordinates)
     out.push(FOREST_FORT_EXCLUSION);
-    out.push(FOREST_CLIMBOUT_EXCLUSION);
+  }
+  if (def.id === "stranglers_march") {
+    // the strangled farmstead + its drowned field grid, the snapped tithe-road
+    // causeway, the Run's chute-mouth mound, and the bending road corridor
+    out.push(MARCH_FARM_EXCLUSION);
+    out.push(MARCH_STUB_EXCLUSION);
+    out.push(MARCH_MOUND_EXCLUSION);
+    out.push(...marchRoadExclusions());
   }
   if (def.id === "desert") {
     // sunken ruins + the oasis (same constants as buildDesertRuins)
@@ -100,7 +107,9 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult 
     case "forest":
       buildForestArena(b, def);
       buildGreenhoodFort(b, def, features);
-      buildClimbOutTell(b, def);
+      break;
+    case "stranglers_march":
+      buildStranglersMarch(b, def, features);
       break;
     case "desert":
       buildDesertRuins(b, def, features);
@@ -885,8 +894,9 @@ function buildForestArena(b: Builder, def: RoomDef): void {
 //   scatter placement near (255,90) sat in pond country). A walled portal
 //   yard annexes the fort's north wall — you fight THROUGH the camp (south
 //   gate → around the fire ring → the inner gap, offset east) to reach the
-//   arch. The Run's one-way climb-out surfaces at a trapdoor mound further
-//   north (no portal there — computePortalArrival's one-way landing).
+//   arch. The Run's one-way climb-out surfaced at a forest trapdoor mound
+//   until batch 4 re-pointed it into the Strangler's March (the mound
+//   dressing moved with it — see buildStranglersMarch).
 //
 //   The Run: a 96² preset warren dug through the slab UNDER the wood —
 //   shored galleries bending east (frames, lanterns: the Run is LIT, the
@@ -905,8 +915,6 @@ const FOREST_FORT = { ox: 308, oz: 148 }; // bandit_fort min corner (15x12, rot 
 const FORT_YARD = { x0: 308, z0: 138, x1: 322, z1: 148 }; // portal yard sharing the fort's north wall (z1)
 const FOREST_GREENHOOD_PORTAL = { x: 313, z: 143 }; // must match forest.json forest-greenhood
 const FOREST_FORT_EXCLUSION: Rect = { x0: 305, z0: 135, x1: 325, z1: 162 };
-const FOREST_CLIMBOUT = { x: 168, z: 118 }; // the Run's one-way surface tell (greenhood-out exitX/exitZ)
-const FOREST_CLIMBOUT_EXCLUSION: Rect = { x0: 162, z0: 112, x1: 175, z1: 125 };
 
 function buildGreenhoodFort(b: Builder, def: RoomDef, features: ScatterResult): void {
   // the fort itself: the shared prefab, fixed-anchored. Its hooks ride in via
@@ -943,13 +951,14 @@ function buildGreenhoodFort(b: Builder, def: RoomDef, features: ScatterResult): 
   b.set(321, FL, 140, "hay");
 }
 
-function buildClimbOutTell(b: Builder, def: RoomDef): void {
-  const { x, z } = FOREST_CLIMBOUT;
+/** The Run's chute-mouth: a low dirt mound with a rotting-plank trapdoor set
+ *  flush in its crown + the stump-lantern mark. Lived in the forest north
+ *  through batch 3; batch 4 moved it into the Strangler's March west (the
+ *  greenhood-out one-way landing — arrivals stand ON the crown and step
+ *  down). Disguised as a badger sett: smugglers design for goods out. */
+function buildChuteMound(b: Builder, x: number, z: number): void {
   const G = b.g(x, z);
   b.clearAbove(x - 4, z - 4, x + 5, z + 5, G, 12);
-  // a low dirt mound with a rotting-plank trapdoor set flush in its crown —
-  // the Run's one-way door, read from the surface. Arrivals land ON it
-  // (exitX/exitZ 168.5,118.5 → standY = the mound top) and step down.
   for (let dz = -3; dz <= 4; dz++) {
     for (let dx = -3; dx <= 4; dx++) {
       const d = Math.hypot(dx - 0.5, dz - 0.5);
@@ -971,6 +980,278 @@ function buildClimbOutTell(b: Builder, def: RoomDef): void {
   b.fill(x - 4, G + 1, z - 2, x - 4, G + 2, z - 2, "log");
   b.set(x - 3, G + 1, z - 2, "log");
   b.set(x - 4, G + 3, z - 2, "lantern");
+}
+
+// ---------------------------------------------------------------------------
+// THE STRANGLER'S MARCH (W3, world-redesign batch 4) — the L5-7 border land
+// spliced between the Kingless Wood and the Gloomfen, killing the L1-4 →
+// L8-10 cliff. Story (bible §6 W3): farmland the fen's flood is eating a
+// finger-width a year; with the water comes the fen tyrant's garden.
+//
+//   PROC + AUTHORED: seed 90031's own noise delivers the gradient (north
+//   22% flooded vs south 8%; the west lake and the central basin MERGE at
+//   z≈100, so every crossing must bend — the owner's no-straight-lines rule
+//   enforced by hydrology). The builder adds: the south afforestation ramp
+//   (mud→grass repaint + oaks thickening toward the forest gate, thinning to
+//   the gen's sparse pale snags by mid-room), the bending road (path/dirt on
+//   dry ground, rotting-plank boardwalk over murk) that forks off the OLD
+//   tithe-road line and detours east through the drowned field grid, the
+//   snapped causeway stub (the old road, raised, progressively broken, dying
+//   into the flood — physically explains why the march must be crossed), the
+//   strangled farmstead (the Elder's arena: a roofless fieldstone shell the
+//   rootstock wears — log root-limbs, vines, moss, a glow-shroom-lit heart),
+//   the drowned drystone field walls (west paddocks dug shin-deep and
+//   flooded: theft in slow motion), and the Run's chute-mouth mound in the
+//   west (buildChuteMound — the greenhood-out one-way landing).
+//
+// DETERMINISM: layout constants fixed; every ragged edge is hash2(seed^salt).
+// ---------------------------------------------------------------------------
+const MARCH_ROAD: Array<[number, number]> = [
+  [120, 228], // the forest gate apron
+  [120, 198], // the fork: the old road line continues north as the stub
+  [132, 176],
+  [134, 136],
+  [136, 110], // the east crossing, skirting the drowned fields' west edge
+  [124, 84],
+  [104, 64],
+  [84, 40],
+  [84, 26], // the fen gate apron
+];
+const MARCH_FARM = { x0: 146, z0: 98, x1: 160, z1: 112 }; // the strangled farmhouse shell
+const MARCH_FIELDS = { x0: 138, z0: 88, x1: 178, z1: 128 }; // drowned drystone field grid
+const MARCH_STUB = { x: 120, z0: 104, z1: 148 }; // the snapped tithe-road causeway
+const MARCH_MOUND = { x: 28, z: 148 }; // chute-mouth (greenhood-out exitX/exitZ 28.5,148.5)
+const MARCH_FARM_EXCLUSION: Rect = { x0: MARCH_FIELDS.x0 - 3, z0: MARCH_FIELDS.z0 - 3, x1: MARCH_FIELDS.x1 + 3, z1: MARCH_FIELDS.z1 + 3 };
+const MARCH_STUB_EXCLUSION: Rect = { x0: 114, z0: 94, x1: 126, z1: 152 };
+const MARCH_MOUND_EXCLUSION: Rect = { x0: 22, z0: 142, x1: 35, z1: 155 };
+
+function marchRoadExclusions(): Rect[] {
+  const out: Rect[] = [];
+  for (let i = 0; i < MARCH_ROAD.length - 1; i++) {
+    const [ax, az] = MARCH_ROAD[i]!;
+    const [bx, bz] = MARCH_ROAD[i + 1]!;
+    out.push({ x0: Math.min(ax, bx) - 4, z0: Math.min(az, bz) - 4, x1: Math.max(ax, bx) + 4, z1: Math.max(az, bz) + 4 });
+  }
+  return out;
+}
+
+/** Distance from a column to the march road polyline (for tree/field passes). */
+function marchRoadDist(x: number, z: number): number {
+  let best = Infinity;
+  for (let i = 0; i < MARCH_ROAD.length - 1; i++) {
+    const [ax, az] = MARCH_ROAD[i]!;
+    const [bx, bz] = MARCH_ROAD[i + 1]!;
+    const vx = bx - ax;
+    const vz = bz - az;
+    const t = Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz)));
+    best = Math.min(best, Math.hypot(x - (ax + vx * t), z - (az + vz * t)));
+  }
+  return best;
+}
+
+function buildStranglersMarch(b: Builder, def: RoomDef, features: ScatterResult): void {
+  const seed = def.terrain.seed;
+  const wl = def.terrain.waterLevel ?? 12;
+  const w = b.world;
+  const GRASS = id("grass");
+  const MUD = id("mud");
+  const MURK = id("murk_water");
+
+  // rects the dressing passes must not touch (prefabs placed by the scatter
+  // pass that ran before us, plus our own authored ground)
+  const keepOut: Rect[] = [MARCH_FARM_EXCLUSION, MARCH_STUB_EXCLUSION, MARCH_MOUND_EXCLUSION];
+  for (const p of features.placements) {
+    const pd = PREFABS[p.prefab];
+    if (!pd) continue;
+    const rw = p.rot % 2 ? pd.footprint.d : pd.footprint.w;
+    const rd = p.rot % 2 ? pd.footprint.w : pd.footprint.d;
+    keepOut.push({ x0: p.ox - 2, z0: p.oz - 2, x1: p.ox + rw + 1, z1: p.oz + rd + 1 });
+  }
+  const inKeepOut = (x: number, z: number): boolean =>
+    keepOut.some((r) => x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1);
+
+  // fenFactor: 0 at the forest gate (the wood holds) → 1 by z≈90 (fen rules)
+  const fen = (z: number): number => Math.min(1, Math.max(0, (206 - z) / 116));
+
+  // --- 1. the gradient repaint: the south verge is still the Kingless Wood ---
+  for (let z = 0; z < def.size.h; z++) {
+    const f = fen(z);
+    if (f >= 1) continue;
+    for (let x = 0; x < def.size.w; x++) {
+      const g = b.g(x, z);
+      if (g <= wl) continue; // banks stay mud
+      if (w.get(x, g, z) !== MUD) continue; // only natural swamp floor
+      if (hash2(seed ^ 0x3a11, x, z) >= f) w.set(x, g, z, GRASS);
+    }
+  }
+
+  // --- 2. oaks thicken southward (gen's sparse pale snags carry the north) ---
+  const plantOak = (x: number, z: number): void => {
+    const g = b.g(x, z);
+    const th = 4 + Math.floor(hash2(seed ^ 0x3a13, x, z) * 3);
+    for (let dy = th - 2; dy <= th + 1; dy++) {
+      const rad = dy >= th ? 1 : 2;
+      for (let dx = -rad; dx <= rad; dx++) {
+        for (let dz = -rad; dz <= rad; dz++) {
+          if (Math.abs(dx) === rad && Math.abs(dz) === rad && hash2(seed ^ 0x3a1c, x + dx, z + dz + dy * 31) < 0.5) continue;
+          w.setIfAir(x + dx, g + 1 + dy, z + dz, id("leaves"));
+        }
+      }
+    }
+    for (let dy = 1; dy <= th; dy++) w.set(x, g + dy, z, id("log"));
+  };
+  for (let z = 2; z < def.size.h - 2; z++) {
+    const wood = 1 - fen(z);
+    if (wood <= 0.05) continue;
+    for (let x = 2; x < def.size.w - 2; x++) {
+      if (hash2(seed ^ 0x3a12, x, z) >= 0.018 * wood * wood) continue;
+      const g = b.g(x, z);
+      if (g <= wl) continue; // never in the water (bank oaks are fine — willows)
+      if (inKeepOut(x, z) || marchRoadDist(x, z) < 4) continue;
+      if (Math.hypot(x - def.spawn.x, z - def.spawn.z) < 8) continue;
+      if (def.portals.some((p) => Math.hypot(x - p.x, z - p.z) < 6)) continue;
+      plantOak(x, z);
+    }
+  }
+
+  // --- 3. the road: path/dirt on dry ground, rotting planks over the murk ---
+  const roadCell = (x: number, z: number): void => {
+    const g = b.g(x, z);
+    if (g <= wl) {
+      w.set(x, wl + 1, z, id("rotting_planks")); // planked wet stretches
+    } else {
+      b.clearAbove(x, z, x, z, g, 10);
+      w.set(x, g, z, hash2(seed ^ 0x3a14, x, z) < 0.7 ? id("path") : id("dirt"));
+    }
+  };
+  for (let i = 0; i < MARCH_ROAD.length - 1; i++) {
+    const [ax, az] = MARCH_ROAD[i]!;
+    const [bx, bz] = MARCH_ROAD[i + 1]!;
+    const len = Math.max(Math.abs(bx - ax), Math.abs(bz - az));
+    for (let t = 0; t <= len; t++) {
+      const cx = Math.round(ax + ((bx - ax) * t) / len);
+      const cz = Math.round(az + ((bz - az) * t) / len);
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) roadCell(cx + dx, cz + dz);
+    }
+  }
+
+  // --- 4. the old tithe-road: overgrown ruts, then the snapped causeway ---
+  // faint ruts where the old line survives on dry ground (south of the stub)
+  for (let z = MARCH_STUB.z1 + 4; z <= 196; z++) {
+    for (const x of [119, 121]) {
+      const g = b.g(x, z);
+      if (g > wl && hash2(seed ^ 0x3a15, x, z) < 0.35) w.set(x, g, z, id("path"));
+    }
+  }
+  // the raised causeway, progressively broken northward
+  for (let z = MARCH_STUB.z1; z >= MARCH_STUB.z0; z--) {
+    const decay = (MARCH_STUB.z1 - z) / (MARCH_STUB.z1 - MARCH_STUB.z0); // 0 south → 1 at the break
+    for (const x of [119, 120, 121]) {
+      const g = b.g(x, z);
+      b.clearAbove(x, z, x, z, Math.max(g, 15), 8);
+      if (hash2(seed ^ 0x3a16, x, z) < decay * 0.55) continue; // bitten deck
+      for (let y = g + 1; y <= 14; y++) w.set(x, y, z, id("cobblestone"));
+      w.set(x, 15, z, hash2(seed ^ 0x3a17, x, z) < 0.3 ? id("cracked_bricks") : id("stone_bricks"));
+    }
+    // parapet stubs survive on the south half
+    if (z % 6 === 0 && decay < 0.4) {
+      w.setIfAir(118, 16, z, id("cracked_bricks"));
+      w.setIfAir(122, 16, z, id("cracked_bricks"));
+    }
+  }
+  // the snap: rubble tumbling into the flood past the break
+  for (let z = MARCH_STUB.z0 - 1; z >= MARCH_STUB.z0 - 8; z--) {
+    for (const x of [118, 119, 120, 121, 122]) {
+      if (hash2(seed ^ 0x3a18, x, z) < 0.25) w.set(x, b.g(x, z) + 1, z, id("rubble"));
+    }
+  }
+
+  // --- 5. the drowned fields: drystone grid, west paddocks under the murk ---
+  const F = MARCH_FIELDS;
+  for (let z = F.z0; z <= F.z1; z++) {
+    for (let x = F.x0; x <= F.x1; x++) {
+      const inFarm = x >= MARCH_FARM.x0 - 2 && x <= MARCH_FARM.x1 + 2 && z >= MARCH_FARM.z0 - 2 && z <= MARCH_FARM.z1 + 2;
+      if (inFarm || marchRoadDist(x, z) < 3.5) continue;
+      const g = b.g(x, z);
+      const onWall = (x - F.x0) % 10 === 0 || (z - F.z0) % 10 === 0;
+      if (onWall) {
+        // field walls poke out of the sedge (1 high — jumpable; hash-bitten)
+        if (g >= wl - 1 && hash2(seed ^ 0x3a19, x, z) < 0.72) {
+          w.set(x, Math.max(g, wl) + 1, z, id("mossy_cobblestone"));
+        }
+      } else if (g <= wl + (x <= MARCH_FARM.x0 && hash2(seed ^ 0x3a1a, x, z) < 0.5 ? 1 : 0)) {
+        // paddock interiors at the water line drown shin-deep — and the west
+        // paddocks (toward the basin) lose dry ground too: theft in slow motion
+        for (let y = wl; y <= g + 4; y++) w.set(x, y, z, 0);
+        w.set(x, wl - 1, z, MUD);
+        w.set(x, wl, z, MURK);
+      }
+    }
+  }
+
+  // --- 6. the strangled farmstead (the Elder's arena) ---
+  const H = MARCH_FARM;
+  const G = 13; // surveyed knoll level (seed 90031: farm circle 93% dry at 12-13)
+  const FL = G + 1;
+  b.clearAbove(H.x0 - 2, H.z0 - 2, H.x1 + 2, H.z1 + 2, G, 14);
+  b.flatten(H.x0 - 1, H.z0 - 1, H.x1 + 1, H.z1 + 1, G, "mud"); // the trampled yard
+  b.flatten(H.x0 + 1, H.z0 + 1, H.x1 - 1, H.z1 - 1, G, "dirt"); // the house floor
+  // roofless fieldstone shell, breached and root-split
+  const wallCell = (x: number, z: number, salt: number): void => {
+    const bite = Math.floor(hash2(seed ^ salt, x, z) * 2.4); // 0-2 blocks bitten off the top
+    for (let y = FL; y <= FL + 2 - bite; y++) {
+      w.set(x, y, z, hash2(seed ^ 0x3a1b, x, z + y * 31) < 0.35 ? id("cracked_bricks") : id("stone_bricks"));
+    }
+  };
+  for (let x = H.x0; x <= H.x1; x++) {
+    wallCell(x, H.z0, 0x51);
+    wallCell(x, H.z1, 0x52);
+  }
+  for (let z = H.z0 + 1; z <= H.z1 - 1; z++) {
+    wallCell(H.x0, z, 0x53);
+    wallCell(H.x1, z, 0x54);
+  }
+  // the south door (full height — a lintel reads as a wall to the BFS grid)
+  b.fill(152, FL, H.z1, 154, FL + 3, H.z1, 0);
+  // the west breach: the flood side gave first
+  b.fill(H.x0, FL, 104, H.x0, FL + 3, 106, 0);
+  // the rootstock wears the house: log root-limbs up the corners + vines
+  for (const [cx, cz] of [
+    [H.x0, H.z0],
+    [H.x1, H.z0],
+    [H.x0, H.z1],
+    [H.x1, H.z1],
+  ] as const) {
+    b.fill(cx, FL, cz, cx, FL + 3, cz, "log");
+    w.setIfAir(cx, FL + 4, cz, id("roots"));
+  }
+  for (let x = H.x0 - 1; x <= H.x1 + 1; x++) {
+    for (const z of [H.z0 - 1, H.z1 + 1]) {
+      if (hash2(seed ^ 0x3a1d, x, z) < 0.3) w.setIfAir(x, FL + 1, z, id("vines"));
+    }
+  }
+  // interior: moss creep, roots, and the heart of the garden
+  for (let z = H.z0 + 1; z <= H.z1 - 1; z++) {
+    for (let x = H.x0 + 1; x <= H.x1 - 1; x++) {
+      const r = hash2(seed ^ 0x3a1e, x, z);
+      if (r < 0.18) w.set(x, G, z, id("moss_carpet"));
+      else if (r > 0.94) w.setIfAir(x, FL, z, id("roots"));
+    }
+  }
+  // the heartroot mound at the arena's heart (the Elder spawns beside it)
+  b.fill(152, FL, 104, 154, FL, 106, "dirt");
+  b.set(153, FL + 1, 105, "roots");
+  for (const [gx, gz] of [
+    [151, 103],
+    [155, 103],
+    [151, 107],
+    [155, 107],
+  ] as const) {
+    w.set(gx, FL, gz, id("glow_shroom")); // the garden glows at night (authored — wins over the root scatter)
+  }
+
+  // --- 7. the Run's chute-mouth mound (moved here from the forest north) ---
+  buildChuteMound(b, MARCH_MOUND.x, MARCH_MOUND.z);
 }
 
 // ---------------------------------------------------------------------------

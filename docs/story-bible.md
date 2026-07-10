@@ -302,10 +302,11 @@ smuggling tunnel east (the Run).
 > shipped verbatim; trophy `greenhood_ledger_page` (value 40) guaranteed.
 > All four landmarks built (tally-vault with strongroom cache behind iron
 > bars; pale-stone cellar with the chiseled crest; kennel row with open
-> pens; the East Door as an open-sky shaft). ONE DEVIATION: the east door
-> exits to the FOREST NORTH for now (a trapdoor mound + stump-lantern
-> surface tell at (168.5,118.5), one-way by omission) — batch 4 re-points
-> it to the Marchland per the proposal's build order. "Corvyn will want to
+> pens; the East Door as an open-sky shaft). ONE DEVIATION (RESOLVED in
+> batch 4): the east door exited to the FOREST NORTH until the Strangler's
+> March landed — `greenhood-out` now targets `stranglers_march` at the
+> chute-mouth mound (28.5,148.5) in the march's west, and the trapdoor
+> mound + stump-lantern dressing moved there with it (§6 W3). "Corvyn will want to
 > read it first" flavor text NOT yet on the trophy (item flavor text is a
 > story-dress-pass item). Proven by `scripts/greenhood-probe.mjs` (full arc
 > live) + screenshots tools/out/greenhood-*.png.
@@ -330,7 +331,7 @@ agents' payments move west. One-way exits to the Marchland (─▶).
   3. **The kennel row** — camp curs bred here (spawn-table anchor).
   4. **The east door** — the one-way drop to the Marchland; a chute, not a
      stair. Reason: smugglers design for goods out, not people back.
-     (Shipped as a climb-out to the forest north until the Marchland lands.)
+     (Shipped: lands at the March's chute-mouth mound since batch 4.)
 - **How the story is told:** ledger-props and crate-stencils (tableaux);
   Grole's death announce: *"Quartermaster Grole is dead. Somewhere in the
   fen, a payment won't arrive."* — the game's first hint that the company
@@ -340,7 +341,41 @@ agents' payments move west. One-way exits to the Marchland (─▶).
 
 ---
 
-### W3 — **The Strangler's March** (`NEW room`, working name "Marchland") · L5–7
+### W3 — **The Strangler's March** (`stranglers_march`, working name "Marchland") · L5–7 — **SHIPPED (batch 4, 2026-07-09)**
+
+> **SHIPPED as designed** (world-redesign batch 4): room `stranglers_march`
+> (240² proc+authored swamp-edge, seed 90031, murk_water, STATEFUL, no
+> gates — an always-open thoroughfare). The seed's own hydrology delivers
+> the drowning gradient (north 22% flooded vs south 8%; the west lake and
+> the central basin merge at z≈100, so the road MUST bend); the builder
+> adds the south afforestation ramp (oaks thinning to pale snags by
+> mid-room), the bending road (path on dry ground, rotting-plank boardwalk
+> over murk — 7 bends, forks off the old tithe-road line), and all four
+> landmarks: the drowned drystone FIELD WALLS (west paddocks dug shin-deep
+> and flooded), the STRANGLED FARMSTEAD (roofless fieldstone shell, log
+> root-limbs, moss, glow-shroom-lit heartroot — the Elder's arena), the
+> HIGH CAUSEWAY STUB (raised deck, progressively bitten, dying into the
+> flood with rubble), and the RUN'S CHUTE-MOUTH (the trapdoor mound +
+> stump-lantern moved here from the forest north; `greenhood-out` now
+> lands at 28.5,148.5 — one-way by omission, watched by a Greenhood
+> picket). **The Elder Strangler** L8 shipped per spec: rooted (move 0.6,
+> leash 18), kit = strangle_lash (slowing grip) / choking_spores (AoE
+> slow+poison lob) / root_burst (pillar line), 50% rally event (2 blooms)
+> + the death announce VERBATIM; guaranteed `strangler_heartroot` (value
+> 50) + rare steel. Mantrap ("Strangler Bloom") and bog_serpent were
+> REBASED 9→6 so the garden runs L5-7 here; gloomfen tables carry L9
+> overrides that resolve within a point of their old values (rank
+> "of the Mire" / "of the Deep Fen" + xpMult re-anchor). Bren gained the
+> "March marks run five to seven" line (hub). Spawn graph: wolves/boars on
+> the wood verge, weavers + the picket west, blooms in the gardens,
+> serpents in the drowned north fields. Splice: forest `forest-march` ⇄
+> `march-forest`, `march-gloomfen` ⇄ gloomfen `gloomfen-march` (the old
+> forest gate, retargeted data-only). Proven by `scripts/march-probe.mjs`
+> (full arc live) + screenshots tools/out/march-{gate,transition,elder,
+> mound}-*.png. DEVIATIONS: trophy flavor text not shipped (story-dress
+> pass item, as W2); the Elder shares the `mantrap` sprite per this
+> entry's "arena framing, not scale" call — boss readability at the
+> farmstead is an owner feel-check.
 
 **The border the flood is eating.** Between the kingless wood and the
 drowned fen lies a march that used to be farmland — you can still read field

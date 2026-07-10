@@ -868,6 +868,16 @@
         24
       ]
     },
+    "strangler_heartroot": {
+      "name": "Strangler Heartroot",
+      "kind": "trophy",
+      "value": 50,
+      "stack": 10,
+      "icon": [
+        0,
+        21
+      ]
+    },
     "war_medal": {
       "name": "War Medal",
       "kind": "trophy",

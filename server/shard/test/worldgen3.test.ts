@@ -196,7 +196,8 @@ describe("crypt_depths / Vaults of Morvane (L12-15, ephemeral)", () => {
 
 describe("portal graph (auto-pairing both ways)", () => {
   const pairs: Array<[string, string]> = [
-    ["forest", "gloomfen"],
+    ["forest", "stranglers_march"], // batch 4: the march spliced the old forest↔gloomfen edge
+    ["stranglers_march", "gloomfen"],
     ["desert", "cinderrift"],
     ["dungeon", "crypt_depths"],
   ];

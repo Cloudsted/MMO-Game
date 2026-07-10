@@ -1,0 +1,250 @@
+{
+  "id": "stranglers_march",
+  "name": "The Strangler's March",
+  "type": "wilderness",
+  "biome": "swamp",
+  "wind": 0.8,
+  "persistence": "stateful",
+  "size": {
+    "w": 240,
+    "h": 240
+  },
+  "spawn": {
+    "x": 120,
+    "z": 222,
+    "yaw": 3.14159
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 90031,
+    "base": 13,
+    "amplitude": 5,
+    "frequency": 0.021,
+    "plateauRadius": 8,
+    "waterLevel": 12,
+    "liquid": "murk_water",
+    "treeDensity": 0.45
+  },
+  "flags": {
+    "safeZone": true,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "march-forest",
+      "label": "The Kingless Wood",
+      "target": "forest",
+      "x": 120,
+      "z": 228,
+      "r": 2.2
+    },
+    {
+      "id": "march-gloomfen",
+      "label": "Gloomfen Marsh",
+      "target": "gloomfen",
+      "x": 84,
+      "z": 24,
+      "r": 2.2
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "wolves-verge",
+      "region": {
+        "kind": "circle",
+        "x": 96,
+        "z": 196,
+        "r": 16
+      },
+      "mobs": [
+        {
+          "mob": "wolf",
+          "weight": 1,
+          "level": 5
+        }
+      ],
+      "maxAlive": 6,
+      "packSize": [2, 3],
+      "respawnSec": 40
+    },
+    {
+      "id": "boar-slough",
+      "region": {
+        "kind": "circle",
+        "x": 158,
+        "z": 196,
+        "r": 16
+      },
+      "mobs": [
+        {
+          "mob": "boar",
+          "weight": 1,
+          "level": 5
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [1, 2],
+      "respawnSec": 30
+    },
+    {
+      "id": "chute-watch",
+      "region": {
+        "kind": "circle",
+        "x": 40,
+        "z": 160,
+        "r": 8
+      },
+      "mobs": [
+        {
+          "mob": "bandit",
+          "weight": 4,
+          "level": 6
+        },
+        {
+          "mob": "greenhood_poacher",
+          "weight": 3,
+          "level": 6
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [2, 2],
+      "respawnSec": 80
+    },
+    {
+      "id": "weaver-thicket",
+      "region": {
+        "kind": "circle",
+        "x": 56,
+        "z": 138,
+        "r": 12
+      },
+      "mobs": [
+        {
+          "mob": "giant_spider",
+          "weight": 1,
+          "level": 6
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [1, 2],
+      "respawnSec": 50
+    },
+    {
+      "id": "strangler-gardens",
+      "region": {
+        "kind": "circle",
+        "x": 152,
+        "z": 122,
+        "r": 13
+      },
+      "mobs": [
+        {
+          "mob": "mantrap",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 4,
+      "packSize": [1, 1],
+      "respawnSec": 60
+    },
+    {
+      "id": "drowned-fields",
+      "region": {
+        "kind": "circle",
+        "x": 100,
+        "z": 42,
+        "r": 14
+      },
+      "mobs": [
+        {
+          "mob": "bog_serpent",
+          "weight": 3
+        },
+        {
+          "mob": "giant_spider",
+          "weight": 2,
+          "level": 7
+        }
+      ],
+      "maxAlive": 5,
+      "packSize": [1, 1],
+      "respawnSec": 55
+    },
+    {
+      "id": "elder-farmstead",
+      "region": {
+        "kind": "circle",
+        "x": 153,
+        "z": 105,
+        "r": 5
+      },
+      "mobs": [
+        {
+          "mob": "elder_strangler",
+          "weight": 1
+        }
+      ],
+      "maxAlive": 1,
+      "packSize": [1, 1],
+      "respawnSec": 900
+    }
+  ],
+  "prefabs": [
+    {
+      "prefab": "wayshrine",
+      "count": 2,
+      "minSpacing": 80,
+      "nearPortals": true
+    },
+    {
+      "prefab": "drowned_house",
+      "count": 3,
+      "minSpacing": 26
+    },
+    {
+      "prefab": "abandoned_camp",
+      "count": 3,
+      "minSpacing": 45
+    },
+    {
+      "prefab": "fallen_giant",
+      "count": 3,
+      "minSpacing": 50
+    },
+    {
+      "prefab": "stone_circle",
+      "count": 1,
+      "minSpacing": 0
+    },
+    {
+      "prefab": "causeway_bridge",
+      "count": 1,
+      "minSpacing": 0
+    },
+    {
+      "prefab": "roadside_gibbet",
+      "count": 1,
+      "minSpacing": 0,
+      "ruinBias": 1.2
+    }
+  ],
+  "events": [
+    {
+      "id": "elder-rally",
+      "on": { "kind": "bossHpBelowPct", "mob": "elder_strangler", "pct": 0.5 },
+      "actions": [
+        { "kind": "announce", "text": "The rootstock heaves — every bloom in the march turns toward the farmstead." },
+        { "kind": "spawnMobs", "mob": "mantrap", "count": 2, "radius": 8 }
+      ]
+    },
+    {
+      "id": "elder-withers",
+      "on": { "kind": "bossDeath", "mob": "elder_strangler" },
+      "actions": [
+        { "kind": "announce", "text": "The Elder Strangler withers. The march's gardens go quiet — for a season." }
+      ]
+    }
+  ],
+  "npcs": []
+}

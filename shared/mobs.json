@@ -292,16 +292,23 @@
   "bog_serpent": {
     "name": "Bog Serpent",
     "sprite": "bog_serpent",
-    "level": 9,
-    "hp": 170,
-    "damage": 19,
+    "level": 6,
+    "hp": 115,
+    "damage": 14,
     "moveSpeed": 3.8,
     "ability": "raptor_bite",
+    "ranks": [
+      {
+        "atLevel": 9,
+        "xpMult": 1.35,
+        "titleSuffix": "of the Deep Fen"
+      }
+    ],
     "aggroRadius": 9,
     "attackRange": 1.8,
     "leashRadius": 34,
     "fleeAtHpPct": 0,
-    "xp": 216,
+    "xp": 100,
     "loot": "serpent_drops",
     "sounds": {
       "idle": "bog_serpent_idle",
@@ -313,17 +320,63 @@
   "mantrap": {
     "name": "Strangler Bloom",
     "sprite": "mantrap",
-    "level": 9,
-    "hp": 230,
-    "damage": 24,
+    "level": 6,
+    "hp": 155,
+    "damage": 18,
     "moveSpeed": 0.8,
     "ability": "mantrap_snap",
+    "ranks": [
+      {
+        "atLevel": 9,
+        "xpMult": 1.35,
+        "titleSuffix": "of the Mire"
+      }
+    ],
     "aggroRadius": 5,
     "attackRange": 2,
     "leashRadius": 12,
     "fleeAtHpPct": 0,
-    "xp": 216,
+    "xp": 100,
     "loot": "mantrap_drops",
+    "sounds": {
+      "idle": "mantrap_idle",
+      "attack": "mantrap_attack",
+      "hurt": "mantrap_hurt",
+      "die": "mantrap_die"
+    }
+  },
+  "elder_strangler": {
+    "name": "The Elder Strangler",
+    "sprite": "mantrap",
+    "level": 8,
+    "hp": 540,
+    "damage": 24,
+    "moveSpeed": 0.6,
+    "attacks": [
+      {
+        "ability": "strangle_lash",
+        "weight": 3
+      },
+      {
+        "ability": "choking_spores",
+        "damage": 18,
+        "minRange": 3,
+        "weight": 3
+      },
+      {
+        "ability": "root_burst",
+        "damage": 16,
+        "minRange": 2,
+        "weight": 3
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 10,
+    "attackRange": 12,
+    "leashRadius": 18,
+    "fleeAtHpPct": 0,
+    "xp": 1373,
+    "loot": "elder_strangler_drops",
     "sounds": {
       "idle": "mantrap_idle",
       "attack": "mantrap_attack",

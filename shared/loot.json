@@ -1778,6 +1778,117 @@
       }
     ]
   },
+  "elder_strangler_drops": {
+    "gold": [
+      90,
+      160
+    ],
+    "rolls": [
+      2,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 30,
+        "table": "weapons_steel"
+      },
+      {
+        "weight": 20,
+        "table": "armor_fine"
+      },
+      {
+        "weight": 25,
+        "item": "greater_health_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 15,
+        "item": "antidote",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 10,
+        "item": "venom_sac",
+        "qty": [
+          1,
+          2
+        ]
+      }
+    ],
+    "guaranteed": [
+      {
+        "weight": 1,
+        "item": "strangler_heartroot",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 1,
+        "table": "weapons_steel",
+        "minRarity": "rare"
+      }
+    ]
+  },
+  "cache_stranglers_march": {
+    "gold": [
+      12,
+      28
+    ],
+    "rolls": [
+      1,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 24,
+        "table": "weapons_fine"
+      },
+      {
+        "weight": 12,
+        "table": "weapons_steel"
+      },
+      {
+        "weight": 20,
+        "item": "health_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 16,
+        "item": "antidote",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 16,
+        "item": "bread",
+        "qty": [
+          2,
+          4
+        ]
+      },
+      {
+        "weight": 12,
+        "item": "ancient_coin",
+        "qty": [
+          1,
+          1
+        ]
+      }
+    ]
+  },
   "cache_desert": {
     "gold": [
       12,

@@ -1411,11 +1411,11 @@ show their block tile).
     land at those coords in the TARGET room, no paired portal needed (and
     the branch wins over auto-pairing, or the climb-out would bounce you
     back to the fort). `greenhood-out` (past Grole's den — beating him is
-    NOT required to leave) lands at forest (168.5,118.5): an authored
+    NOT required to leave) landed at forest (168.5,118.5): an authored
     trapdoor mound (rotting-plank 2×2 flush in a dirt crown, hollow stump
     wearing a smuggler's lantern — the only mark). NO forest portal there.
-    NOTE (batch 4): the proposal re-points this exit to the Marchland —
-    change greenhood-out's target + exitX/exitZ and move the mound dressing.
+    DONE in batch 4: the exit now targets `stranglers_march` (28.5,148.5)
+    and the mound dressing moved there (buildChuteMound).
   - Entrance pairing: forest-greenhood ⇄ greenhood-fort via exitPortalId
     BOTH ways (the run has two forest-target portals — auto-pair scan order
     would be ambiguous).
@@ -1450,6 +1450,115 @@ show their block tile).
     payout vs the 480/900 s timers, whether the yard read ("fight through
     the camp, double back west") lands, and the green-palette Grole sprite
     vs Thrace's chief at a glance.
+
+- 2026-07-09 **THE STRANGLER'S MARCH** (world-redesign batch 4, proposal
+  Part 2 row W3 / Part 5 step 4; story bible §6 W3) — the 13th room: the
+  L5-7 border land spliced between the Kingless Wood and the Gloomfen,
+  killing the old L1-4 → L8-10 cliff. Also receives the Greenhood Run's
+  one-way climb-out.
+  - **Room `stranglers_march`** (240² wilderness, STATEFUL, biome swamp,
+    murk_water, wind 0.8, no fixedTime, flags = forest/gloomfen shape, NO
+    gates/lifecycle — an always-open thoroughfare). Terrain seed **90031**
+    (base 13, amp 5, freq 0.021, wl 12, treeDensity 0.45) was CHOSEN for
+    its hydrology: north 22% flooded vs south 8%, and the west lake merges
+    with the central basin at z≈100 — the owner's no-straight-lines rule
+    enforced by water (the direct gate→gate ray crosses ~40/201 flooded
+    samples, test-locked). Survey-first discipline: every coordinate below
+    was picked off a terrain probe, not guessed.
+  - **Builder `buildStranglersMarch`** (proc+authored): (1) the GRADIENT —
+    south dry mud repaints to grass on a hash ramp (fen(z)=0 at z≥206 → 1
+    by z≤90) and authored oaks thicken southward (0.018·wood² per column;
+    82 oaks in the south band vs 6 north, test-locked), while the gen's
+    sparse pale snags + reeds carry the north; (2) the BENDING ROAD — 9
+    waypoints (MARCH_ROAD), path/dirt on dry ground, rotting-plank
+    boardwalk over murk, forking off the old tithe-road line at z198 and
+    detouring east past the drowned fields; (3) the CAUSEWAY STUB — the
+    old road raised on a cobble embankment (deck y15, stone/cracked
+    bricks), progressively hash-bitten northward, snapping into the flood
+    at z≈104 with rubble in the murk + overgrown path ruts south of it;
+    (4) the DROWNED FIELDS — mossy-cobble drystone grid (10-block
+    paddocks, 1 high = jumpable) whose water-line + west paddocks are dug
+    shin-deep and FLOODED by hand (builders must place liquid blocks
+    themselves — gen only fills during generate()); (5) the STRANGLED
+    FARMSTEAD — roofless fieldstone shell (hash-bitten walls, full-height
+    south door + west breach), log root-limbs up the corners, vines, moss
+    carpet + root scatter, a dirt heart-mound wearing `roots`, and 4
+    authored glow_shrooms (night readability); (6) **buildChuteMound**
+    (the batch-3 forest mound builder, moved + parameterized) at (28,148).
+    Exclusion rects: farm+fields, stub, mound, road segments (bounding
+    boxes ±4). Tree pass skips prefab placements via features.placements
+    + PREFABS footprints.
+  - **The splice** (all data-only on the neighbours — their goldens HELD):
+    forest `forest-gloomfen` → **`forest-march`** (target stranglers_march,
+    label "The Strangler's March", same spot 240,30); gloomfen
+    `gloomfen-forest` → **`gloomfen-march`** (target stranglers_march,
+    same spot 160,308); march portals `march-forest` (120,228, "The
+    Kingless Wood") + `march-gloomfen` (84,24 — a surveyed dry shelf;
+    candidates at x44-72 were ALL under the murk, "Gloomfen Marsh").
+    Auto-pairing lands twin-gate arrivals on all four directions
+    (march-probe measured 3.2 m both ways). `greenhood-out` → target
+    stranglers_march, exitX/Z 28.5,148.5 (one-way branch, batch 3),
+    label "The East Door — out to the March". Bren (hub) gained the
+    bible's "March marks run five to seven" line.
+  - **Band L5-7, forest defs at rank** (proposal Part 3): wolves L5 +
+    boars L5 on the wood verge, giant_spider L6/L7 (the r8 fen-face
+    deliberately NOT lit here), a Greenhood picket at the chute-mouth
+    (bandit + poacher L6 — lights the r6 Cutter/Deadeye ranks; no
+    camp_cur, so Run climb-outs aren't insta-dogpiled), blooms + serpents
+    (below). 7 tables, all ≥95% dry-walkable (roster predicate), family
+    overlap clean.
+  - **Rebases (mobs never scale down)**: `mantrap` 9→6 (hp 230→155, dmg
+    24→18, xp 216→100) and `bog_serpent` 9→6 (170→115, 19→14, 216→100),
+    each gaining a rank at 9 (`xpMult 1.35` + titleSuffix "of the Mire" /
+    "of the Deep Fen") so gloomfen's NEW L9 table overrides resolve at the
+    pre-retune values — serpent EXACT (170/19/216), mantrap 230/**25**/216
+    (dmg +1: 24 has no integer preimage under 1.11³; the batch-1 "within
+    ~1" precedent). Both new ranks REACHABLE (rank-coverage 16/29 →
+    18/31; nothing else moved).
+  - **The Elder Strangler** (new mob, L8 = band-top+1, boss ×8 xp = 1373
+    exactly on the batch-1 formula; hp 540 on the solo trend between
+    Thrace 400@5 and Gravelord 596@9; dmg 24): ROOTED area denial per the
+    bible — moveSpeed 0.6, aggro 10, leash 18, attackRange 12; it doesn't
+    chase, you walk INTO the garden. Sprite = `mantrap` REUSED (bible's
+    explicit "staged big via arena framing, not scale" — monster3.png
+    [2,0] re-eyeballed on a contact sheet; no client change at all this
+    batch). Kit = NEW abilities `strangle_lash` (melee 3 m, slow 35%),
+    `choking_spores` (AoE lob, slow 40% + 12 dot, NOT predictive —
+    strafing beats it), `root_burst` (4-pillar marching line — pillars
+    tech renders the fire flipbook, the Sarquun maw_geysers precedent).
+    Events: 50% rally (announce + 2 mantraps) + the bible's death
+    announce verbatim. Loot `elder_strangler_drops`: guaranteed
+    **`strangler_heartroot`** (value 50 — ledger 40 < root 50 < beak 60
+    ladder, icon [0,21] gnarled_root, verify-icons 0 errors + eyeballed
+    on iconproof-54) + weapons_steel rare (T2 at L8) ; gold 90-160
+    between Grole and Sarquun. NEW `cache_stranglers_march` (fine+steel
+    mix) — scatter caches resolve "auto" to it.
+  - Prefab scatter: wayshrine ×2 nearPortals, drowned_house ×3 (the
+    drowned farms), abandoned_camp ×3, fallen_giant ×3, stone_circle ×1,
+    causeway_bridge ×1 (nearWater), roadside_gibbet ×1 — zero underfill,
+    9 hooked caches.
+  - Goldens: forest grid only (the climb-out mound left it; forest
+    FEATURES held — no scatter candidate ever landed in the dropped
+    exclusion) + NEW stranglers_march entry; gloomfen/greenhood_run/all
+    others byte-identical. Economy lists += room + elder (mobranks.test);
+    worldgen3 portal-graph pairs now forest⇄march + march⇄gloomfen.
+  - Verified: typecheck, **516 vitest** (23 new in stranglers_march.test
+    .ts: gradient, bend-vs-ray, floor-walk BFS to both gates/mound/lair,
+    farmstead + causeway dressing, 3-edge pairing, elder kit/economy,
+    rebase locks), `scripts/march-probe.mjs` FULL PASS live (22 checks:
+    twin-gate arrivals both edges at 3.2 m, the road walked with 0
+    corrections, returnToHub, one-way mound landing y=17, the Elder alive
+    L8 + an L6 bloom), travel-bot + the UPDATED greenhood-probe (its
+    climb-out leg now asserts the march landing, then /rooms back to the
+    forest for the reseal check) both PASS, and 4 screenshot scenes
+    (tools/out/march-{gate,transition,elder,mound}-*.png). Zero client
+    code changes.
+  - Owner feel-checks pending: whether the Elder reads as a BOSS at
+    mantrap size (the bible's no-scale call — the farmstead framing +
+    name tag carry it; flip = new sprite key + SpriteLibrary height),
+    root_burst's fire-flipbook pillars on a plant (Sarquun precedent),
+    the picket's bite at the Run landing, road plank-crossing feel, and
+    the L5-7 pace between the wood and the fen.
 
 ## Conventions
 
@@ -1537,6 +1646,24 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-09 **THE STRANGLER'S MARCH SHIPPED (world-redesign batch 4)** —
+  the 13th room (see the decisions-log entry): a 240² proc+authored
+  swamp-edge (seed 90031 — its own hydrology forces the road to bend)
+  spliced between forest and gloomfen, killing the L1-4 → L8-10 cliff.
+  Drowning-wood gradient (oaks south, murk + pale snags north), bending
+  road with plank crossings, snapped tithe-road causeway, drowned drystone
+  fields, the strangled farmstead housing **the Elder Strangler** (L8
+  rooted boss: slowing lash / spore lob / root pillars / 50% bloom rally;
+  guaranteed `strangler_heartroot`), and the Greenhood Run's climb-out
+  re-pointed to a chute-mouth mound in the march west (watched by a
+  poacher picket). mantrap + bog_serpent rebased 9→6 with L9 gloomfen
+  overrides resolving at pre-retune values. Verified: typecheck, **516
+  vitest** (23 new; goldens moved for forest grid + the new room ONLY),
+  `march-probe.mjs` full-arc live PASS, travel-bot + updated
+  greenhood-probe PASS, rank-coverage 18/31 (both new ranks reachable),
+  4 screenshot scenes (tools/out/march-*.png). Zero client changes.
+  Owner feel-checks in the decisions-log entry.
 
 - 2026-07-09 **THE GREENHOOD RUN SHIPPED (world-redesign batch 3)** — the
   12th room (see the decisions-log entry): the poacher fort is fixed-anchored

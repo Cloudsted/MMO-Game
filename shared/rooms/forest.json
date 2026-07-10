@@ -48,9 +48,9 @@
       "r": 2.2
     },
     {
-      "id": "forest-gloomfen",
-      "label": "Gloomfen Marsh",
-      "target": "gloomfen",
+      "id": "forest-march",
+      "label": "The Strangler's March",
+      "target": "stranglers_march",
       "x": 240,
       "z": 30,
       "r": 2.2

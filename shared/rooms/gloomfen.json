@@ -33,9 +33,9 @@
   },
   "portals": [
     {
-      "id": "gloomfen-forest",
-      "label": "Whispering Forest",
-      "target": "forest",
+      "id": "gloomfen-march",
+      "label": "The Strangler's March",
+      "target": "stranglers_march",
       "x": 160,
       "z": 308,
       "r": 2.2
@@ -115,7 +115,8 @@
       "mobs": [
         {
           "mob": "bog_serpent",
-          "weight": 3
+          "weight": 3,
+          "level": 9
         },
         {
           "mob": "marsh_wisp",
@@ -144,7 +145,8 @@
       "mobs": [
         {
           "mob": "mantrap",
-          "weight": 1
+          "weight": 1,
+          "level": 9
         }
       ],
       "maxAlive": 4,

@@ -213,6 +213,61 @@
     "manaCost": 0,
     "fx": "hit"
   },
+  "strangle_lash": {
+    "kind": "melee",
+    "windupMs": 700,
+    "activeMs": 180,
+    "recoverMs": 700,
+    "range": 3,
+    "arcDeg": 150,
+    "debuff": {
+      "slowPct": 0.35,
+      "durMs": 2000
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 900,
+    "manaCost": 0,
+    "fx": "hit"
+  },
+  "choking_spores": {
+    "kind": "projectile",
+    "dmgClass": "magic",
+    "castTimeMs": 900,
+    "recoverMs": 350,
+    "projSpeed": 14,
+    "maxRange": 24,
+    "aoeRadius": 2.4,
+    "impactFx": "explosion",
+    "projScale": 1.4,
+    "debuff": {
+      "slowPct": 0.4,
+      "dotTotal": 12,
+      "durMs": 3000
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 4200,
+    "manaCost": 0,
+    "fx": "frost"
+  },
+  "root_burst": {
+    "kind": "pillars",
+    "castTimeMs": 1000,
+    "recoverMs": 400,
+    "pillars": {
+      "count": 4,
+      "spacing": 2.2,
+      "radius": 2.1,
+      "staggerMs": 180,
+      "burnMs": 1400
+    },
+    "canMoveWhile": false,
+    "interruptible": false,
+    "cooldownMs": 9000,
+    "manaCost": 0,
+    "fx": "firebolt"
+  },
   "wisp_bolt": {
     "kind": "projectile",
     "castTimeMs": 700,

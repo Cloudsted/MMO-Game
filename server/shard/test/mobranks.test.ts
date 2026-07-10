@@ -889,7 +889,7 @@ describe("economy invariants", () => {
   /** Every mob a spawn table can produce, with the level it produces it at. */
   function shippedSpawns(): Array<{ room: string; table: string; mob: string; level: number; maxAlive: number; respawnSec: number }> {
     const out: Array<{ room: string; table: string; mob: string; level: number; maxAlive: number; respawnSec: number }> = [];
-    for (const roomId of ["hub", "forest", "desert", "dungeon", "gloomfen", "cinderrift", "crypt_depths", "sundered_city", "maw", "greenhood_run", "grounds", "atelier"]) {
+    for (const roomId of ["hub", "forest", "desert", "dungeon", "gloomfen", "cinderrift", "crypt_depths", "sundered_city", "maw", "greenhood_run", "stranglers_march", "grounds", "atelier"]) {
       const def = loadRoomDef(roomId);
       for (const t of def.spawnTables) {
         for (const m of t.mobs) {
@@ -921,8 +921,9 @@ describe("economy invariants", () => {
       sundered_city: resolveMob(reg.mobs["sundered_king"]!, undefined, SCALE).xp,
       maw: resolveMob(reg.mobs["sarquun"]!, undefined, SCALE).xp,
       greenhood_run: resolveMob(reg.mobs["quartermaster_grole"]!, undefined, SCALE).xp,
+      stranglers_march: resolveMob(reg.mobs["elder_strangler"]!, undefined, SCALE).xp,
     };
-    const bosses = new Set(["minotaur_boss", "lich_boss", "cinder_golem_boss", "sundered_king", "thrace_redcap", "kaharat", "sekhat", "grelmoss", "aelthir", "sarquun", "quartermaster_grole"]);
+    const bosses = new Set(["minotaur_boss", "lich_boss", "cinder_golem_boss", "sundered_king", "thrace_redcap", "kaharat", "sekhat", "grelmoss", "aelthir", "sarquun", "quartermaster_grole", "elder_strangler"]);
     for (const s of shippedSpawns()) {
       const cap = bossXp[s.room];
       if (cap === undefined || bosses.has(s.mob)) continue;

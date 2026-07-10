@@ -39,13 +39,13 @@
     },
     {
       "id": "greenhood-out",
-      "label": "The East Door — up to the Wood",
-      "target": "forest",
+      "label": "The East Door — out to the March",
+      "target": "stranglers_march",
       "x": 80,
       "z": 12,
       "r": 2.2,
-      "exitX": 168.5,
-      "exitZ": 118.5
+      "exitX": 28.5,
+      "exitZ": 148.5
     }
   ],
   "spawnTables": [

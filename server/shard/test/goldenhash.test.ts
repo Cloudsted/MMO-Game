@@ -48,7 +48,13 @@ const UPDATE = process.env.GOLDEN_UPDATE === "1";
  *  updated 2026-07-09 for batch 3 (THE GREENHOOD RUN): the bandit_fort
  *  left the scatter pool for a fixed anchor at (308,148) + portal yard +
  *  climb-out mound, which deterministically re-dealt the forest scatter;
- *  every other room stayed byte-identical. atelier/dungeon/grounds/hub/maw
+ *  every other room stayed byte-identical. forest grid updated + the NEW
+ *  stranglers_march entry added 2026-07-09 for batch 4 (THE STRANGLER'S
+ *  MARCH): the climb-out mound left the forest north (it moved into the
+ *  march west with the greenhood-out re-point) — forest FEATURES held (no
+ *  scatter candidate had ever landed in the dropped exclusion rect), and
+ *  gloomfen/greenhood_run held (their portal retargets are data-only).
+ *  atelier/dungeon/grounds/hub/maw
  *  share a features hash: it is the hash of the EMPTY ScatterResult — no
  *  prefab scatter. greenhood_run has no scatter either, but its authored
  *  caches ride the features handle, so its hash differs.) */
@@ -58,12 +64,13 @@ const GOLDEN: Record<string, { grid: string; features: string }> = {
   crypt_depths: { grid: "4ebd017459a67adce7a64d2a4470bf377353f290", features: "2f8b38a89da3d19331960f0781803646b57af960" },
   desert: { grid: "aff409b0bd4eec1683fd5e8b1163268d045ebe1a", features: "f908e575dd8e4b5f1fea511bc7a034d1a02ccb55" },
   dungeon: { grid: "ca34988c68a1b7720ef8bcaeda7c6f835fd1d9ec", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
-  forest: { grid: "25aba7151f43974f9da6cfb9c6bde098a8312577", features: "4ce7137d3ce38a1e7f0981d8342b2f57b3060ed4" },
+  forest: { grid: "ebadbef57df8650f9f564bcf2632c8190ce8b6dd", features: "4ce7137d3ce38a1e7f0981d8342b2f57b3060ed4" },
   gloomfen: { grid: "5802ef6c1b976fe379cffee154e0317c8fa1a797", features: "986429b8853b04c7dd3a5dc6c6c37572f0201e1f" },
   greenhood_run: { grid: "6892ee8672400bd3f7f41b11959d9f9ab3165cb4", features: "3d75f2e784f6244c6660eba46e1709d9b4836f29" },
   grounds: { grid: "493920fcf3e0e14da80e2661dca4cf63dbcc7b14", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
   hub: { grid: "4064b6b1c8ad30e642ba19a2d150fb5d2174345b", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
   maw: { grid: "75b9919c5b5493a24bc0fcd6295950063edc63be", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
+  stranglers_march: { grid: "0e82fe8cd0cc9cd0d28406e0e0a2aff14d8ec3e7", features: "e9737c696504c7800346841a71b1a234b1a61134" },
   sundered_city: { grid: "f9aa6be274d3df42ec21b9d6c82e8874f785399f", features: "67b6fc85e01e5fd79bd0760c5934500893c40ac2" },
 };
 

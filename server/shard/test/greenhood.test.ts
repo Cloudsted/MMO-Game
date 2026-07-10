@@ -206,14 +206,12 @@ describe("the Greenhood fort (forest side)", () => {
     expect(forest.prefabs?.some((p) => p.prefab === "bandit_fort")).toBe(false);
   });
 
-  it("builds the climb-out tell: a trapdoor mound at the one-way landing, no portal there", () => {
-    // rotting-plank trapdoor flush in the mound crown at the authored landing
-    expect(fworld.get(168, 15, 118)).toBe(BLOCK.rotting_planks!.id);
-    expect(fworld.standY(168.5, 118.5)).toBe(16); // arrivals stand ON the mound
-    // one-way by omission: no forest portal within 30 m of the landing
-    for (const p of forest.portals) {
-      expect(Math.hypot(p.x - 168.5, p.z - 118.5), p.id).toBeGreaterThan(30);
-    }
+  it("the climb-out mound left the forest with batch 4 (it lives in the march now)", () => {
+    // batch 4 re-pointed greenhood-out into the Strangler's March and moved
+    // the trapdoor-mound dressing with it — the old forest landing is plain
+    // terrain again (no rotting-plank trapdoor, no lantern stump)
+    expect(fworld.get(168, 15, 118)).not.toBe(BLOCK.rotting_planks!.id);
+    expect(fworld.get(164, 16, 116)).not.toBe(BLOCK.lantern!.id);
   });
 });
 
@@ -232,7 +230,7 @@ describe("the Thrace gate (bossDeath → openPortal, reseal on respawn)", () => 
     const wire = sim.portalsWire();
     expect(wire.find((p) => p.id === "forest-greenhood")!.open).toBe(false);
     expect(wire.find((p) => p.id === "forest-hub")!.open).toBe(true);
-    expect(wire.find((p) => p.id === "forest-gloomfen")!.open).toBe(true);
+    expect(wire.find((p) => p.id === "forest-march")!.open).toBe(true);
   });
 
   it("opens on Thrace's death and reseals when he respawns (the door-ajar window)", () => {
@@ -267,12 +265,16 @@ describe("portal pairing", () => {
     expect(Math.hypot(a.x - 313, a.z - 143)).toBeLessThan(4);
   });
 
-  it("the climb-out is one-way: lands at the authored mound, ignoring the fort pairing", () => {
+  it("the climb-out is one-way into the MARCH now: lands at the authored mound there", () => {
+    // batch 4 re-pointed the East Door: target stranglers_march, authored
+    // exitX/exitZ at the chute-mouth mound in the march's west
     const via = def.portals.find((p) => p.id === "greenhood-out")!;
     expect(via.exitPortalId).toBeUndefined();
-    const a = computePortalArrival(forest, "greenhood_run", via)!;
-    expect(a.x).toBe(168.5);
-    expect(a.z).toBe(118.5);
+    expect(via.target).toBe("stranglers_march");
+    const march = loadRoomDef("stranglers_march");
+    const a = computePortalArrival(march, "greenhood_run", via)!;
+    expect(a.x).toBe(28.5);
+    expect(a.z).toBe(148.5);
   });
 });
 
