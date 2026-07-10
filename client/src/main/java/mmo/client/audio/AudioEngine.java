@@ -268,6 +268,10 @@ public class AudioEngine {
                 bed = "wind_storm"; // dead air scouring the dried sea's basin
                 playlist = "dungeon";
             }
+            case "greenhood_run" -> {
+                bed = "drone_dungeon"; // the smugglers' warren under the wood
+                playlist = "dungeon";
+            }
             case "desert" -> {
                 bed = "wind_desert";
                 playlist = "wild";

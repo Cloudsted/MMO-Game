@@ -1,0 +1,121 @@
+{
+  "id": "greenhood_run",
+  "name": "The Greenhood Run",
+  "type": "dungeon",
+  "biome": "ruin",
+  "wind": 0,
+  "persistence": "stateful",
+  "fixedTime": 0.5,
+  "size": {
+    "w": 96,
+    "h": 96
+  },
+  "spawn": {
+    "x": 18,
+    "z": 74,
+    "yaw": 1.5708
+  },
+  "terrain": {
+    "kind": "blocks",
+    "seed": 61207,
+    "base": 24,
+    "amplitude": 0,
+    "frequency": 0.02
+  },
+  "flags": {
+    "safeZone": false,
+    "buildingEnabled": false,
+    "pvp": false
+  },
+  "portals": [
+    {
+      "id": "greenhood-fort",
+      "label": "The Greenhood Fort — the Kingless Wood",
+      "target": "forest",
+      "x": 18,
+      "z": 78,
+      "r": 2.2,
+      "exitPortalId": "forest-greenhood"
+    },
+    {
+      "id": "greenhood-out",
+      "label": "The East Door — up to the Wood",
+      "target": "forest",
+      "x": 80,
+      "z": 12,
+      "r": 2.2,
+      "exitX": 168.5,
+      "exitZ": 118.5
+    }
+  ],
+  "spawnTables": [
+    {
+      "id": "run-bunkroom",
+      "region": { "kind": "circle", "x": 50, "z": 54, "r": 6 },
+      "mobs": [
+        { "mob": "bandit", "weight": 4, "level": 6 },
+        { "mob": "greenhood_poacher", "weight": 3, "level": 5 },
+        { "mob": "hollow_cowl", "weight": 2 }
+      ],
+      "maxAlive": 6,
+      "packSize": [2, 3],
+      "respawnSec": 60
+    },
+    {
+      "id": "run-kennels",
+      "region": { "kind": "circle", "x": 34, "z": 68, "r": 5 },
+      "mobs": [{ "mob": "camp_cur", "weight": 1, "level": 6 }],
+      "maxAlive": 4,
+      "packSize": [2, 3],
+      "respawnSec": 90
+    },
+    {
+      "id": "run-cellar-watch",
+      "region": { "kind": "circle", "x": 44, "z": 42, "r": 5 },
+      "mobs": [
+        { "mob": "bandit_enforcer", "weight": 2, "level": 6 },
+        { "mob": "powder_brigand", "weight": 2, "level": 6 }
+      ],
+      "maxAlive": 3,
+      "packSize": [1, 2],
+      "respawnSec": 75
+    },
+    {
+      "id": "run-vault-guard",
+      "region": { "kind": "circle", "x": 66, "z": 36, "r": 5 },
+      "mobs": [
+        { "mob": "powder_brigand", "weight": 2, "level": 6 },
+        { "mob": "bandit_enforcer", "weight": 2, "level": 6 },
+        { "mob": "greenhood_poacher", "weight": 2, "level": 6 }
+      ],
+      "maxAlive": 4,
+      "packSize": [2, 2],
+      "respawnSec": 80
+    },
+    {
+      "id": "grole-vault",
+      "region": { "kind": "circle", "x": 69, "z": 26, "r": 4 },
+      "mobs": [{ "mob": "quartermaster_grole", "weight": 1 }],
+      "maxAlive": 1,
+      "packSize": [1, 1],
+      "respawnSec": 900
+    }
+  ],
+  "events": [
+    {
+      "id": "grole-audit",
+      "on": { "kind": "bossHpBelowPct", "mob": "quartermaster_grole", "pct": 0.5 },
+      "actions": [
+        { "kind": "announce", "text": "Grole kicks the strongroom door shut. 'Nobody leaves owing.'" }
+      ]
+    },
+    {
+      "id": "grole-ledger",
+      "on": { "kind": "bossDeath", "mob": "quartermaster_grole" },
+      "actions": [
+        { "kind": "announce", "text": "Quartermaster Grole is dead. Somewhere in the fen, a payment won't arrive." }
+      ]
+    }
+  ],
+  "npcs": []
+}

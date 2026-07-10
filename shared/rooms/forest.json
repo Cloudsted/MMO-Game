@@ -54,6 +54,15 @@
       "x": 240,
       "z": 30,
       "r": 2.2
+    },
+    {
+      "id": "forest-greenhood",
+      "label": "The Greenhood Run",
+      "target": "greenhood_run",
+      "x": 313,
+      "z": 143,
+      "r": 2.2,
+      "exitPortalId": "greenhood-fort"
     }
   ],
   "spawnTables": [
@@ -166,9 +175,9 @@
       "id": "bandit-camp",
       "region": {
         "kind": "circle",
-        "x": 255,
-        "z": 90,
-        "r": 13
+        "x": 315,
+        "z": 154,
+        "r": 11
       },
       "mobs": [
         {
@@ -270,8 +279,8 @@
       "id": "redcap-hall",
       "region": {
         "kind": "circle",
-        "x": 255,
-        "z": 90,
+        "x": 315,
+        "z": 154,
         "r": 6
       },
       "mobs": [
@@ -291,8 +300,8 @@
       "id": "camp-livestock",
       "region": {
         "kind": "circle",
-        "x": 255,
-        "z": 90,
+        "x": 315,
+        "z": 154,
         "r": 11
       },
       "mobs": [
@@ -331,17 +340,6 @@
     }
   ],
   "prefabs": [
-    {
-      "prefab": "bandit_fort",
-      "count": 1,
-      "minSpacing": 0,
-      "near": {
-        "x": 255,
-        "z": 90,
-        "within": 30
-      },
-      "bindSpawnTable": "bandit-camp"
-    },
     {
       "prefab": "spider_hollow",
       "count": 1,
@@ -410,6 +408,22 @@
       "actions": [
         { "kind": "announce", "text": "Somewhere far off, something answers." },
         { "kind": "spawnMobs", "mob": "gravehound", "count": 4, "radius": 8 }
+      ]
+    },
+    {
+      "id": "redcap-rally",
+      "on": { "kind": "bossHpBelowPct", "mob": "thrace_redcap", "pct": 0.5 },
+      "actions": [
+        { "kind": "announce", "text": "Thrace sounds the red horn — the company answers!" },
+        { "kind": "spawnMobs", "mob": "bandit", "count": 3, "radius": 7 }
+      ]
+    },
+    {
+      "id": "redcap-gate",
+      "on": { "kind": "bossDeath", "mob": "thrace_redcap" },
+      "actions": [
+        { "kind": "announce", "text": "Thrace the Redcap is down. The fort gate stands open — the Run is lit." },
+        { "kind": "openPortal", "portalId": "forest-greenhood" }
       ]
     }
   ],

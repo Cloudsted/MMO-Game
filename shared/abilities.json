@@ -668,6 +668,25 @@
     "manaCost": 0,
     "fx": "frost"
   },
+  "grole_muster": {
+    "kind": "self",
+    "castTimeMs": 1300,
+    "recoverMs": 450,
+    "summon": {
+      "mob": "camp_cur",
+      "count": 2,
+      "radius": 5,
+      "cap": 4,
+      "text": "Grole snaps two fingers — the kennel doors bang open!",
+      "grantsXp": false,
+      "grantsLoot": false
+    },
+    "canMoveWhile": false,
+    "interruptible": true,
+    "cooldownMs": 22000,
+    "manaCost": 0,
+    "fx": "frost"
+  },
   "harvest_muster": {
     "kind": "self",
     "castTimeMs": 1700,

@@ -258,20 +258,22 @@ describe("480² retune", () => {
     }
   });
 
-  it("forest generates with full scatter and binds bandit/spider tables to their prefab sites", () => {
+  it("forest generates with full scatter and binds the spider table to its prefab site", () => {
     const sim = new RoomSim(loadRoomDef("forest"));
     const f = sim.world.features;
     expect(f.underfill).toEqual([]); // every configured prefab placed
     const boundIds = f.bindings.map((b) => b.tableId);
-    expect(boundIds).toEqual(expect.arrayContaining(["bandit-camp", "fen-approach-spiders"]));
-    // live tables reflect the binding (region re-centered onto the prefab)
-    const banditDef = loadRoomDef("forest").spawnTables.find((t) => t.id === "bandit-camp")!;
-    const banditLive = sim.liveSpawnTables().find((t) => t.id === "bandit-camp")!;
-    const bind = f.bindings.find((b) => b.tableId === "bandit-camp")!;
-    expect(banditLive.region.x).toBe(bind.x);
-    expect(banditLive.region.z).toBe(bind.z);
-    // the fort anchors the camp *near* its authored center, not across the map
-    expect(Math.hypot(bind.x - banditDef.region.x, bind.z - banditDef.region.z)).toBeLessThanOrEqual(45);
+    // batch 3: bandit_fort left the scatter pool for a FIXED anchor (the gated
+    // Run portal needs authored coordinates) — bandit-camp's region is now
+    // authored directly in forest.json, not scatter-bound. greenhood.test.ts
+    // covers the fort geometry.
+    expect(boundIds).toEqual(expect.arrayContaining(["fen-approach-spiders"]));
+    expect(boundIds).not.toContain("bandit-camp");
+    const spiderLive = sim.liveSpawnTables().find((t) => t.id === "fen-approach-spiders")!;
+    const bind = f.bindings.find((b) => b.tableId === "fen-approach-spiders")!;
+    expect(spiderLive.region.x).toBe(bind.x);
+    expect(spiderLive.region.z).toBe(bind.z);
+    // the fixed fort's own cache hook still rides the features handle
     expect(sim.allCaches().length).toBeGreaterThan(5);
   });
 

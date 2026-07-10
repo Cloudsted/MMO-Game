@@ -74,6 +74,34 @@ describe("computePortalArrival", () => {
     expect(Math.hypot(arrival.x - 50, arrival.z - 50)).toBeCloseTo(3.0);
   });
 
+  it("a one-way portal (exitX/exitZ, no exitPortalId) lands at those coords in the TARGET room", () => {
+    // the Greenhood Run climb-out pattern: no paired portal exists in the
+    // target by design; the via portal's exitX/exitZ ARE the landing.
+    const target = makeDef("b", { x: 32, z: 40 }, [
+      { id: "b-c", label: "C", target: "c", x: 10, z: 10, r: 2 }, // nothing points back at "a"
+    ]);
+    const via = makeDef("a", { x: 32, z: 32 }, [
+      { id: "a-b-oneway", label: "B", target: "b", x: 5, z: 5, r: 2, exitX: 20, exitZ: 24 },
+    ]).portals[0]!;
+    const arrival = computePortalArrival(target, "a", via)!;
+    expect(arrival.x).toBe(20);
+    expect(arrival.z).toBe(24);
+    // yaw faces the target's spawn (out of the climb-out, into the room)
+    expect(arrival.yaw).toBeCloseTo(Math.atan2(32 - 20, 40 - 24));
+  });
+
+  it("a one-way portal's landing wins even when a portal DOES point back (no accidental pairing)", () => {
+    const target = makeDef("b", { x: 32, z: 32 }, [
+      { id: "b-a", label: "A", target: "a", x: 10, z: 10, r: 2 },
+    ]);
+    const via = makeDef("a", { x: 32, z: 32 }, [
+      { id: "a-b-oneway", label: "B", target: "b", x: 5, z: 5, r: 2, exitX: 55, exitZ: 55 },
+    ]).portals[0]!;
+    const arrival = computePortalArrival(target, "a", via)!;
+    expect(arrival.x).toBe(55);
+    expect(arrival.z).toBe(55);
+  });
+
   it("returns null when the target has no portal back to the source", () => {
     const target = makeDef("b", { x: 32, z: 32 }, [
       { id: "b-c", label: "C", target: "c", x: 10, z: 10, r: 2 },

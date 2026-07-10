@@ -138,6 +138,11 @@ function grabComponent(png, seedX, seedY) {
     bandit_mystic: { file: resolve(UNSORTED, "bandits_1.png"), char: [3, 0] }, // fully cloaked, hood drawn, NO face, bone-white clasps
     bandit_chief: { file: resolve(UNSORTED, "bandits_1.png"), char: [1, 1] }, // the green-palette enforcer — the camp's boss
     bandit_poacher: { file: resolve(UNSORTED, "bandits_1.png"), char: [0, 1] }, // green bandana, the only bandit who shows a face
+    // Quartermaster Grole (greenhood_run boss): the green-palette bombardier —
+    // green cap with a LIT FUSE sparking at the brim, bandolier of orange
+    // powder flasks, blue flask at the hip. Verified 2026-07-09 on
+    // tools/out/sheets/grole-candidate-char21.png (all 12 frames clean).
+    bandit_quartermaster: { file: resolve(UNSORTED, "bandits_1.png"), char: [2, 1] },
     // camp livestock + dogs. animals1 row 0 is DOGS, row 1 is CATS (verified on the
     // contact sheet — the catalog's warning is right). animals2 [3,0] is the goat.
     camp_cur: { file: resolve(UNSORTED, "animals1.png"), char: [3, 0] }, // tan-and-rust lean dog

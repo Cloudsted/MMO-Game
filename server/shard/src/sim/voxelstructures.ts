@@ -50,6 +50,12 @@ function authoredExclusions(def: RoomDef): Rect[] {
   for (const r of def.regions) {
     out.push({ x0: r.x - r.r - 3, z0: r.z - r.r - 3, x1: r.x + r.r + 3, z1: r.z + r.r + 3 });
   }
+  if (def.id === "forest") {
+    // the Greenhood fort + its portal yard (fixed anchor — the gated door to
+    // the Run needs authored coordinates) and the Run's climb-out mound
+    out.push(FOREST_FORT_EXCLUSION);
+    out.push(FOREST_CLIMBOUT_EXCLUSION);
+  }
   if (def.id === "desert") {
     // sunken ruins + the oasis (same constants as buildDesertRuins)
     out.push({ x0: DESERT_RUIN_W.cx - 9, z0: DESERT_RUIN_W.cz - 8, x1: DESERT_RUIN_W.cx + 9, z1: DESERT_RUIN_W.cz + 8 });
@@ -93,6 +99,8 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult 
       break;
     case "forest":
       buildForestArena(b, def);
+      buildGreenhoodFort(b, def, features);
+      buildClimbOutTell(b, def);
       break;
     case "desert":
       buildDesertRuins(b, def, features);
@@ -117,6 +125,9 @@ export function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult 
       break;
     case "maw":
       buildMaw(b, def);
+      break;
+    case "greenhood_run":
+      buildGreenhoodRun(b, def, features);
       break;
   }
   // every portal gets a stone archway + a path apron facing the room spawn —
@@ -859,6 +870,346 @@ function buildForestArena(b: Builder, def: RoomDef): void {
   }
   // a center marker: mossy cross inlay
   b.paintCircle(cx, cz, 1.6, "mossy_cobblestone");
+}
+
+// ---------------------------------------------------------------------------
+// THE GREENHOOD FORT + THE GREENHOOD RUN — owner seed #1 (world-redesign
+// batch 3, story bible §6 W1 landmark 1 / §6 W2). The poacher company's
+// palisade fort squats on the old hunting road; INSIDE it, behind a second
+// palisade yard, stands the gate to their smuggling tunnel east. The gate is
+// event-sealed while Thrace the Redcap lives (bossDeath → openPortal;
+// reseals when he respawns — his 900 s respawnSec is the door-ajar window).
+//
+//   Forest side: the shared bandit_fort prefab, FIXED-ANCHORED at a surveyed
+//   flat dry shelf east of the hub→fen road (natural g uniformly 13; the old
+//   scatter placement near (255,90) sat in pond country). A walled portal
+//   yard annexes the fort's north wall — you fight THROUGH the camp (south
+//   gate → around the fire ring → the inner gap, offset east) to reach the
+//   arch. The Run's one-way climb-out surfaces at a trapdoor mound further
+//   north (no portal there — computePortalArrival's one-way landing).
+//
+//   The Run: a 96² preset warren dug through the slab UNDER the wood —
+//   shored galleries bending east (frames, lanterns: the Run is LIT, the
+//   company lives here), the kennel row (iron-bar pens), the bunkroom, a
+//   buried pre-Dividing cellar the company broke into (pale stone, wine
+//   racks, a chiseled-off crest), a crawl to a bolt-hole stash, and Grole's
+//   tally-vault — shelved floor-to-ceiling, crate rows addressed to
+//   creatures, the strongroom cache behind iron bars. Both portal chambers
+//   are open-to-sky shafts (standY = the shaft floor, so paired arrivals
+//   land INSIDE; daylight pours down the entrance the way a cellar door
+//   would). No straight line exists from any portal to Grole.
+//
+// DETERMINISM: layout constants fixed; every ragged edge is hash2(seed^salt).
+// ---------------------------------------------------------------------------
+const FOREST_FORT = { ox: 308, oz: 148 }; // bandit_fort min corner (15x12, rot 0) — interior center (315,154)
+const FORT_YARD = { x0: 308, z0: 138, x1: 322, z1: 148 }; // portal yard sharing the fort's north wall (z1)
+const FOREST_GREENHOOD_PORTAL = { x: 313, z: 143 }; // must match forest.json forest-greenhood
+const FOREST_FORT_EXCLUSION: Rect = { x0: 305, z0: 135, x1: 325, z1: 162 };
+const FOREST_CLIMBOUT = { x: 168, z: 118 }; // the Run's one-way surface tell (greenhood-out exitX/exitZ)
+const FOREST_CLIMBOUT_EXCLUSION: Rect = { x0: 162, z0: 112, x1: 175, z1: 125 };
+
+function buildGreenhoodFort(b: Builder, def: RoomDef, features: ScatterResult): void {
+  // the fort itself: the shared prefab, fixed-anchored. Its hooks ride in via
+  // stampFixedPrefab (loot cache "auto" → cache_forest at the crate corner).
+  stampFixedPrefab(b, features, "bandit_fort", FOREST_FORT.ox, FOREST_FORT.oz, 0, 0);
+  const G = b.g(FOREST_FORT.ox + 7, FOREST_FORT.oz + 6); // the stamp's flatten datum (surveyed 13)
+  const FL = G + 1;
+  const { x0, z0, x1, z1 } = FORT_YARD;
+  // the portal yard: cleared, flattened to the fort's level (portal cell
+  // natural g === G, surveyed — the arch apron paints at yard level)
+  b.clearAbove(x0 - 1, z0 - 1, x1 + 1, z1 - 1, G, 14);
+  b.flatten(x0, z0, x1, z1 - 1, G, "dirt");
+  // palisade ring (north + west + east; south IS the fort's own north wall)
+  for (let x = x0; x <= x1; x++) b.fill(x, FL, z0, x, FL + 2, z0, "palisade");
+  for (let z = z0 + 1; z < z1; z++) {
+    b.fill(x0, FL, z, x0, FL + 2, z, "palisade");
+    b.fill(x1, FL, z, x1, FL + 2, z, "palisade");
+  }
+  // the inner gate: a 2-wide gap knocked through the shared wall, OFFSET EAST
+  // of the fort's south gate (x314-316) and clear of the lean-to at x318-320 —
+  // the walk to the portal doubles back west inside the yard
+  b.fill(316, FL, z1, 317, FL + 2, z1, 0);
+  b.fill(315, FL, z1, 315, FL + 3, z1, "log");
+  b.fill(318, FL, z1, 318, FL + 3, z1, "log");
+  b.set(315, FL + 4, z1, "banner");
+  // the yard is lit — goods move through this door nightly
+  b.fill(310, FL, 140, 310, FL + 2, 140, "log");
+  b.set(310, FL + 3, 140, "lantern");
+  b.fill(318, FL, 145, 318, FL + 2, 145, "log");
+  b.set(318, FL + 3, 145, "lantern");
+  // crates staged by the door (interrupted action: the next shipment)
+  b.set(320, FL, 139, "planks");
+  b.set(321, FL, 139, "planks");
+  b.set(321, FL, 140, "hay");
+}
+
+function buildClimbOutTell(b: Builder, def: RoomDef): void {
+  const { x, z } = FOREST_CLIMBOUT;
+  const G = b.g(x, z);
+  b.clearAbove(x - 4, z - 4, x + 5, z + 5, G, 12);
+  // a low dirt mound with a rotting-plank trapdoor set flush in its crown —
+  // the Run's one-way door, read from the surface. Arrivals land ON it
+  // (exitX/exitZ 168.5,118.5 → standY = the mound top) and step down.
+  for (let dz = -3; dz <= 4; dz++) {
+    for (let dx = -3; dx <= 4; dx++) {
+      const d = Math.hypot(dx - 0.5, dz - 0.5);
+      if (d > 3.6) continue;
+      const h = d < 1.7 ? 2 : 1;
+      b.fill(x + dx, G + 1, z + dz, x + dx, G + h, z + dz, "dirt");
+    }
+  }
+  // the trapdoor: 2x2 rotting planks flush in the crown
+  for (const [dx, dz] of [
+    [0, 0],
+    [1, 0],
+    [0, 1],
+    [1, 1],
+  ] as const) {
+    b.set(x + dx, G + 2, z + dz, "rotting_planks");
+  }
+  // the hollow stump beside it, wearing a smuggler's lantern — the only mark
+  b.fill(x - 4, G + 1, z - 2, x - 4, G + 2, z - 2, "log");
+  b.set(x - 3, G + 1, z - 2, "log");
+  b.set(x - 4, G + 3, z - 2, "lantern");
+}
+
+// ---------------------------------------------------------------------------
+// The Greenhood Run itself (room `greenhood_run`, biome "ruin": a flat
+// 24-high slab the builder digs the warren through). See the banner above.
+// Convention: RUN_FLOOR is the floor SURFACE block y (feet stand at +1).
+// ---------------------------------------------------------------------------
+const RUN_FLOOR = 11;
+const RUN_E = { x: 18, z: 78 }; // entrance shaft (open sky; portal greenhood-fort at its center)
+const RUN_X = { x: 80, z: 12 }; // the East Door climb-out shaft (open sky; portal greenhood-out)
+const RUN_VAULT = { x0: 60, z0: 20, x1: 78, z1: 32 }; // the tally-vault (Grole's arena)
+
+/** Loot caches the Run keeps stocked — the room REWARDS the players who
+ *  earned entry (respawn timers carry the replay value; persistence is
+ *  stateful so lastLootedAt survives restarts). */
+const RUN_CACHES: LootCachePoint[] = [
+  { x: 47.5, y: RUN_FLOOR + 1, z: 38.5, table: "cache_greenhood_run", respawnSec: 480 }, // the buried cellar
+  { x: 65.5, y: RUN_FLOOR + 1, z: 48.5, table: "cache_greenhood_run", respawnSec: 480 }, // the bolt-hole stash
+  { x: 76.5, y: RUN_FLOOR + 1, z: 21.5, table: "cache_greenhood_run", respawnSec: 900 }, // the strongroom (the best stash sits near Grole)
+];
+
+function buildGreenhoodRun(b: Builder, def: RoomDef, features: ScatterResult): void {
+  const seed = def.terrain.seed;
+  const F = RUN_FLOOR;
+  const w = b.world;
+  const DIRT = id("dirt");
+  const MUD = id("mud");
+  const ROT = id("rotting_planks");
+
+  /** Dig a rect gallery: air F+1..F+h, floor dressed dirt/mud/planks. */
+  const carve = (x0: number, z0: number, x1: number, z1: number, h: number, floor?: string): void => {
+    const floorId = floor ? id(floor) : -1;
+    for (let z = z0; z <= z1; z++) {
+      for (let x = x0; x <= x1; x++) {
+        for (let y = F + 1; y <= F + h; y++) w.set(x, y, z, 0);
+        if (floorId >= 0) w.set(x, F, z, floorId);
+        else {
+          const r = hash2(seed ^ 0x6e11, x, z);
+          w.set(x, F, z, r < 0.14 ? MUD : r < 0.24 ? ROT : DIRT);
+        }
+      }
+    }
+  };
+  /** Open-to-sky shaft chamber (standY = its floor: paired arrivals land in). */
+  const shaft = (cx: number, cz: number, r: number): void => {
+    for (let z = Math.floor(cz - r); z <= Math.ceil(cz + r); z++) {
+      for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) {
+        if (Math.hypot(x - cx, z - cz) > r) continue;
+        for (let y = F + 1; y < WORLD_HEIGHT; y++) w.set(x, y, z, 0);
+        w.set(x, F, z, DIRT);
+        // vine strands down the shaft wall — how the company climbs it
+        if (hash2(seed ^ 0x6e12, x, z) < 0.2) {
+          const g = b.g(x, z);
+          for (let y = g; y > g - 4; y--) w.setIfAir(x, y, z, id("vines"));
+        }
+      }
+    }
+  };
+
+  // --- the dig (galleries bend; no straight line reaches the vault) ---
+  shaft(RUN_E.x, RUN_E.z, 5.5); // entrance shaft (portal + spawn)
+  shaft(RUN_X.x, RUN_X.z, 4.5); // the East Door
+  carve(16, 77, 35, 79, 3); // c1: the gullet, east from the entrance
+  carve(33, 54, 35, 79, 3); // c2: north leg past the kennels
+  carve(29, 64, 39, 72, 4); // K: the kennel row
+  carve(33, 53, 59, 55, 3); // c4: east leg to the bunkroom
+  carve(44, 50, 56, 58, 4); // B: the bunkroom
+  carve(43, 45, 45, 52, 3); // s1: cellar stair spur
+  carve(40, 37, 48, 45, 4, "pale_temple_brick"); // C: the buried cellar (pre-Dividing)
+  carve(57, 37, 59, 55, 3); // c5: north leg
+  carve(58, 47, 64, 48, 2); // s2: the crawl (low — goods, not people)
+  carve(63, 46, 66, 50, 3); // P: the bolt-hole stash pocket
+  carve(57, 37, 81, 39, 3); // c6: the long east gallery
+  carve(65, 32, 67, 39, 3); // c7: the vault approach (south door)
+  carve(RUN_VAULT.x0, RUN_VAULT.z0, RUN_VAULT.x1, RUN_VAULT.z1, 6, "planks"); // V: the tally-vault
+  carve(78, 27, 81, 28, 3); // the vault's east door onto the bypass
+  carve(79, 13, 81, 39, 3); // c8: the bypass north to the East Door
+
+  // --- shoring frames + lanterns along the galleries (the Run is LIT) ---
+  const frames: Array<[number, number, number, number, "x" | "z"]> = [
+    [16, 77, 35, 79, "x"], // c1
+    [33, 54, 35, 79, "z"], // c2
+    [33, 53, 59, 55, "x"], // c4
+    [57, 37, 59, 55, "z"], // c5
+    [57, 37, 81, 39, "x"], // c6
+    [79, 13, 81, 39, "z"], // c8
+  ];
+  for (const [x0, z0, x1, z1, axis] of frames) {
+    const len = axis === "x" ? x1 - x0 : z1 - z0;
+    for (let i = 2; i < len - 1; i += 6) {
+      const fx = axis === "x" ? x0 + i : x0;
+      const fz = axis === "x" ? z0 : z0 + i;
+      // never frame inside the shaft chambers: the portal arch anchors to
+      // groundAt, and a frame lintel over the portal column would hoist the
+      // whole arch (and its apron) 3 blocks into the air
+      if (Math.hypot(fx - RUN_E.x, fz - RUN_E.z) < 7) continue;
+      if (Math.hypot(fx - RUN_X.x, fz - RUN_X.z) < 6) continue;
+      const [ax, az, bx, bz] = axis === "x" ? [fx, z0, fx, z1] : [x0, fz, x1, fz];
+      b.fill(ax, F + 1, az, ax, F + 2, az, "palisade");
+      b.fill(bx, F + 1, bz, bx, F + 2, bz, "palisade");
+      for (let j = 0; j <= 2; j++) {
+        b.set(axis === "x" ? fx : x0 + j, F + 3, axis === "x" ? z0 + j : fz, "log");
+      }
+      // every other frame hangs a lantern on the alternating post
+      if (Math.floor(i / 6) % 2 === 0) b.set(ax, F + 3, az, "lantern");
+      else b.set(bx, F + 3, bz, "lantern");
+    }
+  }
+  // roots + moss work through the gallery ceilings; webs take the corners
+  for (let z = 8; z < 84; z++) {
+    for (let x = 12; x < 86; x++) {
+      if (w.solidAt(x, F + 1, z) || !w.solidAt(x, F - 1, z)) continue; // carved columns only
+      const r = hash2(seed ^ 0x6e13, x, z);
+      if (r < 0.05) w.setIfAir(x, F + 3, z, id("roots"));
+      else if (r < 0.09) w.setIfAir(x, F + 3, z, id("hanging_moss"));
+      else if (r > 0.985) w.setIfAir(x, F + 1, z, id("web"));
+    }
+  }
+
+  // --- the kennel row: iron-bar pens, hay, what the curs gnaw ---
+  for (const pz of [65, 68, 71]) {
+    b.fill(31, F + 1, pz - 1, 31, F + 2, pz + 1, "iron_bars");
+    b.set(31, F + 1, pz, 0); // pen door stands open — the curs are OUT
+    b.set(30, F, pz, id("hay"));
+    b.set(29, F + 1, pz, "hay");
+  }
+  b.set(30, F + 1, 66, "bone_block");
+  b.set(38, F + 1, 71, "skull_pile");
+  b.fill(38, F + 1, 65, 38, F + 2, 65, "log");
+  b.set(38, F + 3, 65, "lantern");
+
+  // --- the bunkroom: bedrolls, the fire ring, the company at rest ---
+  for (const [hx, hz] of [
+    [45, 51],
+    [45, 53],
+    [45, 56],
+    [55, 51],
+    [55, 53],
+    [55, 57],
+  ] as const) {
+    b.set(hx, F + 1, hz, "hay");
+  }
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dz = -1; dz <= 1; dz++) {
+      if (dx === 0 && dz === 0) continue;
+      b.set(50 + dx, F, 54 + dz, "cobblestone");
+    }
+  }
+  b.set(50, F + 1, 54, "torch");
+  b.set(47, F + 1, 57, "planks");
+  b.set(48, F + 1, 57, "planks");
+  b.set(48, F + 2, 57, "hay");
+
+  // --- the buried cellar: the world before, glimpsed underground ---
+  // pale stone lining on the walls the company's lamps actually reach
+  for (let x = 40; x <= 48; x++) {
+    b.fill(x, F + 1, 36, x, F + 4, 36, "pale_ruin_stone");
+    b.fill(x, F + 1, 46, x, F + 4, 46, "pale_ruin_stone");
+  }
+  for (let z = 37; z <= 45; z++) {
+    b.fill(39, F + 1, z, 39, F + 4, z, "pale_ruin_stone");
+    b.fill(49, F + 1, z, 49, F + 4, z, "pale_ruin_stone");
+  }
+  // the cellar door: re-open the lining where the stair spur breaks in
+  b.fill(44, F + 1, 46, 45, F + 2, 46, 0);
+  // wine racks along the north wall; one rack toppled
+  for (const rx of [41, 43, 45]) {
+    b.fill(rx, F + 1, 38, rx, F + 2, 38, "bookshelf");
+  }
+  b.set(47, F + 1, 42, "bookshelf");
+  // the family crest, chiseled off (marble arms, cracked center)
+  b.fill(40, F + 1, 40, 40, F + 3, 42, "marble");
+  b.set(40, F + 2, 41, "cracked_bricks");
+  // the cache plinth + the one light the company left burning
+  b.set(47, F + 1, 39, "marble");
+  b.fill(42, F + 1, 44, 42, F + 2, 44, "log");
+  b.set(42, F + 3, 44, "lantern");
+
+  // --- the bolt-hole stash: crates and webs (nobody's been in a while) ---
+  b.set(63, F + 1, 46, "planks");
+  b.set(64, F + 1, 46, "planks");
+  b.set(64, F + 2, 46, "planks");
+  b.set(66, F + 1, 50, "web");
+
+  // --- the tally-vault: Grole's arena — the fight is an audit ---
+  const V = RUN_VAULT;
+  // shelved floor-to-ceiling (bookshelf runs, ragged where stock moved)
+  for (let x = V.x0 + 1; x <= V.x1 - 1; x++) {
+    if (hash2(seed ^ 0x6e14, x, V.z0) < 0.75) b.fill(x, F + 1, V.z0 + 1, x, F + 4, V.z0 + 1, "bookshelf");
+  }
+  for (let z = V.z0 + 3; z <= V.z1 - 1; z++) {
+    if (z >= 26 && z <= 29) continue; // the east-door row stays clear
+    if (hash2(seed ^ 0x6e15, V.x0, z) < 0.6) b.fill(V.x0 + 1, F + 1, z, V.x0 + 1, F + 3, z, "bookshelf");
+  }
+  // crate rows flank the floor (aisles clear — Grole needs his arena)
+  for (const cz of [29, 30]) {
+    for (let x = 62; x <= 66; x++) {
+      if (hash2(seed ^ 0x6e16, x, cz) < 0.7) b.set(x, F + 1, cz, "planks");
+    }
+    b.set(63, F + 2, cz, "hay");
+  }
+  for (let z = 22; z <= 25; z++) {
+    if (hash2(seed ^ 0x6e17, 62, z) < 0.7) b.set(62, F + 1, z, "planks");
+  }
+  // Grole's desk: the LEDGER, and the lamp he reads it by
+  b.set(68, F + 1, 22, "planks");
+  b.set(69, F + 1, 22, "planks");
+  b.set(68, F + 2, 22, "bookshelf");
+  b.set(69, F + 2, 22, "lantern");
+  // company banners over the south door
+  b.set(64, F + 4, V.z1, "banner");
+  b.set(68, F + 4, V.z1, "banner");
+  // corner lamp posts — the vault is the best-lit room in the wood
+  for (const [lx, lz] of [
+    [V.x0 + 2, V.z1 - 2],
+    [V.x1 - 2, V.z1 - 2],
+    [V.x1 - 6, V.z0 + 2],
+  ] as const) {
+    b.fill(lx, F + 1, lz, lx, F + 3, lz, "log");
+    b.set(lx, F + 4, lz, "lantern");
+  }
+  // the strongroom: iron bars, one gap, the best stash in the Run
+  b.fill(74, F + 1, 21, 74, F + 3, 21, "iron_bars");
+  b.fill(74, F + 1, 23, 74, F + 3, 23, "iron_bars");
+  b.fill(74, F + 1, 24, 77, F + 3, 24, "iron_bars");
+  b.set(74, F + 1, 22, 0); // the gap — Grole never locks what he can watch
+  b.set(74, F + 2, 22, 0);
+  b.set(75, F + 1, 23, "planks");
+  b.set(77, F + 1, 21, "planks");
+
+  // --- the East Door chamber: goods out, not people back ---
+  b.set(82, F + 1, 10, "planks");
+  b.set(82, F + 1, 11, "planks");
+  b.set(82, F + 2, 10, "hay");
+  b.fill(77, F + 1, 15, 77, F + 2, 15, "log");
+  b.set(77, F + 3, 15, "lantern");
+
+  // the stocked stashes (respawn timers = the room's replay value)
+  for (const c of RUN_CACHES) features.caches.push({ ...c });
 }
 
 // ---------------------------------------------------------------------------

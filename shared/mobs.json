@@ -944,6 +944,54 @@
       "die": "marauder_die"
     }
   },
+  "quartermaster_grole": {
+    "name": "Quartermaster Grole",
+    "sprite": "bandit_quartermaster",
+    "level": 7,
+    "hp": 490,
+    "damage": 20,
+    "moveSpeed": 2.7,
+    "attacks": [
+      {
+        "ability": "cleave",
+        "weight": 3
+      },
+      {
+        "ability": "iron_bash",
+        "damage": 15,
+        "weight": 2
+      },
+      {
+        "ability": "powder_flask",
+        "damage": 17,
+        "minRange": 4,
+        "weight": 3
+      },
+      {
+        "ability": "fuse_line",
+        "damage": 14,
+        "minRange": 3,
+        "weight": 3
+      },
+      {
+        "ability": "grole_muster",
+        "weight": 4
+      }
+    ],
+    "ranks": [],
+    "aggroRadius": 14,
+    "attackRange": 14,
+    "leashRadius": 30,
+    "fleeAtHpPct": 0,
+    "xp": 1064,
+    "loot": "grole_drops",
+    "sounds": {
+      "idle": "marauder_idle",
+      "attack": "marauder_attack",
+      "hurt": "marauder_hurt",
+      "die": "marauder_die"
+    }
+  },
   "camp_cur": {
     "name": "Camp Cur",
     "sprite": "camp_cur",

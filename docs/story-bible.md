@@ -284,18 +284,42 @@ smuggling tunnel east (the Run).
 
 ---
 
-### W2 — **The Greenhood Run** (`NEW room`, working name "Poachers' Run") · L4–6
+### W2 — **The Greenhood Run** (`greenhood_run`, was "Poachers' Run") · L4–6 · ⚿☆ — **SHIPPED (batch 3, 2026-07-09)**
+
+> **SHIPPED as designed** (world-redesign batch 3): room `greenhood_run`
+> (96² preset warren, biome `ruin`, STATEFUL — a hideout, not an event
+> room). The fort moved to a fixed anchor at (308,148) with a walled portal
+> yard INSIDE it; the `forest-greenhood` gate boots sealed behind Thrace,
+> opens on his death (*"Thrace the Redcap is down. The fort gate stands
+> open — the Run is lit."* — verbatim), and reseals on his 900 s respawn
+> (the door-ajar window). The 50% rally (*"Thrace sounds the red horn —
+> the company answers!"*) shipped verbatim too. **Quartermaster Grole**
+> [PROPOSAL RESOLVED — canon] L7, sprite VERIFIED as `bandits_1.png` [2,1]
+> — the green-palette bombardier (lit fuse at the cap brim, bandolier of
+> powder flasks; the "second-palette chief" guess was wrong — that cell is
+> Thrace): kit = powder_flask / fuse_line / iron_bash / cleave /
+> grole_muster (kennel curs, no xp/loot, interruptible). Death announce
+> shipped verbatim; trophy `greenhood_ledger_page` (value 40) guaranteed.
+> All four landmarks built (tally-vault with strongroom cache behind iron
+> bars; pale-stone cellar with the chiseled crest; kennel row with open
+> pens; the East Door as an open-sky shaft). ONE DEVIATION: the east door
+> exits to the FOREST NORTH for now (a trapdoor mound + stump-lantern
+> surface tell at (168.5,118.5), one-way by omission) — batch 4 re-points
+> it to the Marchland per the proposal's build order. "Corvyn will want to
+> read it first" flavor text NOT yet on the trophy (item flavor text is a
+> story-dress-pass item). Proven by `scripts/greenhood-probe.mjs` (full arc
+> live) + screenshots tools/out/greenhood-*.png.
 
 **The company's smuggling tunnel** — a 96² preset warren of shored galleries,
 cache-rooms, and a buried pre-Dividing cellar the company broke into and
 never told Thrace about. This is where poached goods move east and tyrants'
 agents' payments move west. One-way exits to the Marchland (─▶).
 
-- **THE RULING POWER (main boss):** **Quartermaster Grole** [PROPOSAL], L7 —
+- **THE RULING POWER (main boss):** **Quartermaster Grole**, L7 —
   the company's real brains; Thrace holds the wood, Grole holds the LEDGER.
   Fights with powder, fuse-lines, and locked-door logistics (his arena is a
-  cache-vault; the fight IS an audit). Sprite: `bandits_1.png` second-palette
-  chief cell [PROPOSAL, UNVERIFIED — verify on contact sheet].
+  cache-vault; the fight IS an audit). Sprite (VERIFIED): `bandits_1.png`
+  [2,1], the green-palette powder archetype — lit fuse, flask bandolier.
 - **Side boss:** none (proposal: max 1+1; the Run is short and mean).
 - **Landmarks (reasons):**
   1. **The tally-vault** — Grole's arena, shelved floor-to-ceiling with
@@ -306,10 +330,11 @@ agents' payments move west. One-way exits to the Marchland (─▶).
   3. **The kennel row** — camp curs bred here (spawn-table anchor).
   4. **The east door** — the one-way drop to the Marchland; a chute, not a
      stair. Reason: smugglers design for goods out, not people back.
+     (Shipped as a climb-out to the forest north until the Marchland lands.)
 - **How the story is told:** ledger-props and crate-stencils (tableaux);
   Grole's death announce: *"Quartermaster Grole is dead. Somewhere in the
   fen, a payment won't arrive."* — the game's first hint that the company
-  pays Grelmoss; trophy [PROPOSAL] `greenhood_ledger_page` ("Bounty proof —
+  pays Grelmoss; trophy `greenhood_ledger_page` ("Bounty proof —
   and evidence. Corvyn will want to read it first.").
 - **Named characters:** Quartermaster Grole.
 

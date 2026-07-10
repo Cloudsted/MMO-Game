@@ -11,8 +11,14 @@ export const PortalDefSchema = z.object({
   x: z.number(),
   z: z.number(),
   r: z.number(), // trigger radius (metres)
-  /** authored arrival point for players coming IN through this portal
-   *  (omit to auto-offset from the portal toward the room spawn) */
+  /** authored arrival point. Two meanings, disambiguated by exitPortalId:
+   *  - WITH exitPortalId (or when this portal is found as the pair Q):
+   *    players coming IN through this portal land at (exitX, exitZ) in THIS
+   *    room (omit to auto-offset from the portal toward the room spawn).
+   *  - WITHOUT exitPortalId on a portal nothing pairs back to: a ONE-WAY
+   *    door — players going OUT through it land at (exitX, exitZ) in the
+   *    TARGET room, no paired portal needed (the Greenhood Run climb-out:
+   *    an authored surface tell in the forest, no return portal there). */
   exitX: z.number().optional(),
   exitZ: z.number().optional(),
   /** explicit pairing: the portal id in `target` to arrive at (for rooms
@@ -42,6 +48,18 @@ export function computePortalArrival(
   sourceRoomId: string,
   via: PortalDef
 ): PortalArrival | null {
+  // one-way authored landing: a portal that authors exitX/exitZ WITHOUT an
+  // exitPortalId drops its travellers at those coordinates in the TARGET
+  // room directly — no paired portal exists there by design (one-way by
+  // omission). yaw faces the target room's spawn (out of the climb-out,
+  // into the room). Portals that pair (exitPortalId authored, or something
+  // pairs back to them) keep the legacy meaning of exitX/exitZ below.
+  if (!via.exitPortalId && via.exitX !== undefined && via.exitZ !== undefined) {
+    let dx = targetDef.spawn.x - via.exitX;
+    let dz = targetDef.spawn.z - via.exitZ;
+    if (Math.hypot(dx, dz) < 1e-6) [dx, dz] = [0, 1];
+    return { x: via.exitX, z: via.exitZ, yaw: Math.atan2(dx, dz) };
+  }
   const q = via.exitPortalId
     ? targetDef.portals.find((p) => p.id === via.exitPortalId)
     : targetDef.portals.find((p) => p.target === sourceRoomId);

@@ -1342,6 +1342,115 @@ show their block tile).
     windows, the 0.46 salt-glare mood, 600 s feeding schedule pacing, and
     whether snow-as-salt-crust reads right.
 
+- 2026-07-09 **THE GREENHOOD RUN** (world-redesign batch 3, owner seed #1;
+  story bible §6 W2) — the fort-gated hidden branch: the poacher fort hides
+  a portal that opens only over Thrace's corpse, into the company's
+  smuggling warren, which climbs out ONE-WAY at a trapdoor mound further
+  north. The 12th room.
+  - **The fort is FIXED-ANCHORED now** (`stampFixedPrefab("bandit_fort",
+    308, 148, 0, 0)` in buildGreenhoodFort — the gated portal needs authored
+    coordinates; the old scatter placement near (255,90) sat in pond
+    country). Surveyed shelf east of the hub→fen road, natural g uniformly
+    13 at fort center AND portal cell (flatten seams matter: portalArch's
+    legacy path paints the apron at NATURAL height — a 14 under the apron
+    would float a knee-high path block). bandit-camp / redcap-hall /
+    camp-livestock regions moved to (315,154) in forest.json; the
+    `bandit_fort` scatter entry is GONE (prefabs.test updated — the spider
+    binding is now the assert). A walled **portal yard** annexes the fort's
+    north wall: palisade ring, 2-wide inner gap OFFSET EAST of the south
+    gate (the walk to the portal doubles back through the camp — owner's
+    no-straight-line rule), lantern posts, staged crates.
+  - **The gate**: `forest-greenhood` portal (313,143 — inside the yard) +
+    events `redcap-rally` (50%: "Thrace sounds the red horn" + 3 bandits)
+    and `redcap-gate` (bossDeath thrace_redcap → announce "the Run is lit"
+    + openPortal). Boots sealed while Thrace lives, reseals on his respawn —
+    the redcap-hall 900 s respawnSec IS the door-ajar window.
+  - **Room `greenhood_run`** (96² preset warren, biome ruin base-24 slab,
+    STATEFUL, no lifecycle — a hideout, not an event room; fixedTime 0.5,
+    wind 0, audio bed drone_dungeon): galleries dug at floor y11 BEND
+    through shoring frames (palisade posts + log lintels, lanterns
+    alternating — the Run is LIT, the company lives here), kennel row
+    (iron-bar pens, doors open — the curs are OUT), bunkroom (bedrolls +
+    fire ring), the buried pre-Dividing cellar (pale_temple_brick floor,
+    pale_ruin_stone lining, bookshelf wine racks, a marble crest with the
+    center CHISELED OFF), a low crawl to a bolt-hole stash, and Grole's
+    **tally-vault** (19×13, h6: bookshelf walls, crate rows with clear
+    aisles, the ledger desk, banners, the strongroom cache behind iron
+    bars). Both portal chambers are **open-to-sky shafts** — standY = the
+    shaft floor, so paired arrivals land INSIDE (addPlayer's y=0 sentinel
+    ground-snaps via standY; a roofed portal chamber would put arrivals on
+    the cap). TRAP paid: a shoring frame's lintel over a portal column
+    hoists the whole arch — portalArch anchors to groundAt, so frames skip
+    the shaft radii. 3 stocked caches (`cache_greenhood_run` loot table;
+    cellar + bolt-hole 480 s, strongroom 900 s — the best stash sits near
+    Grole; stateful persistence carries the replay value).
+  - **Band L4-6** on the retuned poacher family at rank thresholds: bandit
+    L6 (r6 Cutter), greenhood_poacher L5/L6 (r6 Deadeye), powder_brigand L6
+    (r6 Sapper), bandit_enforcer L6 (r6 Ironjaw), hollow_cowl base-4 (its
+    heal rank is L8 — above band, by design), camp_cur L6 (r6 Mauler)
+    tripwires in the kennels. 5 tables; no straight line portal→boss
+    (test-asserted: the direct ray crosses undug rock).
+  - **Quartermaster Grole** (new mob, L7 = band-top+1, boss ×8 xp = 1064
+    exactly on the batch-1 formula; hp 490 / dmg 20 on the solo-boss 1.14^Δ
+    trend between Thrace 400@5 and the Gravelord 596@9; moveSpeed 2.7):
+    sprite `bandit_quartermaster` = bandits_1.png **[2,1]** (green-palette
+    bombardier: green cap with a LIT FUSE at the brim, bandolier of orange
+    powder flasks — eyeballed on tools/out/sheets/grole-candidate-char21.png
+    per Layer-4 discipline; height 1.85). Kit = cleave/iron_bash (melee) +
+    powder_flask (AoE lob, NOT predictive) + fuse_line (marching pillars) +
+    NEW `grole_muster` (summons 2 camp_curs, cap 4, **grantsXp/grantsLoot
+    false** — no vending machine — and interruptible: hit him mid-snap and
+    the kennel doors stay shut). Loot `grole_drops`: guaranteed
+    **`greenhood_ledger_page`** trophy (value 40, icon [1,24]
+    framed-text-page, eyeballed) + weapons_fine rare guarantee (T1/T2 band
+    home). Events: 50% announce ("Nobody leaves owing.") + death announce
+    "Somewhere in the fen, a payment won't arrive." — the first company⇄
+    Grelmoss hint.
+  - **ONE-WAY exits, new `computePortalArrival` branch**: a portal that
+    authors exitX/exitZ WITHOUT exitPortalId is a one-way door — travellers
+    land at those coords in the TARGET room, no paired portal needed (and
+    the branch wins over auto-pairing, or the climb-out would bounce you
+    back to the fort). `greenhood-out` (past Grole's den — beating him is
+    NOT required to leave) lands at forest (168.5,118.5): an authored
+    trapdoor mound (rotting-plank 2×2 flush in a dirt crown, hollow stump
+    wearing a smuggler's lantern — the only mark). NO forest portal there.
+    NOTE (batch 4): the proposal re-points this exit to the Marchland —
+    change greenhood-out's target + exitX/exitZ and move the mound dressing.
+  - Entrance pairing: forest-greenhood ⇄ greenhood-fort via exitPortalId
+    BOTH ways (the run has two forest-target portals — auto-pair scan order
+    would be ambiguous).
+  - Goldens: forest grid+features (fixed fort re-dealt the scatter) + NEW
+    greenhood_run entry; all 10 other rooms held. Economy lists += room +
+    grole (mobranks.test).
+  - Verified: typecheck, **492 vitest** (24 new in greenhood.test.ts + 2
+    one-way pairing tests in common rooms.test), client compiles,
+    verify-icons (1 new soft warning, royal_seal-precedent shape),
+    rank-coverage (the run's tables light up the 5 bandit-family r6 ranks),
+    and `scripts/greenhood-probe.mjs` FULL PASS live (20 checks: sealed
+    boot + guardian denial → Thrace kill w/ rally → "the Run is lit" +
+    portalState → walk through the camp → transfer → shaft landing at
+    y=12 UNDERGROUND → warren walk to the vault → Grole kill w/ audit +
+    fen-hint announces → ledger page looted → East Door → one-way landing
+    ON the mound crown → gate reseal on Thrace's respawn). Probe traps
+    paid: bots need a floor-gap BFS in roofed rooms (goTo's heightAt reads
+    the CAP — the probe carries findPathFloor); an enforcer's iron_bash
+    slow turns full-speed move packets into a correction storm (adaptive
+    step backoff); potions are body-FSM actions (a bot that never stops
+    attacking never drinks); the room's own bossDeath ANNOUNCE is the
+    robust kill oracle (staging can race a spawner into two boss
+    instances). Screenshots tools/out/: greenhood-fort2-1.png ("The
+    Greenhood Run (locked)" over the palisade, the whole camp massed
+    behind it), greenhood-run-2.png (lantern gallery + Mauler-rank curs),
+    greenhood-grole3-1.png (Grole mid-muster in the vault — "the kennel
+    doors bang open!" on screen), greenhood-mound-2.png (the trapdoor
+    mound + stump lantern).
+  - Owner feel-checks pending: warren pack density and chip damage (the
+    L30 probe bot needed armor + potion discipline — an at-band L5-6
+    group is the intended audience), Grole's fuse_line dodge window, cache
+    payout vs the 480/900 s timers, whether the yard read ("fight through
+    the camp, double back west") lands, and the green-palette Grole sprite
+    vs Thrace's chief at a glance.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -1428,6 +1537,23 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-09 **THE GREENHOOD RUN SHIPPED (world-redesign batch 3)** — the
+  12th room (see the decisions-log entry): the poacher fort is fixed-anchored
+  at (308,148) on a surveyed dry shelf with a walled portal yard inside it;
+  the `forest-greenhood` gate boots sealed behind Thrace, opens on his death
+  ("the Run is lit"), and reseals on his 900 s respawn — the door-ajar
+  window. Behind it: a 96² stateful preset warren (shored lantern galleries,
+  kennel row, bunkroom, the pre-Dividing cellar, 3 stocked caches) ending in
+  **Quartermaster Grole** (L7 boss ×8 xp, powder/fuse-line/muster kit,
+  guaranteed `greenhood_ledger_page` bounty proof) and a ONE-WAY climb-out
+  to a trapdoor mound in the forest north (new computePortalArrival branch:
+  exitX/exitZ without exitPortalId = authored one-way landing; batch 4
+  re-points it to the Marchland). Verified: typecheck, **492 vitest** (26
+  new; goldens forest+greenhood_run only), client compiles,
+  `scripts/greenhood-probe.mjs` full-arc live PASS (20 checks), 4 screenshot
+  scenes (tools/out/greenhood-*.png incl. the "(locked)" gate label and
+  Grole mid-muster). Owner feel-checks in the decisions-log entry.
 
 - 2026-07-09 **THE MAW SHIPPED (world-redesign batch 2)** — the 11th room
   (see the decisions-log entry): the Wellhead Crater ☆ in the Sunscour's

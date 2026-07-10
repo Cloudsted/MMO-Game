@@ -94,6 +94,7 @@ public class SpriteLibrary {
         heights.put("bandit_mystic", 1.8f);
         heights.put("bandit_chief", 1.85f);
         heights.put("bandit_poacher", 1.75f);
+        heights.put("bandit_quartermaster", 1.85f); // Grole — boss-sized like the chief
         // camp livestock. These shipped with no entry and were falling back to the
         // 1.75 humanoid default — a dog and a goat as tall as a man.
         heights.put("camp_cur", 0.75f);

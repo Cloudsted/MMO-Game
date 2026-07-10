@@ -1674,6 +1674,110 @@
       }
     ]
   },
+  "grole_drops": {
+    "gold": [
+      70,
+      130
+    ],
+    "rolls": [
+      2,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 35,
+        "table": "weapons_fine"
+      },
+      {
+        "weight": 20,
+        "table": "armor_fine"
+      },
+      {
+        "weight": 25,
+        "item": "health_potion",
+        "qty": [
+          2,
+          3
+        ]
+      },
+      {
+        "weight": 20,
+        "item": "mana_potion",
+        "qty": [
+          1,
+          2
+        ]
+      }
+    ],
+    "guaranteed": [
+      {
+        "weight": 1,
+        "item": "greenhood_ledger_page",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 1,
+        "table": "weapons_fine",
+        "minRarity": "rare"
+      }
+    ]
+  },
+  "cache_greenhood_run": {
+    "gold": [
+      10,
+      26
+    ],
+    "rolls": [
+      1,
+      2
+    ],
+    "entries": [
+      {
+        "weight": 26,
+        "table": "weapons_fine"
+      },
+      {
+        "weight": 10,
+        "table": "weapons_fine",
+        "minRarity": "rare"
+      },
+      {
+        "weight": 22,
+        "item": "health_potion",
+        "qty": [
+          1,
+          2
+        ]
+      },
+      {
+        "weight": 14,
+        "item": "mana_potion",
+        "qty": [
+          1,
+          1
+        ]
+      },
+      {
+        "weight": 16,
+        "item": "bread",
+        "qty": [
+          2,
+          4
+        ]
+      },
+      {
+        "weight": 12,
+        "item": "ancient_coin",
+        "qty": [
+          1,
+          1
+        ]
+      }
+    ]
+  },
   "cache_desert": {
     "gold": [
       12,

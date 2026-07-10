@@ -44,18 +44,23 @@ const UPDATE = process.env.GOLDEN_UPDATE === "1";
  *  (Recorded 2026-07-09 on branch world-redesign, pre-retune baseline.
  *  hub updated 2026-07-09 for the GREYWATCH authored rebuild (batch 1b).
  *  desert grid+features and the NEW maw entry updated 2026-07-09 for
- *  batch 2 (THE MAW): the Wellhead Crater carve + the desert-maw portal
- *  shifted the desert scatter deterministically; every other room stayed
- *  byte-identical. atelier/dungeon/grounds/hub/maw share a features hash:
- *  it is the hash of the EMPTY ScatterResult — no prefab scatter.) */
+ *  batch 2 (THE MAW). forest grid+features and the NEW greenhood_run entry
+ *  updated 2026-07-09 for batch 3 (THE GREENHOOD RUN): the bandit_fort
+ *  left the scatter pool for a fixed anchor at (308,148) + portal yard +
+ *  climb-out mound, which deterministically re-dealt the forest scatter;
+ *  every other room stayed byte-identical. atelier/dungeon/grounds/hub/maw
+ *  share a features hash: it is the hash of the EMPTY ScatterResult — no
+ *  prefab scatter. greenhood_run has no scatter either, but its authored
+ *  caches ride the features handle, so its hash differs.) */
 const GOLDEN: Record<string, { grid: string; features: string }> = {
   atelier: { grid: "a5a2f7b6d3f36a836370c123b136e9db477cda33", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
   cinderrift: { grid: "2b4c4d47c3b429445b7a6f8933414a435255e14c", features: "dc3d9ec84ab63088664776590ba7adf44645df85" },
   crypt_depths: { grid: "4ebd017459a67adce7a64d2a4470bf377353f290", features: "2f8b38a89da3d19331960f0781803646b57af960" },
   desert: { grid: "aff409b0bd4eec1683fd5e8b1163268d045ebe1a", features: "f908e575dd8e4b5f1fea511bc7a034d1a02ccb55" },
   dungeon: { grid: "ca34988c68a1b7720ef8bcaeda7c6f835fd1d9ec", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
-  forest: { grid: "f7af9d8a1d07fc8fe8e553f7b1b64ce6e313577b", features: "6beee38ddb6103982547f057200e8aaed0c11bd4" },
+  forest: { grid: "25aba7151f43974f9da6cfb9c6bde098a8312577", features: "4ce7137d3ce38a1e7f0981d8342b2f57b3060ed4" },
   gloomfen: { grid: "5802ef6c1b976fe379cffee154e0317c8fa1a797", features: "986429b8853b04c7dd3a5dc6c6c37572f0201e1f" },
+  greenhood_run: { grid: "6892ee8672400bd3f7f41b11959d9f9ab3165cb4", features: "3d75f2e784f6244c6660eba46e1709d9b4836f29" },
   grounds: { grid: "493920fcf3e0e14da80e2661dca4cf63dbcc7b14", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
   hub: { grid: "4064b6b1c8ad30e642ba19a2d150fb5d2174345b", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
   maw: { grid: "75b9919c5b5493a24bc0fcd6295950063edc63be", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },

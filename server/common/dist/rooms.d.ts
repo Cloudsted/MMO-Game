@@ -6,8 +6,14 @@ export declare const PortalDefSchema: z.ZodObject<{
     x: z.ZodNumber;
     z: z.ZodNumber;
     r: z.ZodNumber;
-    /** authored arrival point for players coming IN through this portal
-     *  (omit to auto-offset from the portal toward the room spawn) */
+    /** authored arrival point. Two meanings, disambiguated by exitPortalId:
+     *  - WITH exitPortalId (or when this portal is found as the pair Q):
+     *    players coming IN through this portal land at (exitX, exitZ) in THIS
+     *    room (omit to auto-offset from the portal toward the room spawn).
+     *  - WITHOUT exitPortalId on a portal nothing pairs back to: a ONE-WAY
+     *    door — players going OUT through it land at (exitX, exitZ) in the
+     *    TARGET room, no paired portal needed (the Greenhood Run climb-out:
+     *    an authored surface tell in the forest, no return portal there). */
     exitX: z.ZodOptional<z.ZodNumber>;
     exitZ: z.ZodOptional<z.ZodNumber>;
     /** explicit pairing: the portal id in `target` to arrive at (for rooms
@@ -59,15 +65,15 @@ export declare const SpawnTableSchema: z.ZodObject<{
         z: z.ZodNumber;
         r: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
     }, {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
     }>;
     /** `level` reuses a mob def at a higher level: stats scale by
      *  constants.mobs.scaling and level-gated ranks unlock extra abilities
@@ -89,34 +95,34 @@ export declare const SpawnTableSchema: z.ZodObject<{
     packSize: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
     respawnSec: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
+    id: string;
+    region: {
+        x: number;
+        z: number;
+        r: number;
+        kind: "circle";
+    };
     mobs: {
         mob: string;
         weight: number;
         level?: number | undefined;
     }[];
-    id: string;
-    region: {
-        kind: "circle";
-        x: number;
-        z: number;
-        r: number;
-    };
     maxAlive: number;
     packSize: [number, number];
     respawnSec: number;
 }, {
+    id: string;
+    region: {
+        x: number;
+        z: number;
+        r: number;
+        kind: "circle";
+    };
     mobs: {
         mob: string;
         weight: number;
         level?: number | undefined;
     }[];
-    id: string;
-    region: {
-        kind: "circle";
-        x: number;
-        z: number;
-        r: number;
-    };
     maxAlive: number;
     packSize: [number, number];
     respawnSec: number;
@@ -225,9 +231,9 @@ export declare const NpcDefSchema: z.ZodObject<{
         maxTier: z.ZodDefault<z.ZodNumber>;
         remove: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
-        maxTier: number;
         kind: "enchant";
         offers: string[];
+        maxTier: number;
         remove: boolean;
     }, {
         kind: "enchant";
@@ -236,10 +242,10 @@ export declare const NpcDefSchema: z.ZodObject<{
         remove?: boolean | undefined;
     }>>;
 }, "strip", z.ZodTypeAny, {
-    name: string;
     id: string;
     x: number;
     z: number;
+    name: string;
     sprite: string;
     yaw: number;
     wanderRadius: number;
@@ -249,16 +255,16 @@ export declare const NpcDefSchema: z.ZodObject<{
         buys: boolean;
     } | undefined;
     service?: {
-        maxTier: number;
         kind: "enchant";
         offers: string[];
+        maxTier: number;
         remove: boolean;
     } | undefined;
 }, {
-    name: string;
     id: string;
     x: number;
     z: number;
+    name: string;
     sprite: string;
     dialog: string[];
     yaw?: number | undefined;
@@ -283,16 +289,16 @@ export declare const RegionSchema: z.ZodObject<{
     r: z.ZodNumber;
     pvp: z.ZodDefault<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
-    kind: "circle";
     x: number;
     z: number;
     r: number;
+    kind: "circle";
     pvp: boolean;
 }, {
-    kind: "circle";
     x: number;
     z: number;
     r: number;
+    kind: "circle";
     pvp?: boolean | undefined;
 }>;
 export type RegionDef = z.infer<typeof RegionSchema>;
@@ -538,16 +544,16 @@ export declare const RoomDefSchema: z.ZodObject<{
         r: z.ZodNumber;
         pvp: z.ZodDefault<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
         pvp: boolean;
     }, {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
         pvp?: boolean | undefined;
     }>, "many">>;
     size: z.ZodObject<{
@@ -631,8 +637,14 @@ export declare const RoomDefSchema: z.ZodObject<{
         x: z.ZodNumber;
         z: z.ZodNumber;
         r: z.ZodNumber;
-        /** authored arrival point for players coming IN through this portal
-         *  (omit to auto-offset from the portal toward the room spawn) */
+        /** authored arrival point. Two meanings, disambiguated by exitPortalId:
+         *  - WITH exitPortalId (or when this portal is found as the pair Q):
+         *    players coming IN through this portal land at (exitX, exitZ) in THIS
+         *    room (omit to auto-offset from the portal toward the room spawn).
+         *  - WITHOUT exitPortalId on a portal nothing pairs back to: a ONE-WAY
+         *    door — players going OUT through it land at (exitX, exitZ) in the
+         *    TARGET room, no paired portal needed (the Greenhood Run climb-out:
+         *    an authored surface tell in the forest, no return portal there). */
         exitX: z.ZodOptional<z.ZodNumber>;
         exitZ: z.ZodOptional<z.ZodNumber>;
         /** explicit pairing: the portal id in `target` to arrive at (for rooms
@@ -667,15 +679,15 @@ export declare const RoomDefSchema: z.ZodObject<{
             z: z.ZodNumber;
             r: z.ZodNumber;
         }, "strip", z.ZodTypeAny, {
-            kind: "circle";
             x: number;
             z: number;
             r: number;
+            kind: "circle";
         }, {
-            kind: "circle";
             x: number;
             z: number;
             r: number;
+            kind: "circle";
         }>;
         /** `level` reuses a mob def at a higher level: stats scale by
          *  constants.mobs.scaling and level-gated ranks unlock extra abilities
@@ -697,34 +709,34 @@ export declare const RoomDefSchema: z.ZodObject<{
         packSize: z.ZodTuple<[z.ZodNumber, z.ZodNumber], null>;
         respawnSec: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
+        id: string;
+        region: {
+            x: number;
+            z: number;
+            r: number;
+            kind: "circle";
+        };
         mobs: {
             mob: string;
             weight: number;
             level?: number | undefined;
         }[];
-        id: string;
-        region: {
-            kind: "circle";
-            x: number;
-            z: number;
-            r: number;
-        };
         maxAlive: number;
         packSize: [number, number];
         respawnSec: number;
     }, {
+        id: string;
+        region: {
+            x: number;
+            z: number;
+            r: number;
+            kind: "circle";
+        };
         mobs: {
             mob: string;
             weight: number;
             level?: number | undefined;
         }[];
-        id: string;
-        region: {
-            kind: "circle";
-            x: number;
-            z: number;
-            r: number;
-        };
         maxAlive: number;
         packSize: [number, number];
         respawnSec: number;
@@ -948,9 +960,9 @@ export declare const RoomDefSchema: z.ZodObject<{
             maxTier: z.ZodDefault<z.ZodNumber>;
             remove: z.ZodDefault<z.ZodBoolean>;
         }, "strip", z.ZodTypeAny, {
-            maxTier: number;
             kind: "enchant";
             offers: string[];
+            maxTier: number;
             remove: boolean;
         }, {
             kind: "enchant";
@@ -959,10 +971,10 @@ export declare const RoomDefSchema: z.ZodObject<{
             remove?: boolean | undefined;
         }>>;
     }, "strip", z.ZodTypeAny, {
-        name: string;
         id: string;
         x: number;
         z: number;
+        name: string;
         sprite: string;
         yaw: number;
         wanderRadius: number;
@@ -972,16 +984,16 @@ export declare const RoomDefSchema: z.ZodObject<{
             buys: boolean;
         } | undefined;
         service?: {
-            maxTier: number;
             kind: "enchant";
             offers: string[];
+            maxTier: number;
             remove: boolean;
         } | undefined;
     }, {
-        name: string;
         id: string;
         x: number;
         z: number;
+        name: string;
         sprite: string;
         dialog: string[];
         yaw?: number | undefined;
@@ -998,18 +1010,18 @@ export declare const RoomDefSchema: z.ZodObject<{
         } | undefined;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
-    type: "building" | "hub" | "wilderness" | "dungeon";
-    name: string;
     id: string;
+    type: "hub" | "wilderness" | "dungeon" | "building";
+    name: string;
     biome: string;
     wind: number;
     nightLight: number;
     persistence: "stateful" | "ephemeral";
     regions: {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
         pvp: boolean;
     }[];
     size: {
@@ -1049,18 +1061,18 @@ export declare const RoomDefSchema: z.ZodObject<{
         exitPortalId?: string | undefined;
     }[];
     spawnTables: {
+        id: string;
+        region: {
+            x: number;
+            z: number;
+            r: number;
+            kind: "circle";
+        };
         mobs: {
             mob: string;
             weight: number;
             level?: number | undefined;
         }[];
-        id: string;
-        region: {
-            kind: "circle";
-            x: number;
-            z: number;
-            r: number;
-        };
         maxAlive: number;
         packSize: [number, number];
         respawnSec: number;
@@ -1109,10 +1121,10 @@ export declare const RoomDefSchema: z.ZodObject<{
         })[];
     }[];
     npcs: {
-        name: string;
         id: string;
         x: number;
         z: number;
+        name: string;
         sprite: string;
         yaw: number;
         wanderRadius: number;
@@ -1122,9 +1134,9 @@ export declare const RoomDefSchema: z.ZodObject<{
             buys: boolean;
         } | undefined;
         service?: {
-            maxTier: number;
             kind: "enchant";
             offers: string[];
+            maxTier: number;
             remove: boolean;
         } | undefined;
     }[];
@@ -1135,9 +1147,9 @@ export declare const RoomDefSchema: z.ZodObject<{
         lifetimeSec?: number | undefined;
     } | undefined;
 }, {
-    type: "building" | "hub" | "wilderness" | "dungeon";
-    name: string;
     id: string;
+    type: "hub" | "wilderness" | "dungeon" | "building";
+    name: string;
     biome: string;
     persistence: "stateful" | "ephemeral";
     size: {
@@ -1177,27 +1189,27 @@ export declare const RoomDefSchema: z.ZodObject<{
         exitPortalId?: string | undefined;
     }[];
     spawnTables: {
+        id: string;
+        region: {
+            x: number;
+            z: number;
+            r: number;
+            kind: "circle";
+        };
         mobs: {
             mob: string;
             weight: number;
             level?: number | undefined;
         }[];
-        id: string;
-        region: {
-            kind: "circle";
-            x: number;
-            z: number;
-            r: number;
-        };
         maxAlive: number;
         packSize: [number, number];
         respawnSec: number;
     }[];
     npcs: {
-        name: string;
         id: string;
         x: number;
         z: number;
+        name: string;
         sprite: string;
         dialog: string[];
         yaw?: number | undefined;
@@ -1222,10 +1234,10 @@ export declare const RoomDefSchema: z.ZodObject<{
         lifetimeSec?: number | undefined;
     } | undefined;
     regions?: {
-        kind: "circle";
         x: number;
         z: number;
         r: number;
+        kind: "circle";
         pvp?: boolean | undefined;
     }[] | undefined;
     prefabs?: {
