@@ -248,7 +248,13 @@ export function tickBrain(
     }
     const d = distTo(best.pos.x, best.pos.z);
     const dy = Math.abs(best.pos.y - mob.pos.y);
-    if (d > def.attackRange || dy > attackReachY) {
+    // a target inside attackRange but with NO sight line must be CHASED, not
+    // attacked-at: the old flow fell into chooseAttack's "close" dead-band —
+    // blind steering with no stuck tracking and no planner — and a boss under
+    // a floor you're standing on would grind there forever (the Sunscour tomb
+    // stair, chase side). Chasing routes it through the full purposeful
+    // machinery instead. Costs one LOS ray per engaged-mob brain tick.
+    if (d > def.attackRange || dy > attackReachY || (hasLos !== undefined && !hasLos(best))) {
       b.state = "chase";
       return { move: { x: best.pos.x, z: best.pos.z, speedMult: 1, maxDrop: PURPOSEFUL_MAX_DROP, wade: true }, attack: null, faceYaw: null };
     }
@@ -533,6 +539,207 @@ export function pathfindWaypoints(
   const out: Array<{ x: number; z: number }> = [];
   for (let i = 0; i < cells.length; i++) {
     if (i % 2 === 1 || i === cells.length - 1) out.push(cells[i]!);
+  }
+  return out.length ? out : null;
+}
+
+// ---------- smart pathfinding: real A* for bosses / smartPath mobs ----------
+//
+// The deflection steering + the bounded BFS above are fine for open fields
+// and local concave traps, but a leashed boss dragged into open country can
+// NOT solve "open desert → tomb stair → Vessel Chamber" inside a 24-cell
+// radius (the owner's sekhat bug). Mobs whose RESOLVED `boss` flag is true,
+// plus `smartPath` opt-ins, plan purposeful moves (chase/flee/return) with a
+// room-scale A* instead. The planner only PROPOSES waypoints — every actual
+// step still goes through applyMove, which enforces the identical movement
+// rules (the validator disposes).
+
+/** How far a chase goal may drift from a smart path's end before the path is
+ *  dropped for a replan (the BFS uses 5 — smart mobs re-check tighter). */
+export const SMART_REPATH_DRIFT = 3;
+/** A returning smart mob further than this from home plans PROACTIVELY —
+ *  the walk back should look deliberate, not four ticks of wall-grinding
+ *  first. Inside this range plain steering covers the last stretch. */
+export const SMART_RETURN_PLAN_DIST = 8;
+
+/** Optional instrumentation out-param for tests / budget measurement. */
+export interface SmartPathStats {
+  expanded: number;
+  found: boolean;
+}
+
+interface HeapNode {
+  f: number;
+  key: number;
+  x: number;
+  z: number;
+  y: number;
+  g: number;
+}
+
+function heapPush(heap: HeapNode[], n: HeapNode): void {
+  heap.push(n);
+  let i = heap.length - 1;
+  while (i > 0) {
+    const p = (i - 1) >> 1;
+    if (heap[p]!.f <= heap[i]!.f) break;
+    const t = heap[p]!;
+    heap[p] = heap[i]!;
+    heap[i] = t;
+    i = p;
+  }
+}
+
+function heapPop(heap: HeapNode[]): HeapNode | undefined {
+  const top = heap[0];
+  const last = heap.pop();
+  if (!top || !last || heap.length === 0) return top ?? last;
+  heap[0] = last;
+  let i = 0;
+  for (;;) {
+    const l = i * 2 + 1;
+    const r = l + 1;
+    let m = i;
+    if (l < heap.length && heap[l]!.f < heap[m]!.f) m = l;
+    if (r < heap.length && heap[r]!.f < heap[m]!.f) m = r;
+    if (m === i) break;
+    const t = heap[m]!;
+    heap[m] = heap[i]!;
+    heap[i] = t;
+    i = m;
+  }
+  return top;
+}
+
+/**
+ * Feet Y a walker stepping from feet `y` onto column (x,z) lands at, under
+ * applyMove's EXACT rules resolved locally (never a full-column scan, so
+ * multi-level worlds keep the level the walker is on): highest solid top at
+ * or below y+1.05 (step up ≤1 block), liquid wade/swim adjustment (shallow
+ * runs cross on the flooded floor, deep water swims at the surface), the
+ * intent's drop allowance, 2 cells of headroom, and the batch-9 leaf-top
+ * refusal. Returns -1 when the column refuses the step.
+ */
+function smartStepY(world: VoxelWorld, x: number, z: number, y: number, maxDrop: number, wade: boolean): number {
+  let feet = -1;
+  for (let cy = Math.floor(y + 1.05); cy >= 1; cy--) {
+    if (isSolidBlock(world.get(x, cy - 1, z))) {
+      feet = cy;
+      break;
+    }
+  }
+  if (feet < 0) return -1; // void column
+  if (world.liquidAt(x + 0.5, feet + 0.1, z + 0.5)) {
+    if (!wade) return -1;
+    let surf = feet;
+    while (surf - feet < 12 && world.liquidAt(x + 0.5, surf + 0.1, z + 0.5)) surf++;
+    if (surf - feet > WADE_DEPTH) feet = surf - 1; // deep: swim at the surface
+  }
+  if (feet - y > 1.05 || y - feet > maxDrop) return -1;
+  if (isSolidBlock(world.get(x, feet, z)) || isSolidBlock(world.get(x, feet + 1, z))) return -1; // headroom
+  if (isLeafBlock(world.get(x, feet - 1, z))) return -1; // never step ONTO a canopy
+  return feet;
+}
+
+/**
+ * A* over the voxel walk grid for smart mobs' purposeful moves. Nodes are
+ * (column, feet-Y) — Y is part of the key, so a tomb interior and the
+ * surface above it are DIFFERENT nodes and a route may pass under itself.
+ * 4-connected, Manhattan heuristic (admissible), liquid cells cost double
+ * (prefer dry routes). `to.y` (when known — the return home floor, a chase
+ * target's feet) gates the goal to the right LEVEL: reaching the goal
+ * column on the roof above home is not arrival.
+ *
+ * Budgeted by `nodeCap` expansions (constants mobs.smartPathNodeCap). When
+ * the goal is out of reach/budget, falls back to a path toward the explored
+ * cell closest to the goal if that's a meaningful improvement (≥3 cells),
+ * else null — callers set a cooldown, and the return failsafe backstops.
+ * Returns coarse cell-center waypoints (every 2nd cell), like the BFS.
+ */
+export function planSmartPath(
+  world: VoxelWorld,
+  from: { x: number; y: number; z: number },
+  to: { x: number; z: number; y?: number },
+  wade: boolean,
+  nodeCap: number,
+  stats?: SmartPathStats
+): Array<{ x: number; z: number; y: number }> | null {
+  const sx = Math.floor(from.x);
+  const sz = Math.floor(from.z);
+  const tx = Math.floor(to.x);
+  const tz = Math.floor(to.z);
+  const startY = world.walkYNear(from.x, from.z, from.y);
+  const key = (x: number, z: number, y: number) => (x * 4096 + z) * 64 + y;
+  const hOf = (x: number, z: number) => Math.abs(x - tx) + Math.abs(z - tz);
+  const gScore = new Map<number, number>();
+  const parent = new Map<number, number>();
+  const startKey = key(sx, sz, startY);
+  gScore.set(startKey, 0);
+  const open: HeapNode[] = [{ f: hOf(sx, sz), key: startKey, x: sx, z: sz, y: startY, g: 0 }];
+  const startH = hOf(sx, sz);
+  let bestKey = startKey;
+  let bestH = startH;
+  let goalKey = -1;
+  let expanded = 0;
+  while (open.length > 0 && expanded < nodeCap) {
+    const n = heapPop(open)!;
+    if ((gScore.get(n.key) ?? Number.POSITIVE_INFINITY) < n.g) continue; // stale heap entry
+    expanded++;
+    const h = hOf(n.x, n.z);
+    if (h < bestH) {
+      bestH = h;
+      bestKey = n.key;
+    }
+    if (n.x === tx && n.z === tz && (to.y === undefined || Math.abs(n.y - to.y) <= 3)) {
+      goalKey = n.key;
+      break;
+    }
+    for (const [dx, dz] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const) {
+      const nx = n.x + dx;
+      const nz = n.z + dz;
+      if (nx < 1 || nx >= world.w - 1 || nz < 1 || nz >= world.h - 1) continue;
+      const ny = smartStepY(world, nx, nz, n.y, PURPOSEFUL_MAX_DROP, wade);
+      if (ny < 0) continue;
+      const k = key(nx, nz, ny);
+      const g = n.g + (world.liquidAt(nx + 0.5, ny + 0.1, nz + 0.5) ? 2 : 1);
+      if (g >= (gScore.get(k) ?? Number.POSITIVE_INFINITY)) continue;
+      gScore.set(k, g);
+      parent.set(k, n.key);
+      heapPush(open, { f: g + hOf(nx, nz), key: k, x: nx, z: nz, y: ny, g });
+    }
+  }
+  if (stats) {
+    stats.expanded = expanded;
+    stats.found = goalKey >= 0;
+  }
+  const endKey = goalKey >= 0 ? goalKey : bestH <= startH - 3 ? bestKey : -1;
+  if (endKey < 0) return null;
+  const cells: Array<{ x: number; z: number; y: number }> = [];
+  let cur: number | undefined = endKey;
+  while (cur !== undefined && cur !== startKey) {
+    const col = Math.floor(cur / 64);
+    cells.push({ x: Math.floor(col / 4096) + 0.5, z: (col % 4096) + 0.5, y: cur % 64 });
+    cur = parent.get(cur);
+  }
+  cells.reverse();
+  if (cells.length === 0) return null;
+  // Waypoints CARRY their planned feet-Y, and decimation NEVER drops a
+  // level-change cell. Both matter on stepped tunnels (the Sunscour tomb
+  // stair): the route may go "east one cell, drop onto the tread, come back
+  // west UNDERNEATH its own roof" — a 2D follower eats that turn-around cell
+  // instantly (it is 2D-identical to where the mob stands) and then grinds
+  // along the roof forever. RoomSim's follower Y-gates the advance.
+  const out: Array<{ x: number; z: number; y: number }> = [];
+  let prevY = startY;
+  for (let i = 0; i < cells.length; i++) {
+    const c = cells[i]!;
+    if (c.y !== prevY || i % 2 === 1 || i === cells.length - 1) out.push(c);
+    prevY = c.y;
   }
   return out.length ? out : null;
 }

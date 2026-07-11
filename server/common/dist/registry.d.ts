@@ -504,6 +504,9 @@ export declare const MobRankSchema: z.ZodObject<{
      *  frostplate revenant is a side boss at its r15 Unbound tier but an
      *  ordinary elite again as the r21 Tithe-Collector. Last present wins. */
     boss: z.ZodOptional<z.ZodBoolean>;
+    /** smart-path override at this rank (see MobDefSchema.smartPath) —
+     *  explicit false demotes, last present wins, same pattern as `boss`. */
+    smartPath: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     atLevel: number;
     add: {
@@ -526,6 +529,7 @@ export declare const MobRankSchema: z.ZodObject<{
     lore?: string | undefined;
     loot?: string | undefined;
     boss?: boolean | undefined;
+    smartPath?: boolean | undefined;
 }, {
     atLevel: number;
     name?: string | undefined;
@@ -548,6 +552,7 @@ export declare const MobRankSchema: z.ZodObject<{
     lore?: string | undefined;
     loot?: string | undefined;
     boss?: boolean | undefined;
+    smartPath?: boolean | undefined;
 }>;
 export type MobRankDef = z.infer<typeof MobRankSchema>;
 export declare const MobDefSchema: z.ZodObject<{
@@ -646,6 +651,9 @@ export declare const MobDefSchema: z.ZodObject<{
          *  frostplate revenant is a side boss at its r15 Unbound tier but an
          *  ordinary elite again as the r21 Tithe-Collector. Last present wins. */
         boss: z.ZodOptional<z.ZodBoolean>;
+        /** smart-path override at this rank (see MobDefSchema.smartPath) —
+         *  explicit false demotes, last present wins, same pattern as `boss`. */
+        smartPath: z.ZodOptional<z.ZodBoolean>;
     }, "strip", z.ZodTypeAny, {
         atLevel: number;
         add: {
@@ -668,6 +676,7 @@ export declare const MobDefSchema: z.ZodObject<{
         lore?: string | undefined;
         loot?: string | undefined;
         boss?: boolean | undefined;
+        smartPath?: boolean | undefined;
     }, {
         atLevel: number;
         name?: string | undefined;
@@ -690,6 +699,7 @@ export declare const MobDefSchema: z.ZodObject<{
         lore?: string | undefined;
         loot?: string | undefined;
         boss?: boolean | undefined;
+        smartPath?: boolean | undefined;
     }>, "many">>;
     aggroRadius: z.ZodNumber;
     attackRange: z.ZodNumber;
@@ -701,6 +711,11 @@ export declare const MobDefSchema: z.ZodObject<{
      *  entity replication so clients keep the nameplate visible at range.
      *  Rank `boss` overrides for rank-elevated bosses (the Unfinished King). */
     boss: z.ZodOptional<z.ZodBoolean>;
+    /** opt-in to REAL pathfinding (A* over the voxel walk grid) for purposeful
+     *  moves without being a boss — "smarter"/important mobs. Every RESOLVED
+     *  boss is smart implicitly (RoomSim ORs the two flags); this flag exists
+     *  for the important non-boss case. Rank-overridable like `boss`. */
+    smartPath: z.ZodOptional<z.ZodBoolean>;
     /** client vocal sound groups in the audio manifest (all optional; omitted = silent category) */
     sounds: z.ZodOptional<z.ZodObject<{
         idle: z.ZodOptional<z.ZodString>;
@@ -752,11 +767,13 @@ export declare const MobDefSchema: z.ZodObject<{
         lore?: string | undefined;
         loot?: string | undefined;
         boss?: boolean | undefined;
+        smartPath?: boolean | undefined;
     }[];
     xp: number;
     ability?: string | undefined;
     lore?: string | undefined;
     boss?: boolean | undefined;
+    smartPath?: boolean | undefined;
     attacks?: {
         ability: string;
         weight: number;
@@ -785,6 +802,7 @@ export declare const MobDefSchema: z.ZodObject<{
     ability?: string | undefined;
     lore?: string | undefined;
     boss?: boolean | undefined;
+    smartPath?: boolean | undefined;
     attacks?: {
         ability: string;
         damage?: number | undefined;
@@ -813,6 +831,7 @@ export declare const MobDefSchema: z.ZodObject<{
         lore?: string | undefined;
         loot?: string | undefined;
         boss?: boolean | undefined;
+        smartPath?: boolean | undefined;
     }[] | undefined;
     sounds?: {
         idle?: string | undefined;
@@ -850,6 +869,9 @@ export interface ResolvedMob {
     loot: string;
     /** boss/miniboss at this level (def `boss`, rank-overridable) */
     boss: boolean;
+    /** real pathfinding for purposeful moves at this level (def `smartPath`,
+     *  rank-overridable; resolved bosses are ALWAYS smart — RoomSim ORs them) */
+    smartPath: boolean;
 }
 /**
  * Evaluate `def` at `level`. Stats compound per level above the def's base

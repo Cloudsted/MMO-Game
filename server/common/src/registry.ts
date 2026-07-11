@@ -262,6 +262,9 @@ export const MobRankSchema = z.object({
    *  frostplate revenant is a side boss at its r15 Unbound tier but an
    *  ordinary elite again as the r21 Tithe-Collector. Last present wins. */
   boss: z.boolean().optional(),
+  /** smart-path override at this rank (see MobDefSchema.smartPath) —
+   *  explicit false demotes, last present wins, same pattern as `boss`. */
+  smartPath: z.boolean().optional(),
 });
 export type MobRankDef = z.infer<typeof MobRankSchema>;
 
@@ -292,6 +295,11 @@ export const MobDefSchema = z.object({
    *  entity replication so clients keep the nameplate visible at range.
    *  Rank `boss` overrides for rank-elevated bosses (the Unfinished King). */
   boss: z.boolean().optional(),
+  /** opt-in to REAL pathfinding (A* over the voxel walk grid) for purposeful
+   *  moves without being a boss — "smarter"/important mobs. Every RESOLVED
+   *  boss is smart implicitly (RoomSim ORs the two flags); this flag exists
+   *  for the important non-boss case. Rank-overridable like `boss`. */
+  smartPath: z.boolean().optional(),
   /** client vocal sound groups in the audio manifest (all optional; omitted = silent category) */
   sounds: z
     .object({
@@ -337,6 +345,9 @@ export interface ResolvedMob {
   loot: string;
   /** boss/miniboss at this level (def `boss`, rank-overridable) */
   boss: boolean;
+  /** real pathfinding for purposeful moves at this level (def `smartPath`,
+   *  rank-overridable; resolved bosses are ALWAYS smart — RoomSim ORs them) */
+  smartPath: boolean;
 }
 
 /**
@@ -364,6 +375,7 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
   let name = def.name;
   let loot = def.loot;
   let boss = def.boss ?? false;
+  let smartPath = def.smartPath ?? false;
   let aggroRadius = def.aggroRadius;
   let attackRange = def.attackRange;
   let leashRadius = def.leashRadius;
@@ -389,6 +401,7 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
     if (rank.name) name = rank.name; // full override wins over the suffix
     if (rank.loot) loot = rank.loot;
     if (rank.boss !== undefined) boss = rank.boss; // explicit false demotes
+    if (rank.smartPath !== undefined) smartPath = rank.smartPath;
   }
 
   // A per-attack `damage` override is authored RELATIVE to the def's base level
@@ -415,6 +428,7 @@ export function resolveMob(def: MobDef, level: number | undefined, scaling: MobS
     fleeAtHpPct,
     loot,
     boss,
+    smartPath,
   };
 }
 

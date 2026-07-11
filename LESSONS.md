@@ -165,6 +165,29 @@ long-running session process as the reaper, not a crash.
 
 ## libGDX / rendering
 
+### Screen-space derivatives go garbage at mesh seams — even on coplanar faces
+- **Symptom:** thin LIT lines tracing the block grid on close-up walls in
+  full shadow, appearing right after the wave-3 PCF shadow fix.
+- **Cause:** `dFdx/dFdy/fwidth` are computed per 2×2 pixel quad; at every
+  block edge (the mesher emits per-block faces) the quad math misbehaves on
+  real hardware EVEN THOUGH the neighboring faces are perfectly coplanar
+  with bit-identical shared vertices — "the derivative of a planar surface
+  is continuous" is true on paper and false at seam quads. The derivative
+  NORMAL flipped facing-away pixels into the sampled branch with tanT at
+  its cap, and `fwidth(spos.z)` spiked; both fed the shadow bias, inflating
+  it from the 0.72 m contract to 1.6–2.8 m at seam pixels only → the wall
+  un-shadowed itself through its 1–3 m-away caster in a one-pixel line.
+- **Rule:** never feed raw screen-space-derivative products (fwidth spans,
+  derivative-normal slopes) into a shadow bias or kernel radius without a
+  physically-derived clamp — legit footprints grow with DISTANCE, so a
+  distance-scaled cap (`0.02·v_dist` m for depth terms, `1 + 0.25·v_dist`
+  texels for spread) crushes seam spikes without touching the far field.
+  And don't argue geometry from first principles when a 20-minute debug
+  visualization settles it: `MMO_DEBUG_SHADOW=2` (spread/litfrac/bias as
+  RGB) attributed the artifact to the bias side in ONE screenshot — the
+  spread channel read exactly 0 at the lines, killing the "clamp the tap
+  spread" prior everyone (including the task brief) believed.
+
 - `TextureRegionDrawable.tint()` returns a **SpriteDrawable** — assigning it
   back to a TextureRegionDrawable ClassCastExceptions at runtime.
 - GLSL uniforms optimized out by dead code make `setUniformf` **throw**

@@ -115,6 +115,22 @@ const ConstantsSchema = z.object({
      *  exactly the leash semantics). Never fires mid-kite: a live target
      *  blocks it, and any hit restarts the clock. */
     idleResetSec: z.number(),
+    /** FAILSAFE (all mobs): a mob in `return` that has made NO net progress
+     *  toward home for this long teleports there — the classic MMO evade
+     *  snap (position → home, full heal, threat cleared: the exact
+     *  leash-reset semantics). Closes the "stuck forever" class even where
+     *  planning fails or the geometry is truly broken. */
+    returnFailsafeSec: z.number(),
+    /** A* node-expansion cap for smart-path (resolved boss / smartPath)
+     *  planning. Must comfortably cover "open desert → tomb stair → Vessel
+     *  Chamber": measured 5.4k expansions from the south pull, 13.3k from
+     *  the worst direction (north — the route rounds the whole tomb). A
+     *  capped-out plan costs ~10-20 ms, rare by the replan cooldown. */
+    smartPathNodeCap: z.number().int(),
+    /** smart plans computed per room per tick — few smart mobs exist per
+     *  room, and a budget-starved mob simply stays stuck one more tick and
+     *  plans on the next (keeps tick time bounded). */
+    smartPlansPerTick: z.number().int(),
     scaling: z.object({
       hpPerLevel: z.number(),
       damagePerLevel: z.number(),

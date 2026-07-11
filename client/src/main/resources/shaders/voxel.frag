@@ -47,6 +47,34 @@ void main() {
     vec4 tex = texture2D(u_tiles, v_uv);
     if (tex.a < 0.5) discard;
 
+    if (u_shadowDebug > 1.5) {
+        // mode 2: PCF sampling internals — R = tap spread in texels beyond
+        // the 1-texel floor (/8), G = PCF lit fraction, B = bias meters (/3).
+        // Black = facing away (no sampling). Mirrors the main path exactly.
+        vec3 dnrm = normalize(cross(dFdx(v_worldPos), dFdy(v_worldPos)));
+        float dndl = dot(dnrm, -u_lightDir);
+        if (v_br > 1.2) dndl = abs(dndl);
+        if (dndl <= 0.02) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
+        vec4 dsc = u_shadowMat * vec4(v_worldPos, 1.0);
+        vec3 dspos = dsc.xyz * 0.5 + 0.5;
+        float dtanT = min(sqrt(max(1.0 - dndl * dndl, 0.0)) / dndl, 8.0);
+        float dbias = 0.02 + 1.5 * u_shadowTexel * dtanT;
+        vec2 dfp = fwidth(dspos.xy);
+        float dspread = clamp(0.6 * max(dfp.x, dfp.y),
+            u_shadowPix, u_shadowPix * (1.0 + v_dist * 0.25));
+        float dspreadM = max(dspread / u_shadowPix - 1.5, 0.0) * u_shadowTexel;
+        dbias = min(dbias + min(0.75 * fwidth(dspos.z) * u_shadowRange, 0.02 * v_dist)
+            + dspreadM * dtanT, 3.0);
+        float dref = dspos.z - dbias / u_shadowRange;
+        float dlit = 0.0;
+        for (int oy = -1; oy <= 1; oy++)
+            for (int ox = -1; ox <= 1; ox++)
+                dlit += step(dref, unpackDepth(texture2D(u_shadowMap,
+                    dspos.xy + vec2(float(ox), float(oy)) * dspread)));
+        gl_FragColor = vec4(clamp((dspread / u_shadowPix - 1.0) / 8.0, 0.0, 1.0),
+            dlit / 9.0, clamp(dbias / 3.0, 0.0, 1.0), 1.0);
+        return;
+    }
     if (u_shadowDebug > 0.5) {
         vec4 dc = u_shadowMat * vec4(v_worldPos, 1.0);
         vec3 dp = dc.xyz * 0.5 + 0.5;
@@ -117,11 +145,30 @@ void main() {
                 // motion. The no-jitter map cache is untouched; only how it
                 // is SAMPLED changed.
                 vec2 fpUv = fwidth(spos.xy);
-                float spread = max(u_shadowPix, 0.6 * max(fpUv.x, fpUv.y));
+                // SEAM GUARD: screen-space derivatives are per-2x2 pixel
+                // quad, and at mesh seams (every block edge — the mesher
+                // emits per-block faces) the quad math goes bad even on
+                // perfectly COPLANAR faces: the derivative normal above can
+                // flip a facing-away pixel into this branch with tanT at its
+                // 8.0 cap, and fwidth(spos.z) spikes. Un-clamped, those
+                // inputs inflated the bias to 1.6-2.8 m (vs the 0.72 m
+                // pre-PCF contract) and un-shadowed a thin line of pixels
+                // exactly along block seams — "lit grid lines on walls in
+                // full shadow". Legit footprints GROW with distance
+                // (minification), so both clamps are distance-scaled: they
+                // never bind the real far-field footprint (the distant-
+                // shimmer win), while near-wall seam spikes are crushed.
+                float spread = clamp(0.6 * max(fpUv.x, fpUv.y),
+                    u_shadowPix, u_shadowPix * (1.0 + v_dist * 0.25));
                 // taps away from the receiver's center need bias for the
-                // receiver plane's own slope across the spread (in meters)
-                float spreadM = (spread / u_shadowPix) * u_shadowTexel;
-                biasM = min(biasM + 0.75 * fwidth(spos.z) * u_shadowRange + spreadM * tanT, 3.0);
+                // receiver plane's own slope across the spread — but ONLY
+                // the spread BEYOND the base term's 1.5 texels: at the
+                // near-field 1-texel floor this contributes ZERO, so
+                // close-up bias stays exactly the old 0.02 + 1.5·texel·tanT
+                // contract (edges within ~2 texels of the caster).
+                float spreadM = max(spread / u_shadowPix - 1.5, 0.0) * u_shadowTexel;
+                biasM = min(biasM + min(0.75 * fwidth(spos.z) * u_shadowRange, 0.02 * v_dist)
+                    + spreadM * tanT, 3.0);
                 float ref = spos.z - biasM / u_shadowRange;
                 float lit = 0.0;
                 for (int oy = -1; oy <= 1; oy++) {

@@ -134,6 +134,9 @@
   },
   "mobs": {
     "idleResetSec": 60,
+    "returnFailsafeSec": 15,
+    "smartPathNodeCap": 16000,
+    "smartPlansPerTick": 2,
     "scaling": {
       "hpPerLevel": 0.14,
       "damagePerLevel": 0.11,

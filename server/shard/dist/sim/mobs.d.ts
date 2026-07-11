@@ -140,6 +140,46 @@ export declare function pathfindWaypoints(world: VoxelWorld, from: {
     x: number;
     z: number;
 }> | null;
+/** How far a chase goal may drift from a smart path's end before the path is
+ *  dropped for a replan (the BFS uses 5 — smart mobs re-check tighter). */
+export declare const SMART_REPATH_DRIFT = 3;
+/** A returning smart mob further than this from home plans PROACTIVELY —
+ *  the walk back should look deliberate, not four ticks of wall-grinding
+ *  first. Inside this range plain steering covers the last stretch. */
+export declare const SMART_RETURN_PLAN_DIST = 8;
+/** Optional instrumentation out-param for tests / budget measurement. */
+export interface SmartPathStats {
+    expanded: number;
+    found: boolean;
+}
+/**
+ * A* over the voxel walk grid for smart mobs' purposeful moves. Nodes are
+ * (column, feet-Y) — Y is part of the key, so a tomb interior and the
+ * surface above it are DIFFERENT nodes and a route may pass under itself.
+ * 4-connected, Manhattan heuristic (admissible), liquid cells cost double
+ * (prefer dry routes). `to.y` (when known — the return home floor, a chase
+ * target's feet) gates the goal to the right LEVEL: reaching the goal
+ * column on the roof above home is not arrival.
+ *
+ * Budgeted by `nodeCap` expansions (constants mobs.smartPathNodeCap). When
+ * the goal is out of reach/budget, falls back to a path toward the explored
+ * cell closest to the goal if that's a meaningful improvement (≥3 cells),
+ * else null — callers set a cooldown, and the return failsafe backstops.
+ * Returns coarse cell-center waypoints (every 2nd cell), like the BFS.
+ */
+export declare function planSmartPath(world: VoxelWorld, from: {
+    x: number;
+    y: number;
+    z: number;
+}, to: {
+    x: number;
+    z: number;
+    y?: number;
+}, wade: boolean, nodeCap: number, stats?: SmartPathStats): Array<{
+    x: number;
+    z: number;
+    y: number;
+}> | null;
 /** Find a legal spawn point in a spawn region (dry, unobstructed, ON THE
  *  FLOOR — floorY lands under tree canopies/roofs, never on top of them). */
 export declare function findSpawnPoint(table: SpawnTable, world: VoxelWorld, _waterLevel: number | null): {

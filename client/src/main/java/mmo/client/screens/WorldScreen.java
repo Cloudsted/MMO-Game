@@ -2047,7 +2047,18 @@ public class WorldScreen extends ScreenAdapter {
                 roomDisplay.isEmpty() ? roomName : roomDisplay,
                 pos.x, pos.z, playerCount, mobCount, Gdx.graphics.getFramesPerSecond(), timeLabel(dayNight.timeOfDay()))
             : (leaving ? "traveling..." : "entering world...");
-        font.draw(hudBatch, status, 10, h - 10);
+        // keep the instrument line clear of the minimap panel (top-right):
+        // if the full-scale line would run under it, drop to the 0.5
+        // small-text tier (a legal pixel-font scale — half the 2x bitmap is
+        // the native 9px grid) instead of truncating instrument tokens
+        layout.setText(font, status);
+        if (layout.width > w - mmo.client.ui.GameUi.MM_PANEL - 22) {
+            font.getData().setScale(0.5f);
+            font.draw(hudBatch, status, 10, h - 8);
+            font.getData().setScale(1f);
+        } else {
+            font.draw(hudBatch, status, 10, h - 10);
+        }
 
         hudBatch.end();
 

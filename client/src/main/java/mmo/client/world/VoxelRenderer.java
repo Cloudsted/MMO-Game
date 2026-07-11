@@ -262,9 +262,18 @@ public final class VoxelRenderer {
         } else {
             shader.setUniformf("u_shadowDim", 1f);
         }
-        shader.setUniformf("u_shadowDebug", "1".equals(System.getenv("MMO_DEBUG_SHADOW")) ? 1f : 0f);
+        shader.setUniformf("u_shadowDebug", shadowDebugMode());
         tiles.bind(0);
         shader.setUniformi("u_tiles", 0);
+    }
+
+    /** MMO_DEBUG_SHADOW: 1 = light-space compare view, 2 = PCF sampling
+     *  internals view (R = tap spread in texels, G = PCF lit fraction,
+     *  B = bias meters — the mode that cracked the seam-glitch hunt). */
+    private static float shadowDebugMode() {
+        String v = System.getenv("MMO_DEBUG_SHADOW");
+        if (v == null) return 0f;
+        try { return Float.parseFloat(v); } catch (NumberFormatException e) { return 0f; }
     }
 
     /** Voxel-lit tint for billboards/viewmodel at a world position.

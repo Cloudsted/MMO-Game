@@ -21,6 +21,7 @@ const ROOMS = ["forest", "desert", "gloomfen", "cinderrift"];
 
 const registry = JSON.parse(readFileSync(resolve(ROOT, "shared", "blocks.json"), "utf8").replace(/^﻿/, ""));
 const LEAFY = new Set(registry.blocks.filter((b) => b.name === "leaves" || b.name === "dead_leaves").map((b) => b.id));
+const SOLID = new Set(registry.blocks.filter((b) => b.solid).map((b) => b.id));
 
 async function api(path, body, token) {
   const res = await fetch(`${MASTER}${path}`, {
@@ -122,11 +123,29 @@ for (const roomId of ROOMS) {
     }
   }
 
+  // TREED = standing on leaf-family blocks with a real walkable floor well
+  // BELOW — a canopy always has ground underneath. Leaf blocks AT floor
+  // level are legitimate: the tier-3 lion-den prefab authors a dead_leaves
+  // LITTER FLOOR and binds a lioness guard table, so its cats stand on
+  // their own bedding (a probabilistic false positive this probe used to
+  // flag — pre-existing, caught 2026-07-11).
+  const floorAt = (xi, zi) => {
+    for (let y = 1; y < 46; y++) {
+      if (!SOLID.has(state.terrain.get(xi, y - 1, zi))) continue;
+      if (SOLID.has(state.terrain.get(xi, y, zi)) || SOLID.has(state.terrain.get(xi, y + 1, zi))) continue;
+      return y;
+    }
+    return -1;
+  };
   let onLeaves = 0;
   for (const m of seen.values()) {
     const underY = Math.round(m.y) - 1;
     for (const [ox, oz] of [[0, 0], [0.25, 0.25], [0.25, -0.25], [-0.25, 0.25], [-0.25, -0.25]]) {
-      if (LEAFY.has(state.terrain.get(Math.floor(m.x + ox), underY, Math.floor(m.z + oz)))) {
+      const xi = Math.floor(m.x + ox);
+      const zi = Math.floor(m.z + oz);
+      if (LEAFY.has(state.terrain.get(xi, underY, zi))) {
+        const fl = floorAt(xi, zi);
+        if (fl >= 0 && fl >= Math.round(m.y) - 2) break; // leaf-floored den litter, not a canopy
         onLeaves++;
         log(`     ${m.name ?? "mob"} #${m.id} ON leaves at ${m.x.toFixed(1)},${m.y.toFixed(1)},${m.z.toFixed(1)}`);
         break;

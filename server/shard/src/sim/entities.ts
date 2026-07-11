@@ -106,9 +106,11 @@ export interface MobBrain {
    *  each pay full xp/loot, or waiting next to one is free levels */
   grantsXp?: boolean;
   grantsLoot?: boolean;
-  /** stuck-recovery waypoints from the local BFS (pathfindWaypoints) —
-   *  followed head-first while chasing; cleared on arrival/invalidations */
-  path?: Array<{ x: number; z: number }>;
+  /** recovery/planned waypoints, followed head-first: the local BFS
+   *  (pathfindWaypoints, 2D cells) or a smart plan (planSmartPath, cells
+   *  WITH their planned feet-Y — the follower Y-gates waypoint advance so a
+   *  mob on a stair roof can't eat the descending cells beneath it) */
+  path?: Array<{ x: number; z: number; y?: number }>;
   /** consecutive ticks a purposeful move made no progress */
   stuckTicks?: number;
   /** distance to the goal last tick (progress detection for stuckTicks) */
@@ -117,6 +119,11 @@ export interface MobBrain {
    *  bites included) — mobs.idleResetSec past this with no live target, a
    *  wounded mob gets the leash-reset treatment (idle full-heal) */
   lastCombatAt?: number;
+  /** best (smallest) 2D distance-to-home seen this return trip, and the ms
+   *  epoch it last improved — mobs.returnFailsafeSec of no net progress in
+   *  `return` teleports the mob home (RoomSim tick step 2, the evade snap) */
+  returnBestD?: number;
+  returnProgressAt?: number;
 }
 
 /** A dropped loot bag in the world. */

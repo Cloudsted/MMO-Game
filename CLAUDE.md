@@ -2553,13 +2553,25 @@ show their block tile).
     corrupt → defaults). Hooks: MMO_UI=pause|settings, MMO_SET_VOLUMES.
     TRAP paid: SpriteBatch.end() disables GL_BLEND — the dim-rect pass
     must re-enable blend or it paints the frame black.
-  - **Minimap**: fixed **200×200** virtual-px panel in every room. Big
-    rooms = a **50-block view span at exactly 4 px/block** (integer texel
-    scale), crop centered on the player via a per-frame TextureRegion UV
-    sub-rect, out-of-room = panel void, player arrow always center. Rooms
-    ≤ view span draw whole at floor(200/maxDim) integer scale, letterboxed
-    (atelier 1x, maw 2x). Dots/portals/arrow share ONE world→panel mapping
-    and clip to the widget. Nearest + integer scales throughout.
+  - **Minimap**: fixed-size virtual-px panel in every room. Big rooms =
+    a fixed view span at an exactly-integer px/block texel scale, crop
+    centered on the player via a per-frame TextureRegion UV sub-rect,
+    out-of-room = panel void, player arrow always center. Small rooms
+    draw whole at floor(panel/maxDim) integer scale, letterboxed.
+    Dots/portals/arrow share ONE world→panel mapping and clip to the
+    widget. Nearest + integer scales throughout. Shipped at 200×200 px /
+    50 blocks (4 px/block); **2026-07-11 owner request re-sized it to
+    225×225 px / 75 blocks = exactly 3 px/block** (the panel size follows
+    the span so the texel scale stays an integer — GameUi.MM_PANEL/MM_VIEW
+    are the only knobs, everything else derives; atelier still fits 1x,
+    maw 2x, 160² rooms 1x). The bigger panel exposed a top-right
+    collision: the WorldScreen instrument line now MEASURES itself
+    (GlyphLayout) and drops to the 0.5 small-text tier when it would run
+    under the panel (long room names / wide pos digits; GameUi.MM_PANEL
+    is public for exactly this check). Verified 1280x720 (fit + zoom)
+    and the 960x540 minimum canvas: tools/out/forest-mm4-after-2.png
+    (75-block zoom), mm-min-canvas-2.png, contract-after-2.png (fit-mode
+    letterboxing w/ watchtower dots).
   - **Inventory Minecraft-style**: LMB picks the stack ONTO THE CURSOR
     (icon+qty ride the mouse, topmost; tooltips suppressed while
     carrying), LMB places/swaps/merges; **shift-click quick-moves**
@@ -2675,6 +2687,43 @@ show their block tile).
     shadows fully off) — style-inherent, a different owner decision (AA)
     if it ever matters. Bias contract intact, leaf-cutout shadows and
     MMO_DEBUG_NO_SHADOWS untouched.
+    - **SEAM GLITCH (2026-07-11 follow-up, owner: "blocks in a solid wall
+      of shadow have lit lines around them")**: the PCF pass's derivative
+      inputs go GARBAGE at mesh-seam pixel quads — screen-space
+      derivatives are per-2×2-quad, and at every block edge (the mesher
+      emits per-block faces) the quad math misbehaves EVEN ON PERFECTLY
+      COPLANAR faces: the derivative normal flips a facing-away pixel
+      into the sampled branch with tanT slammed to its 8.0 cap, and
+      fwidth(spos.z) spikes. The wave-3 bias terms amplified exactly
+      those inputs (spreadM·tanT paid 0.47 m even at the 1-texel spread
+      floor; the depth-fwidth term was unclamped) → seam-pixel bias
+      1.6–2.8 m vs the 0.72 m pre-PCF contract → un-shadowed thin lines
+      exactly along block seams on close-up walls (the Colossus trench at
+      07:07 reproduced it; 67 artifact px in the probe window).
+      **Diagnosed with `MMO_DEBUG_SHADOW=2`** (new mode, TESTING.md):
+      R = tap spread in texels, G = PCF lit fraction, B = bias meters —
+      line pixels read R=0/G=243/B=139, proving the spread never spiked
+      (the artifact is 100% bias-side). FIX, all in voxel.frag: the
+      depth-fwidth bias term is clamped to `0.02·v_dist` meters, the tap
+      spread to `1 + 0.25·v_dist` texels (both distance-scaled: legit
+      footprints GROW with minification, so the clamps never bind the
+      far field — near-wall spikes are crushed), and the spread slope
+      bias only pays for spread BEYOND the base term's 1.5 texels (zero
+      at the near floor — close-up bias returns exactly to the pre-PCF
+      contract). Artifact px 67 → 0; the same-spot lit band and floor
+      sun patches are pixel-identical (tools/out/seam-before-2 vs
+      seam-after-2, seam-crop-right*). **Shimmer bench re-run** on a
+      desert colonnade long-view with a shadows-OFF control AND the
+      pre-wave-3 shader as calibration (4 nudge pairs each, controls ~0):
+      ROI raw flips pre 3,540 / wave-3 3,242 / fix 3,131 / off 2,649 —
+      excess over the floor 891 → 593 → **482**: the fix sits BELOW the
+      shipped wave-3 sampler in every metric channel; bias contract
+      re-verified close up (tools/out/contract-after-2: shadow hugs the
+      tower footing, shaded face uniform), leaf-cutout + water + thin
+      cross paths unchanged, 75 fps throughout. Trap for posterity:
+      "coplanar quads can't have derivative discontinuities" is FALSE in
+      practice — never feed raw fwidth/derivative-normal products into a
+      bias without a physically-derived clamp.
   - Traps paid this wave: a NAIVE paired-shot pixel-count "shimmer
     metric" reads FLAT across a real shadow fix — it is dominated by
     nearest-filter sprite/texture resampling and silhouette crawl, and
@@ -2690,6 +2739,125 @@ show their block tile).
     LOD's far softening (0.78 at 144 m+ — distant shadows are deliberately
     lighter now; the knob is the mix target in voxel.frag), and PCF edge
     softness up close.
+
+- 2026-07-11 **SMART-MOB PATHFINDING + RETURN FAILSAFE** (owner: "I pulled
+  the sunscour tomb boss all the way out of the tomb... when it leashed it
+  couldn't pathfind back inside. Time for some enemies to use real
+  pathfinding — split normal mobs / bosses+smarter enemies"). Server-only
+  (shard + common + shared/constants.json); ZERO wire/client changes;
+  goldens all held (no gen changes).
+  - **Who's smart**: every mob whose RESOLVED `boss` flag is true (the 18
+    boss defs + the rank-elevated four exactly at their boss levels — the
+    r21 Tithe-Collector demotion also demotes its pathfinding, by design),
+    plus a new opt-in `MobDefSchema.smartPath` with a
+    `MobRankSchema.smartPath` override (explicit false demotes — the exact
+    `boss` pattern), resolved onto `ResolvedMob.smartPath`; RoomSim ORs the
+    two flags. NOTHING authors smartPath yet — the boss flag covers the ask.
+  - **The planner** (`planSmartPath`, mobs.ts): A* over (column, feet-Y)
+    nodes — Y is part of the node key, so the tomb interior and the surface
+    above it are DIFFERENT nodes and a route may pass under itself. Every
+    neighbor check is applyMove's EXACT rule set resolved locally
+    (`smartStepY`: step up ≤1.05, purposeful drop ≤8, shallow liquid waded
+    on the flooded floor / deep swum at the surface, 2-cell headroom, the
+    batch-9 leaf-top refusal); the planner only PROPOSES waypoints —
+    applyMove still validates every actual step. 4-connected, Manhattan
+    heuristic, liquid costs double (prefers dry), and the goal is gated to
+    the right LEVEL when known (return → floorY(home), chase → target feet
+    ±3) so "arriving" on the roof above home is not arrival. Out of
+    budget/unreachable → partial path toward the closest explored cell if
+    that improves ≥3 cells, else null + the BFS's negative-stuckTicks
+    cooldown (broken geometry can't replan every tick).
+  - **The follower is 3D too — the live probe forced it.** Waypoints CARRY
+    their planned feet-Y, decimation NEVER drops a level-change cell, and
+    RoomSim only advances a waypoint at its own level (2D <0.7 AND |feetY −
+    wp.y| ≤1.6; BFS waypoints have no y and keep the pure-2D rule). The
+    tomb's entrance stair is a stepped tunnel with a 1-block roof: the
+    correct route off that roof is "east one cell, DROP onto the mid-flight
+    tread, come back west UNDERNEATH yourself" — a 2D follower eats the
+    turn-around cell instantly (it's 2D-identical to where the mob stands)
+    and grinds along the roof into the knee wall forever (probe run 2
+    reproduced it live, then offline in a harness; run 2's failsafe snap is
+    what rescued the boss — proof the belt-and-braces works, but the walk
+    must not need it).
+  - **tickBrain: in-range-but-UNSEEN targets are CHASED now** (mobs.ts). A
+    kit with any projectile makes attackReachY infinite, so a target ≤
+    attackRange 2D but through a floor/wall used to fall into chooseAttack's
+    "close" dead-band — blind steering with NO stuck tracking and NO
+    planner (sekhat sat under the porch, 10 blocks 2D from the bot above,
+    forever). The brain now LOS-checks the attack decision itself (one ray
+    per engaged-mob tick) and chases through the full purposeful machinery
+    instead. Side effect for ALL ranged mobs: a target ducking behind cover
+    is pursued rather than cast-at through the wall — strictly more
+    sensible, and the wave-1 LOS tests still pass unchanged.
+  - **When it plans** (room.ts tick step 2): the SAME stuck signal as the
+    recovery BFS (4 no-progress ticks), plus PROACTIVELY when a smart mob
+    enters `return` >8 blocks from home (the walk back looks deliberate —
+    no wall-grind first). Smart paths drop for a replan when the goal
+    drifts >3 off the path end (plain BFS keeps its 5). Budgets in
+    `constants.json mobs`: `smartPathNodeCap` **16000** (measured on the
+    owner's exact bug: south-sand → tomb stair → Vessel = 5.4k expansions;
+    worst direction — rounding the whole tomb from the north — 13.3k; a
+    capped-out plan costs ~10-20 ms and the cooldown makes it rare) and
+    `smartPlansPerTick` **2** per room (few smart mobs exist; a starved one
+    stays stuck one more tick and plans next). Normal mobs: steering +
+    radius-24 BFS byte-identical (test-asserted contrast).
+  - **RETURN FAILSAFE (all mobs, belt and braces)**: a mob in `return`
+    that has made no net progress for `mobs.returnFailsafeSec` (**15**)
+    teleports home — the classic MMO evade snap with the exact leash-reset
+    semantics (position → spawn point via floorY, full heal, threat
+    cleared, path/tracking dropped) + a `return-failsafe:` info log line.
+    "Net progress" = distance-to-home improved ≥0.5 OR a return-path
+    waypoint was consumed — the second clause matters: a legitimate route
+    can walk euclidean-AWAY from home for 15+ s (the tomb's processional
+    detour, d 10→28), and the euclidean-only metric snapped a boss
+    mid-walk 30 m from arrival (probe run 3). A genuinely stuck follower
+    stops consuming waypoints (the Y-gate), so every real deadlock still
+    snaps. Tracking = `brain.returnBestD/returnProgressAt`, cleared
+    outside `return`.
+  - Verified: typecheck, **744 vitest** (10 new in pathfind.test.ts:
+    routing through the ONLY door in a room-spanning wall with a
+    crossing-cell assert, stair climb + goal-level gating, budget
+    exhaustion, liquid wade gating, leaf refusal + stone control,
+    resolveMob plumbing both directions, boss-plans-while-wolf-BFS-caps in
+    a U-trap 50 cells from home, failsafe snap + not-before-window),
+    goldens held. Live on a [::1] session stack (mongod ::1:27020 scratch
+    dbpath + master 4180 + rooms 4810+, owner's 4000/27017 data untouched):
+    **`scripts/sekhat-return-probe.mjs` ALL CHECKS PASSED** — walks INTO
+    the tomb (stair descent cell-by-cell + floor-gap BFS), hits Sekhat
+    once, he CHASES out through the tomb (chase-side planning), dragged
+    20+ from home on open sand, leash broken, then the WALK back: 42 s
+    continuous (sand → stair y16→13→7 → landing → processional detour out
+    to d=28 → hall → approach → Vessel), healed to full, **max
+    per-snapshot displacement 1.05 m** (no failsafe, no teleport — zero
+    `return-failsafe:` lines in the shard log), desert tick avg 3.02 ms
+    vs 2.75 baseline (max 5.79 vs 4.06). Regressions: separation-check,
+    wade-probe, combat-bot, mob-floor-probe all PASS (floor-probe needed
+    a probe-side fix: the tier-3 lion-den prefab authors a dead_leaves
+    LITTER FLOOR with a lioness guard table, and "leaf under feet"
+    falsely flagged cats standing on their own bedding — pre-existing,
+    probabilistic; the probe now requires a real walkable floor well
+    BELOW the mob before calling it treed).
+  - Traps paid: a session-scratch mongod from the PREVIOUS wave still held
+    this scratchpad's dbpath lock (kill the zombie by dbpath match — never
+    the owner's 27017); test walls measured with `standY` AFTER building
+    read the WALL TOP, so the "door" got carved in mid-air — sample the
+    floor from the column BESIDE the wall; a probe's 2D floor-BFS is
+    level-ambiguous over a roofed tomb (run 1 walked the ROOF, "reached"
+    the vessel column at y16, and the melee vertical gate ate the pull
+    hit) — descend real stairs cell-by-cell along the tread line, then let
+    interior refY tracking take over; the offline follow HARNESS (plan +
+    real applyMove/applyGravity loop in a script) reproduced the live
+    stair deadlock in seconds and validated the fix without burning
+    10-minute live probe runs; and killing session processes by REGEX
+    over node command lines swept up the OWNER's shard tree with it
+    (master/mongod survived; owner must restart their stack) — kill by
+    exact PID list only.
+  - Owner feel-checks pending: does the walk-back read right in person
+    (the boss files home ignoring you — classic MMO evade behavior, worth
+    watching once); the 15 s failsafe window (too patient? too twitchy?);
+    whether chase-side planning makes bosses feel too relentless through
+    doorways; the r21 Tithe-Collector losing smart pathing with its boss
+    demotion (author `smartPath: true` on that rank if it ever matters).
 
 ## Conventions
 

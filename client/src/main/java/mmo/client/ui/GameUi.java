@@ -222,10 +222,13 @@ public class GameUi {
     private Texture minimap;
     private final TextureRegion minimapRegion = new TextureRegion();
     private float minimapWorldW = 1, minimapWorldH = 1;
-    /** minimap widget: FIXED panel size (virtual px) in every room */
-    private static final int MM_PANEL = 200;
-    /** zoom mode: world blocks across the panel — 200/50 = exactly 4 px/block */
-    private static final int MM_VIEW = 50;
+    /** minimap widget: FIXED panel size (virtual px) in every room —
+     *  public so WorldScreen can keep the status line clear of the panel */
+    public static final int MM_PANEL = 225;
+    /** zoom mode: world blocks across the panel — 225/75 = exactly 3 px/block
+     *  (owner: 75-block view distance; the panel size follows the span so the
+     *  texel scale stays an INTEGER — fractional scale smears a nearest map) */
+    private static final int MM_VIEW = 75;
     private final GlyphLayout layout = new GlyphLayout();
     private final Vector3 tmp = new Vector3();
 
@@ -1060,7 +1063,7 @@ public class GameUi {
         // Rooms that fit at an integer texel scale draw whole (centered,
         // letterboxed on the panel background); larger rooms show a zoomed
         // MM_VIEW-block crop centered on the player at an exact integer
-        // 4 px/block — outside the room = dark void, the player arrow stays
+        // 3 px/block — outside the room = dark void, the player arrow stays
         // centered, and a big world never fits on the map (go explore it).
         float mmSize = MM_PANEL;
         float mmX = w - mmSize - 12, mmY = h - mmSize - 12;
@@ -1072,7 +1075,7 @@ public class GameUi {
             mmBaseX = mmX + MathUtils.floor((MM_PANEL - minimapWorldW * mmScale) / 2f);
             mmBaseY = mmY + mmSize - MathUtils.floor((MM_PANEL - minimapWorldH * mmScale) / 2f);
         } else {
-            mmScale = MM_PANEL / (float) MM_VIEW; // 200/50 = exactly 4 px/block
+            mmScale = MM_PANEL / (float) MM_VIEW; // 225/75 = exactly 3 px/block
             mmBaseX = mmX - (selfX - MM_VIEW / 2f) * mmScale;
             mmBaseY = mmY + mmSize + (selfZ - MM_VIEW / 2f) * mmScale;
         }

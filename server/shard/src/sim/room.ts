@@ -69,8 +69,11 @@ import {
   findSpawnPoint,
   pathfindWaypoints,
   pickMobEntry,
+  planSmartPath,
   PURPOSEFUL_MAX_DROP,
   separateEntities,
+  SMART_REPATH_DRIFT,
+  SMART_RETURN_PLAN_DIST,
   STUCK_TICKS_FOR_PATH,
   tickBrain,
   type AttackOption,
@@ -2752,6 +2755,10 @@ export class RoomSim {
     const players = [...this.sessions.values()].map((s) => s.entity);
     const aliveMobs = [...this.entities.values()].filter((e) => e.kind === "mob" && e.combat!.act !== "dead");
     let pathBudget = 3; // bounded BFS computations per tick (stuck recovery)
+    // real-A* plans per tick for smart mobs (resolved bosses + smartPath) —
+    // few exist per room; a budget-starved one stays stuck one more tick and
+    // plans on the next, so starvation self-resolves round-robin-ish
+    let smartBudget = this.consts.mobs.smartPlansPerTick;
     for (const e of aliveMobs) {
       if (!e.brain) continue;
       const def = this.reg.mobs[e.brain.mobId];
@@ -2788,6 +2795,42 @@ export class RoomSim {
           }
         }
       }
+      // RETURN FAILSAFE (all mobs, belt and braces under the smart planner):
+      // a mob in `return` that has made NO net progress toward home for
+      // mobs.returnFailsafeSec teleports there — the classic MMO evade snap,
+      // with the exact leash-reset semantics (position → spawn point, full
+      // heal, threat cleared). Closes the "stuck forever" class even where
+      // planning fails or the geometry is truly broken.
+      {
+        const b = e.brain;
+        if (b.state === "return") {
+          const dHome = Math.hypot(e.pos.x - b.home.x, e.pos.z - b.home.z);
+          if (b.returnBestD === undefined || dHome < b.returnBestD - 0.5) {
+            b.returnBestD = dHome;
+            b.returnProgressAt = now;
+          } else if (now - (b.returnProgressAt ?? now) > this.consts.mobs.returnFailsafeSec * 1000) {
+            e.pos.x = b.home.x;
+            e.pos.z = b.home.z;
+            e.pos.y = this.world.floorY(b.home.x, b.home.z);
+            e.vy = 0;
+            e.health!.hp = e.health!.maxHp;
+            b.state = "patrol";
+            b.targetId = null;
+            b.threat.clear();
+            b.path = undefined;
+            b.stuckTicks = 0;
+            b.lastGoalD = undefined;
+            b.returnBestD = undefined;
+            b.returnProgressAt = undefined;
+            this.log.info(`return-failsafe: ${b.mobId} #${e.id} snapped home to ${b.home.x.toFixed(0)},${b.home.z.toFixed(0)}`);
+            e.renderable.anim = "idle";
+            continue;
+          }
+        } else if (b.returnBestD !== undefined) {
+          b.returnBestD = undefined;
+          b.returnProgressAt = undefined;
+        }
+      }
       // melee attacks only land within the vertical reach; a kit with any
       // projectile aims with real pitch, so height barely matters to it
       const reachY = this.attackOptionsOf(resolved).some((o) => o.ability.kind === "projectile")
@@ -2800,14 +2843,67 @@ export class RoomSim {
         const b = e.brain;
         const goal = decision.move;
         const purposeful = goal.maxDrop !== undefined; // chase/flee/return
-        // recovery path bookkeeping: invalid once the goal drifts off its end
+        // bosses and smartPath mobs run REAL pathfinding for purposeful moves
+        const smart = purposeful && (resolved.boss || resolved.smartPath);
+        // path bookkeeping: invalid once the goal drifts off its end (smart
+        // paths re-check tighter so a moving target forces a real replan)
         if (b.path && b.path.length) {
           const end = b.path[b.path.length - 1]!;
-          if (Math.hypot(goal.x - end.x, goal.z - end.z) > 5) b.path = undefined;
+          if (Math.hypot(goal.x - end.x, goal.z - end.z) > (smart ? SMART_REPATH_DRIFT : 5)) b.path = undefined;
         }
         if (b.path && b.path.length) {
-          const wp = b.path[0]!;
-          if (Math.hypot(e.pos.x - wp.x, e.pos.z - wp.z) < 0.7) b.path.shift();
+          const wp0 = b.path[0]!;
+          // Y-gated advance: a smart waypoint is only "reached" at its own
+          // LEVEL (±1.6, one body height) — on a stepped tunnel the route
+          // may pass 2D-under itself, and a 2D-only advance eats the cells
+          // beneath a mob standing on the roof (the tomb-stair deadlock).
+          // BFS waypoints carry no y and keep the old 2D rule.
+          const yOk = wp0.y === undefined || Math.abs(e.pos.y - wp0.y) <= 1.6;
+          if (yOk && Math.hypot(e.pos.x - wp0.x, e.pos.z - wp0.z) < 0.7) {
+            b.path.shift();
+            // consuming a waypoint IS net progress: a legitimate return
+            // route can walk euclidean-AWAY from home for 15+ seconds (the
+            // tomb's processional detour) — without this the failsafe
+            // snapped a boss mid-walk 30 m from arrival. A genuinely stuck
+            // follower stops consuming waypoints (the Y-gate), so the
+            // failsafe still catches every real deadlock.
+            if (b.state === "return" && b.returnProgressAt !== undefined) b.returnProgressAt = now;
+          }
+        }
+        // SMART planning (A*, generous cap): on the same stuck signal as the
+        // BFS, and PROACTIVELY on a far return — the walk home should look
+        // deliberate, not four ticks of wall-grinding first. The planner only
+        // proposes; applyMove below still validates every step. Failed plans
+        // set a negative-stuckTicks cooldown exactly like the BFS, and the
+        // proactive branch respects it (>= 0) so broken geometry can't
+        // re-plan every tick until the return failsafe snaps the mob home.
+        if (smart && !(b.path && b.path.length) && smartBudget > 0) {
+          const goalD = Math.hypot(goal.x - e.pos.x, goal.z - e.pos.z);
+          const stuck = (b.stuckTicks ?? 0) >= STUCK_TICKS_FOR_PATH;
+          const farReturn = b.state === "return" && goalD > SMART_RETURN_PLAN_DIST && (b.stuckTicks ?? 0) >= 0;
+          if (stuck || farReturn) {
+            smartBudget--;
+            // gate the goal to the right LEVEL where we know it: the return
+            // home sits on its column's floor (spawnMob spawns at floorY),
+            // a chase target carries real feet — otherwise "arriving" on
+            // the tomb roof above home would count as reaching it
+            let goalY: number | undefined;
+            if (b.state === "return") goalY = this.world.floorY(goal.x, goal.z);
+            else if (b.targetId !== null) goalY = this.entities.get(b.targetId)?.pos.y;
+            const path = planSmartPath(
+              this.world,
+              e.pos,
+              { x: goal.x, z: goal.z, y: goalY },
+              goal.wade ?? false,
+              this.consts.mobs.smartPathNodeCap
+            );
+            if (path) {
+              b.path = path;
+              b.stuckTicks = 0;
+            } else {
+              b.stuckTicks = -20; // cooldown: don't re-plan every tick against broken geometry
+            }
+          }
         }
         const wp = b.path && b.path.length ? b.path[0]! : null;
         const intent = wp ? { ...goal, x: wp.x, z: wp.z } : goal;
@@ -2822,7 +2918,7 @@ export class RoomSim {
             b.stuckTicks = 0;
           }
           b.lastGoalD = goalD;
-          if ((b.stuckTicks ?? 0) >= STUCK_TICKS_FOR_PATH && !wp && pathBudget > 0) {
+          if (!smart && (b.stuckTicks ?? 0) >= STUCK_TICKS_FOR_PATH && !wp && pathBudget > 0) {
             pathBudget--;
             const path = pathfindWaypoints(this.world, e.pos, { x: goal.x, z: goal.z }, goal.wade ?? false);
             if (path) {
