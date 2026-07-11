@@ -89,7 +89,7 @@
       "tier": 2,
       "ability": "firebolt",
       "damage": 13,
-      "durability": 400,
+      "durability": 100,
       "value": 50,
       "stack": 1,
       "icon": [
@@ -104,7 +104,7 @@
       "tier": 2,
       "ability": "frost",
       "damage": 8,
-      "durability": 400,
+      "durability": 100,
       "value": 50,
       "stack": 1,
       "icon": [
@@ -119,7 +119,7 @@
       "tier": 2,
       "ability": "heal",
       "damage": 0,
-      "durability": 450,
+      "durability": 110,
       "value": 45,
       "stack": 1,
       "icon": [
@@ -501,7 +501,7 @@
       "tier": 3,
       "ability": "firebolt",
       "damage": 16,
-      "durability": 450,
+      "durability": 110,
       "value": 150,
       "stack": 1,
       "icon": [
@@ -516,7 +516,7 @@
       "tier": 3,
       "ability": "greater_heal",
       "damage": 0,
-      "durability": 600,
+      "durability": 150,
       "value": 170,
       "stack": 1,
       "icon": [
@@ -576,7 +576,7 @@
       "tier": 4,
       "ability": "greater_firebolt",
       "damage": 26,
-      "durability": 700,
+      "durability": 175,
       "value": 400,
       "stack": 1,
       "icon": [
@@ -591,7 +591,7 @@
       "tier": 4,
       "ability": "greater_frost",
       "damage": 18,
-      "durability": 700,
+      "durability": 175,
       "value": 380,
       "stack": 1,
       "icon": [
@@ -906,7 +906,7 @@
       "tier": 5,
       "ability": "greater_frost",
       "damage": 32,
-      "durability": 750,
+      "durability": 190,
       "value": 540,
       "stack": 1,
       "icon": [

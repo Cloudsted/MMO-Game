@@ -57,8 +57,12 @@ export type AttackChoice = {
  * with pitch) and off cooldown; several usable at once → weighted roll.
  * When everything in range is cooling down, mixed kits CLOSE toward melee
  * (a skeleton advances between bow shots) while pure-ranged mobs hold.
+ * `hasLos` gates the RANGED options (projectile/pillars): without a sight
+ * line they read as out of range, so the existing dead-band behavior kicks
+ * in — the mob advances instead of shooting the wall (evaluated lazily,
+ * once, and only after every other check passed — this runs at 10 Hz).
  */
-export declare function chooseAttack(mob: Entity, target: Entity, options: AttackOption[], now: number, attackRange: number, meleeGrace: number, meleeReachY: number): AttackChoice;
+export declare function chooseAttack(mob: Entity, target: Entity, options: AttackOption[], now: number, attackRange: number, meleeGrace: number, meleeReachY: number, hasLos?: () => boolean): AttackChoice;
 /**
  * One brain tick. Pure decision — the caller applies movement (with terrain)
  * and routes attack intents into the shared action FSM. `attackReachY` is
@@ -72,7 +76,13 @@ export declare function tickBrain(mob: Entity,
  *  (aggroRadius / fleeAtHpPct / attackRange / leashRadius), so the brain must
  *  never read the raw def — otherwise a rank could change a mob's numbers and
  *  its buttons but never its nerve. */
-def: ResolvedMob, players: Entity[], now: number, attackReachY?: number): BrainDecision;
+def: ResolvedMob, players: Entity[], now: number, attackReachY?: number, 
+/** voxel LOS to a candidate — PROXIMITY acquisition only (a mob may not
+ *  notice you through a wall just because you're inside aggroRadius; the
+ *  Sunscour temple bug). Damage threat and pack assist deliberately bypass
+ *  it: if you actually hit a mob it knows, and packs still rally. Called
+ *  only for candidates that pass every cheaper check first (10 Hz budget). */
+hasLos?: (p: Entity) => boolean): BrainDecision;
 /**
  * Apply a move intent with voxel rules: walk at speed, deflect around
  * blockers, step up/down at most one block, keep headroom. Liquid blocks

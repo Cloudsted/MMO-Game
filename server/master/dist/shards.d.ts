@@ -109,13 +109,13 @@ export declare class ShardManager {
     };
     /** Flattened online-player list across every shard (admin dashboard). */
     livePlayers(): ({
-        x: number;
-        z: number;
-        level: number;
         name: string;
+        level: number;
         hp: number;
         gold: number;
+        x: number;
         y: number;
+        z: number;
         maxHp: number;
         charId: string;
     } & {

@@ -79,6 +79,12 @@ declare const ConstantsSchema: z.ZodObject<{
         armorK: z.ZodNumber;
         /** death drops equipped armor/trinkets into the bag too (full-loot) */
         deathDropsEquipment: z.ZodBoolean;
+        /** keep-inventory mode (owner 2026-07-11: "no player drops items on
+         *  death" — for now): when true, death drops NOTHING (items, equipment,
+         *  gold all kept, PvP clearing included). The whole drop path stays
+         *  intact behind this knob; deathDropsEquipment only matters when it's
+         *  off again. */
+        keepInventoryOnDeath: z.ZodBoolean;
     }, "strip", z.ZodTypeAny, {
         critChance: number;
         critMult: number;
@@ -98,6 +104,7 @@ declare const ConstantsSchema: z.ZodObject<{
         sellFraction: number;
         armorK: number;
         deathDropsEquipment: boolean;
+        keepInventoryOnDeath: boolean;
     }, {
         critChance: number;
         critMult: number;
@@ -117,6 +124,7 @@ declare const ConstantsSchema: z.ZodObject<{
         sellFraction: number;
         armorK: number;
         deathDropsEquipment: boolean;
+        keepInventoryOnDeath: boolean;
     }>;
     building: z.ZodObject<{
         placeRangeM: z.ZodNumber;
@@ -274,6 +282,12 @@ declare const ConstantsSchema: z.ZodObject<{
      *  level (see registry.resolveMob). Compounding per level. These are THE
      *  difficulty knobs for reused mobs — tune here, not in mobs.json. */
     mobs: z.ZodObject<{
+        /** a wounded mob that neither dealt nor took damage for this long AND has
+         *  no live target gets the leash-reset treatment (walk home healing, full
+         *  heal on arrival, threat cleared; spent bossHpBelowPct arcs stay spent —
+         *  exactly the leash semantics). Never fires mid-kite: a live target
+         *  blocks it, and any hit restarts the clock. */
+        idleResetSec: z.ZodNumber;
         scaling: z.ZodObject<{
             hpPerLevel: z.ZodNumber;
             damagePerLevel: z.ZodNumber;
@@ -292,6 +306,7 @@ declare const ConstantsSchema: z.ZodObject<{
             maxLevelBonus: number;
         }>;
     }, "strip", z.ZodTypeAny, {
+        idleResetSec: number;
         scaling: {
             hpPerLevel: number;
             damagePerLevel: number;
@@ -299,6 +314,7 @@ declare const ConstantsSchema: z.ZodObject<{
             maxLevelBonus: number;
         };
     }, {
+        idleResetSec: number;
         scaling: {
             hpPerLevel: number;
             damagePerLevel: number;
@@ -361,6 +377,7 @@ declare const ConstantsSchema: z.ZodObject<{
         sellFraction: number;
         armorK: number;
         deathDropsEquipment: boolean;
+        keepInventoryOnDeath: boolean;
     };
     building: {
         placeRangeM: number;
@@ -404,6 +421,7 @@ declare const ConstantsSchema: z.ZodObject<{
         maxLevel: number;
     };
     mobs: {
+        idleResetSec: number;
         scaling: {
             hpPerLevel: number;
             damagePerLevel: number;
@@ -456,6 +474,7 @@ declare const ConstantsSchema: z.ZodObject<{
         sellFraction: number;
         armorK: number;
         deathDropsEquipment: boolean;
+        keepInventoryOnDeath: boolean;
     };
     building: {
         placeRangeM: number;
@@ -499,6 +518,7 @@ declare const ConstantsSchema: z.ZodObject<{
         maxLevel: number;
     };
     mobs: {
+        idleResetSec: number;
         scaling: {
             hpPerLevel: number;
             damagePerLevel: number;

@@ -221,6 +221,32 @@ export class VoxelWorld {
     return isLiquidBlock(this.get(Math.floor(x), Math.floor(y), Math.floor(z)));
   }
 
+  /**
+   * Voxel line-of-sight: marches the segment at ~0.5 m steps and fails on any
+   * solid block (liquids and cross decorations don't occlude — same rules as
+   * projectile flight). `endSkip` metres are skipped at BOTH ends so an
+   * endpoint's own cell never occludes it (the AudioEngine occlusion
+   * precedent; entity eye/chest points sit in open cells anyway, but corner
+   * rounding at the very ends would otherwise produce false walls).
+   * Used by mob proximity aggro (eye ~1.4 → chest ~1.0), ranged attack
+   * choice, and AoE splash gating — damage-based threat deliberately
+   * bypasses it (if you hit a mob, it knows).
+   */
+  lineOfSight(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, endSkip = 0.75): boolean {
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const dz = z1 - z0;
+    const dist = Math.hypot(dx, dy, dz);
+    if (dist <= endSkip * 2) return true; // point-blank: nothing between the skips
+    const ux = dx / dist;
+    const uy = dy / dist;
+    const uz = dz / dist;
+    for (let t = endSkip; t <= dist - endSkip; t += 0.5) {
+      if (this.solidAt(x0 + ux * t, y0 + uy * t, z0 + uz * t)) return false;
+    }
+    return true;
+  }
+
   /** Highest non-air block y at a column (-1 if the column is empty). */
   surfaceY(x: number, z: number): number {
     const xi = Math.floor(x);

@@ -236,7 +236,17 @@ describe("roster-2 spawn tables", () => {
     expect(reg.mobs["aelthir"]!.aggroRadius).toBe(0); // it never opens the fight
     const ev = def.events.find((e) => e.id === "unmarred-answer")!;
     expect(ev.on).toMatchObject({ kind: "bossDeath", mob: "aelthir" });
-    expect(ev.actions.some((a) => a.kind === "spawnMobs" && a.mob === "gravehound")).toBe(true);
+    const wave = ev.actions.find((a) => a.kind === "spawnMobs" && a.mob === "gravehound");
+    expect(wave).toBeDefined();
+    // Owner 2026-07-11: "any player under level 15 should get demolished" —
+    // the answer arrives at L17 (Δ4 over the def's 13): 41 dmg × 4 hounds is
+    // ~126 raw pack dps, well past a geared L14's mitigation + potion ceiling,
+    // and 405 hp each is a ~30 s clear even with perfect cleaves. Deliberately
+    // event-level only — every other gravehound encounter is untouched.
+    expect(wave).toMatchObject({ count: 4, level: 17 });
+    const answered = resolveMob(reg.mobs["gravehound"]!, 17, SCALING);
+    expect(answered.damage).toBe(41); // 27 × 1.11⁴
+    expect(answered.hp).toBe(405); // 240 × 1.14⁴
   });
 
   it("the desert's Sekhat digs at half health and falls silent at zero", () => {

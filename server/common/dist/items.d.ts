@@ -21,6 +21,19 @@ import type { ItemStack } from "./protocol.js";
  */
 export declare function mintItem(reg: RegistryService, consts: GameConstants, itemId: string, qty: number, rarity: string, rand?: () => number): ItemStack;
 /**
+ * Flat mint: exact base stats, zero randomness (owner 2026-07-11: "items
+ * bought in the shop should have base stats with no random rolls or affects
+ * ... same with command item giving"). Used by shop buys, admin /give, and
+ * the dashboard's character-item-add — loot drops, minRarity re-mints, and
+ * ensureItemInstance backfill keep rolling via mintItem above.
+ *  - stats: OMITTED entirely (tooltips show no roll lines — a flat item IS
+ *    the base item)
+ *  - dur/maxDur: exact `base × rarityMult` (no ±spread)
+ *  - mods: never (no lottery)
+ * Two flat mints of the same item+rarity are identical every time.
+ */
+export declare function mintItemFlat(reg: RegistryService, consts: GameConstants, itemId: string, qty: number, rarity: string): ItemStack;
+/**
  * Backfill rolls onto an instance minted before variance/durability existed
  * (legacy DB rows, hardcoded starter items). Complete instances pass through
  * untouched; partial ones keep what they have and roll only the gaps.

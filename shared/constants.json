@@ -36,7 +36,8 @@
     "talkRange": 3.5,
     "sellFraction": 0.4,
     "armorK": 120,
-    "deathDropsEquipment": true
+    "deathDropsEquipment": true,
+    "keepInventoryOnDeath": true
   },
   "building": {
     "placeRangeM": 6,
@@ -124,7 +125,7 @@
   "progression": {
     "baseHp": 80,
     "hpPerLevel": 20,
-    "baseMana": 50,
+    "baseMana": 12,
     "manaPerLevel": 10,
     "damagePerLevelPct": 0.06,
     "xpBase": 60,
@@ -132,6 +133,7 @@
     "maxLevel": 30
   },
   "mobs": {
+    "idleResetSec": 60,
     "scaling": {
       "hpPerLevel": 0.14,
       "damagePerLevel": 0.11,

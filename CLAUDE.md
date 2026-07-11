@@ -2426,6 +2426,110 @@ show their block tile).
     rooms (viewBox-scaled), whether cache_* tables should surface
     room-links, and small sprite crops staying 1× (integer-scale rule).
 
+- 2026-07-11 **OWNER-FEEDBACK BATCH: keep-inventory + flat shop mints + mana/
+  magic-durability nerfs + mob idle heal + LINE-OF-SIGHT + Aelthir wave +
+  portal-out-of-the-pond + admin ids** (server+shared+admin only; client and
+  audio owned by sibling agents this wave). Verified: typecheck, **728
+  vitest** green ×2 (19 new), march-probe FULL PASS + combat-bot PASS live
+  on a [::1] session stack (4100/4610+/27018 scratch DB).
+  - **`combat.keepInventoryOnDeath: true`** (constants.json): death drops
+    NOTHING — items, equipment, gold, PvP clearing included. The whole drop
+    path stays intact behind the knob (deathDropsEquipment only matters when
+    it's off again); death-bag tests flip the knob off around themselves.
+  - **Flat minting** (`mintItemFlat` in common/items.ts): shop buys
+    (handleBuy), admin `/give`, and dashboard character-item-add now mint
+    EXACT base items — no `stats` field at all (tooltip shows no roll
+    lines), durability = base × rarityMult exactly, never a mod. Loot
+    drops, minRarity re-mints, and ensureItemInstance keep rolling.
+  - **baseMana 50 → 12** (progression): L1 mana = 12 — one firebolt (12) per
+    bar; `heal` (20 mana) is uncastable until L2 — flagged as a feel-check.
+  - **Magic durability ÷4**: fire_staff/frost_staff 400→100, heal_staff
+    450→110, wisp_wand 450→110, fen_staff 600→150, ashen_scepter 700→175,
+    tidecaller_staff 700→175, scepter_of_ruin 750→190. Bows/melee untouched.
+  - **Mob idle full-heal** (`mobs.idleResetSec: 60`): a wounded mob that
+    neither dealt nor took damage for 60 s AND has no live target gets the
+    leash-reset treatment (state→return, threat cleared, walk-home heal;
+    spent bossHpBelowPct arcs stay spent — identical semantics). The clock
+    (`brain.lastCombatAt`) is stamped in applyDamage/applyDotDamage both
+    directions; a mob with NO clock is never eligible (tests hand-wound
+    mobs via direct hp writes — the Cowl heal tests caught the `?? 0` bug).
+  - **LINE-OF-SIGHT** (`VoxelWorld.lineOfSight`, 0.5 m march, 0.75 m
+    end-skip — the AudioEngine occlusion recipe): (a) tickBrain PROXIMITY
+    acquisition requires LOS mob-eye(1.4)→chest(1.0); damage threat + pack
+    assist deliberately bypass it; (b) chooseAttack gates projectile AND
+    pillars options on LOS (lazily, after every cheaper check) — no LOS
+    reads as out-of-range so the dead-band "close" behavior advances the
+    mob instead of it shooting walls (the Sunscour temple bug); (c) AoE
+    splash + fire-pillar burns need LOS from the impact point (0.25 m
+    end-skip; a wall-buried projectile backs its splash origin out along
+    its flight first — substeps bury it up to ~0.85 m into the block).
+    New `server/shard/test/los.test.ts` covers all three + the idle heal on
+    atelier-built walls. TRAP for tests: tickFirePillars REASSIGNS the
+    firePillars array (filter) — re-read the field, never hold it.
+  - **Aelthir's answer wave** (forest.json `unmarred-answer`): gravehounds
+    spawn at **level 17** (4× 41 dmg / 405 hp — ~126 raw pack dps ≈ 95 after
+    a geared L14's armor, past any potion ceiling). Event-level only; every
+    other gravehound encounter untouched (gravehound has no ranks).
+  - **forest-march portal moved (240,30) → (248,22)**: the arch stood IN the
+    north pond (its clearAbove had cut a literal hole in the pond surface);
+    the new spot is the dry shelf on the pond's NE shore, same corner. Pond
+    verified healed byte-for-byte (deterministic gen restores 49/49 water
+    blocks in the old stamp rect). Goldens: forest grid+features only
+    (nearPortals wayshrine re-dealt); all 18 other rooms held. Pairing
+    tests are derived (computePortalArrival) — only march-probe's tp/goTo
+    coords changed.
+  - **Armory internal ids**: adminpage item cards show the registry id in
+    small muted mono under the display name.
+  - Owner feel-checks: L1 casters (12 mana = one firebolt; heal staff dead
+    until L2), magic wear rate in real fights (~100 casts on a fire staff),
+    whether mobs "going home" mid-standoff reads right at 60 s, LOS around
+    leaf canopies (leaves are solid to the ray), scepter_of_ruin at 190
+    (750/4 = 187.5 rounded to a clean number).
+
+- 2026-07-11 **BANDITS SPEAK HUMAN** (owner: "they sound like fairies" —
+  same wave as the batch above; tools/build-sounds.mjs + docs/sound-design
+  .md only). bandit_* was DOGLS mp3 grunts and marauder_* was literally the
+  Goblin Fairy pack pitched down — both re-sourced to Pro Sound Collection
+  v1.3 Human Male voice sets: **Male B = bandit_*** (trash: bandit,
+  greenhood_poacher, powder_brigand, sandpicker), **Male C = marauder_***
+  (heavies: marauder, bandit_enforcer, thrace_redcap, quartermaster_grole).
+  Group names unchanged → zero mobs.json/client edits. 28 new oggs, build
+  exit 0, zero missing refs; DOGLS constant retired. Male C has real
+  filename gaps (attack_09, hurt_pain_12) — every source was verified by
+  directory listing first. Distinctness gaps deliberately NOT fixed (they
+  share groups other creatures fit, or need mobs.json edits): sarquun on
+  snake hisses, snow_harpy on bat wings, pale_courser on wolf,
+  **first_tyrant shares minotaur_boss groups verbatim** (the finale boss
+  sounds like the L9 Gravelord), rime_warden on troll. Unused human kits
+  for the future: PSC Human Male D + Super Dialogue Audio Pack (3 VO
+  actors). Owner ear-check pending (client relaunch loads the new oggs).
+
+- 2026-07-11 **CLIENT SMALL-UI BATCH** (same wave; GameUi/WorldScreen/
+  ItemRegistry + TESTING.md). All screenshot-verified live
+  (tools/out/uibatch-*.png):
+  - **HUD level right-aligned** against a fixed edge 10 px left of the HP
+    bar (L10+ used to clip into it). GlyphLayout color-before-setText.
+  - **Hotbar select popup**: selectHeld (wheel/1-8/RMB-equip choke point)
+    shows the item name rarity-colored above the HP/mana bars, 1.5 s hold +
+    0.5 s fade; empty slot clears. Test hook `MMO_SELECT_TEST=slot[,delay]`
+    (fires the real selectHotbar path, re-fires every 6 s for MMO_SHOT
+    runs — documented in TESTING.md).
+  - **Shop columns uniform**: name left, cost right-aligned at the row
+    edge; gold tint when affordable, dim red when not.
+  - **"Heals N" tooltip line** on heal-ability weapons (ItemRegistry.
+    Ability += heal). Server applies ability.heal FLAT (room.ts) — no roll
+    scaling, so the base number is shown with no roll tag, by design.
+  - **ScrollRegion** (one reusable helper in GameUi): raw glScissor via the
+    1-virtual-px = uiScale-physical-px mapping (HUD ortho guarantees it),
+    proportional gold thumb, track-click jump, thumb drag via new
+    GameUi.drag, wheel via GameUi.scrolled — WorldScreen routes the wheel
+    into the UI whenever a window is open (can't cycle the hotbar).
+    Applied to: NPC dialog text, shop buy list, Weave offer list (panel now
+    clamps to vh-16 for the 540 min canvas). Row hit-tests are
+    view-guarded so half-scrolled rows can't be clicked.
+  - Owner feel-checks: wheel speed (~1 row/notch), thumb width/tint, popup
+    timing vs a full status-effect row, gold cost color.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes

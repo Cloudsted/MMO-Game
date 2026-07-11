@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { gameConstants } from "../src/constants.js";
 import { RegistryService, isEquippable, abilityDmgClass, EQUIP_SLOTS } from "../src/registry.js";
-import { mintItem, ensureItemInstance } from "../src/items.js";
+import { mintItem, mintItemFlat, ensureItemInstance } from "../src/items.js";
 import { encode, decodeClientToServer, decodeMasterToShard, RoomStateSchema } from "../src/protocol.js";
 
 const reg = new RegistryService();
@@ -122,6 +122,38 @@ describe("mintItem equipment rolls", () => {
     const minted = mintItem(reg, consts, "iron_cuirass", 1, "rare", scripted(0.5, 0.5, 0.0, 0.99, pick, 0.37, 0.99));
     const mag = Object.values(minted.mods!)[0]!;
     expect(Number.isInteger(mag)).toBe(true);
+  });
+});
+
+describe("mintItemFlat — shop / /give / dashboard grants (owner 2026-07-11)", () => {
+  it("mints exact base stats: no stats field, exact durability, never mods", () => {
+    const sword = mintItemFlat(reg, consts, "iron_sword", 1, "common");
+    expect(sword.stats, "no roll lines in the tooltip — the flat item IS the base item").toBeUndefined();
+    expect(sword.mods).toBeUndefined();
+    expect(sword.maxDur).toBe(reg.items["iron_sword"]!.durability); // rarityMult(common) = 1, no ±spread
+    expect(sword.dur).toBe(sword.maxDur);
+  });
+
+  it("is deterministic: two flat mints of the same item+rarity are identical", () => {
+    const a = mintItemFlat(reg, consts, "iron_helm", 1, "epic");
+    const b = mintItemFlat(reg, consts, "iron_helm", 1, "epic");
+    expect(a).toEqual(b);
+    // rarity durability multiplier still applies — exactly, without the ±10%
+    const d = consts.items.durability;
+    expect(a.maxDur).toBe(Math.round(reg.items["iron_helm"]!.durability! * d.rarityMult["epic"]!));
+  });
+
+  it("leaves stackables and trinkets plain (mergeable / no durability)", () => {
+    const bread = mintItemFlat(reg, consts, "bread", 5, "common");
+    expect(bread).toEqual({ item: "bread", qty: 5, rarity: "common" });
+    const charm = mintItemFlat(reg, consts, "lucky_locket", 1, "rare");
+    expect(charm.dur).toBeUndefined(); // trinkets never wear
+    expect(charm.stats).toBeUndefined();
+  });
+
+  it("loot minting still rolls (mintItem is untouched — flat is only the counter)", () => {
+    const rolled = mintItem(reg, consts, "iron_sword", 1, "common", scripted(1, 1, 1, 0.99));
+    expect(rolled.stats).toBeDefined(); // the loot path keeps its variance
   });
 });
 

@@ -98,6 +98,14 @@ const UPDATE = process.env.GOLDEN_UPDATE === "1";
  *  explain room-by-room — its legitimacy IS the atelier/features control.
  *  ══════════════════════════════════════════════════════════════════════════
  *
+ *  forest grid+features updated 2026-07-11 (owner batch): the `forest-march`
+ *  portal moved out of the north pond — (240,30) → (248,22), the dry shelf on
+ *  the pond's NE shore. The old arch stood IN the water (its clearAbove cut a
+ *  hole in the pond surface and its apron painted the pond floor); the move
+ *  restores the pond byte-for-byte from pristine gen. Features moved because
+ *  the wayshrine `nearPortals` scatter re-dealt around the new portal. Every
+ *  other room held byte-identical.
+ *
  *  atelier/dungeon/grounds/hub/maw
  *  share a features hash: it is the hash of the EMPTY ScatterResult — no
  *  prefab scatter. greenhood_run has no scatter either, but its authored
@@ -110,7 +118,7 @@ const GOLDEN: Record<string, { grid: string; features: string }> = {
   desert: { grid: "eca195a445488168e3f6b00cbb6ad0882cd17e11", features: "f908e575dd8e4b5f1fea511bc7a034d1a02ccb55" },
   dungeon: { grid: "d877dc5637398046bc6f4cf37c3384a366cb09ee", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
   emberfells: { grid: "21b8a45d7b87817dd6fda1e849c0dbbd18cbfd31", features: "4608f78baf0ca48c66686e051d638693a41ce3aa" },
-  forest: { grid: "ebbb73d83f366b050c0bfff5e19ca79390fc13d4", features: "4ce7137d3ce38a1e7f0981d8342b2f57b3060ed4" },
+  forest: { grid: "c36932511aafaf66411fad21f5f69b1a291f5cf3", features: "a47bee9c0f2ddbd79ada1036eea64dc47869856e" },
   foundry: { grid: "3c97b4804675e8666fd54d9a9223098eef5a0532", features: "6c4725467c0187a91bc129fdddf81b885bc8b3db" },
   gloomfen: { grid: "1030b99171288f0055cce414b32e9f3ccbdb2d7f", features: "986429b8853b04c7dd3a5dc6c6c37572f0201e1f" },
   greenhood_run: { grid: "e9b2f22aeea06e8188a712f7412ccb5339bf1409", features: "3d75f2e784f6244c6660eba46e1709d9b4836f29" },

@@ -87,6 +87,10 @@ export type AttackChoice =
  * with pitch) and off cooldown; several usable at once → weighted roll.
  * When everything in range is cooling down, mixed kits CLOSE toward melee
  * (a skeleton advances between bow shots) while pure-ranged mobs hold.
+ * `hasLos` gates the RANGED options (projectile/pillars): without a sight
+ * line they read as out of range, so the existing dead-band behavior kicks
+ * in — the mob advances instead of shooting the wall (evaluated lazily,
+ * once, and only after every other check passed — this runs at 10 Hz).
  */
 export function chooseAttack(
   mob: Entity,
@@ -95,7 +99,8 @@ export function chooseAttack(
   now: number,
   attackRange: number,
   meleeGrace: number,
-  meleeReachY: number
+  meleeReachY: number,
+  hasLos?: () => boolean
 ): AttackChoice {
   const d = Math.hypot(target.pos.x - mob.pos.x, target.pos.z - mob.pos.z);
   const dy = Math.abs(target.pos.y - mob.pos.y);
@@ -103,6 +108,8 @@ export function chooseAttack(
   let inRange = false;
   let meleeInRange = false;
   let hasMelee = false;
+  let los: boolean | null = null; // lazy one-shot LOS (only rays when a ranged option is otherwise live)
+  const seesTarget = () => (los ??= hasLos ? hasLos() : true);
   for (const o of options) {
     if (o.ability.kind === "melee") hasMelee = true;
     if (d < o.minRange) continue;
@@ -110,7 +117,7 @@ export function chooseAttack(
       if (d > (o.ability.range ?? 2) + meleeGrace || dy > meleeReachY) continue;
       meleeInRange = true;
     } else if (o.ability.kind === "projectile" || o.ability.kind === "pillars") {
-      if (d > attackRange) continue;
+      if (d > attackRange || !seesTarget()) continue;
     }
     inRange = true;
     if ((mob.combat!.cooldowns.get(o.id) ?? 0) > now) continue;
@@ -147,7 +154,13 @@ export function tickBrain(
   def: ResolvedMob,
   players: Entity[],
   now: number,
-  attackReachY: number = Number.POSITIVE_INFINITY
+  attackReachY: number = Number.POSITIVE_INFINITY,
+  /** voxel LOS to a candidate — PROXIMITY acquisition only (a mob may not
+   *  notice you through a wall just because you're inside aggroRadius; the
+   *  Sunscour temple bug). Damage threat and pack assist deliberately bypass
+   *  it: if you actually hit a mob it knows, and packs still rally. Called
+   *  only for candidates that pass every cheaper check first (10 Hz budget). */
+  hasLos?: (p: Entity) => boolean
 ): BrainDecision {
   const b = mob.brain!;
   const none: BrainDecision = { move: null, attack: null, faceYaw: null };
@@ -210,7 +223,10 @@ export function tickBrain(
   for (const p of alive.values()) {
     const d = distTo(p.pos.x, p.pos.z);
     const threat = b.threat.get(p.id) ?? 0;
-    if (threat <= 0 && d > def.aggroRadius) continue; // not hostile yet, out of aggro range
+    if (threat <= 0) {
+      if (d > def.aggroRadius) continue; // not hostile yet, out of aggro range
+      if (hasLos && !hasLos(p)) continue; // in range but behind a wall: unseen
+    }
     const score = threat * THREAT_WEIGHT - d + (p.id === b.targetId ? STICKINESS_BONUS : 0);
     if (score > bestScore) {
       bestScore = score;

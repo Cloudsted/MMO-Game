@@ -1381,6 +1381,7 @@ function itemCard(it) {
   html += '<div class="ico"><canvas class="icn" data-c="' + it.icon[0] + '" data-r="' + it.icon[1] + '" width="48" height="48"></canvas></div>';
   html += '<div style="flex:1;min-width:0">';
   html += '<p class="inm">' + esc(it.name) + tierBadge(it.tier) + ' <span class="badge">' + esc(it.kind) + '</span></p>';
+  html += '<div class="mono muted" style="font-size:10px;margin:0 0 2px">' + esc(it.id) + '</div>';
   var stat = [];
   if (it.damage !== null) stat.push('<b>' + it.damage + '</b> dmg');
   if (it.ability) stat.push('<a href="#abilities-' + esc(it.ability.id) + '" title="' + esc(it.ability.summary) + '">' + esc(it.ability.id) + '</a>');

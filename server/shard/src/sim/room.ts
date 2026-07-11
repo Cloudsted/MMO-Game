@@ -13,7 +13,7 @@ import {
   isEquippable,
   loadRoomDefs,
   makeLogger,
-  mintItem,
+  mintItemFlat,
   resolveMob,
   RegistryService,
   WORLD_HEIGHT,
@@ -1381,12 +1381,20 @@ export class RoomSim {
     return out;
   }
 
+  /** Voxel line-of-sight from a mob's eye (~1.4) to a target's chest (~1.0).
+   *  Gates proximity aggro, ranged attack choice, and (from impact points)
+   *  AoE splash — never damage threat or pack assist. */
+  private mobSeesTarget(mob: Entity, tgt: Entity): boolean {
+    return this.world.lineOfSight(mob.pos.x, mob.pos.y + 1.4, mob.pos.z, tgt.pos.x, tgt.pos.y + 1.0, tgt.pos.z);
+  }
+
   /** Mob brain wants to attack: pick a usable option from the mob's kit
    *  (range windows, cooldowns, melee vertical gate — weighted when several
    *  qualify) and start it on the shared FSM. "close" tells the caller
    *  nothing connects from this distance (dead band between melee reach and
    *  a bow's minRange, target up a ledge, reloading while a melee option
-   *  exists) — the tick advances the mob instead. */
+   *  exists, ranged kit without line-of-sight) — the tick advances the mob
+   *  instead of letting it shoot walls. */
   private mobAttack(mob: Entity, target: Entity, now: number): "started" | "wait" | "close" {
     const def = this.reg.mobs[mob.brain!.mobId];
     if (!def) return "wait";
@@ -1414,7 +1422,8 @@ export class RoomSim {
       now,
       resolved.attackRange,
       this.consts.combat.meleeRangeGrace,
-      this.consts.combat.meleeVerticalReach
+      this.consts.combat.meleeVerticalReach,
+      () => this.mobSeesTarget(mob, target)
     );
     if (choice.kind !== "use") return choice.kind;
     const { option } = choice;
@@ -1644,6 +1653,9 @@ export class RoomSim {
     const amount = Math.max(1, Math.round(raw));
     tgt.health.hp -= amount;
     tgt.combat!.lastDamagedAt = now;
+    // mob idle-reset clock: dealing OR taking damage counts as engagement
+    if (src.brain) src.brain.lastCombatAt = now;
+    if (tgt.brain) tgt.brain.lastCombatAt = now;
     this.broadcastEvent({ kind: "dmg", src: src.id, tgt: tgt.id, amount, crit }, tgt.pos.x, tgt.pos.z);
 
     // on-hit hooks: armor wears on physical hits taken; thorns reflects
@@ -1721,6 +1733,9 @@ export class RoomSim {
     const src = this.entities.get(tgt.combat!.dotSrcId) ?? tgt;
     tgt.health.hp -= amount;
     tgt.combat!.lastDamagedAt = now;
+    // DoT bites keep the idle-reset clock running on both parties too
+    if (src.brain) src.brain.lastCombatAt = now;
+    if (tgt.brain) tgt.brain.lastCombatAt = now;
     this.broadcastEvent({ kind: "dmg", src: src.id, tgt: tgt.id, amount, crit: false }, tgt.pos.x, tgt.pos.z);
     if (tgt.kind === "mob" && src !== tgt) {
       const srcSession = this.sessions.get(src.id);
@@ -1800,9 +1815,17 @@ export class RoomSim {
   }
 
   /** Death drops: the entire inventory (and, by default, worn equipment —
-   *  combat.deathDropsEquipment) becomes a bag at the death spot. */
+   *  combat.deathDropsEquipment) becomes a bag at the death spot.
+   *  `combat.keepInventoryOnDeath` short-circuits the WHOLE thing (owner
+   *  2026-07-11, "for now"): nothing drops anywhere — PvP clearing included —
+   *  and the entire drop path below stays intact for the day it's re-enabled. */
   private dropPlayerInventory(session: PlayerSession): void {
     const now = Date.now();
+    if (this.consts.combat.keepInventoryOnDeath) {
+      session.send({ t: "died", x: session.entity.pos.x, y: session.entity.pos.y, z: session.entity.pos.z });
+      this.log.info(`${session.character.name} died (kept inventory)`);
+      return;
+    }
     const items = session.slots.filter((s): s is ItemStack => s !== null);
     if (this.consts.combat.deathDropsEquipment) {
       items.push(...session.equipment.filter((s): s is ItemStack => s !== null));
@@ -2349,7 +2372,9 @@ export class RoomSim {
       this.system(session, "Not enough gold.");
       return;
     }
-    const leftover = addItem(this.reg, session.slots, mintItem(this.reg, this.consts, itemId, qty, "common"));
+    // FLAT mint (owner: shop items have base stats, no rolls, no mods) —
+    // "you always know what you are getting" at the counter
+    const leftover = addItem(this.reg, session.slots, mintItemFlat(this.reg, this.consts, itemId, qty, "common"));
     if (leftover === qty) {
       this.system(session, "Your bags are full.");
       return;
@@ -2432,7 +2457,9 @@ export class RoomSim {
         }
         const qty = Math.max(1, parseInt(args[1] ?? "1", 10) || 1);
         const rarity = args[2] && this.reg.rarities[args[2]] ? args[2]! : "common";
-        addItem(this.reg, session.slots, mintItem(this.reg, this.consts, itemId, qty, rarity));
+        // FLAT mint like the shop: /give hands out exact base stats (staging
+        // and tests need known quantities, not lottery tickets)
+        addItem(this.reg, session.slots, mintItemFlat(this.reg, this.consts, itemId, qty, rarity));
         this.touchInv(session);
         this.system(session, `Gave ${qty}x ${rarity} ${itemId}.`);
         break;
@@ -2732,12 +2759,37 @@ export class RoomSim {
         e.renderable.anim = "idle";
         continue;
       }
+      // idle full-heal (owner 2026-07-11): a wounded mob that neither dealt
+      // nor took damage for idleResetSec AND has no live target gets the
+      // SAME reset treatment as breaking its leash — state → return (walk
+      // home healing 20%/s, full heal on arrival), target dropped, threat
+      // cleared. Spent bossHpBelowPct arcs stay spent, exactly like a leash
+      // reset (they only re-arm on respawn — onBossSpawned). A live target
+      // blocks it, so an actively kiting player can't watch it heal mid-fight.
+      {
+        const b = e.brain;
+        // no lastCombatAt = never fought (every wound path stamps it) — not
+        // eligible; the clock starts at the first real combat interaction
+        if (
+          e.health!.hp < e.health!.maxHp &&
+          b.state !== "return" &&
+          b.lastCombatAt !== undefined &&
+          now - b.lastCombatAt > this.consts.mobs.idleResetSec * 1000
+        ) {
+          const tgt = b.targetId !== null ? this.entities.get(b.targetId) : undefined;
+          if (!tgt || !tgt.health || tgt.combat?.act === "dead") {
+            b.state = "return";
+            b.targetId = null;
+            b.threat.clear();
+          }
+        }
+      }
       // melee attacks only land within the vertical reach; a kit with any
       // projectile aims with real pitch, so height barely matters to it
       const reachY = this.attackOptionsOf(resolved).some((o) => o.ability.kind === "projectile")
         ? Number.POSITIVE_INFINITY
         : this.consts.combat.meleeVerticalReach;
-      const decision = tickBrain(e, resolved, players, now, reachY);
+      const decision = tickBrain(e, resolved, players, now, reachY, (p) => this.mobSeesTarget(e, p));
       const speed = resolved.moveSpeed * slowMult(e.combat!, now);
       let moved = false;
       if (decision.move) {
@@ -2948,6 +3000,8 @@ export class RoomSim {
         const d = Math.hypot(tgt.pos.x - f.x, tgt.pos.z - f.z);
         if (d > f.radius) continue;
         if (tgt.pos.y - f.y > 2.5 || f.y - tgt.pos.y > 1.5) continue; // same floor
+        // a pillar can't burn through a wall (no splash-through-walls threat)
+        if (!this.world.lineOfSight(f.x, f.y + 1.0, f.z, tgt.pos.x, tgt.pos.y + 1.0, tgt.pos.z, 0.25)) continue;
         f.hitIds.add(tgt.id);
         this.applyDamage(owner, tgt, f.damage, "magic");
       }
@@ -2968,11 +3022,28 @@ export class RoomSim {
     }
     if (p.aoeRadius > 0) {
       const splash = Math.max(1, Math.round(p.damage * 0.7));
+      // splash origin: a projectile that died on a WALL stops up to ~0.85 m
+      // INSIDE the block (substep length) — back it out along its flight to
+      // open air so the LOS test below judges from the caster's side of the
+      // wall, not from inside it (splash must not leak through walls, and
+      // legitimately exposed targets near the impact must still be hit)
+      let ox = p.x;
+      let oy = p.y;
+      let oz = p.z;
+      const vm = Math.hypot(p.vx, p.vy, p.vz) || 1;
+      for (let i = 0; i < 8 && this.world.solidAt(ox, oy, oz); i++) {
+        ox -= (p.vx / vm) * 0.25;
+        oy -= (p.vy / vm) * 0.25;
+        oz -= (p.vz / vm) * 0.25;
+      }
       for (const tgt of this.targetsOf(owner)) {
         if (tgt === directHit) continue;
         const d = Math.hypot(tgt.pos.x - p.x, tgt.pos.z - p.z);
         if (d > p.aoeRadius) continue;
         if (Math.abs(tgt.pos.y + 0.9 - p.y) > 3) continue; // roughly the same floor
+        // splash needs a sight line from the impact — no more fireballs
+        // building threat through the temple wall
+        if (!this.world.lineOfSight(ox, oy, oz, tgt.pos.x, tgt.pos.y + 1.0, tgt.pos.z, 0.25)) continue;
         this.applyDamage(owner, tgt, splash, p.dmgClass);
         if (p.debuff) this.applyDebuff(tgt, p.debuff, owner);
       }

@@ -160,6 +160,36 @@ public class GameUi {
     // inventory drag (click-to-pick, click-to-place)
     private int carrying = -1;
 
+    // hotbar-select name popup (Minecraft-style): the selected item's name
+    // shows centered above the hp/mana bars, rarity-colored, held ~1.5 s
+    // then fading ~0.5 s. selectHeld() refreshes it; empty slot clears it.
+    private String heldPopupText = null;
+    private final Color heldPopupColor = new Color(Color.WHITE);
+    private float heldPopupAge = 0;
+
+    /** Reusable scroll state for one clipped list/text region (all virtual-
+     *  canvas coords). Content taller than the view gets a right-edge
+     *  scrollbar: wheel over the region scrolls, the thumb click-drags, a
+     *  track click jumps. Rendering clips through scissorOn/scissorOff. */
+    private static final class ScrollRegion {
+        final Rectangle view = new Rectangle();   // visible viewport (incl. the bar strip)
+        final Rectangle track = new Rectangle();  // scrollbar track at the right edge
+        final Rectangle thumb = new Rectangle();  // draggable thumb
+        float contentH = 0;                       // measured content height
+        float scroll = 0;                         // px scrolled down from the top
+        float grabDy = 0;                         // thumb-local grab offset while dragging
+
+        float max() { return Math.max(0, contentH - view.height); }
+        boolean scrollable() { return contentH > view.height + 0.5f; }
+        void clamp() { scroll = MathUtils.clamp(scroll, 0, max()); }
+    }
+
+    private static final float SCROLLBAR_W = 8;
+    private final ScrollRegion dialogScroll = new ScrollRegion();
+    private final ScrollRegion shopScroll = new ScrollRegion();
+    private final ScrollRegion enchantScroll = new ScrollRegion();
+    private ScrollRegion draggingScroll = null;
+
     private final Net net;
     private final ItemRegistry reg;
     private final Texture icons;
@@ -252,6 +282,16 @@ public class GameUi {
     public void selectHeld(int slot) {
         held = slot;
         heldPredictedUntil = System.currentTimeMillis() + 800;
+        // select-name popup: rarity-colored item name above the hp bar
+        Stack s = slot >= 0 && slot < 8 ? slots[slot] : null;
+        if (s != null) {
+            ItemRegistry.Item def = reg.item(s.item);
+            heldPopupText = def != null ? def.name : s.item;
+            heldPopupColor.set(reg.rarityColor(s.rarity));
+            heldPopupAge = 0;
+        } else {
+            heldPopupText = null; // empty hand: no popup
+        }
     }
 
     public void setInventory(List<Stack> list, int held, List<Stack> equip) {
@@ -363,6 +403,8 @@ public class GameUi {
         shopOpen = !enchantOpen && autoOpenShop && !shopEntries.isEmpty();
         autoOpenShop = false;
         window = Window.DIALOG;
+        dialogScroll.scroll = shopScroll.scroll = enchantScroll.scroll = 0;
+        draggingScroll = null;
     }
 
     public void addChat(String channel, String from, String text) {
@@ -459,6 +501,7 @@ public class GameUi {
         window = Window.NONE;
         carrying = -1;
         shopOpen = false;
+        draggingScroll = null;
     }
 
     public void focusChat() {
@@ -515,6 +558,8 @@ public class GameUi {
                 closeWindow();
                 return true;
             }
+            // scrollbar first: thumb drag / track jump on the visible list
+            if (!right && scrollbarClick(activeScroll(), x, y)) return true;
             if (enchantOpen) {
                 // pick a target (any equippable — so a FULL item can still be unpicked)
                 for (int i = 0; i < 24; i++) {
@@ -524,9 +569,9 @@ public class GameUi {
                     }
                 }
                 Stack target = enchantTarget >= 0 ? slots[enchantTarget] : null;
-                // weave: click an offer row
+                // weave: click an offer row (rows scroll — hits must be in view)
                 for (int i = 0; i < enchantRowRects.size() && i < enchantOffers.size(); i++) {
-                    if (!enchantRowRects.get(i).contains(x, y)) continue;
+                    if (!enchantRowRects.get(i).contains(x, y) || !enchantScroll.view.contains(x, y)) continue;
                     EnchantOffer offer = enchantOffers.get(i);
                     if (target != null) {
                         boolean dup = target.mods != null && target.mods.containsKey(offer.id);
@@ -551,7 +596,7 @@ public class GameUi {
             }
             if (shopOpen) {
                 for (int i = 0; i < shopRowRects.size() && i < shopEntries.size(); i++) {
-                    if (shopRowRects.get(i).contains(x, y)) {
+                    if (shopRowRects.get(i).contains(x, y) && shopScroll.view.contains(x, y)) {
                         net.send(mmo.client.net.Protocol.buy(dialogNpc, shopEntries.get(i).item, 1));
                         return true;
                     }
@@ -624,6 +669,10 @@ public class GameUi {
      *  plain click) or on the panel background keeps carrying, so the
      *  click-then-click placement mode still works. Returns consumed. */
     public boolean release(int sx, int syTopDown, int button) {
+        if (button == 0 && draggingScroll != null) { // finish a scrollbar drag
+            draggingScroll = null;
+            return true;
+        }
         if (button != 0 || window != Window.INVENTORY || carrying < 0) return false;
         float y = vh - syTopDown / (float) uiScale;
         float x = sx / (float) uiScale;
@@ -652,11 +701,103 @@ public class GameUi {
         return true;
     }
 
+    // ---------- scroll regions ----------
+
+    /** The scroll region the open window shows right now (null = none). */
+    private ScrollRegion activeScroll() {
+        if (window != Window.DIALOG) return null;
+        if (enchantOpen) return enchantScroll;
+        if (shopOpen) return shopScroll;
+        return dialogScroll;
+    }
+
+    /** Mouse wheel while a window is open: scrolls the hovered region.
+     *  Routed from WorldScreen INSTEAD of the hotbar cycle. Returns consumed. */
+    public boolean scrolled(float amountY) {
+        ScrollRegion r = activeScroll();
+        if (r == null || !r.scrollable()) return false;
+        float mx = Gdx.input.getX() / (float) uiScale, my = vh - Gdx.input.getY() / (float) uiScale;
+        if (!r.view.contains(mx, my)) return false;
+        r.scroll += amountY * 40f; // ~one list row per notch
+        r.clamp();
+        return true;
+    }
+
+    /** Mouse drag routed from WorldScreen while a window is open — moves a
+     *  grabbed scrollbar thumb. Returns consumed. */
+    public boolean drag(int sx, int syTopDown) {
+        if (draggingScroll == null) return false;
+        dragScrollTo(draggingScroll, vh - syTopDown / (float) uiScale);
+        return true;
+    }
+
+    /** This frame's scrollbar geometry for the region (track + thumb). */
+    private void layoutScrollbar(ScrollRegion r) {
+        r.clamp();
+        r.track.set(r.view.x + r.view.width - SCROLLBAR_W, r.view.y, SCROLLBAR_W, r.view.height);
+        float th = Math.max(24, r.view.height * (r.view.height / Math.max(1f, r.contentH)));
+        float span = r.view.height - th;
+        float ty = r.view.y + span * (1f - (r.max() <= 0 ? 0f : r.scroll / r.max()));
+        r.thumb.set(r.track.x, ty, SCROLLBAR_W, th);
+    }
+
+    /** Track + thumb at the region's right edge (only when it overflows). */
+    private void drawScrollbar(ShapeRenderer shapes, ScrollRegion r) {
+        if (!r.scrollable()) return;
+        layoutScrollbar(r);
+        shapes.setColor(0.03f, 0.03f, 0.05f, 0.95f);
+        shapes.rect(r.track.x, r.track.y, r.track.width, r.track.height);
+        boolean hot = draggingScroll == r;
+        shapes.setColor(hot ? 0.75f : 0.55f, hot ? 0.68f : 0.5f, hot ? 0.48f : 0.36f, 1f);
+        shapes.rect(r.thumb.x + 1, r.thumb.y, r.thumb.width - 2, r.thumb.height);
+    }
+
+    /** touchDown on a scrollbar: thumb = start drag; track = jump + drag. */
+    private boolean scrollbarClick(ScrollRegion r, float x, float y) {
+        if (r == null || !r.scrollable()) return false;
+        layoutScrollbar(r);
+        if (r.thumb.contains(x, y)) {
+            draggingScroll = r;
+            r.grabDy = y - r.thumb.y;
+            return true;
+        }
+        if (r.track.contains(x, y)) {
+            draggingScroll = r;
+            r.grabDy = r.thumb.height / 2f;
+            dragScrollTo(r, y);
+            return true;
+        }
+        return false;
+    }
+
+    private void dragScrollTo(ScrollRegion r, float my) {
+        layoutScrollbar(r);
+        float span = r.view.height - r.thumb.height;
+        if (span <= 0) return;
+        float ty = MathUtils.clamp(my - r.grabDy, r.view.y, r.view.y + span);
+        r.scroll = r.max() * (1f - (ty - r.view.y) / span);
+        r.clamp();
+    }
+
+    /** Pixel-exact scissor around a virtual-canvas rect (the HUD ortho maps
+     *  1 virtual px to exactly uiScale physical px). Scissor state applies at
+     *  flush time — callers flush the active batch around on/off. */
+    private void scissorOn(Rectangle r) {
+        Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_SCISSOR_TEST);
+        Gdx.gl.glScissor(Math.round(r.x * uiScale), Math.round(r.y * uiScale),
+            Math.round(r.width * uiScale), Math.round(r.height * uiScale));
+    }
+
+    private void scissorOff() {
+        Gdx.gl.glDisable(com.badlogic.gdx.graphics.GL20.GL_SCISSOR_TEST);
+    }
+
     // ---------- rendering ----------
 
     public void update(float dt) {
         for (ChatLine l : chat) l.age += dt;
         floaters.removeIf(f -> (f.age += dt) > 1.4f);
+        if (heldPopupText != null) heldPopupAge += dt;
     }
 
     /** Always-on HUD: bars, hotbar, chat, minimap, floaters, death overlay. */
@@ -792,11 +933,32 @@ public class GameUi {
             }
         }
 
-        // level + gold + bar labels
+        // level + gold + bar labels — the level is RIGHT-aligned against the
+        // hp bar's left edge so 2-3 digit levels grow leftward instead of
+        // clipping into the bar (color before setText: GlyphLayout bakes it)
         font.setColor(1f, 0.9f, 0.6f, 1f);
-        font.draw(batch, "Lv " + level, hbX - 52, barY + barH);
+        layout.setText(font, "Lv " + level);
+        font.draw(batch, layout, MathUtils.floor(hbX - 10 - layout.width), barY + barH);
         font.setColor(1f, 0.85f, 0.3f, 1f);
         font.draw(batch, gold + "g", hbX + hbW + 12, barY + barH);
+
+        // hotbar-select name popup: centered above the bars, rarity-colored,
+        // ~1.5 s hold then a 0.5 s fade (Minecraft-style)
+        if (heldPopupText != null && heldPopupAge < 2f && !dead) {
+            float alpha = heldPopupAge < 1.5f ? 1f : 1f - (heldPopupAge - 1.5f) / 0.5f;
+            float lyy = barY + barH + 52;
+            // dark 4-way outline keeps the name legible over the world
+            font.setColor(0f, 0f, 0f, alpha * 0.75f);
+            layout.setText(font, heldPopupText);
+            float lx = MathUtils.floor(w / 2f - layout.width / 2f);
+            font.draw(batch, layout, lx - 1, lyy);
+            font.draw(batch, layout, lx + 1, lyy);
+            font.draw(batch, layout, lx, lyy - 1);
+            font.draw(batch, layout, lx, lyy + 1);
+            font.setColor(heldPopupColor.r, heldPopupColor.g, heldPopupColor.b, alpha);
+            layout.setText(font, heldPopupText);
+            font.draw(batch, layout, lx, lyy);
+        }
         font.getData().setScale(0.5f);
         font.setColor(1f, 1f, 1f, 0.9f);
         font.draw(batch, hp + "/" + maxHp, hbX + 6, barY + barH - 3);
@@ -972,7 +1134,7 @@ public class GameUi {
         }
         if (hovered == null && window == Window.DIALOG && shopOpen) {
             for (int i = 0; i < shopRowRects.size() && i < shopEntries.size(); i++) {
-                if (shopRowRects.get(i).contains(mx, my)) {
+                if (shopRowRects.get(i).contains(mx, my) && shopScroll.view.contains(mx, my)) {
                     shopItem = shopEntries.get(i).item;
                     break;
                 }
@@ -1015,6 +1177,12 @@ public class GameUi {
             int spdPct = Math.round((s.statSpd - 1f) * 100f);
             if (spdPct != 0) {
                 tip.add(new TipLine(String.format("Speed  %+d%%", spdPct), pctColor(spdPct), 1f));
+            }
+            // healing weapons: the ability's flat heal — the server applies
+            // ability.heal unscaled (no rarity/roll math), so show the base
+            ItemRegistry.Ability wab = def.ability != null ? reg.ability(def.ability) : null;
+            if (wab != null && wab.heal > 0) {
+                tip.add(new TipLine("Heals  " + (int) wab.heal, new Color(0.5f, 1f, 0.55f, 1f), 1f));
             }
         }
         if ("armor".equals(def.kind) && def.armor > 0) {
@@ -1277,12 +1445,37 @@ public class GameUi {
 
     private void renderDialog(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, int w, int h) {
         float pw = enchantOpen ? 600 : (shopOpen ? 560 : 460);
-        float ph = enchantOpen ? 540 : (shopOpen ? 420 : 200);
+        // the weave panel is taller than the 540 minimum canvas — clamp and
+        // let its offer list scroll instead of spilling off-screen
+        float ph = enchantOpen ? Math.min(540, h - 16) : (shopOpen ? 420 : 200);
         float px = MathUtils.floor(w / 2f - pw / 2f), py = MathUtils.floor(h / 2f - ph / 2f);
         shopRowRects.clear();
         enchantRowRects.clear();
         enchantRemoveRects.clear();
         enchantRemoveIds.clear();
+
+        // scroll regions: view rects + content heights measured up front so
+        // the shapes pass can clip row backgrounds and draw the scrollbar
+        float topY = py + ph - 88; // enchant offer-list anchor (top row's base)
+        if (enchantOpen) {
+            enchantScroll.view.set(px + 12, py + 64, pw / 2f - 18, (topY + 30) - (py + 64));
+            enchantScroll.contentH = enchantOffers.size() * 34f;
+            enchantScroll.clamp();
+        } else if (shopOpen) {
+            shopScroll.view.set(px + 12, py + 44, pw / 2f - 20, ph - 104);
+            shopScroll.contentH = shopEntries.size() * 34f + 6f;
+            shopScroll.clamp();
+        } else {
+            dialogScroll.view.set(px + 12, py + 44, pw - 24, ph - 90);
+            float total = 4;
+            font.setColor(0.92f, 0.92f, 0.92f, 1f); // color before setText
+            for (String line : dialogLines) {
+                layout.setText(font, "\"" + line + "\"", font.getColor(), pw - 40, com.badlogic.gdx.utils.Align.left, true);
+                total += layout.height + 14;
+            }
+            dialogScroll.contentH = total;
+            dialogScroll.clamp();
+        }
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         panel(shapes, px, py, pw, ph);
@@ -1306,16 +1499,21 @@ public class GameUi {
         } else {
             enchantToggleRect = null;
         }
+        if (!enchantOpen && !shopOpen) drawScrollbar(shapes, dialogScroll);
         if (enchantOpen) {
             Stack tgt = enchantTarget >= 0 ? slots[enchantTarget] : null;
-            float topY = py + ph - 88;
-            // left: the weaving menu (one row per perk)
+            // left: the weaving menu (one row per perk), clipped + scrollable
+            shapes.flush();
+            scissorOn(enchantScroll.view);
             for (int i = 0; i < enchantOffers.size(); i++) {
-                Rectangle row = new Rectangle(px + 14, topY - i * 34, pw / 2f - 26, 30);
+                Rectangle row = new Rectangle(px + 14, topY - i * 34 + enchantScroll.scroll, pw / 2f - 34, 30);
                 enchantRowRects.add(row);
                 shapes.setColor(0.2f, 0.16f, 0.28f, 1f);
                 shapes.rect(row.x, row.y, row.width, row.height);
             }
+            shapes.flush();
+            scissorOff();
+            drawScrollbar(shapes, enchantScroll);
             // right: your gear (click one as the target)
             float cell = 40, gap = 4;
             for (int i = 0; i < 24; i++) {
@@ -1349,12 +1547,18 @@ public class GameUi {
             }
         }
         if (shopOpen) {
+            // buy list, clipped + scrollable (long shops overflow the panel)
+            shapes.flush();
+            scissorOn(shopScroll.view);
             for (int i = 0; i < shopEntries.size(); i++) {
-                Rectangle row = new Rectangle(px + 14, py + ph - 96 - i * 34, pw / 2f - 24, 30);
+                Rectangle row = new Rectangle(px + 14, py + ph - 96 - i * 34 + shopScroll.scroll, pw / 2f - 34, 30);
                 shopRowRects.add(row);
                 shapes.setColor(0.16f, 0.18f, 0.24f, 1f);
                 shapes.rect(row.x, row.y, row.width, row.height);
             }
+            shapes.flush();
+            scissorOff();
+            drawScrollbar(shapes, shopScroll);
             // inventory mini-grid for selling (right half)
             float cell = 40, gap = 4;
             for (int i = 0; i < 24; i++) {
@@ -1384,6 +1588,8 @@ public class GameUi {
             String rhead = target == null ? "Pick a piece of gear"
                 : itemName(target) + "   " + usedSlots(target) + "/" + capSlots(target) + " slots";
             font.draw(batch, rhead, px + pw / 2f + 14, py + ph - 44);
+            batch.flush();
+            scissorOn(enchantScroll.view);
             for (int i = 0; i < enchantOffers.size() && i < enchantRowRects.size(); i++) {
                 EnchantOffer o = enchantOffers.get(i);
                 Rectangle row = enchantRowRects.get(i);
@@ -1418,6 +1624,8 @@ public class GameUi {
                 font.draw(batch, sub, row.x + 26, row.y + 11);
                 font.getData().setScale(1f);
             }
+            batch.flush();
+            scissorOff();
             for (int i = 0; i < 24; i++) {
                 Stack s = slots[i];
                 if (s == null) continue;
@@ -1443,26 +1651,41 @@ public class GameUi {
             font.draw(batch, "Finer gear holds more weavings, and holds them stronger.", px + 14, py + 50);
             font.getData().setScale(1f);
         } else if (!shopOpen) {
+            // dialog text, clipped + scrollable (long-winded NPCs overflow)
+            batch.flush();
+            scissorOn(dialogScroll.view);
             font.setColor(0.92f, 0.92f, 0.92f, 1f);
-            float ly = py + ph - 46;
+            float ly = py + ph - 46 + dialogScroll.scroll;
             for (String line : dialogLines) {
-                layout.setText(font, "\"" + line + "\"", font.getColor(), pw - 28, com.badlogic.gdx.utils.Align.left, true);
+                layout.setText(font, "\"" + line + "\"", font.getColor(), pw - 40, com.badlogic.gdx.utils.Align.left, true);
                 font.draw(batch, layout, px + 14, ly);
                 ly -= layout.height + 14;
             }
+            batch.flush();
+            scissorOff();
         } else {
             font.setColor(0.8f, 0.9f, 1f, 1f);
             font.draw(batch, "Buy (click)", px + 14, py + ph - 44);
             font.draw(batch, shopBuys ? "Sell — RMB your item" : "(doesn't buy)", px + pw / 2f + 14, py + ph - 44);
+            batch.flush();
+            scissorOn(shopScroll.view);
             for (int i = 0; i < shopEntries.size() && i < shopRowRects.size(); i++) {
                 ShopEntry e = shopEntries.get(i);
                 ItemRegistry.Item def = reg.item(e.item);
                 Rectangle row = shopRowRects.get(i);
                 drawIcon(batch, e.item, row.x + 4, row.y + 3, 24);
                 boolean affordable = gold >= e.price;
+                // name left in its column, cost RIGHT-aligned in a fixed
+                // column so the prices line up whatever the name's length
+                // (color before setText — GlyphLayout bakes it)
                 font.setColor(affordable ? 1f : 0.6f, affordable ? 1f : 0.4f, affordable ? 1f : 0.4f, 1f);
-                font.draw(batch, (def != null ? def.name : e.item) + "   " + e.price + "g", row.x + 34, row.y + 21);
+                font.draw(batch, def != null ? def.name : e.item, row.x + 34, row.y + 21);
+                font.setColor(affordable ? 1f : 0.7f, affordable ? 0.85f : 0.4f, affordable ? 0.35f : 0.35f, 1f);
+                layout.setText(font, e.price + "g");
+                font.draw(batch, layout, row.x + row.width - 8 - layout.width, row.y + 21);
             }
+            batch.flush();
+            scissorOff();
             for (int i = 0; i < 24; i++) {
                 Stack s = slots[i];
                 if (s == null) continue;

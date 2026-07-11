@@ -93,6 +93,10 @@ export interface MobBrain {
     stuckTicks?: number;
     /** distance to the goal last tick (progress detection for stuckTicks) */
     lastGoalD?: number;
+    /** ms epoch of the last combat interaction (damage dealt OR taken, DoT
+     *  bites included) — mobs.idleResetSec past this with no live target, a
+     *  wounded mob gets the leash-reset treatment (idle full-heal) */
+    lastCombatAt?: number;
 }
 /** A dropped loot bag in the world. */
 export interface LootBag {

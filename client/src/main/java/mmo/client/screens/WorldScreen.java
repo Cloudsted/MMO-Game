@@ -223,6 +223,14 @@ public class WorldScreen extends ScreenAdapter {
     private float resizeTestT = 0;
     private boolean resizeTestDone = false;
 
+    // test hook: MMO_SELECT_TEST=slot[,delayMs] selects that hotbar slot
+    // delayMs after entering the world, then re-selects every 6 s (the
+    // MMO_SHOT cadence) so the select-name popup is mid-display in captures —
+    // input injection can't reach the GLFW window from a background process
+    private final String selectTest = System.getenv("MMO_SELECT_TEST");
+    private float selectTestT = 0;
+    private float selectTestNext = -1;
+
     // test hook: MMO_SHOT=<dirOrPrefix> writes glReadPixels screenshots from
     // inside the render loop — immune to window occlusion/session lock, which
     // makes external PrintWindow captures come back white.
@@ -299,7 +307,14 @@ public class WorldScreen extends ScreenAdapter {
         // fires the held ability.
         Gdx.input.setInputProcessor(new InputAdapter() {
             @Override public boolean mouseMoved(int x, int y) { accumulateMouse(x, y); return false; }
-            @Override public boolean touchDragged(int x, int y, int pointer) { accumulateMouse(x, y); return false; }
+            @Override public boolean touchDragged(int x, int y, int pointer) {
+                // window open: a drag moves a grabbed scrollbar thumb.
+                // accumulateMouse self-guards on cursor catch, so mouse-look
+                // never sees these events either way.
+                if ((ui.anyWindowOpen() || !Gdx.input.isCursorCatched()) && ui.drag(x, y)) return true;
+                accumulateMouse(x, y);
+                return false;
+            }
             @Override public boolean keyTyped(char c) { return ui.keyTyped(c); }
             @Override public boolean scrolled(float amountX, float amountY) {
                 // wheel cycles the hotbar (selection only — LMB uses the item).
@@ -307,7 +322,10 @@ public class WorldScreen extends ScreenAdapter {
                 // click moves instantly; waiting for the server's inv echo both
                 // lagged a round trip AND ate fast clicks (each event computed
                 // from the still-unmoved held index).
-                if (!welcomed || ui.dead || ui.anyWindowOpen() || !Gdx.input.isCursorCatched()) return false;
+                if (!welcomed || ui.dead) return false;
+                // window open (cursor free): the wheel scrolls that window's
+                // list region — it must NEVER also cycle the hotbar
+                if (ui.anyWindowOpen() || !Gdx.input.isCursorCatched()) return ui.scrolled(amountY);
                 int steps = Math.round(amountY); // fast scrolls batch >1 notch
                 if (steps == 0) steps = amountY > 0 ? 1 : -1;
                 selectHotbar(((ui.held + steps) % 8 + 8) % 8);
@@ -1629,6 +1647,27 @@ public class WorldScreen extends ScreenAdapter {
                     if ("enchant".equals(pendingTalkHook)) ui.autoOpenEnchant = true;
                     pendingTalkHook = null;
                 }
+            }
+        }
+
+        // hotbar-select hook (see field comment): fire at delayMs, re-fire
+        // every 6 s so any MMO_SHOT frame catches the popup mid-display
+        if (selectTest != null && ready) {
+            if (selectTestNext < 0) {
+                float delay = 5f;
+                String[] parts = selectTest.split(",");
+                if (parts.length > 1) {
+                    try { delay = Integer.parseInt(parts[1].trim()) / 1000f; } catch (NumberFormatException ignored) {}
+                }
+                selectTestNext = delay;
+            }
+            selectTestT += dt;
+            if (selectTestT >= selectTestNext) {
+                selectTestNext += 6f;
+                try {
+                    int slot = Integer.parseInt(selectTest.split(",")[0].trim());
+                    selectHotbar(MathUtils.clamp(slot, 0, 7));
+                } catch (NumberFormatException ignored) {}
             }
         }
 

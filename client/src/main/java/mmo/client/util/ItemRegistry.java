@@ -64,11 +64,15 @@ public final class ItemRegistry {
     public static final class Ability {
         public final String kind, fx;
         public final float windupMs, activeMs, castTimeMs, recoverMs, cooldownMs, manaCost, projSpeed;
+        /** self abilities: flat hp restored on release (server: ability.heal —
+         *  NOT scaled by rarity or per-instance rolls); 0 = none */
+        public final float heal;
         public final boolean canMoveWhile;
 
         Ability(JsonObject o) {
             kind = o.get("kind").getAsString();
             fx = o.get("fx").getAsString();
+            heal = o.has("heal") ? o.get("heal").getAsFloat() : 0;
             windupMs = o.has("windupMs") ? o.get("windupMs").getAsFloat() : 0;
             activeMs = o.has("activeMs") ? o.get("activeMs").getAsFloat() : 0;
             castTimeMs = o.has("castTimeMs") ? o.get("castTimeMs").getAsFloat() : 0;

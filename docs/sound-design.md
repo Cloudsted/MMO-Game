@@ -69,8 +69,12 @@ Library: `D:\Google Drive\My Drive\Files\Assets\Sound Library`.
 - Mob -> library mapping (agent MUST existsSync-validate every path; the elemental-magic packs
   pad FOUR spaces before bracket ids — copy names exactly):
   slime: Pro v1.3 Fun Creatures squelchy picks; wolf: USFX Ultimate Animal Sounds Wolf/Dog Attacks
-  (idle growl/attack snarl/hurt yelp/die whimper); bandit: DOGLS GAME SOUNDPACK grunts (mp3 ->
-  transcode); skeleton: USFX Monsters Small + bone foley if findable; cacto: Monsters Small;
+  (idle growl/attack snarl/hurt yelp/die whimper); bandit: Pro v1.3 Voice/Human Male B — growls +
+  a chuckle (idle), attack barks + short battle shouts, pain sets, deaths (the original DOGLS mp3
+  grunts read high-pitched/fey, owner-rejected 2026-07-11; DOGLS is retired from the pipeline);
+  marauder family (marauder/enforcer/thrace/grole): Pro v1.3 Voice/Human Male C — a second
+  distinct male throat at pitch 0.93 (replaced Goblin Fairy pitched 0.85, rejected same day);
+  skeleton: USFX Monsters Small + bone foley if findable; cacto: Monsters Small;
   raptor: Monsters Medium screech; minotaur_boss: Monsters Huge; boar: Animal_Impersonations pig
   or USFX critters; giant_spider: insect/critter chitter; bog_serpent: USFX Reptiles Snake hiss;
   mantrap: Monsters Medium bite; lizardman: Pro v1.3 Goblin Fairy (aggressive picks) or Monsters
@@ -90,8 +94,17 @@ Library: `D:\Google Drive\My Drive\Files\Assets\Sound Library`.
 ### 7. Pipeline notes
 - All new sources -> build-sounds.mjs mapping; WARN-and-continue on missing (existing behavior);
   validate paths with existsSync BEFORE finalizing (LESSONS: agent-cataloged paths drift).
-- MP3 sources (DOGLS) transcode fine via ffmpeg. Keep SFX mono/44.1k/-18 LUFS/3s cap conventions;
-  footsteps cap 1s.
+- MP3 sources transcode fine via ffmpeg (DOGLS was the only mp3 pack and is retired as of
+  2026-07-11 — every current vocal source is .wav). Keep SFX mono/44.1k/-18 LUFS/3s cap
+  conventions; footsteps cap 1s.
+- Human-male vocal kits in the library (for future human mobs): Pro v1.3 Voice/Human Male B
+  (richest: 30 attacks, 30 battle shouts, 55 pains, 30 deaths, 12 growls — bandits use it),
+  Human Male C (13 attacks, 8 shouts, 12 pains, 19 deaths, 5 growls — marauders use it),
+  Human Male D (10 attack groans, 15 shouts, 13 pains, 12 deaths; NO growl/idle material —
+  unused, reserved for a third human family), Human Male A (files are plain `voice_male_*`,
+  modern-soldier flavor). Real-VO alternates: Super Dialogue Audio Pack v1 (Grunting/Shouting/
+  Damage/Death x 3 actors), USFX Hero Voice Jack (worded lines). Male C series have real gaps:
+  `attack_09` and `hurt_pain_12` do not exist.
 - manifest.json shape grows params; AudioEngine constructor parses them (backward compatible).
 
 ### 8. Verification

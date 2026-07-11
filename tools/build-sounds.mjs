@@ -57,7 +57,6 @@ const SURV = `${USFX}/Survival Sounds Pro`;
 const MON = `${USFX}/Monsters Sounds Pro`;
 const ANIM = `${USFX}/Ultimate Animal Sounds`;
 const GHOST = `${USFX}/Ghost Sounds Pro`;
-const DOGLS = "DOGLS GAME SOUNDPACK/Dogl's Sound Pack";
 
 /** n sources from a zero-padded Pro-v1.3-style series: base_01.wav.. */
 const pad = (base, from, to) =>
@@ -209,10 +208,32 @@ const SFX = {
   wolf_hurt: vocal(num(`${ANIM}/Dog Cries/Dog Cries (High Pitched Cry)`, 1, 2), { pitchVar: 0.08 }),
   wolf_die: vocal(num(`${ANIM}/Dog Cries/Dog Cries (High Pitched Cry)`, 3, 4)),
 
-  bandit_idle: vocal([P(`${DOGLS}/Battle_Grunt_1.mp3`), P(`${DOGLS}/Battle_Grunt_2.mp3`)], { vol: 0.8 }),
-  bandit_attack: vocal([P(`${DOGLS}/Battle_Attack_1.mp3`), P(`${DOGLS}/Battle_Attack_2.mp3`), P(`${DOGLS}/Battle_Attack_3.mp3`)]),
-  bandit_hurt: vocal([P(`${DOGLS}/Pain_Grunt_1.mp3`), P(`${DOGLS}/Pain_Grunt_2.mp3`), P(`${DOGLS}/Pain_Grunt_3.mp3`)], { pitchVar: 0.08 }),
-  bandit_die: vocal([P(`${DOGLS}/Pain_Grunt_6.mp3`), P(`${DOGLS}/Pain_Grunt_7.mp3`)]),
+  // bandit family (bandit/greenhood_poacher/powder_brigand/sandpicker): REAL
+  // human male combat vocals — Pro v1.3 Human Male B (the DOGLS mp3 grunts
+  // read high-pitched/fey; owner-rejected 2026-07-11). Gruff growls + one
+  // menacing chuckle for camp idles; attack barks + short war shouts.
+  bandit_idle: vocal([
+    P(`${VOICE}/Human Male B/voice_male_b_growl_06.wav`),
+    P(`${VOICE}/Human Male B/voice_male_b_growl_07.wav`),
+    P(`${VOICE}/Human Male B/voice_male_b_growl_08.wav`),
+    P(`${VOICE}/Human Male B/voice_male_b_laugh_short_02.wav`),
+  ], { vol: 0.8 }),
+  bandit_attack: vocal([
+    P(`${VOICE}/Human Male B/voice_male_b_attack_set1_01.wav`),
+    P(`${VOICE}/Human Male B/voice_male_b_attack_set1_03.wav`),
+    P(`${VOICE}/Human Male B/voice_male_b_battle_shout_short_02.wav`),
+    P(`${VOICE}/Human Male B/voice_male_b_battle_shout_short_05.wav`),
+  ]),
+  bandit_hurt: vocal([
+    P(`${VOICE}/Human Male B/voice_male_b_hurt_pain_set_1_01.wav`),
+    P(`${VOICE}/Human Male B/voice_male_b_hurt_pain_set_1_03.wav`),
+    P(`${VOICE}/Human Male B/voice_male_b_hurt_pain_set_2_02.wav`),
+  ], { pitchVar: 0.08 }),
+  bandit_die: vocal([
+    P(`${VOICE}/Human Male B/voice_male_b_death_low_02.wav`),
+    P(`${VOICE}/Human Male B/voice_male_b_death_low_03.wav`),
+    P(`${VOICE}/Human Male B/voice_male_b_death_high_04.wav`),
+  ]),
 
   skeleton_idle: vocal([...num(`${MON}/Small monster Breathing/Small monster Breathing`, 1, 2), P(`${MON}/Small monster Growls/Small monster Growls 1.wav`)], { vol: 0.8 }),
   skeleton_attack: vocal(num(`${MON}/Small monster attack/Small monster attack`, 1, 2)),
@@ -313,11 +334,33 @@ const SFX = {
 
   // --- Sundered City roster (all sources proven above; pitch knobs keep the
   // shared pools reading as distinct creatures) ---
-  // marauder: the goblin-fairy warband voice pitched DOWN into orc territory
-  marauder_idle: vocal(pad(`${VOICE}/Goblin Fairy/goblin_fairy_growl`, 1, 3), { pitch: 0.85, vol: 0.85 }),
-  marauder_attack: vocal(pad(`${VOICE}/Goblin Fairy/goblin_fairy_attack_low`, 1, 3), { pitch: 0.85 }),
-  marauder_hurt: vocal(pad(`${VOICE}/Goblin Fairy/goblin_fairy_hurt_pain`, 1, 3), { pitch: 0.85, pitchVar: 0.08 }),
-  marauder_die: vocal(pad(`${VOICE}/Goblin Fairy/goblin_fairy_death`, 1, 2), { pitch: 0.85 }),
+  // marauder family (marauder/bandit_enforcer/thrace_redcap/quartermaster_
+  // grole — the human heavies): Pro v1.3 Human Male C, a SECOND real male
+  // throat distinct from the bandits' Male B, dropped a touch (0.93) for
+  // bulk. (The old goblin-fairy source pitched 0.85 still read fey —
+  // owner-rejected 2026-07-11 with the DOGLS bandits.)
+  marauder_idle: vocal([
+    P(`${VOICE}/Human Male C/voice_male_c_growl_01.wav`),
+    P(`${VOICE}/Human Male C/voice_male_c_growl_02.wav`),
+    P(`${VOICE}/Human Male C/voice_male_c_growl_03.wav`),
+    P(`${VOICE}/Human Male C/voice_male_c_laugh_01_short_01.wav`),
+  ], { pitch: 0.93, vol: 0.85 }),
+  marauder_attack: vocal([
+    P(`${VOICE}/Human Male C/voice_male_c_attack_01.wav`),
+    P(`${VOICE}/Human Male C/voice_male_c_attack_03.wav`),
+    P(`${VOICE}/Human Male C/voice_male_c_battle_shout_01.wav`),
+    P(`${VOICE}/Human Male C/voice_male_c_battle_shout_charge_01.wav`),
+  ], { pitch: 0.93 }),
+  marauder_hurt: vocal([
+    P(`${VOICE}/Human Male C/voice_male_c_hurt_pain_01.wav`),
+    P(`${VOICE}/Human Male C/voice_male_c_hurt_pain_02.wav`),
+    P(`${VOICE}/Human Male C/voice_male_c_hurt_pain_04.wav`),
+  ], { pitch: 0.93, pitchVar: 0.08 }),
+  marauder_die: vocal([
+    P(`${VOICE}/Human Male C/voice_male_c_death_02.wav`),
+    P(`${VOICE}/Human Male C/voice_male_c_death_05.wav`),
+    P(`${VOICE}/Human Male C/voice_male_c_death_08.wav`),
+  ], { pitch: 0.93 }),
   // gravehound: the wolf voice dropped low for the horned dire beast
   gravehound_idle: vocal([...num(`${ANIM}/Wolf/Wolf howls`, 1, 2), P(`${ANIM}/Wolf/Wolf barks 1.wav`)], { pitch: 0.85, vol: 0.85 }),
   gravehound_attack: vocal(num(`${ANIM}/Dog Attacks/Dog Attacks`, 1, 3), { pitch: 0.85 }),

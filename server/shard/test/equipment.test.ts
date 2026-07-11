@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import type { CharacterSnapshot, ItemStack, ServerToClient } from "@fantasy-mmo/common";
-import { loadRoomDef } from "@fantasy-mmo/common";
+import { gameConstants, loadRoomDef } from "@fantasy-mmo/common";
 import { RoomSim, type PlayerSession } from "../src/sim/room.js";
 
 function makeCharacter(
@@ -114,17 +114,34 @@ describe("equipment slots", () => {
     expect(a.session.equipment[0]).toBeNull();
   });
 
-  it("death drops worn equipment into the bag alongside the inventory", () => {
+  it("death drops worn equipment into the bag alongside the inventory (keep-inventory OFF)", () => {
+    // the drop path is parked behind combat.keepInventoryOnDeath — flip it
+    // off so the deathDropsEquipment branch stays covered
+    gameConstants().combat.keepInventoryOnDeath = false;
+    try {
+      const a = join("c1", "Alice", [cap(), null, null, null, charm()], [sword()]);
+      const b = join("c2", "Bob");
+      sim.applyDamage(b.session.entity, a.session.entity, 99999);
+      expect(a.last("died")).toBeDefined();
+      expect(a.session.equipment.every((s) => s === null)).toBe(true);
+      expect(a.session.slots.every((s) => s === null)).toBe(true);
+      const bag = [...sim.allEntities()].find((e) => e.kind === "loot");
+      expect(bag).toBeDefined();
+      const items = bag!.loot!.items.map((s) => s.item).sort();
+      expect(items).toEqual(["iron_sword", "leather_cap", "lucky_locket"]);
+    } finally {
+      gameConstants().combat.keepInventoryOnDeath = true;
+    }
+  });
+
+  it("keep-inventory (the shipped default) leaves worn equipment on the corpse's owner", () => {
     const a = join("c1", "Alice", [cap(), null, null, null, charm()], [sword()]);
     const b = join("c2", "Bob");
     sim.applyDamage(b.session.entity, a.session.entity, 99999);
     expect(a.last("died")).toBeDefined();
-    expect(a.session.equipment.every((s) => s === null)).toBe(true);
-    expect(a.session.slots.every((s) => s === null)).toBe(true);
-    const bag = [...sim.allEntities()].find((e) => e.kind === "loot");
-    expect(bag).toBeDefined();
-    const items = bag!.loot!.items.map((s) => s.item).sort();
-    expect(items).toEqual(["iron_sword", "leather_cap", "lucky_locket"]);
+    expect(a.session.equipment[0]?.item).toBe("leather_cap"); // still worn
+    expect(a.session.slots.some((s) => s?.item === "iron_sword")).toBe(true);
+    expect([...sim.allEntities()].find((e) => e.kind === "loot")).toBeUndefined();
   });
 
   it("persistence reports carry equipment", () => {

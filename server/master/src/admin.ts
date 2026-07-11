@@ -16,7 +16,7 @@ import {
   loadRoomDefs,
   logSink,
   makeLogger,
-  mintItem,
+  mintItemFlat,
   mobAllAbilityIds,
   mobAttacks,
   readJsonFile,
@@ -942,9 +942,11 @@ export async function handleAdmin(
         json(res, 400, { error: "bad rarity" });
         return true;
       }
-      // weapons are per-instance (stat rolls + durability) — never stacked
+      // weapons are per-instance (durability) — never stacked. FLAT mint
+      // (owner 2026-07-11): admin-granted items carry exact base stats, no
+      // rolls, no mod lottery — same as the shop and /give.
       const qty = def.kind === "weapon" ? 1 : Math.min(99, Math.max(1, Math.floor(Number(q("qty")) || 1)));
-      const stack = mintItem(reg, gameConstants(), itemId, qty, rarity);
+      const stack = mintItemFlat(reg, gameConstants(), itemId, qty, rarity);
       const inventory = [...character.inventory];
       let slot = inventory.findIndex((s) => s === null);
       if (slot < 0 && inventory.length < INV_SIZE) {

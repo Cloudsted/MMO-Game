@@ -49,6 +49,12 @@ const ConstantsSchema = z.object({
     armorK: z.number(),
     /** death drops equipped armor/trinkets into the bag too (full-loot) */
     deathDropsEquipment: z.boolean(),
+    /** keep-inventory mode (owner 2026-07-11: "no player drops items on
+     *  death" — for now): when true, death drops NOTHING (items, equipment,
+     *  gold all kept, PvP clearing included). The whole drop path stays
+     *  intact behind this knob; deathDropsEquipment only matters when it's
+     *  off again. */
+    keepInventoryOnDeath: z.boolean(),
   }),
   building: z.object({
     placeRangeM: z.number(),
@@ -103,6 +109,12 @@ const ConstantsSchema = z.object({
    *  level (see registry.resolveMob). Compounding per level. These are THE
    *  difficulty knobs for reused mobs — tune here, not in mobs.json. */
   mobs: z.object({
+    /** a wounded mob that neither dealt nor took damage for this long AND has
+     *  no live target gets the leash-reset treatment (walk home healing, full
+     *  heal on arrival, threat cleared; spent bossHpBelowPct arcs stay spent —
+     *  exactly the leash semantics). Never fires mid-kite: a live target
+     *  blocks it, and any hit restarts the clock. */
+    idleResetSec: z.number(),
     scaling: z.object({
       hpPerLevel: z.number(),
       damagePerLevel: z.number(),

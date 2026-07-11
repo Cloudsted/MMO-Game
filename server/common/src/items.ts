@@ -63,6 +63,36 @@ export function mintItem(
   return stack;
 }
 
+/**
+ * Flat mint: exact base stats, zero randomness (owner 2026-07-11: "items
+ * bought in the shop should have base stats with no random rolls or affects
+ * ... same with command item giving"). Used by shop buys, admin /give, and
+ * the dashboard's character-item-add — loot drops, minRarity re-mints, and
+ * ensureItemInstance backfill keep rolling via mintItem above.
+ *  - stats: OMITTED entirely (tooltips show no roll lines — a flat item IS
+ *    the base item)
+ *  - dur/maxDur: exact `base × rarityMult` (no ±spread)
+ *  - mods: never (no lottery)
+ * Two flat mints of the same item+rarity are identical every time.
+ */
+export function mintItemFlat(
+  reg: RegistryService,
+  consts: GameConstants,
+  itemId: string,
+  qty: number,
+  rarity: string
+): ItemStack {
+  const stack: ItemStack = { item: itemId, qty, rarity };
+  const def = reg.items[itemId];
+  if (!def || !isEquippable(def.kind)) return stack;
+  if (def.durability !== undefined) {
+    const max = Math.max(1, Math.round(def.durability * (consts.items.durability.rarityMult[rarity] ?? 1)));
+    stack.maxDur = max;
+    stack.dur = max;
+  }
+  return stack;
+}
+
 /** Roll the dynamic-modifier lottery for a freshly minted equippable.
  *  Returns null on a miss (the common case) — `mods` stays absent, which is
  *  what merge guards and the enchanter's "unmodified only" rule key on. */

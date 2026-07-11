@@ -54,8 +54,8 @@
       "id": "forest-march",
       "label": "The Strangler's March",
       "target": "stranglers_march",
-      "x": 240,
-      "z": 30,
+      "x": 248,
+      "z": 22,
       "r": 2.2
     },
     {
@@ -410,7 +410,7 @@
       "on": { "kind": "bossDeath", "mob": "aelthir" },
       "actions": [
         { "kind": "announce", "text": "Somewhere far off, something answers." },
-        { "kind": "spawnMobs", "mob": "gravehound", "count": 4, "radius": 8 }
+        { "kind": "spawnMobs", "mob": "gravehound", "count": 4, "radius": 8, "level": 17 }
       ]
     },
     {

@@ -168,8 +168,10 @@ for (let i = 0; i < 30 && state.portals.length === 0; i++) await sleep(100);
 const northGate = state.portals.find((p) => p.id === "forest-march");
 expect(!!northGate && northGate.target === "stranglers_march", "forest north gate targets the march");
 expect(!!northGate && northGate.open === true, "the march gate is always open (a thoroughfare, no gating)");
-await tp(ws, state, 240, 35);
-await goTo(ws, state, 240, 31.5, 1.2);
+// (2026-07-11: the north gate moved out of the pond to dry ground at 248,22
+// — the arch used to stand IN the water and its stamp cut a hole in the pond)
+await tp(ws, state, 248, 28);
+await goTo(ws, state, 248, 23.5, 1.2);
 state.transfer = null;
 ws.send(JSON.stringify({ t: "usePortal", portalId: "forest-march" }));
 const t1 = await waitTransfer(state);

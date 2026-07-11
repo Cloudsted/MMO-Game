@@ -251,12 +251,17 @@ export declare class RoomSim {
     private samePack;
     /** Living packmates an allyHeal from `caster` would touch (caster included per spec). */
     private healableAllies;
+    /** Voxel line-of-sight from a mob's eye (~1.4) to a target's chest (~1.0).
+     *  Gates proximity aggro, ranged attack choice, and (from impact points)
+     *  AoE splash — never damage threat or pack assist. */
+    private mobSeesTarget;
     /** Mob brain wants to attack: pick a usable option from the mob's kit
      *  (range windows, cooldowns, melee vertical gate — weighted when several
      *  qualify) and start it on the shared FSM. "close" tells the caller
      *  nothing connects from this distance (dead band between melee reach and
      *  a bow's minRange, target up a ledge, reloading while a melee option
-     *  exists) — the tick advances the mob instead. */
+     *  exists, ranged kit without line-of-sight) — the tick advances the mob
+     *  instead of letting it shoot walls. */
     private mobAttack;
     /** Tracked horizontal velocity for prediction — zero once move packets go
      *  quiet, clamped so a burst packet can't fake super-speed. */
@@ -293,7 +298,10 @@ export declare class RoomSim {
     private applyDotDamage;
     private kill;
     /** Death drops: the entire inventory (and, by default, worn equipment —
-     *  combat.deathDropsEquipment) becomes a bag at the death spot. */
+     *  combat.deathDropsEquipment) becomes a bag at the death spot.
+     *  `combat.keepInventoryOnDeath` short-circuits the WHOLE thing (owner
+     *  2026-07-11, "for now"): nothing drops anywhere — PvP clearing included —
+     *  and the entire drop path below stays intact for the day it's re-enabled. */
     private dropPlayerInventory;
     handleRespawn(session: PlayerSession): void;
     /** H key: hub-bound transfer from anywhere. Dead players use R instead;

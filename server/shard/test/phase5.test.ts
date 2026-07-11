@@ -144,13 +144,29 @@ describe("pvp regions", () => {
     expect(hitOutside).toBe(false);
   });
 
-  it("drops free-for-all bags on deaths inside the zone", () => {
+  it("drops free-for-all bags on deaths inside the zone (keep-inventory OFF)", () => {
+    // the drop path is parked behind combat.keepInventoryOnDeath — exercise
+    // the PvP FFA branch with the knob off so it stays covered
+    consts.combat.keepInventoryOnDeath = false;
+    try {
+      const inv: Array<ItemStack | null> = [{ item: "iron_sword", qty: 1, rarity: "rare" }];
+      const a = joinRoom(forest, "c1", "Alice", 84, 354, inv);
+      const b = joinRoom(forest, "c2", "Bob", 84, 355, inv);
+      forest.applyDamage(b.session.entity, a.session.entity, 9999);
+      const bag = [...forest.allEntities()].find((e) => e.kind === "loot")!;
+      expect(bag.loot!.owner).toBeNull(); // FFA immediately
+    } finally {
+      consts.combat.keepInventoryOnDeath = true;
+    }
+  });
+
+  it("keep-inventory covers the PvP clearing too (nothing drops there either)", () => {
     const inv: Array<ItemStack | null> = [{ item: "iron_sword", qty: 1, rarity: "rare" }];
     const a = joinRoom(forest, "c1", "Alice", 84, 354, inv);
     const b = joinRoom(forest, "c2", "Bob", 84, 355, inv);
     forest.applyDamage(b.session.entity, a.session.entity, 9999);
-    const bag = [...forest.allEntities()].find((e) => e.kind === "loot")!;
-    expect(bag.loot!.owner).toBeNull(); // FFA immediately
+    expect([...forest.allEntities()].find((e) => e.kind === "loot")).toBeUndefined();
+    expect(a.session.slots.filter(Boolean)).toHaveLength(1);
   });
 });
 

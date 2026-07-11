@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { CharacterSnapshot, ItemStack, ServerToClient } from "@fantasy-mmo/common";
-import { BLOCK, gameConstants, loadRoomDef, mintItem, RegistryService } from "@fantasy-mmo/common";
+import { BLOCK, gameConstants, loadRoomDef, mintItem, mintItemFlat, RegistryService } from "@fantasy-mmo/common";
 import { RoomSim, type PlayerSession } from "../src/sim/room.js";
 import { advanceFsm, inMeleeCone, interruptIfCasting, startAbility } from "../src/sim/combat.js";
 import { addItem, rollLoot, normalizeInventory, INV_SIZE } from "../src/sim/loot.js";
@@ -145,6 +145,21 @@ describe("loot", () => {
       if (!slots[i]) slots[i] = { item: "iron_sword", qty: 1, rarity: "common" };
     }
     expect(addItem(reg, slots, { item: "longbow", qty: 1, rarity: "common" })).toBe(1);
+  });
+
+  it("flat-minted instances obey the merge guards (dur present = never merges)", () => {
+    const slots = normalizeInventory([]);
+    // a rolled sword and a flat sword occupy separate slots (both carry dur;
+    // weapons are stack-1 anyway — the point is nothing crashes or merges)
+    addItem(reg, slots, mintItem(reg, consts, "iron_sword", 1, "common"));
+    addItem(reg, slots, mintItemFlat(reg, consts, "iron_sword", 1, "common"));
+    expect(slots.filter((s) => s?.item === "iron_sword")).toHaveLength(2);
+    // flat stackables carry no instance fields and merge like any plain stack
+    addItem(reg, slots, mintItemFlat(reg, consts, "bread", 3, "common"));
+    addItem(reg, slots, mintItemFlat(reg, consts, "bread", 4, "common"));
+    const breads = slots.filter((s) => s?.item === "bread");
+    expect(breads).toHaveLength(1);
+    expect(breads[0]!.qty).toBe(7);
   });
 });
 
@@ -684,28 +699,52 @@ describe("RoomSim gameplay", () => {
     expect(lvl).toBeDefined();
   });
 
-  it("drops the whole inventory on player death and restores on pickup after respawn", () => {
+  it("drops the whole inventory on player death and restores on pickup after respawn (keep-inventory OFF)", () => {
+    // the drop path is currently parked behind combat.keepInventoryOnDeath —
+    // flip it off to keep the path covered for the day it's re-enabled
+    consts.combat.keepInventoryOnDeath = false;
+    try {
+      const inv: Array<ItemStack | null> = [{ item: "iron_sword", qty: 1, rarity: "rare" }, { item: "bread", qty: 3, rarity: "common" }];
+      const a = join("c1", "Alice", 64, 64, inv);
+      const mob = sim.spawnMob("wolf", 66, 64, "")!;
+      sim.applyDamage(mob, a.session.entity, 9999);
+      expect(a.session.entity.combat!.act).toBe("dead");
+      expect(a.last("died")).toBeDefined();
+      expect(a.session.slots.every((s) => s === null)).toBe(true);
+      const bag = [...sim.allEntities()].find((e) => e.kind === "loot")!;
+      expect(bag).toBeDefined();
+      expect(bag.loot!.items).toHaveLength(2);
+      expect(bag.loot!.owner).toBe("c1"); // safe zone: owner-locked
+      expect(bag.loot!.expireAt).toBeNull(); // death bags persist
+
+      sim.handleRespawn(a.session);
+      expect(a.session.entity.combat!.act).toBe("idle");
+      expect(a.session.entity.health!.hp).toBe(a.session.entity.health!.maxHp);
+      // walk of shame skipped: teleport the entity to the bag for the pickup test
+      a.session.entity.pos.x = bag.pos.x;
+      a.session.entity.pos.z = bag.pos.z;
+      sim.handlePickup(a.session, bag.id);
+      expect(a.session.slots.filter(Boolean)).toHaveLength(2);
+    } finally {
+      consts.combat.keepInventoryOnDeath = true;
+    }
+  });
+
+  it("keeps inventory, equipment, and gold on death when keepInventoryOnDeath is on (the shipped default)", () => {
+    expect(consts.combat.keepInventoryOnDeath).toBe(true); // the owner's current setting
     const inv: Array<ItemStack | null> = [{ item: "iron_sword", qty: 1, rarity: "rare" }, { item: "bread", qty: 3, rarity: "common" }];
     const a = join("c1", "Alice", 64, 64, inv);
+    a.session.gold = 123;
+    a.session.equipment[0] = { item: "leather_cap", qty: 1, rarity: "common" };
     const mob = sim.spawnMob("wolf", 66, 64, "")!;
     sim.applyDamage(mob, a.session.entity, 9999);
     expect(a.session.entity.combat!.act).toBe("dead");
-    expect(a.last("died")).toBeDefined();
-    expect(a.session.slots.every((s) => s === null)).toBe(true);
-    const bag = [...sim.allEntities()].find((e) => e.kind === "loot")!;
-    expect(bag).toBeDefined();
-    expect(bag.loot!.items).toHaveLength(2);
-    expect(bag.loot!.owner).toBe("c1"); // safe zone: owner-locked
-    expect(bag.loot!.expireAt).toBeNull(); // death bags persist
-
-    sim.handleRespawn(a.session);
-    expect(a.session.entity.combat!.act).toBe("idle");
-    expect(a.session.entity.health!.hp).toBe(a.session.entity.health!.maxHp);
-    // walk of shame skipped: teleport the entity to the bag for the pickup test
-    a.session.entity.pos.x = bag.pos.x;
-    a.session.entity.pos.z = bag.pos.z;
-    sim.handlePickup(a.session, bag.id);
+    expect(a.last("died")).toBeDefined(); // the death screen still shows
+    // nothing dropped, nothing lost
+    expect([...sim.allEntities()].find((e) => e.kind === "loot")).toBeUndefined();
     expect(a.session.slots.filter(Boolean)).toHaveLength(2);
+    expect(a.session.equipment[0]?.item).toBe("leather_cap");
+    expect(a.session.gold).toBe(123);
   });
 
   it("enforces loot ownership locks against other players", () => {
@@ -759,17 +798,17 @@ describe("RoomSim gameplay", () => {
     expect(a.last("chat")?.text).toContain("gold");
     a.session.gold = 100;
 
-    // handleBuy MINTS the sword, and minting rolls the modifier lottery. A common
-    // item takes a mod 4% of the time and that mod is a curse 15% of the time — and
-    // a curse cuts the sell price by 15% (16 -> 13). That is a ~0.6% chance for this
-    // assertion to fail on correct code, which it duly did. Pin the roll instead of
-    // widening the assertion: the sell FORMULA is what this test is about.
-    const rand = vi.spyOn(Math, "random").mockReturnValue(0.99); // above every mod chance
+    // handleBuy FLAT-mints (owner 2026-07-11): exact base stats, exact base
+    // durability, never a mod — "you always know what you are getting". (This
+    // used to need a pinned Math.random against the mod lottery; flat minting
+    // made the shop deterministic by design.)
     sim.handleBuy(a.session, smith.id, "iron_sword", 1);
-    rand.mockRestore();
     expect(a.session.gold).toBe(60);
     const bought = a.session.slots.find((s) => s?.item === "iron_sword")!;
-    expect(bought.mods, "the pinned roll must produce an unmodified sword").toBeUndefined();
+    expect(bought.mods, "shop items never carry mods").toBeUndefined();
+    expect(bought.stats, "shop items carry no stat rolls (tooltip shows no roll lines)").toBeUndefined();
+    expect(bought.maxDur, "shop durability is the exact base").toBe(reg.items["iron_sword"]!.durability);
+    expect(bought.dur).toBe(bought.maxDur);
 
     const slot = a.session.slots.findIndex((s) => s?.item === "iron_sword");
     sim.handleSell(a.session, smith.id, slot, 1);
@@ -800,17 +839,22 @@ describe("RoomSim gameplay", () => {
   });
 
   it("persists drops and respawn timers in the room state round trip", () => {
-    const a = join("c1", "Alice", 64, 64, [{ item: "longbow", qty: 1, rarity: "epic" }]);
-    const mob = sim.spawnMob("wolf", 66, 64, "")!;
-    sim.applyDamage(mob, a.session.entity, 9999); // death bag
-    const state = sim.buildRoomState();
-    expect(state.drops.length).toBeGreaterThanOrEqual(1);
-    expect(state.drops[0]!.items[0]!.item).toBe("longbow");
+    consts.combat.keepInventoryOnDeath = false; // a death bag is the handiest persistent drop
+    try {
+      const a = join("c1", "Alice", 64, 64, [{ item: "longbow", qty: 1, rarity: "epic" }]);
+      const mob = sim.spawnMob("wolf", 66, 64, "")!;
+      sim.applyDamage(mob, a.session.entity, 9999); // death bag
+      const state = sim.buildRoomState();
+      expect(state.drops.length).toBeGreaterThanOrEqual(1);
+      expect(state.drops[0]!.items[0]!.item).toBe("longbow");
 
-    const resumed = new RoomSim(loadRoomDef("hub"), state);
-    const bags = [...resumed.allEntities()].filter((e) => e.kind === "loot");
-    expect(bags).toHaveLength(state.drops.length);
-    expect(bags[0]!.loot!.items[0]!.rarity).toBe("epic");
+      const resumed = new RoomSim(loadRoomDef("hub"), state);
+      const bags = [...resumed.allEntities()].filter((e) => e.kind === "loot");
+      expect(bags).toHaveLength(state.drops.length);
+      expect(bags[0]!.loot!.items[0]!.rarity).toBe("epic");
+    } finally {
+      consts.combat.keepInventoryOnDeath = true;
+    }
   });
 
   it("locks movement while casting and rejects dead-player moves", () => {
@@ -931,18 +975,23 @@ describe("item instances (stat variance + durability)", () => {
   });
 
   it("replicates loot bag contents rarest-first for 3D drop rendering", () => {
-    const inv: Array<ItemStack | null> = [
-      { item: "bread", qty: 3, rarity: "common" },
-      { item: "iron_sword", qty: 1, rarity: "rare" },
-    ];
-    const a = join("c1", "Alice", inv);
-    const mob = sim.spawnMob("wolf", 66, 64, "")!;
-    sim.applyDamage(mob, a.session.entity, 9999); // death drop
-    const bag = [...sim.allEntities()].find((e) => e.kind === "loot")!;
-    expect(bag.lootView).toBeDefined();
-    expect(bag.lootView!.length).toBe(2);
-    expect(bag.lootView![0]).toMatchObject({ item: "iron_sword", rarity: "rare" });
-    // rolled instance fields survive the drop → pickup round trip
-    expect(bag.loot!.items.find((s) => s.item === "iron_sword")!.dur).toBeGreaterThan(0);
+    consts.combat.keepInventoryOnDeath = false; // a death bag is the handiest multi-item drop
+    try {
+      const inv: Array<ItemStack | null> = [
+        { item: "bread", qty: 3, rarity: "common" },
+        { item: "iron_sword", qty: 1, rarity: "rare" },
+      ];
+      const a = join("c1", "Alice", inv);
+      const mob = sim.spawnMob("wolf", 66, 64, "")!;
+      sim.applyDamage(mob, a.session.entity, 9999); // death drop
+      const bag = [...sim.allEntities()].find((e) => e.kind === "loot")!;
+      expect(bag.lootView).toBeDefined();
+      expect(bag.lootView!.length).toBe(2);
+      expect(bag.lootView![0]).toMatchObject({ item: "iron_sword", rarity: "rare" });
+      // rolled instance fields survive the drop → pickup round trip
+      expect(bag.loot!.items.find((s) => s.item === "iron_sword")!.dur).toBeGreaterThan(0);
+    } finally {
+      consts.combat.keepInventoryOnDeath = true;
+    }
   });
 });
