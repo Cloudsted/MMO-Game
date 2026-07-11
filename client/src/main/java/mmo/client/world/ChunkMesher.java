@@ -11,6 +11,20 @@ import com.badlogic.gdx.utils.ShortArray;
  * quads for plants/torches/crystals.
  *
  * Vertex layout: pos3, uv2, brightness1, light2 (8 floats).
+ *
+ * The brightness float is FACE-BANDED so the fragment shader knows each
+ * quad's EXACT axis-aligned normal (screen-space-derivative normals go
+ * garbage at mesh-seam/silhouette pixel quads — LESSONS.md):
+ *   band 0   (raw 1.5 / 2.5)          cross-plant quads — 1.5 rooted/thin,
+ *                                     2.5 sway-top (voxel.vert wind test)
+ *   band f+1 (4*(f+1) + brightness)   cube/liquid/glow faces, f = face id in
+ *                                     DIRS order (-X +X -Y +Y -Z +Z);
+ *                                     brightness stays 0.275..1.0, so bands
+ *                                     never overlap and floor(br/4) decodes
+ *                                     the face exactly after interpolation
+ *                                     (all four verts of a quad share f).
+ * shadow.vert never declares a_br (location -1, skipped); item meshes carry
+ * their own un-banded a_br for the separate item shader.
  */
 public final class ChunkMesher {
     private static final int CHUNK = VoxelWorld.CHUNK;
@@ -147,7 +161,7 @@ public final class ChunkMesher {
 
                         if (b.glow) {
                             for (int i = 0; i < 4; i++) {
-                                br[i] = 1f;
+                                br[i] = 1f + (f + 1) * 4f; // face-banded (decodes to 1.0)
                                 skyL[i] = 1f;
                                 blkL[i] = 1f;
                             }
@@ -184,11 +198,14 @@ public final class ChunkMesher {
                                 skySum += p >> 4; blkSum += p & 15; cnt++;
                             }
                             int ao = (s1 && s2) ? 0 : 3 - ((s1 ? 1 : 0) + (s2 ? 1 : 0) + (sc ? 1 : 0));
-                            br[i] = BRIGHT[f] * (isLiquid ? 1f : AO_MUL[ao]);
+                            // face-banded: +4*(f+1) tells the frag this quad's
+                            // exact normal; the brightness part stays 0.275..1.0
+                            br[i] = BRIGHT[f] * (isLiquid ? 1f : AO_MUL[ao]) + (f + 1) * 4f;
                             skyL[i] = skySum / (float) cnt / 15f;
                             blkL[i] = blkSum / (float) cnt / 15f;
                         }
-                        // split the quad along the brighter diagonal (AO bands)
+                        // split the quad along the brighter diagonal (AO bands —
+                        // the constant band offset cancels on both sides)
                         boolean flip = br[0] + br[3] > br[1] + br[2] && !isLiquid;
                         target.quad(CORNERS[f], 0, tile, reg.atlasCols, wx, y, wz, br, skyL, blkL, flip);
                     }

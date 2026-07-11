@@ -17,12 +17,13 @@ varying vec3 v_worldPos;
 void main() {
     vec3 p = a_position;
 
-    // a_br > 2.0 marks the TOP verts of a wind-swaying cross plant (grass,
+    // a_br == 2.5 marks the TOP verts of a wind-swaying cross plant (grass,
     // flowers, brush) — bend them horizontally so foliage breathes. Rooted
-    // bottom verts (1.5) and all cube geometry (<= 1.0) are untouched. This
-    // sway is deliberately absent from shadow.vert (no u_time there), so the
-    // cached world shadow map never crawls.
-    if (a_br > 2.0 && u_wind > 0.0) {
+    // bottom verts (1.5) and all cube geometry (face-banded to 4.275+ by the
+    // mesher — see ChunkMesher's layout doc) are untouched. This sway is
+    // deliberately absent from shadow.vert (no u_time there), so the cached
+    // world shadow map never crawls.
+    if (a_br > 2.0 && a_br < 3.0 && u_wind > 0.0) {
         float phase = p.x * 0.7 + p.z * 0.6;
         float bend = sin(u_time * 1.3 + phase) + 0.35 * sin(u_time * 2.9 + phase * 1.8);
         p.x += bend * u_wind * 0.055;

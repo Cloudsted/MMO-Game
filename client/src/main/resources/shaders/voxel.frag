@@ -10,11 +10,24 @@ precision mediump float;
 // Directional shadows: a packed-depth shadow map from the active celestial
 // light dims the SKYLIGHT term only (u_shadowDim), so torch pools still glow
 // inside cast shadows and caves stay governed by the voxel light.
-// Faces pointing away from the light are shadowed outright (no map lookup —
-// no acne possible); lit faces compare with a slope-scaled bias in METERS,
-// so edges stay within a texel or two of the caster at every sun angle (a
-// constant bias in normalized depth was ~0.9 m here — it slid every shadow
-// edge more than a block off its corner).
+//
+// NORMALS ARE EXACT, NOT DERIVED. Block faces are axis-aligned and the
+// mesher knows each quad's direction, so it bands the face id into a_br
+// (see the decode below and ChunkMesher's layout doc). The original design
+// derived the normal from screen-space derivatives ("exact for blocks") —
+// but dFdx/dFdy are per-2x2-pixel-quad and go garbage at mesh-seam and
+// silhouette quads even on perfectly coplanar faces (LESSONS.md): facing-
+// away pixels leaked into the sampled branch with tanθ at its cap, which
+// was the whole residual artifact class — noon acne DOTS on grazing faces,
+// lit SEAM LINES around edge blocks of walls/pillars, and noisy per-pixel
+// branch/bias flips feeding distant shimmer. With the exact normal the
+// facing-away test is exact — a true back face NEVER samples the map, so
+// back-face acne is impossible — and the slope bias uses the exact tanθ.
+// Lit faces compare with a slope-scaled bias in METERS so edges stay within
+// ~2 texels of the caster at every sun angle (a constant bias in normalized
+// depth was ~0.9 m here — it slid every shadow edge more than a block off
+// its corner). Crossed plants have no single normal (two quads, double-
+// sided, wind-bent): they keep the derivative normal with |ndl|.
 
 varying vec2 v_uv;
 varying float v_br;
@@ -47,24 +60,48 @@ void main() {
     vec4 tex = texture2D(u_tiles, v_uv);
     if (tex.a < 0.5) discard;
 
+    // a_br decode (ChunkMesher bands it): band 0 = cross-plant quad (raw
+    // 1.5 rooted / 2.5 sway-top — "thin": double-sided, clamps to display
+    // brightness 0.95); band f+1 = cube/liquid/glow face 4*(f+1)+brightness,
+    // f in -X +X -Y +Y -Z +Z order. All four verts of a quad share the band,
+    // so the decode survives interpolation exactly.
+    float fid = floor(v_br * 0.25); // 0 = cross quad, 1..6 = face id + 1
+    bool thin = fid < 0.5;
+    float brv = thin ? 0.95 : v_br - fid * 4.0;
+
+    // EXACT axis-aligned normal from the face id; cross quads fall back to
+    // the screen-space-derivative normal (both of their sides count as lit
+    // via abs() below, so the facing-away leak class doesn't apply to them)
+    vec3 nrm;
+    if (thin) {
+        nrm = normalize(cross(dFdx(v_worldPos), dFdy(v_worldPos)));
+    } else {
+        float f6 = fid - 1.0;                 // 0..5 in DIRS order
+        float sgn = mod(f6, 2.0) * 2.0 - 1.0; // -1 even, +1 odd
+        nrm = vec3(0.0);
+        if (f6 < 1.5) nrm.x = sgn;
+        else if (f6 < 3.5) nrm.y = sgn;
+        else nrm.z = sgn;
+    }
+    float ndl = dot(nrm, -u_lightDir);
+    if (thin) ndl = abs(ndl);
+
     if (u_shadowDebug > 1.5) {
         // mode 2: PCF sampling internals — R = tap spread in texels beyond
         // the 1-texel floor (/8), G = PCF lit fraction, B = bias meters (/3).
-        // Black = facing away (no sampling). Mirrors the main path exactly.
-        vec3 dnrm = normalize(cross(dFdx(v_worldPos), dFdy(v_worldPos)));
-        float dndl = dot(dnrm, -u_lightDir);
-        if (v_br > 1.2) dndl = abs(dndl);
-        if (dndl <= 0.02) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
+        // Facing-away pixels (never sampled) render the EXACT-normal face id
+        // as a purple ramp (fid/8 in R and B): every pixel of one block face
+        // must read a single flat value — any speckle or per-pixel variation
+        // there means the face-id decode broke. Mirrors the main path exactly.
+        if (ndl <= 0.02) { gl_FragColor = vec4(fid / 8.0, 0.0, fid / 8.0, 1.0); return; }
         vec4 dsc = u_shadowMat * vec4(v_worldPos, 1.0);
         vec3 dspos = dsc.xyz * 0.5 + 0.5;
-        float dtanT = min(sqrt(max(1.0 - dndl * dndl, 0.0)) / dndl, 8.0);
-        float dbias = 0.02 + 1.5 * u_shadowTexel * dtanT;
+        float dtanT = min(sqrt(max(1.0 - ndl * ndl, 0.0)) / ndl, 8.0);
         vec2 dfp = fwidth(dspos.xy);
         float dspread = clamp(0.6 * max(dfp.x, dfp.y),
             u_shadowPix, u_shadowPix * (1.0 + v_dist * 0.25));
-        float dspreadM = max(dspread / u_shadowPix - 1.5, 0.0) * u_shadowTexel;
-        dbias = min(dbias + min(0.75 * fwidth(dspos.z) * u_shadowRange, 0.02 * v_dist)
-            + dspreadM * dtanT, 3.0);
+        float dspreadTex = dspread / u_shadowPix;
+        float dbias = min(0.02 + (1.5 + 2.4 * max(dspreadTex - 1.5, 0.0)) * u_shadowTexel * dtanT, 3.0);
         float dref = dspos.z - dbias / u_shadowRange;
         float dlit = 0.0;
         for (int oy = -1; oy <= 1; oy++)
@@ -90,11 +127,6 @@ void main() {
         return;
     }
 
-    // v_br > 1.2 marks thin double-sided quads (crossed plants) — clamp back
-    // to their display brightness and treat both sides as light-facing
-    bool thin = v_br > 1.2;
-    float brv = thin ? 0.95 : v_br;
-
     // cast-shadow factor from the light-space depth map
     float shadowMul = 1.0;
     if (u_shadowDim < 1.0) {
@@ -106,69 +138,46 @@ void main() {
         // shadows keep the full tuned 0.45). Applies to the facing-away
         // branch too: distant unlit-face vs lit-face dapple is the same flip.
         float effDim = mix(u_shadowDim, 0.78, clamp((v_dist - 48.0) / 96.0, 0.0, 1.0));
-        // axis-aligned face normal from screen-space derivatives (always
-        // points at the viewer, which for closed cubes IS the visible face)
-        vec3 nrm = normalize(cross(dFdx(v_worldPos), dFdy(v_worldPos)));
-        float ndl = dot(nrm, -u_lightDir);
-        if (thin) ndl = abs(ndl);
         if (ndl <= 0.02) {
-            shadowMul = effDim; // facing away from the light
+            // exact back/grazing face: shadowed by the light term alone, no
+            // map lookup — with the banded normal this branch is per-FACE,
+            // never per-pixel, so the noon "bright dot" speckle (derivative-
+            // normal pixels wobbling across this threshold into the sampled
+            // branch with tanθ at cap) cannot happen.
+            shadowMul = effDim;
         } else {
             vec4 sc = u_shadowMat * vec4(v_worldPos, 1.0);
             vec3 spos = sc.xyz * 0.5 + 0.5; // ortho: w == 1
             if (spos.x > 0.0 && spos.x < 1.0 && spos.y > 0.0 && spos.y < 1.0 && spos.z < 1.0) {
-                // bias = base + 1.5 texels of the receiver's depth slope
                 float tanT = min(sqrt(max(1.0 - ndl * ndl, 0.0)) / ndl, 8.0);
-                float biasM = 0.02 + 1.5 * u_shadowTexel * tanT;
-                // + receiver-plane footprint term: the meters of light-space
-                // depth that ONE screen pixel spans in the map. ~0 in the
-                // magnified near/mid field (near-field bias stays put), it
-                // grows with minification at distance — where a pixel covers
-                // many nearest-sampled texels, so a single tap on a sun-tilted
-                // receiver mis-reads its own depth by far more than 1.5 texels
-                // and the texel-frequency self-shadow acne aliases into the
-                // shimmering far stripes. This term covers that reconstruction
-                // error; the min() clamps peter-panning to 3 m (only reached
-                // under deep minification, where 3 m is sub-pixel and in fog).
-                // u_shadowRange converts normalized fwidth back to meters.
                 // FOOTPRINT-SCALED 3x3 PCF. The cached map is bit-identical
-                // between sun steps, so the owner-reported "distant shadows
-                // shimmer when the camera moves" was pure SAMPLING aliasing:
-                // at range one screen pixel spans MANY nearest-filtered
-                // texels (worst case: cross-plant cutout shadows — a ~50%
-                // on/off dapple at texel frequency), and a single binary tap
-                // re-rolled that coin on every sub-pixel camera move. Nine
+                // between sun steps, so distant shimmer under camera motion
+                // is pure SAMPLING aliasing: at range one screen pixel spans
+                // MANY nearest-filtered texels and a single binary tap
+                // re-rolled that coin every sub-pixel camera move. Nine
                 // compares spread over the pixel's ACTUAL map footprint
-                // (fwidth of spos.xy; min 1 texel, so near-field edges just
-                // get classic 1-texel PCF softening) estimate the footprint's
-                // lit FRACTION — the stable quantity that survives camera
-                // motion. The no-jitter map cache is untouched; only how it
-                // is SAMPLED changed.
+                // estimate the footprint's lit FRACTION — the stable quantity
+                // under camera motion. The no-jitter map cache is untouched;
+                // only how it is SAMPLED changed. The footprint estimate is
+                // the ONE remaining screen-space-derivative input; its
+                // distance-scaled clamp stays (legit footprints GROW with
+                // minification, so the cap never binds the far field) as
+                // insurance against seam-quad fwidth spikes mis-widening the
+                // kernel and mis-raising the slope bias.
                 vec2 fpUv = fwidth(spos.xy);
-                // SEAM GUARD: screen-space derivatives are per-2x2 pixel
-                // quad, and at mesh seams (every block edge — the mesher
-                // emits per-block faces) the quad math goes bad even on
-                // perfectly COPLANAR faces: the derivative normal above can
-                // flip a facing-away pixel into this branch with tanT at its
-                // 8.0 cap, and fwidth(spos.z) spikes. Un-clamped, those
-                // inputs inflated the bias to 1.6-2.8 m (vs the 0.72 m
-                // pre-PCF contract) and un-shadowed a thin line of pixels
-                // exactly along block seams — "lit grid lines on walls in
-                // full shadow". Legit footprints GROW with distance
-                // (minification), so both clamps are distance-scaled: they
-                // never bind the real far-field footprint (the distant-
-                // shimmer win), while near-wall seam spikes are crushed.
                 float spread = clamp(0.6 * max(fpUv.x, fpUv.y),
                     u_shadowPix, u_shadowPix * (1.0 + v_dist * 0.25));
-                // taps away from the receiver's center need bias for the
-                // receiver plane's own slope across the spread — but ONLY
-                // the spread BEYOND the base term's 1.5 texels: at the
-                // near-field 1-texel floor this contributes ZERO, so
-                // close-up bias stays exactly the old 0.02 + 1.5·texel·tanT
-                // contract (edges within ~2 texels of the caster).
-                float spreadM = max(spread / u_shadowPix - 1.5, 0.0) * u_shadowTexel;
-                biasM = min(biasM + min(0.75 * fwidth(spos.z) * u_shadowRange, 0.02 * v_dist)
-                    + spreadM * tanT, 3.0);
+                // bias = base 0.02 m + the receiver plane's EXACT depth slope
+                // across the sampled footprint: 1.5 texels at the near floor
+                // (the pre-PCF close-up contract — edges within ~2 texels of
+                // the caster), growing with the footprint under minification;
+                // 2.4 per extra texel covers the diagonal taps (×1.41) plus
+                // ~1 texel of single-tap depth reconstruction. This RETIRES
+                // the old fwidth(spos.z) depth term and its 0.02·v_dist
+                // clamp: both existed to cover this same minification error
+                // with a noisy derivative input that spiked at mesh seams.
+                float spreadTex = spread / u_shadowPix;
+                float biasM = min(0.02 + (1.5 + 2.4 * max(spreadTex - 1.5, 0.0)) * u_shadowTexel * tanT, 3.0);
                 float ref = spos.z - biasM / u_shadowRange;
                 float lit = 0.0;
                 for (int oy = -1; oy <= 1; oy++) {

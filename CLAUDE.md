@@ -198,13 +198,20 @@ show their block tile).
     desynced the client clock from the server's).
   - `voxel.frag` dims the SKYLIGHT term only (`u_shadowDim` 0.45) — torch
     pools still glow inside cast shadows, and cave darkness stays governed
-    by the voxel light. Face normals come from screen-space derivatives
-    (exact for blocks): faces pointing away from the light are shadowed
-    WITHOUT a map lookup (can't acne), lit faces compare with a
-    slope-scaled bias in METERS (`0.02 + 1.5·texel·tanθ`; texel size and
-    far−near passed as uniforms) so edges stay within ~2 texels of the
-    caster at every hour. Crossed plants are flagged thin/double-sided via
-    a br=1.5 vertex sentinel (shader uses |ndl|, clamps br back to 0.95).
+    by the voxel light. **Face normals are EXACT since 2026-07-11** (the
+    original design derived them from screen-space derivatives, "exact for
+    blocks; can't acne" — FALSE at mesh-seam/silhouette 2×2 pixel quads,
+    see LESSONS.md and the 2026-07-11 exact-normal entry): ChunkMesher
+    bands the face id into the br vertex attribute (`4·(face+1) +
+    brightness`, DIRS order), the frag decodes it and reconstructs the
+    axis normal, so the facing-away test is exact — a TRUE back face never
+    samples the map (back-face acne impossible, per-face not per-pixel) —
+    and lit faces compare with a slope-scaled bias in METERS
+    (`0.02 + max(spreadTexels,1.5)-ish·texel·tanθ` with exact tanθ; texel
+    size and far−near passed as uniforms) so edges stay within ~2 texels
+    of the caster at every hour. Crossed plants are flagged thin/double-
+    sided via a br=1.5 vertex sentinel (band 0; the shader keeps the
+    derivative normal for them, uses |ndl|, clamps br back to 0.95).
     Entities/viewmodel keep voxel-light tint + blob circles (unchanged by
     design). Chunk-border light seams: relight and mesh are now separate
     queues — a chunk meshes only once its 3×3 neighbourhood is relit (see
@@ -2858,6 +2865,85 @@ show their block tile).
     whether chase-side planning makes bosses feel too relentless through
     doorways; the r21 Tithe-Collector losing smart pathing with its boss
     demotion (author `smartPath: true` on that rank if it ever matters).
+
+- 2026-07-11 **EXACT SHADOW NORMALS** (owner: after the wave-4 clamps,
+  "edge blocks of walls and pillars still have the light seams... distant
+  objects shimmering with shadows that move with the camera... blocks with
+  shadows get this weird dotting effect"). All three residuals were ONE
+  class: the frag derived the face normal from screen-space derivatives
+  ("exact for blocks; can't acne" — false), and dFdx/dFdy go garbage at
+  mesh-seam AND silhouette 2×2 pixel quads, so facing-away pixels leaked
+  into the sampled branch with tanθ at its 8.0 cap → sparse LIT pixels on
+  shadowed faces. Per symptom: noon DOTS = faces near ndl 0 (±X at noon,
+  light (0,-.94,-.33)) speckling across the 0.02 threshold per-pixel;
+  EDGE-block seams = the same leak at silhouette-edge quads (wave 4's
+  distance-scaled clamps only contained interior seams); distant SHIMMER
+  residual = those per-pixel branch flips re-rolling under sub-pixel
+  camera motion. Wave 4 contained the bias side; this batch removes the
+  cause: **block faces are axis-aligned and the mesher knows each quad's
+  direction, so normals are now EXACT.**
+  - **Encoding**: ChunkMesher bands the face id into the EXISTING br
+    attribute — cross quads keep raw 1.5/2.5 sentinels (band 0), cube/
+    liquid/glow faces write `4·(f+1) + brightness` (f in DIRS order -X +X
+    -Y +Y -Z +Z; brightness 0.275..1.0 so bands never overlap; constant
+    per quad so interpolation can't cross bands; the flip-diagonal test is
+    offset-invariant). Layout stays 8 floats — zero vertex-size cost.
+    Consumers audited: voxel.vert sway test `>2.0` → band test
+    `>2.0 && <3.0` (encoded cubes start at 4.275); voxel.frag decodes
+    `fid = floor(v_br/4)`, brv = remainder; shadow.vert never declares
+    a_br (location -1 skip); item meshes carry their own un-banded a_br
+    for the separate item shader; no CPU reader of Pass.verts but upload.
+  - **voxel.frag**: exact axis normal from fid → the facing-away test is
+    per-FACE (a true back face NEVER samples the map — back-face acne
+    impossible), tanθ exact and smooth. Cross/thin quads (band 0) keep
+    the derivative normal + |ndl| double-sided handling (no single normal
+    exists for a wind-bent crossed pair). **Clamps retired**: the wave-3
+    `fwidth(spos.z)` depth-bias term and its wave-4 `0.02·v_dist` clamp —
+    replaced by the analytic footprint slope `(1.5 + 2.4·max(spreadTex −
+    1.5, 0))·texel·tanθ` (near floor = exactly the pre-PCF 0.02 +
+    1.5·texel·tanθ contract; 2.4/extra-texel covers diagonal taps ×1.41 +
+    ~1 texel single-tap reconstruction). **Clamps kept**: the distance-
+    scaled tap-spread clamp `1 + 0.25·v_dist` texels (fwidth(spos.xy) is
+    the ONE remaining derivative input — the clamp never binds legit
+    minification footprints and insures against seam-quad spikes), the
+    8.0 tanθ cap and the 3 m total bias cap. `MMO_DEBUG_SHADOW=2` now
+    renders facing-away pixels as a per-face FLAT purple fid ramp — any
+    speckle there means the decode broke (TESTING.md).
+  - **Verified** (live session stack 4150/4710+/27019, owner's untouched;
+    before/after = stash-swapped builds, same staging): DOTS repro at the
+    owner's exact spot (Sunscour 376.7, 87.5, clock 11:59, camera at
+    (358,105)) — the on-face acne sprinkle is GONE (dotscan: the lum
+    80-100 on-face clusters 20→0; the surviving lum-200+ hits are real
+    sunlit top-face slivers at the skyline, pixel-identical in both
+    builds; tools/out/dots-{before,after}-crop2.png); EDGE seams at the
+    wave-4 Colossus scene (235,264 @ 07:07) — silhouette-edge ticks on
+    all three standing stones + lit rows on distant posts GONE
+    (seamscan probe band 396→253 px, every artifact row cleared —
+    remaining hits are real sunlit strips between silhouettes;
+    tools/out/eseam-{before,after}-crop1.png); SHIMMER bench (same scene,
+    MMO_SHIMMER_TEST + shadows-off floors, relative-contrast metric):
+    shadow-attributable excess farband 138→85 (−38%), colonnade 164→115
+    (−30%), posts 104→96; the paired colonnade crop shows the old build's
+    orange dot-sparkle on the distant shadowed aqueduct face flickering
+    per nudge and the new build near-clean and stable
+    (tools/out/shim-crop-col5.png). **Decode-correctness proof: the
+    shadows-OFF floor runs of old and new builds count IDENTICAL flips
+    in every ROI (786/466/1103)** — with the shadow path off the new
+    build renders pixel-equivalent, so the banding changed nothing else.
+    Bias contract re-verified close-up at 07:07 and noon (shadow hugs
+    the pillar footing, boundaries pixel-identical before/after;
+    tools/out/contract-{low,noon}-5.png). Leaf-cutout/water/glow/
+    MMO_DEBUG_SHADOW=1/MMO_DEBUG_NO_SHADOWS re-verified; 75-76 fps
+    throughout (HUD).
+  - **Deferred (gold-plating, flagged not built)**: the remaining far
+    excess (~85-115 px/ROI) is PCF footprint re-estimation + silhouette
+    crawl on top of a ~786-1103 px texture-resample floor (~90% of all
+    far sparkle is the no-shadow floor — style-inherent nearest-filter
+    resampling). Wider far PCF (5×5 at range), a stronger far-LOD ease
+    (the 0.78 mix target), or an ESM prefiltered map would each shave it
+    further at real cost (taps / washed-out far shadows / a new packed
+    format + separable blur over the cached map) — not worth it until an
+    owner report survives this fix.
 
 ## Conventions
 

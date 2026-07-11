@@ -182,6 +182,13 @@ long-running session process as the reaper, not a crash.
   physically-derived clamp — legit footprints grow with DISTANCE, so a
   distance-scaled cap (`0.02·v_dist` m for depth terms, `1 + 0.25·v_dist`
   texels for spread) crushes seam spikes without touching the far field.
+- **Final chapter (2026-07-11):** clamps only CONTAIN this class — interior
+  seams got fixed, but silhouette-edge seams, noon acne dots and residual
+  branch-flip shimmer were the same garbage escaping the clamps elsewhere.
+  When the geometry is axis-aligned blocks, the mesher KNOWS the normal:
+  band the face id into a spare vertex-attribute range and derive nothing
+  (see the CLAUDE.md exact-normal entry). If you find yourself clamping a
+  derivative a second time, stop and plumb the exact quantity instead.
   And don't argue geometry from first principles when a 20-minute debug
   visualization settles it: `MMO_DEBUG_SHADOW=2` (spread/litfrac/bias as
   RGB) attributed the artifact to the bias side in ONE screenshot — the
@@ -885,6 +892,19 @@ inside the aggregate until the control isolated it.
 - Corollary of the owner's phrasing: users attribute all far-field sparkle
   to "shadows" because shadows are the most visible moving thing out there.
   Diagnose which layer owns the artifact before believing the report's noun.
+
+**Addendum (exact-normal batch): a fixed-luminance flip threshold cannot
+compare shadows-ON against the shadows-OFF floor.** The 0.45 shadow dim
+compresses texture-resample luminance deltas below the threshold, so the
+"floor" run counts MORE flips than the configured run (16.9k vs 10.5k on the
+same scene) and the excess-over-floor arithmetic goes negative. Use a
+CONTRAST-relative threshold (|Δ|/mean > ~0.28) when the runs differ in
+brightness — with it the same four runs ordered sanely and the
+shadow-attributable excess fell 30-38% under exact normals. Bonus pattern
+worth stealing: when a change re-encodes vertex data (or anything upstream
+of a feature), the feature-OFF runs of old and new builds must count
+IDENTICAL flips — shim5-offold == shim5-offnew to the pixel was the proof
+that the br face-banding changed nothing outside the shadow path.
 
 ## The agent-restarted mongod comes back FENCED and blocks every future boot
 - **Symptom:** `npm run dev` fails with "MongoDB never came up on port 27017" forever, while `Get-NetTCPConnection` clearly shows a mongod LISTENING on 27017; a second mongod started by dev.mjs dies on the locked `logs/mongod.log`. Meanwhile `curl 127.0.0.1:<any-port>` from the session TIMES OUT instead of getting connection-refused.
