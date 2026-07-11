@@ -47,6 +47,11 @@ public final class VoxelRenderer {
      *  endpoint (world message; room-def default). Mirror in VoxelLighting. */
     public float nightLight = 1.35f;
     private float time = 0f;
+    /** MMO_DEBUG_NO_WORLD_SHADOWS=1: pass u_shadowDim=1 so the frag skips the
+     *  whole directional-shadow path (map compares AND the facing-away
+     *  darkening) — render-pass isolation for shimmer/aliasing hunts: what
+     *  remains is the no-shadow aliasing baseline. */
+    private final boolean noWorldShadows = "1".equals(System.getenv("MMO_DEBUG_NO_WORLD_SHADOWS"));
 
     private static final class ChunkMeshes {
         Mesh solid, glow, water;
@@ -243,7 +248,7 @@ public final class VoxelRenderer {
         shader.setUniformf("u_wind", wind);
         shader.setUniformf("u_fogColor", dayNight.skyColor.r, dayNight.skyColor.g, dayNight.skyColor.b);
         shader.setUniformf("u_fogRange", fogStart, fogEnd);
-        if (shadows != null) {
+        if (shadows != null && !noWorldShadows) {
             shadows.depthTexture().bind(1);
             shadows.entityDepthTexture().bind(2);
             shader.setUniformi("u_shadowMap", 1);
@@ -253,6 +258,7 @@ public final class VoxelRenderer {
             shader.setUniformf("u_lightDir", dayNight.shadowDir);
             shader.setUniformf("u_shadowTexel", shadows.texelWorld());
             shader.setUniformf("u_shadowRange", shadows.depthRange());
+            shader.setUniformf("u_shadowPix", 1f / shadows.mapRes()); // one texel in UV units (PCF taps)
         } else {
             shader.setUniformf("u_shadowDim", 1f);
         }

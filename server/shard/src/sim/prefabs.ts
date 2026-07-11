@@ -88,6 +88,10 @@ export interface PrefabCtx {
   digFloorY(depth: number): number;
   /** deterministic [0,1) — hash2 over room seed ^ prefab salt ^ salt */
   rand(salt: number): number;
+  /** Per-cell light-emission override (rotation-aware local x/z, ABSOLUTE
+   *  world y) — see Builder.lightAt: replaces the block's registry light for
+   *  that cell; works on air (invisible fill light) and in both directions. */
+  lightAt(lx: number, y: number, lz: number, level: number): void;
 }
 
 export interface PrefabDef {
@@ -299,6 +303,10 @@ export function stampPrefab(b: Builder, prefabId: string, ox: number, oz: number
     },
     digFloorY: (depth) => Math.max(MIN_DIG_FLOOR, groundY - depth),
     rand: (salt) => hash2(seed ^ psalt ^ Math.imul(salt | 0, 0x85ebca6b), ox, oz),
+    lightAt: (lx, y, lz, level) => {
+      const [wx, wz] = p(lx, lz);
+      b.lightAt(wx, y, wz, level);
+    },
   };
   pdef.build(ctx);
 

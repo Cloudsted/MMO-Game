@@ -40,6 +40,10 @@ export interface BlockGrid {
   setIfAir(x: number, y: number, z: number, id: number): void;
   solidAt(x: number, y: number, z: number): boolean;
   terrainHeight(def: RoomDef, x: number, z: number): number;
+  /** Authored per-cell light-emission override (0-15) — optional because the
+   *  /prefab EditRecorder has no light channel (admin stamps light via real
+   *  emissive blocks; overrides are gen-authored only). */
+  setLightOverride?(x: number, y: number, z: number, level: number): void;
 }
 
 /** Rects claimed by authored builders — prefab scatter must not overlap them.
@@ -307,6 +311,20 @@ export class Builder {
 
   torch(x: number, y: number, z: number): void {
     this.set(x, y, z, "torch");
+  }
+
+  /**
+   * Author a per-cell light-emission override (0-15) — the cell emits `level`
+   * blocklight INSTEAD of its block's registry light. Works both directions
+   * (dim a lantern to 9, flare a ward to 11) and on any cell including AIR
+   * (an invisible fill light: brightens a dark boss room with no visible
+   * source and no full-bright faces — glow meshing keys off the block's
+   * registry glow, never the override). Deterministic gen output; ships to
+   * clients in the `world` message. No-op through the /prefab EditRecorder.
+   */
+  lightAt(x: number, y: number, z: number, level: number): void {
+    if (y < 1 || y >= WORLD_HEIGHT) return;
+    this.world.setLightOverride?.(x, y, z, level);
   }
 
   /** Crenellated wall run along x or z at a fixed ground level. */

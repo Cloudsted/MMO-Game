@@ -436,8 +436,11 @@ export type EffectWire =
 export type ServerToClient =
   /** roomName = the room's DISPLAY name (def.name — "Greywatch", not "hub"); the HUD/minimap render it */
   | { t: "welcome"; roomId: string; roomName: string; selfId: number; name: string; sprite: string; spawn: { x: number; y: number; z: number; yaw: number }; timeOfDay: number; ents: EntityFull[]; safeZone: boolean; regions: RegionWire[]; buildingEnabled: boolean }
-  /** voxel world header: dimensions + how many chunk payloads follow */
-  | { t: "world"; w: number; h: number; height: number; waterLevel: number | null; chunks: number; wind: number; nightLight: number }
+  /** voxel world header: dimensions + how many chunk payloads follow.
+   *  lights = authored per-cell emission overrides as [x, y, z, level 0-15]
+   *  tuples (tens, not thousands) — each REPLACES the block's registry light
+   *  when the client seeds its blocklight flood; absent/empty = none. */
+  | { t: "world"; w: number; h: number; height: number; waterLevel: number | null; chunks: number; wind: number; nightLight: number; lights?: Array<[number, number, number, number]> }
   /** deflated 16×16×height block chunks (base64 raw-deflate), batched */
   | { t: "chunks"; batch: Array<{ cx: number; cz: number; data: string }> }
   /** a single live block change (player build/break, admin clears) */

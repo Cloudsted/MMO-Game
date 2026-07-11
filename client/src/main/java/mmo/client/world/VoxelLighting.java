@@ -80,7 +80,9 @@ public final class VoxelLighting {
                     opa[i] = (byte) o;
                     if (light > 0 && o > 1) light = Math.max(0, light - o);
                     sky[i] = (byte) light;
-                    int em = world.reg.emission[id];
+                    // per-cell authored overrides replace the registry light
+                    // (world msg `lights`) — including fill light on air cells
+                    int em = world.emission(bx + x, y, bz + z, id);
                     if (em > 0) {
                         blk[i] = (byte) em;
                         queue[qn++] = i;

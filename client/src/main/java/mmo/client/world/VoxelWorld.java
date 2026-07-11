@@ -1,5 +1,7 @@
 package mmo.client.world;
 
+import com.badlogic.gdx.utils.IntIntMap;
+
 import java.util.Base64;
 import java.util.zip.Inflater;
 
@@ -17,6 +19,12 @@ public final class VoxelWorld {
     public final BlockRegistry reg;
     private final int chunksTotal;
     private int chunksReceived = 0;
+    /** Authored per-cell light-emission overrides (world msg `lights`),
+     *  keyed by the flat data index. An entry REPLACES the block's registry
+     *  light when VoxelLighting seeds its blocklight flood — including on
+     *  air cells (invisible fill light). A blockSet on the cell drops it
+     *  (the override described the generated block). */
+    private final IntIntMap lightOverrides = new IntIntMap();
 
     public VoxelWorld(BlockRegistry reg, int w, int h, int height, Float waterLevel, int chunksTotal) {
         this.reg = reg;
@@ -71,6 +79,30 @@ public final class VoxelWorld {
     public int get(int x, int y, int z) {
         if (x < 0 || x >= w || y < 0 || y >= height || z < 0 || z >= h) return 0;
         return data[x + z * w + y * w * h] & 0xff;
+    }
+
+    public void setLightOverride(int x, int y, int z, int level) {
+        if (x < 0 || x >= w || y < 0 || y >= height || z < 0 || z >= h) return;
+        lightOverrides.put(x + z * w + y * w * h, Math.max(0, Math.min(15, level)));
+    }
+
+    /** Drop the override at a cell (live block edits invalidate it). */
+    public void clearLightOverride(int x, int y, int z) {
+        if (lightOverrides.size == 0) return;
+        if (x < 0 || x >= w || y < 0 || y >= height || z < 0 || z >= h) return;
+        lightOverrides.remove(x + z * w + y * w * h, 0);
+    }
+
+    /** Blocklight emission for the cell holding block `id` — the authored
+     *  override when one exists, else the block's registry light. This is
+     *  the ONLY seed VoxelLighting's blocklight flood uses; glow meshing
+     *  (full-bright faces) still keys off the registry glow flag. */
+    public int emission(int x, int y, int z, int id) {
+        if (lightOverrides.size > 0 && x >= 0 && x < w && y >= 0 && y < height && z >= 0 && z < h) {
+            int v = lightOverrides.get(x + z * w + y * w * h, -1);
+            if (v >= 0) return v;
+        }
+        return reg.emission[id];
     }
 
     /**

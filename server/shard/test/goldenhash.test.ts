@@ -106,6 +106,15 @@ const UPDATE = process.env.GOLDEN_UPDATE === "1";
  *  the wayshrine `nearPortals` scatter re-dealt around the new portal. Every
  *  other room held byte-identical.
  *
+ *  desert GRID updated 2026-07-11 (owner: "the sunscour temple is far too
+ *  dark"): authored light in the Colossus tomb — stair/approach/robbers'-
+ *  corridor lantern niches, the landing brazier, two grave-goods braziers in
+ *  the Hall, four vigil braziers on the Vessel's canopic pylons
+ *  (setpieces_desert.ts PHASE 4). Desert FEATURES held (scatter runs before
+ *  the setpieces and reads none of this); every other room held
+ *  byte-identical. The same batch's per-cell light OVERRIDES are not part of
+ *  either hash — they golden-lock separately in lightoverrides.test.ts.
+ *
  *  atelier/dungeon/grounds/hub/maw
  *  share a features hash: it is the hash of the EMPTY ScatterResult — no
  *  prefab scatter. greenhood_run has no scatter either, but its authored
@@ -115,7 +124,7 @@ const GOLDEN: Record<string, { grid: string; features: string }> = {
   broken_court: { grid: "11488a7bc783bad4eba322569a31c3408f3dc0e7", features: "35d68df7bb65002ec459140d1219f1548baff40e" },
   cinderrift: { grid: "bd598f680867da26b0de536cb97614a301ef5a15", features: "64fd739a989b4a5014c437d9e235aa6c81726653" },
   crypt_depths: { grid: "e53667d642d3ad6d14815ab2d2a6e5216def3160", features: "2f8b38a89da3d19331960f0781803646b57af960" },
-  desert: { grid: "eca195a445488168e3f6b00cbb6ad0882cd17e11", features: "f908e575dd8e4b5f1fea511bc7a034d1a02ccb55" },
+  desert: { grid: "06b5983305775e6c334c4474cc8a5a1981368e2a", features: "f908e575dd8e4b5f1fea511bc7a034d1a02ccb55" },
   dungeon: { grid: "d877dc5637398046bc6f4cf37c3384a366cb09ee", features: "133eeb0e39c4eb2c448227e0e45b28ae450ac744" },
   emberfells: { grid: "21b8a45d7b87817dd6fda1e849c0dbbd18cbfd31", features: "4608f78baf0ca48c66686e051d638693a41ce3aa" },
   forest: { grid: "c36932511aafaf66411fad21f5f69b1a291f5cf3", features: "a47bee9c0f2ddbd79ada1036eea64dc47869856e" },

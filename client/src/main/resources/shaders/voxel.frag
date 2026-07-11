@@ -31,6 +31,7 @@ uniform float u_shadowDebug; // 1 = visualize the light-space compare
 uniform vec3 u_lightDir;     // FROM light TOWARD ground (quantized shadow dir)
 uniform float u_shadowTexel; // one shadow-map texel in world meters
 uniform float u_shadowRange; // light-camera far-near in meters
+uniform float u_shadowPix;   // one world-map texel in UV units (1/res)
 uniform float u_sun;        // 0 night .. 1 day
 uniform float u_nightLight; // per-room multiplier on the night skylight floor
 uniform float u_fullbright; // glow pass: skip lighting entirely
@@ -69,13 +70,21 @@ void main() {
     // cast-shadow factor from the light-space depth map
     float shadowMul = 1.0;
     if (u_shadowDim < 1.0) {
+        // shadow LOD: ease the dim factor toward 1 with distance (48→144 m).
+        // At range a screen pixel spans several faces and many map texels, so
+        // ANY binary lit/shadow distinction flickers under camera motion no
+        // matter how it's sampled — shrinking the CONTRAST is what makes the
+        // residual flips invisible (fog owns the far field anyway; near/mid
+        // shadows keep the full tuned 0.45). Applies to the facing-away
+        // branch too: distant unlit-face vs lit-face dapple is the same flip.
+        float effDim = mix(u_shadowDim, 0.78, clamp((v_dist - 48.0) / 96.0, 0.0, 1.0));
         // axis-aligned face normal from screen-space derivatives (always
         // points at the viewer, which for closed cubes IS the visible face)
         vec3 nrm = normalize(cross(dFdx(v_worldPos), dFdy(v_worldPos)));
         float ndl = dot(nrm, -u_lightDir);
         if (thin) ndl = abs(ndl);
         if (ndl <= 0.02) {
-            shadowMul = u_shadowDim; // facing away from the light
+            shadowMul = effDim; // facing away from the light
         } else {
             vec4 sc = u_shadowMat * vec4(v_worldPos, 1.0);
             vec3 spos = sc.xyz * 0.5 + 0.5; // ortho: w == 1
@@ -94,11 +103,44 @@ void main() {
                 // error; the min() clamps peter-panning to 3 m (only reached
                 // under deep minification, where 3 m is sub-pixel and in fog).
                 // u_shadowRange converts normalized fwidth back to meters.
-                biasM = min(biasM + 0.75 * fwidth(spos.z) * u_shadowRange, 3.0);
-                // nearer occluder of: world geometry, entity sprite quads
-                float d = min(unpackDepth(texture2D(u_shadowMap, spos.xy)),
-                              unpackDepth(texture2D(u_entShadowMap, spos.xy)));
-                if (spos.z - biasM / u_shadowRange > d) shadowMul = u_shadowDim;
+                // FOOTPRINT-SCALED 3x3 PCF. The cached map is bit-identical
+                // between sun steps, so the owner-reported "distant shadows
+                // shimmer when the camera moves" was pure SAMPLING aliasing:
+                // at range one screen pixel spans MANY nearest-filtered
+                // texels (worst case: cross-plant cutout shadows — a ~50%
+                // on/off dapple at texel frequency), and a single binary tap
+                // re-rolled that coin on every sub-pixel camera move. Nine
+                // compares spread over the pixel's ACTUAL map footprint
+                // (fwidth of spos.xy; min 1 texel, so near-field edges just
+                // get classic 1-texel PCF softening) estimate the footprint's
+                // lit FRACTION — the stable quantity that survives camera
+                // motion. The no-jitter map cache is untouched; only how it
+                // is SAMPLED changed.
+                vec2 fpUv = fwidth(spos.xy);
+                float spread = max(u_shadowPix, 0.6 * max(fpUv.x, fpUv.y));
+                // taps away from the receiver's center need bias for the
+                // receiver plane's own slope across the spread (in meters)
+                float spreadM = (spread / u_shadowPix) * u_shadowTexel;
+                biasM = min(biasM + 0.75 * fwidth(spos.z) * u_shadowRange + spreadM * tanT, 3.0);
+                float ref = spos.z - biasM / u_shadowRange;
+                float lit = 0.0;
+                for (int oy = -1; oy <= 1; oy++) {
+                    for (int ox = -1; ox <= 1; ox++) {
+                        lit += step(ref, unpackDepth(texture2D(u_shadowMap,
+                            spos.xy + vec2(float(ox), float(oy)) * spread)));
+                    }
+                }
+                float sunFrac = lit / 9.0;
+                // entity sprite shadows only within 64 m of the camera: the
+                // per-frame half-res entity map re-projects every frame, so
+                // its distant edges crawl with entity animation — and a
+                // sprite's shadow is sub-pixel out there anyway. Entities
+                // only exist inside the interest radius, so nothing visible
+                // is lost; the far field stops sampling the crawling map.
+                if (v_dist < 64.0) {
+                    sunFrac = min(sunFrac, step(ref, unpackDepth(texture2D(u_entShadowMap, spos.xy))));
+                }
+                shadowMul = mix(effDim, 1.0, sunFrac);
             }
         }
     }

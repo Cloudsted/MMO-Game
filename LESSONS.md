@@ -832,6 +832,37 @@ sees. Authored water (the Drownbell's moat, the Temple's flooded vault) is
 independent of the gen amplitude — so "make it swimmable" survives even if you
 later dial the flood back for spawn viability.
 
+## A shimmer metric without a feature-OFF control measures the art style, not the bug
+
+Chasing "shadows on distant objects shimmer when the camera moves"
+(2026-07-11): paired screenshots with a half-pixel camera nudge gave a huge
+changed-pixel count (39k px), a heatmap full of camera-dependent sprinkle
+across distant surfaces — and then every shadow-sampling fix (5-tap PCF,
+footprint-scaled 3×3 PCF, entity-map range gate, far contrast fade) moved
+that count by ~zero. Three refinements of the metric (thresholds, flip
+energy, smooth-interior gating) all stayed flat, each round costing a full
+client-relaunch cycle.
+
+One run settled it: the SAME scene with the whole shadow path disabled
+(`MMO_DEBUG_NO_WORLD_SHADOWS=1`, added for exactly this) still showed ~90%
+of the flips. The dominant sparkle was nearest-filtered SPRITE/TEXTURE
+resampling — distant cross-plant carpets reshuffling per sub-pixel camera
+move, shadows fully off. The shadow-attributable share was the small excess
+over that floor (184 px of 1,790), and the fix HAD cut it by 75% — invisible
+inside the aggregate until the control isolated it.
+
+- **Any "is the artifact gone" pixel metric needs the feature-OFF baseline
+  from the same scene and camera.** Signal = configured − floor. Without the
+  floor you can't even tell whether the thing you're fixing is the thing
+  you're measuring.
+- A/B across client sessions needs a STERILE scene: wandering mobs (and
+  their per-frame cast shadows) put hundreds of pixels of noise between two
+  runs of identical code. The Atelier + `/prefab` stamps is the bench —
+  zero mobs, wind 0, persisted world.
+- Corollary of the owner's phrasing: users attribute all far-field sparkle
+  to "shadows" because shadows are the most visible moving thing out there.
+  Diagnose which layer owns the artifact before believing the report's noun.
+
 ## The agent-restarted mongod comes back FENCED and blocks every future boot
 - **Symptom:** `npm run dev` fails with "MongoDB never came up on port 27017" forever, while `Get-NetTCPConnection` clearly shows a mongod LISTENING on 27017; a second mongod started by dev.mjs dies on the locked `logs/mongod.log`. Meanwhile `curl 127.0.0.1:<any-port>` from the session TIMES OUT instead of getting connection-refused.
 - **Cause:** the Claude session sandbox silently drops IPv4 loopback for its whole process tree (even with sandbox-disable flags, and for system processes it re-parents). A batch agent killed the owner's mongod and "restored" it from inside that fence — the revived mongod holds the dbpath/log locks and is visible in the OS connection table, but is unreachable to every normal process. Every subsequent stack boot then fails both ways: can't reach the fenced mongod, can't start a fresh one over its locks.

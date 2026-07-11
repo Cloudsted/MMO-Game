@@ -1120,8 +1120,11 @@ export class RoomSim {
       regions: this.def.regions.map((r) => ({ x: r.x, z: r.z, r: r.r, pvp: r.pvp })),
       buildingEnabled: this.def.flags.buildingEnabled,
     });
-    // ship the voxel world: header + deflated chunk batches
+    // ship the voxel world: header + deflated chunk batches. `lights` =
+    // authored per-cell emission overrides (Builder.lightAt), skipping cells
+    // a player edit currently covers — overrides describe the GENERATED block.
     const chunks = this.chunks();
+    const lights = this.world.lightsWire();
     send({
       t: "world",
       w: this.def.size.w,
@@ -1131,6 +1134,7 @@ export class RoomSim {
       chunks: chunks.length,
       wind: this.def.wind,
       nightLight: this.def.nightLight,
+      ...(lights.length > 0 ? { lights } : {}),
     });
     for (let i = 0; i < chunks.length; i += CHUNKS_PER_MSG) {
       send({ t: "chunks", batch: chunks.slice(i, i + CHUNKS_PER_MSG) });

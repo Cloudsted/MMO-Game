@@ -2580,6 +2580,117 @@ show their block tile).
     tracking a real cursor, minimap pan while running + whether 50 blocks
     is the right zoom span, Log Out on a human (non-autologin) client.
 
+- 2026-07-11 **WAVE 3: PER-CELL LIGHT OVERRIDES + THE TOMB LIT + DISTANT
+  SHADOW SHIMMER** (owner-feedback batch, final wave; server + shared +
+  client). Verified: typecheck, **734 vitest** green ×2 (6 new, goldens
+  stable), client compiles, live [alt-port] session stack (mongod 27020
+  scratch dbpath + master 4180 + rooms 4810+; owner's 4000/27017 and the
+  prior agent's 4150/27019 untouched), wire probe + travel-bot PASS,
+  before/after screenshots read (tools/out/tomb-*, bench-*, shim-*).
+  - **Per-cell light-emission overrides** (owner: "individual light blocks
+    should be customizable... light up dark boss rooms without ruining the
+    atmosphere"). `Builder.lightAt(x,y,z,level)` / rotation-aware
+    `PrefabCtx.lightAt` author a 0-15 override that REPLACES the block's
+    registry `light` for that ONE cell when the client seeds its blocklight
+    BFS — both directions work (dim a lantern 13→9, flare a ward 7→11),
+    and an override on a NON-emissive cell (even AIR) is an invisible fill
+    light: brightens a room with no visible source and no full-bright
+    faces, because glow-pass meshing still keys off the registry glow flag,
+    never the override. Deterministic gen output stored on VoxelWorld
+    (`lightOverrides`, keyed "x,y,z").
+    - **Wire**: `world` message += optional `lights: [x,y,z,level][]`
+      (protocol.ts + shared/protocol.json + WorldScreen parse; tens of
+      tuples, omitted when empty). Bots tolerate it untouched —
+      makeWorldTracker reads only the fields it knows (travel-bot + a live
+      desert wire probe: 10 tuples + 900 chunks decoded).
+    - **Client**: `VoxelWorld.emission(x,y,z,id)` (IntIntMap override →
+      registry fallback) is now the ONLY blocklight seed VoxelLighting
+      uses; lightColorAt/billboard tints need no change (they read the
+      propagated field). A `blockSet` on an overridden cell DROPS the
+      override client-side (it described the generated block) and the
+      server's `lightsWire()` skips cells under a live edit — if the edit
+      later reverts to gen, the override ships again on the next join
+      (mid-session the cell stays at registry light until rejoin;
+      documented, harmless — building rooms author no overrides today).
+      /prefab's EditRecorder has no light channel (admin stamps light with
+      real emissive blocks); `/clearblocks` is unaffected.
+    - **Tests** (`lightoverrides.test.ts`): authoring/clamping/OOB,
+      determinism ×2, its own golden (sha1 over sorted tuples — overrides
+      are in NEITHER goldenhash net: grid hashes blocks, features hashes
+      ScatterResult), the edit-skip/revert wire filter, world-msg shape,
+      and hub-omits-lights.
+  - **THE SUNSCOUR TEMPLE LIT** (owner: "far too dark in the lower rooms...
+    the hallway is almost pitch black"). The complaint was the Colossus of
+    Sekhat's tomb (setpieces_desert.ts — sunken_temple + dry_cistern were
+    checked and are open-sky, fine). Before-shots reproduced it exactly
+    (tomb-before-corridor-2: a black frame with a HUD). Authored light
+    only — fixedTime/nightLight untouched, all in the dead-court voice:
+    stair = two funeral lamps in the north wall **dimmed to 9 via
+    lightAt** (the way down reads, barely — the mood the door deserves) +
+    the robbers' brazier at the landing; the APPROACH corridor = three
+    full lanterns in the east wall (z225/231/237 — the procession's lamps
+    still burn); Hall of Diggers = two grave-goods braziers on the bone
+    shelving; robbers' east corridor = two wall lamps dimmed to 8; THE
+    VESSEL (sekhat's boss room) = four vigil braziers atop the canopic
+    pylons + the inlaid ward ring FLARED 7→11 + two invisible AIR fill
+    lights (level 8) in the south corners. 10 overrides total (the test
+    golden). GOLDEN_UPDATE: desert GRID only (the new light blocks);
+    desert features + all 18 other rooms held byte-identical.
+  - **DISTANT SHADOW SHIMMER** (owner: "shadows on distant objects move
+    and shimmer when the camera move"). Diagnosed with two new hooks —
+    `MMO_SHIMMER_TEST=1` (alternates a ~half-pixel camera yaw offset per
+    MMO_SHOT frame: diff(N,N+1) isolates what a TINY camera move changes,
+    diff(N,N+2) is the camera-identical control) and
+    `MMO_DEBUG_NO_WORLD_SHADOWS=1` (u_shadowDim=1 — the whole directional
+    path off, giving the no-shadow aliasing FLOOR; both in TESTING.md) —
+    on a sterile bench: three `/prefab` watchtowers down the Atelier
+    (zero mobs, wind 0), old shader vs new vs shadows-off photographed on
+    the SAME world from the SAME camera. ROOT CAUSE: the cached world map
+    is bit-identical between sun steps (that design held), but the frag
+    sampled it with ONE nearest tap and a BINARY compare — at range a
+    screen pixel spans many map texels, so every sub-pixel camera move
+    re-picks the texel and the pixel flips lit↔shadowed by the full 0.45
+    skylight step. THREE fixes in voxel.frag (the no-jitter cache is
+    untouched — only how it's SAMPLED changed): (1) **footprint-scaled
+    3×3 PCF** — nine compares spread over the pixel's ACTUAL map footprint
+    (`fwidth(spos.xy)`, min 1 texel via new `u_shadowPix` =
+    1/ShadowMap.mapRes(); tap spread feeds the slope bias as
+    `spreadM·tanT`) estimate the footprint's lit FRACTION, the stable
+    quantity under camera motion; (2) **entity-map taps gated to v_dist <
+    64 m** — the per-frame half-res entity map's distant edges crawl with
+    sprite animation, and entities only exist inside interest anyway;
+    (3) **shadow LOD** — the dim factor eases 0.45→0.78 over 48-144 m
+    (facing-away branch included): at range several faces share one
+    pixel, so shrinking the far CONTRAST is what makes residual flips
+    invisible (fog owns the far field; near/mid keeps the tuned 0.45,
+    which reads as slightly lighter far shadows BY DESIGN). MEASURED
+    (bench, 0.04° nudge, big smooth-interior flips): old 1,790 / new
+    1,652 / shadows-OFF 1,606 — i.e. the shadow-ATTRIBUTABLE excess fell
+    **184 → 46 (−75%), to within noise of shadows-off**, at an unchanged
+    240 fps; the desert colonnade crop shows the before-pair's hard
+    lit/shadow patchwork flipping per nudge and the after-pair holding
+    with gradient edges (tools/out/shim-crop-colbase.png). The ~1,600
+    residual is the no-shadow floor: nearest-filtered SPRITE/TEXTURE
+    resampling (distant cross-plant carpets reshuffle per nudge with
+    shadows fully off) — style-inherent, a different owner decision (AA)
+    if it ever matters. Bias contract intact, leaf-cutout shadows and
+    MMO_DEBUG_NO_SHADOWS untouched.
+  - Traps paid this wave: a NAIVE paired-shot pixel-count "shimmer
+    metric" reads FLAT across a real shadow fix — it is dominated by
+    nearest-filter sprite/texture resampling and silhouette crawl, and
+    wandering mobs (and their moving cast shadows) pollute it between
+    sessions; the decisive design is a mob-free same-world A/B **with a
+    shadows-off control run** so the shadow-attributable share can be
+    isolated at all. And the previous agent session's mongod still held
+    this session's shared scratchpad dbpath — a second mongod needs its
+    own dbpath, not just its own port.
+  - Owner feel-checks: tomb brightness ladder (dim-9 stair vs full-13
+    approach vs the brazier-lit Vessel — is the boss room readable enough
+    in a real fight), whether the ward flare reads as intent, the shadow
+    LOD's far softening (0.78 at 144 m+ — distant shadows are deliberately
+    lighter now; the knob is the mix target in voxel.frag), and PCF edge
+    softness up close.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -2666,6 +2777,20 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-11 **WAVE 3 (uncommitted working tree): per-cell light overrides +
+  the Sunscour tomb lit + distant shadow shimmer** — see the decisions-log
+  entry. Builders can now author per-cell emission (`Builder.lightAt` /
+  `PrefabCtx.lightAt`, `world` msg `lights` tuples, client blocklight seeds
+  from them; air-cell overrides = invisible fill light); the Colossus tomb's
+  whole route reads (before/after: tools/out/tomb-before-*.png vs
+  tomb-after-*.png) with the mood intact; and the distant-shadow shimmer is
+  fixed at the sampling layer (footprint-scaled 3×3 PCF + 64 m entity-map
+  gate + 48-144 m shadow-contrast LOD) — proven against a shadows-off
+  control on an Atelier bench (shadow-attributable flips −75%, to the
+  no-shadow floor). 734 vitest ×2, GOLDEN_UPDATE desert grid only.
+  **The client changed — relaunch run-client.cmd.** New debug hooks:
+  MMO_SHIMMER_TEST, MMO_DEBUG_NO_WORLD_SHADOWS (TESTING.md).
 
 - 2026-07-10 **ADMIN DASHBOARD OVERHAUL + LORE REGISTRY (uncommitted working
   tree)** — see the decisions-log entry. The dashboard is a sidebar ops

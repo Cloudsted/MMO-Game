@@ -281,14 +281,15 @@
         "buildingEnabled": "b"
       },
       "world": {
-        "$comment": "voxel world header sent right after welcome: dimensions in blocks + number of chunk payloads that follow",
+        "$comment": "voxel world header sent right after welcome: dimensions in blocks + number of chunk payloads that follow. lights = authored per-cell emission overrides as [x,y,z,level 0-15] tuples (tens, not thousands) — each replaces the block's registry light when the client seeds its blocklight flood; works on air cells (invisible fill light); absent = none. A cell under a live player edit is skipped (the override describes the generated block).",
         "w": "n",
         "h": "n",
         "height": "n",
         "waterLevel": "n|null",
         "chunks": "n",
         "wind": "n",
-        "nightLight": "n"
+        "nightLight": "n",
+        "lights": "a<[n,n,n,n]>?"
       },
       "chunks": {
         "$comment": "batched 16x16xheight block chunks; data = raw-deflate base64, x-fastest then z then y",

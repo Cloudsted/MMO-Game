@@ -111,11 +111,11 @@ export declare class ShardManager {
     livePlayers(): ({
         name: string;
         level: number;
-        hp: number;
         gold: number;
         x: number;
         y: number;
         z: number;
+        hp: number;
         maxHp: number;
         charId: string;
     } & {
@@ -155,7 +155,7 @@ export declare class ShardManager {
         defs: {
             id: string;
             name: string;
-            type: "building" | "hub" | "wilderness" | "dungeon";
+            type: "hub" | "wilderness" | "dungeon" | "building";
             biome: string;
             size: {
                 w: number;

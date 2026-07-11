@@ -21,6 +21,19 @@ export declare class VoxelWorld {
     readonly waterLevel: number | null;
     /** player edits keyed "x,y,z" — the persistence overlay */
     readonly edits: Map<string, BlockEdit>;
+    /**
+     * Authored per-cell light-emission overrides keyed "x,y,z" (0-15), written
+     * by builders via Builder.lightAt / PrefabCtx.lightAt during generation —
+     * deterministic gen output, like the blocks themselves. An override
+     * REPLACES the block's registry `light` for that one cell when the client
+     * seeds its blocklight flood: a lantern can burn low (13→9), a ward can
+     * flare (7→11), and an override on a non-emissive cell (even AIR) becomes
+     * an invisible fill light — the owner's "light the boss room without
+     * ruining the atmosphere" tool. Glow-pass meshing still keys off the
+     * block's registry glow flag, so an overridden crystal keeps its
+     * full-bright faces and an air fill-light shows no source at all.
+     */
+    readonly lightOverrides: Map<string, number>;
     /** prefab-scatter output: placements, loot caches, spawn bindings —
      *  deterministic per def, so RoomSim can consume it every boot */
     readonly features: ScatterResult;
@@ -32,6 +45,14 @@ export declare class VoxelWorld {
     /** Block id at integer coords; out-of-bounds reads as air. */
     get(x: number, y: number, z: number): number;
     set(x: number, y: number, z: number, id: number): void;
+    /** Author a per-cell light override (0-15; clamped, out-of-bounds ignored).
+     *  Gen-time only — see the lightOverrides field doc. */
+    setLightOverride(x: number, y: number, z: number, level: number): void;
+    /** Light overrides for the wire, skipping cells a player edit currently
+     *  covers (the override was authored for the GENERATED block; if the edit
+     *  is later reverted the override ships again on the next join). Compact
+     *  [x, y, z, level] tuples — tens of cells, not thousands. */
+    lightsWire(): Array<[number, number, number, number]>;
     /** Set only if the cell is currently air (tree canopies, decorations). */
     setIfAir(x: number, y: number, z: number, id: number): void;
     solidAt(x: number, y: number, z: number): boolean;

@@ -236,6 +236,14 @@ public class WorldScreen extends ScreenAdapter {
     private final String shotPrefix = System.getenv("MMO_SHOT");
     private float shotTimer = 0;
     private int shotIndex = 0;
+    // test hook: MMO_SHIMMER_TEST=1 adds a half-pixel camera yaw offset on
+    // alternating MMO_SHOT frames — shots 1,3,5,7 render at the base yaw and
+    // 2,4,6,8 at base+0.0007 rad, so diff(N,N+1) shows what a TINY camera
+    // move changes (the distant-shadow-shimmer trigger) while diff(N,N+2) is
+    // the camera-identical control (animated content only). Mouse motion
+    // can't be injected into a background GLFW window; this is the
+    // deterministic stand-in.
+    private final boolean shimmerTest = "1".equals(System.getenv("MMO_SHIMMER_TEST"));
     /** MMO_UI=talk|shop: auto-talk to the nearest NPC once entities arrive */
     private String pendingTalkHook = null;
     private float talkHookTimer = 0;
@@ -413,6 +421,13 @@ public class WorldScreen extends ScreenAdapter {
                         msg.get("height").getAsInt(),
                         waterLevel,
                         msg.get("chunks").getAsInt());
+                    // authored per-cell emission overrides ([x,y,z,level]) —
+                    // applied before any chunk lands, so the first lighting
+                    // pass already seeds from them
+                    for (JsonElement el : Protocol.arr(msg, "lights")) {
+                        JsonArray l = el.getAsJsonArray();
+                        world.setLightOverride(l.get(0).getAsInt(), l.get(1).getAsInt(), l.get(2).getAsInt(), l.get(3).getAsInt());
+                    }
                     roomW = world.w;
                     roomH = world.h;
                     worldInit = false;
@@ -447,6 +462,10 @@ public class WorldScreen extends ScreenAdapter {
                     // the OLD block id must be read BEFORE the edit applies:
                     // id==0 means BREAK and the sound belongs to what died
                     int oldId = world != null ? world.get(bx, by, bz) : 0;
+                    // an edit invalidates any authored light override on the
+                    // cell (it described the GENERATED block); the 3x3 relight
+                    // below re-seeds from the new block's registry light
+                    if (world != null) world.clearLightOverride(bx, by, bz);
                     if (voxels != null) voxels.applyBlockSet(bx, by, bz, id);
                     else if (world != null) world.set(bx, by, bz, id);
                     BlockRegistry.Block sndBlock = game.blocks.get(id == 0 ? oldId : id);
@@ -1420,10 +1439,13 @@ public class WorldScreen extends ScreenAdapter {
             pos.x + correctionOffset.x,
             pos.y + correctionOffset.y + game.constants.eyeHeight,
             pos.z + correctionOffset.z);
+        // MMO_SHIMMER_TEST: alternate a ~half-pixel yaw offset per MMO_SHOT
+        // frame (see the field comment) — never touches the real yaw state
+        float camYaw = shimmerTest && (shotIndex % 2) == 1 ? yaw + 0.0007f : yaw;
         cam.direction.set(
-            MathUtils.sin(yaw) * MathUtils.cos(pitch),
+            MathUtils.sin(camYaw) * MathUtils.cos(pitch),
             MathUtils.sin(pitch),
-            MathUtils.cos(yaw) * MathUtils.cos(pitch));
+            MathUtils.cos(camYaw) * MathUtils.cos(pitch));
         cam.up.set(0, 1, 0);
         cam.update();
 

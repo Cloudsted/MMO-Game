@@ -21,6 +21,10 @@ export interface BlockGrid {
     setIfAir(x: number, y: number, z: number, id: number): void;
     solidAt(x: number, y: number, z: number): boolean;
     terrainHeight(def: RoomDef, x: number, z: number): number;
+    /** Authored per-cell light-emission override (0-15) — optional because the
+     *  /prefab EditRecorder has no light channel (admin stamps light via real
+     *  emissive blocks; overrides are gen-authored only). */
+    setLightOverride?(x: number, y: number, z: number, level: number): void;
 }
 export declare function stampStructures(world: VoxelWorld, def: RoomDef): ScatterResult;
 export declare class Builder {
@@ -62,6 +66,16 @@ export declare class Builder {
     paint(x0: number, z0: number, x1: number, z1: number, surface: string): void;
     paintCircle(cx: number, cz: number, r: number, surface: string): void;
     torch(x: number, y: number, z: number): void;
+    /**
+     * Author a per-cell light-emission override (0-15) — the cell emits `level`
+     * blocklight INSTEAD of its block's registry light. Works both directions
+     * (dim a lantern to 9, flare a ward to 11) and on any cell including AIR
+     * (an invisible fill light: brightens a dark boss room with no visible
+     * source and no full-bright faces — glow meshing keys off the block's
+     * registry glow, never the override). Deterministic gen output; ships to
+     * clients in the `world` message. No-op through the /prefab EditRecorder.
+     */
+    lightAt(x: number, y: number, z: number, level: number): void;
     /** Crenellated wall run along x or z at a fixed ground level. */
     wallRun(x0: number, z0: number, x1: number, z1: number, baseY: number, height: number, block?: string): void;
     tower(cx: number, cz: number, baseY: number, half: number, height: number, block?: string): void;

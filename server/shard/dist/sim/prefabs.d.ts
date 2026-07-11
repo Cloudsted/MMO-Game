@@ -57,6 +57,10 @@ export interface PrefabCtx {
     digFloorY(depth: number): number;
     /** deterministic [0,1) — hash2 over room seed ^ prefab salt ^ salt */
     rand(salt: number): number;
+    /** Per-cell light-emission override (rotation-aware local x/z, ABSOLUTE
+     *  world y) — see Builder.lightAt: replaces the block's registry light for
+     *  that cell; works on air (invisible fill light) and in both directions. */
+    lightAt(lx: number, y: number, lz: number, level: number): void;
 }
 export interface PrefabDef {
     id: string;

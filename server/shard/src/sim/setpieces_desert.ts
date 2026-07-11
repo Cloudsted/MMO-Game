@@ -356,6 +356,69 @@ function buildTomb(b: Builder, def: RoomDef, _seed: number, G: number): void {
   for (let z = 226; z <= 254; z += 6) {
     if (z > 226) b.set(225, Fp + 1, z, "lantern"); // mounted in the west wall
   }
+
+  // ======= PHASE 4: light the way (owner report: "the hallway to enter the
+  // room is almost pitch black and the room itself is barely visible").
+  // Authored light only — fixedTime/nightLight untouched, the mood stays a
+  // tomb. Lantern niches follow the processional's pattern (the cross block
+  // replaces a wall cell); per-cell overrides (Builder.lightAt) dim the old
+  // funeral lamps and flare the ward, and invisible air-cell fill lifts the
+  // Vessel's corners without adding a single visible source. =======
+
+  // The descent: two funeral lamps in the stair's north wall, burning LOW
+  // after four hundred years (lantern base 13 → overridden to 9) — the way
+  // down reads, but barely, which is the mood the door deserves.
+  b.set(237, G - 1, 256, "lantern");
+  b.lightAt(237, G - 1, 256, 9);
+  b.set(233, G - 5, 256, "lantern");
+  b.lightAt(233, G - 5, 256, 9);
+  // The robbers' brazier at the foot of the stair — someone came this way,
+  // and left their light burning (same voice as the false chambers').
+  b.set(228, Fp, 259, "brazier");
+
+  // The approach — the ceremonial way in, and the complained-about hallway:
+  // the last procession's lamps still burn in the east wall, full and steady.
+  for (const lz of [225, 231, 237] as const) {
+    b.set(237, Fp + 1, lz, "lantern");
+  }
+
+  // Hall of Diggers: two grave-goods braziers on the bone shelving — he was
+  // buried with his workmen, and the workmen were buried with their lights.
+  b.world.setIfAir(226, Fp + 2, 211, bid("brazier"));
+  b.world.setIfAir(234, Fp + 2, 217, bid("brazier"));
+
+  // The robbers' route east: two guttering lamps left in the corridor wall
+  // (overridden low — they've been burning since the robbery).
+  b.set(249, Fp + 1, 224, "lantern");
+  b.lightAt(249, Fp + 1, 224, 8);
+  b.set(249, Fp + 1, 236, "lantern");
+  b.lightAt(249, Fp + 1, 236, 8);
+
+  // THE VESSEL CHAMBER (sekhat's boss room): vigil fires on the four canopic
+  // pylons frame the dais...
+  for (const [px, pz] of [
+    [236, 241],
+    [240, 241],
+    [236, 243],
+    [240, 243],
+  ] as const) {
+    b.world.setIfAir(px, Fp + 3, pz, bid("brazier"));
+  }
+  // ...the inlaid ward FLARES (rune_plate_lit base 7 → 11: something stirs
+  // beneath it)...
+  for (const [dx, dz] of [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ] as const) {
+    b.lightAt(238 + dx, Fp - 1, 246 + dz, 11);
+  }
+  // ...and invisible fill light in the south corners' air (level 8, no
+  // source block at all) so the room READS to its edges while every visible
+  // flame stays where the story put it.
+  b.lightAt(233, Fp + 3, 250, 8);
+  b.lightAt(243, Fp + 3, 250, 8);
 }
 
 /**

@@ -206,6 +206,11 @@ public class ShadowMap {
         return (radius * 2f) / fbo.getWidth();
     }
 
+    /** World-map resolution in texels (the entity map runs at half). */
+    public int mapRes() {
+        return fbo.getWidth();
+    }
+
     /** Light-camera depth range (far - near) in meters — converts metric
      *  shadow biases into normalized depth units in the shader. */
     public float depthRange() {
