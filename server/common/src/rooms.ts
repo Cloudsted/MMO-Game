@@ -209,6 +209,11 @@ export type LifecycleDef = z.infer<typeof LifecycleSchema>;
 export const RoomDefSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
+  /** Region-identity blurb (story bible §6, 2-3 sentences) — the one place
+   *  the room narrates itself; canon-guarded like every lore field
+   *  (lore.test.ts: no naming the First Tyrant, no portal explanations,
+   *  no far door). */
+  lore: z.string().optional(),
   type: z.enum(["hub", "wilderness", "dungeon", "building"]),
   /** suggested character-level band (the proposal's node table). Portals
    *  pointing AT this room surface it on their labels ("Lv 8-10", colored

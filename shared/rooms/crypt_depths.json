@@ -1,6 +1,7 @@
 {
   "id": "crypt_depths",
   "name": "Vaults of Morvane",
+  "lore": "The Pale King's seat: dark vaults, iron cells, a frozen third — everything in it paid for by Greywatch's dead-tithe. The Court is Morvane's masterwork in progress, a royal household stitched from generations of tribute, performing courtly life without living it.",
   "levelBand": { "min": 12, "max": 14 },
   "type": "dungeon",
   "biome": "dungeon",

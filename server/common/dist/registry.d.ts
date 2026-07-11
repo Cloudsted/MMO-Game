@@ -490,6 +490,10 @@ export declare const MobRankSchema: z.ZodObject<{
      *  turns "Forge Prototype" into "The Unfinished King" without forking the
      *  def. Last applicable rank wins. */
     name: z.ZodOptional<z.ZodString>;
+    /** bestiary blurb for a rank that IS a different creature in the fiction
+     *  (Waste-Shade, Tithe-Collector, the Unfinished King). Same canon rules
+     *  as MobDef.lore. Last applicable rank wins for display. */
+    lore: z.ZodOptional<z.ZodString>;
     /** loot-table override: a def elevated to a room boss by a rank must not
      *  hand its guaranteed boss table to every lower-level spawn of the same
      *  def (the Bone Warden kept wraith_drops for exactly this reason before
@@ -514,6 +518,7 @@ export declare const MobRankSchema: z.ZodObject<{
     moveSpeedMult: number;
     xpMult: number;
     name?: string | undefined;
+    lore?: string | undefined;
     aggroRadius?: number | undefined;
     fleeAtHpPct?: number | undefined;
     attackRange?: number | undefined;
@@ -525,6 +530,7 @@ export declare const MobRankSchema: z.ZodObject<{
     atLevel: number;
     name?: string | undefined;
     remove?: string[] | undefined;
+    lore?: string | undefined;
     add?: {
         ability: string;
         weight?: number | undefined;
@@ -546,6 +552,10 @@ export declare const MobRankSchema: z.ZodObject<{
 export type MobRankDef = z.infer<typeof MobRankSchema>;
 export declare const MobDefSchema: z.ZodObject<{
     name: z.ZodString;
+    /** One/two-sentence bestiary blurb in the story bible's voice (§6/§7 story
+     *  slots). Canon-guarded: see lore.test.ts — no line may name the First
+     *  Tyrant, explain a portal, or open the far door. */
+    lore: z.ZodOptional<z.ZodString>;
     sprite: z.ZodString;
     level: z.ZodNumber;
     hp: z.ZodNumber;
@@ -622,6 +632,10 @@ export declare const MobDefSchema: z.ZodObject<{
          *  turns "Forge Prototype" into "The Unfinished King" without forking the
          *  def. Last applicable rank wins. */
         name: z.ZodOptional<z.ZodString>;
+        /** bestiary blurb for a rank that IS a different creature in the fiction
+         *  (Waste-Shade, Tithe-Collector, the Unfinished King). Same canon rules
+         *  as MobDef.lore. Last applicable rank wins for display. */
+        lore: z.ZodOptional<z.ZodString>;
         /** loot-table override: a def elevated to a room boss by a rank must not
          *  hand its guaranteed boss table to every lower-level spawn of the same
          *  def (the Bone Warden kept wraith_drops for exactly this reason before
@@ -646,6 +660,7 @@ export declare const MobDefSchema: z.ZodObject<{
         moveSpeedMult: number;
         xpMult: number;
         name?: string | undefined;
+        lore?: string | undefined;
         aggroRadius?: number | undefined;
         fleeAtHpPct?: number | undefined;
         attackRange?: number | undefined;
@@ -657,6 +672,7 @@ export declare const MobDefSchema: z.ZodObject<{
         atLevel: number;
         name?: string | undefined;
         remove?: string[] | undefined;
+        lore?: string | undefined;
         add?: {
             ability: string;
             weight?: number | undefined;
@@ -728,6 +744,7 @@ export declare const MobDefSchema: z.ZodObject<{
         moveSpeedMult: number;
         xpMult: number;
         name?: string | undefined;
+        lore?: string | undefined;
         aggroRadius?: number | undefined;
         fleeAtHpPct?: number | undefined;
         attackRange?: number | undefined;
@@ -737,6 +754,7 @@ export declare const MobDefSchema: z.ZodObject<{
         boss?: boolean | undefined;
     }[];
     xp: number;
+    lore?: string | undefined;
     ability?: string | undefined;
     boss?: boolean | undefined;
     attacks?: {
@@ -764,6 +782,7 @@ export declare const MobDefSchema: z.ZodObject<{
     hp: number;
     moveSpeed: number;
     xp: number;
+    lore?: string | undefined;
     ability?: string | undefined;
     boss?: boolean | undefined;
     attacks?: {
@@ -776,6 +795,7 @@ export declare const MobDefSchema: z.ZodObject<{
         atLevel: number;
         name?: string | undefined;
         remove?: string[] | undefined;
+        lore?: string | undefined;
         add?: {
             ability: string;
             weight?: number | undefined;
@@ -946,6 +966,93 @@ export declare const LootTableSchema: z.ZodObject<{
     }[] | undefined;
 }>;
 export type LootTable = z.infer<typeof LootTableSchema>;
+/**
+ * shared/lore.json — the world's story spine as DATA: the logline, the
+ * premise paragraph, the factions, and the glossary. One source of truth for
+ * every surface that narrates the world (game text, admin dashboard, any
+ * future web page) — nothing re-hardcodes these strings. Authored from the
+ * story bible (docs/story-bible.md §1/§5/§11) and canon-guarded like every
+ * other lore field (lore.test.ts).
+ */
+export declare const LoreFactionSchema: z.ZodObject<{
+    id: z.ZodString;
+    name: z.ZodString;
+    blurb: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    name: string;
+    blurb: string;
+}, {
+    id: string;
+    name: string;
+    blurb: string;
+}>;
+export type LoreFaction = z.infer<typeof LoreFactionSchema>;
+export declare const LoreGlossaryEntrySchema: z.ZodObject<{
+    term: z.ZodString;
+    def: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    term: string;
+    def: string;
+}, {
+    term: string;
+    def: string;
+}>;
+export type LoreGlossaryEntry = z.infer<typeof LoreGlossaryEntrySchema>;
+export declare const LoreFileSchema: z.ZodObject<{
+    /** the world in one line (bible §1) */
+    logline: z.ZodString;
+    /** the world in one paragraph (bible §1, condensed) */
+    premise: z.ZodString;
+    factions: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        name: z.ZodString;
+        blurb: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        id: string;
+        name: string;
+        blurb: string;
+    }, {
+        id: string;
+        name: string;
+        blurb: string;
+    }>, "many">;
+    glossary: z.ZodArray<z.ZodObject<{
+        term: z.ZodString;
+        def: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        term: string;
+        def: string;
+    }, {
+        term: string;
+        def: string;
+    }>, "many">;
+}, "strip", z.ZodTypeAny, {
+    logline: string;
+    premise: string;
+    factions: {
+        id: string;
+        name: string;
+        blurb: string;
+    }[];
+    glossary: {
+        term: string;
+        def: string;
+    }[];
+}, {
+    logline: string;
+    premise: string;
+    factions: {
+        id: string;
+        name: string;
+        blurb: string;
+    }[];
+    glossary: {
+        term: string;
+        def: string;
+    }[];
+}>;
+export type LoreFile = z.infer<typeof LoreFileSchema>;
 export declare class RegistryService {
     rarities: Record<string, RarityDef>;
     items: Record<string, ItemDef>;
@@ -953,6 +1060,7 @@ export declare class RegistryService {
     mobs: Record<string, MobDef>;
     loot: Record<string, LootTable>;
     modifiers: Record<string, ModifierDef>;
+    lore: LoreFile;
     constructor();
     /** (Re)load everything from shared/. Throws (leaving old data intact-ish)
      *  on schema or cross-reference errors — callers catch and report. */

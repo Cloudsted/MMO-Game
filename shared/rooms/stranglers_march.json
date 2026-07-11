@@ -1,6 +1,7 @@
 {
   "id": "stranglers_march",
   "name": "The Strangler's March",
+  "lore": "The border the flood is eating. This was farmland — you can still read the field walls under the sedge — but the fen-king's dam backs the water a finger-width higher every year, and with the water comes its garden: blooms, serpents, weavers. The March is the tribute era as landscape: a neighbor's appetite, arriving slowly.",
 
   "levelBand": { "min": 5, "max": 7 },
   "type": "wilderness",

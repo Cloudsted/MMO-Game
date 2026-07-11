@@ -1,6 +1,7 @@
 {
   "id": "emberfells",
   "name": "The Emberfells",
+  "lore": "The rift's slag-heap, with a landscape attached. The terraces aren't geology — they're pour-lines, generations of slag tipped downslope from the works above — and the dead work-gangs still clock shifts on the haul-road. This is what living downhill from the Furnace-King means.",
   "levelBand": { "min": 8, "max": 10 },
   "type": "wilderness",
   "biome": "volcanic",

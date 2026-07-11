@@ -1,6 +1,7 @@
 {
   "id": "broken_court",
   "name": "The Broken Court",
+  "lore": "The court exactly as day ten left it: braziers lit, banners hung, the state table set and forty years stale. Vaelric, the Sundered King, is what the lesson left — a king still holding court, alone, forever. Behind the throne, the mountain is torn open.",
   "levelBand": { "min": 17, "max": 19 },
   "type": "dungeon",
   "biome": "ruin",

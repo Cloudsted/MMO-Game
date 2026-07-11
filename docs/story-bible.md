@@ -28,6 +28,37 @@
 
 ---
 
+> **SHIPPED 2026-07-10 (admin-dashboard + lore-registry batch): the bible's
+> spine is now DATA.** New canon surfaces, all machine-guarded
+> (server/common/test/lore.test.ts extends the §10 canon guard — "tyrant"
+> only ever after "first", no portal talk, no far door — to EVERY lore/desc
+> field):
+> - **`shared/lore.json`** — the §1 logline + a condensed premise, the §5
+>   factions, and the §11 glossary as structured data (loaded by
+>   RegistryService; the admin dashboard's Lore panel renders it; game/pages
+>   must pull from it, never re-hardcode). Two guard-driven adaptations,
+>   recorded as canon: the faction "The Tyrants" ships under the display
+>   name **"The Kings"** (per §11, "king" is common speech — the strict
+>   guard forbids a bare "tyrant" even in a faction name), and the glossary
+>   merges the Tyrant/king entry into **"king"** ("...the Charter's board
+>   prefers a harder word for the same thing").
+> - **`MobDefSchema.lore`** — every mob id (66) carries a one/two-sentence
+>   bestiary line adapted from the §7 re-theme table + its §6 region entry;
+>   ranks that are a different creature in the fiction carry their own
+>   (`MobRankSchema.lore` ×7: Waste-Shade, Unbound + Tithe-Collector, the
+>   Unfinished King, the Riderless, Wrung Shade, THE Bone Warden). The
+>   Furnace Golem's line deliberately leaves "is it the Furnace-King itself"
+>   open (Vulkhar stays [PROPOSAL]); the Unfinished King's line mirrors the
+>   shipped announce (tableau-implication only, §10.2(c) stays non-canon).
+> - **`RoomDefSchema.lore`** — all 19 rooms carry a 2-3 sentence §6
+>   condensation (the Atelier got a light in-fiction line: "the Charter's
+>   drafting-slab").
+> - **`items.json` desc coverage is now TOTAL** (78/78; trophies were batch
+>   9, the other 57 ship with this batch — weapons/armor/trinkets/
+>   consumables/blocks, all §9-voiced, vendor-anchored where possible).
+
+---
+
 ## 1. The world in one page
 
 **Logline:** *"Every land has a king. None of them are men."*

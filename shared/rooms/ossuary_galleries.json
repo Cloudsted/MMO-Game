@@ -1,6 +1,7 @@
 {
   "id": "ossuary_galleries",
   "name": "The Ossuary Galleries",
+  "lore": "The sorting-house of the Pale Court. Below the Gravelord's door the tribute is processed: stitchers grade the dead like cloth, wardens shelve them, harrowers cull the stock. The down-shaft rides the freight past seeing — the tribute goes further down than anyone follows.",
   "levelBand": { "min": 9, "max": 11 },
   "type": "dungeon",
   "biome": "dungeon",

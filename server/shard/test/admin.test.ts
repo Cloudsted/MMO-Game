@@ -95,4 +95,20 @@ describe("admin dashboard hooks", () => {
     const again = new RoomSim(loadRoomDef("hub")).world.renderTopDown();
     expect(again.data).toBe(map.data);
   });
+
+  it("adminInfo reports LIVE portal seal state (dashboard world graph)", () => {
+    // hub: no gates, every portal open
+    const hubPorts = sim.adminInfo().portals!;
+    expect(hubPorts.length).toBe(sim.def.portals.length);
+    for (const p of hubPorts) expect(p.open, p.id).toBe(true);
+
+    // dungeon: the Gravelord's border-gate boots SEALED while he lives —
+    // adminInfo must mirror the same portalOpen() players see
+    const dungeon = new RoomSim(loadRoomDef("dungeon"));
+    const ports = dungeon.adminInfo().portals!;
+    const gate = ports.find((p) => p.id === "dungeon-depths")!;
+    expect(gate.open).toBe(false);
+    const home = ports.find((p) => p.id === "dungeon-hub")!;
+    expect(home.open).toBe(true);
+  });
 });

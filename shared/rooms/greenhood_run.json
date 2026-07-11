@@ -1,6 +1,7 @@
 {
   "id": "greenhood_run",
   "name": "The Greenhood Run",
+  "lore": "The company's smuggling tunnel — shored galleries, cache-rooms, and a buried pre-Dividing cellar the company broke into and never told Thrace about. Poached goods move east; payments from the kings' agents move west. Quartermaster Grole holds the ledger, and nobody leaves owing.",
   "levelBand": { "min": 4, "max": 6 },
   "type": "dungeon",
   "biome": "ruin",

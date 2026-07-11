@@ -1,6 +1,7 @@
 {
   "id": "grounds",
   "name": "The Freehold",
+  "lore": "The first acre back. The Charter petitioned, the Council shrugged, Jib planted a fence — the first ground formally claimed back from the divided world. Every hut raised here is a flag.",
   "type": "building",
   "biome": "grass",
   "wind": 0.6,

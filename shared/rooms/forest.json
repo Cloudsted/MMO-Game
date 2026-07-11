@@ -1,6 +1,7 @@
 {
   "id": "forest",
   "name": "The Kingless Wood",
+  "lore": "Every land has a king; this one doesn't. No king will so much as den on its edge — because Aelthir walks it — and into the vacuum came the Greenhood Company: poachers who found the one wood where you can rob the kings' larder without meeting a king. Thrace the Redcap holds the fort, and the fort holds the only way into the Run.",
 
   "levelBand": { "min": 1, "max": 4 },
   "type": "wilderness",

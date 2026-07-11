@@ -1,6 +1,7 @@
 {
   "id": "desert",
   "name": "The Sunscour",
+  "lore": "A sea-country once — the aqueduct carried river-water, and the Colossus watched a harbor. Then the Dividing put something in the deep crater, and over a generation it drank the water table to the last aquifer. What the drinking left, Kaharat's pride rules; below the rim waits the reason for the sand.",
 
   "levelBand": { "min": 4, "max": 7 },
   "type": "wilderness",

@@ -2334,6 +2334,98 @@ show their block tile).
     cap in raid packs, band colors at other levels, whether player names
     at 25 m read right in the hub crowd, boss gold-name tint.
 
+- 2026-07-10 **ADMIN DASHBOARD OVERHAUL + LORE REGISTRY** (owner: "room
+  connections, lists of all items, mobs, loot tables... clean and intuitive
+  UI/UX" + "lore points... dynamic data stored in a central location — one
+  source of truth"). NOT COMMITTED — working-tree batch.
+  - **The lore registry (one source of truth).** `MobDefSchema` +=
+    optional `lore` (authored on ALL 66 mobs, bible §6/§7 voice);
+    `MobRankSchema` += `lore` (7 fiction-distinct ranks: Waste-Shade,
+    Unbound/Tithe-Collector, Unfinished King, the Riderless, Wrung Shade,
+    THE Bone Warden); `RoomDefSchema` += `lore` (all 19 rooms, §6
+    condensations); `items.json` desc coverage 21→**78/78** (57 authored:
+    weapons/armor/trinkets/consumables/blocks, §9 voice); NEW
+    **`shared/lore.json`** (LoreFileSchema in registry.ts, loaded by
+    RegistryService both runtimes): logline, premise, 9 factions, 12
+    glossary terms. **Canon guard extended to every lore field**
+    (common/test/lore.test.ts): "tyrant" only after "first", no portal
+    mention, no far door — over mob/rank/room lore + item descs + all of
+    lore.json (names included). Consequence recorded in the bible: the
+    §5 "Tyrants" faction ships as "The Kings", and all new text says
+    "king" per the §11 common-speech convention. Coverage tests: every
+    mob/room/item has its line; every rank with a `name` override has lore.
+  - **Telemetry**: `RoomAdminInfo` += optional `portals [{id, open,
+    reopenInSec?}]` (protocol.ts); `RoomSim.adminInfo()` reports the SAME
+    `portalOpen()` combination players see — the dashboard's world graph
+    shows LIVE seal state (shard admin.test.ts asserts the dungeon's
+    Gravelord gate reads sealed at boot).
+  - **API** (admin.ts, all ADMIN_KEY-gated): `/api/admin/registry/{mobs,
+    items,loot,abilities,rooms,lore}` + `/api/admin/graph` — a cached
+    `buildRegistryDump()` (exported for tests) computes per-mob found-in
+    (every room spawn table incl. `level` overrides, resolved via
+    resolveMob: name/hp/xp/boss at spawn level), event waves, summoned-by,
+    and drop lines (recursive loot-table expectation math mirroring
+    rollLoot: weighted rolls + guaranteed slots, depth-capped; expected
+    count + guaranteed floor per item); per-item reverse indexes
+    (dropped-by w/ guaranteed flag, direct tables, cache_* membership,
+    sold-by NPCs); per-table used-by; per-ability used-by; rooms detail
+    (portals w/ gate detection from openPortal events, resolved spawn
+    tables, events, npcs, prefabs); graph nodes+edges (gate boss, one-way
+    = exitX/Z w/o exitPortalId). POST `/api/admin/registry/refresh` =
+    reg.reload() + cache rebuild. **Asset routes**
+    `/api/admin/asset/sprite?sheet=<key>` + `/api/admin/asset/icons`
+    serve the BUILT game assets (client/assets/sprites/*.png +
+    ui/icons.png) behind a strict allowlist (token shape + known to mob
+    defs/room npcs/"player") — dashboard and game share one art source.
+    Master-side tests: server/master/test/registrydump.test.ts (all six ⚿
+    border-gates, one-way flags, crown guaranteed on the King, reverse
+    indexes).
+  - **Page** (adminpage.ts, still one string-concat document): left
+    SIDEBAR nav (Live / World / Ops groups) replacing the tab row —
+    Overview · **World Graph** · Rooms · **Bestiary** · **Armory** ·
+    **Loot Tables** · **Abilities** · **Lore** · Players · Characters ·
+    Accounts · Economy · Logs · Actions. Hash deep links everywhere
+    (#bestiary-<mobId>, #armory-<itemId>, #loot-<tableId> pins the table
+    to the top expanded, #rooms-<roomId>, #abilities-<id>, plus the old
+    #map-/#char-). GLOBAL fuzzy search (header) over mobs/items/rooms/
+    tables/abilities/factions jumps to cards. Registry data loads once
+    (7 parallel calls) + "⟳ reload registries"; live data keeps the 2.5 s
+    active-panel poll. **World Graph**: SVG, DIRECTED BFS-from-hub column
+    layout (one-way home portals must not pull the endgame into column 1),
+    viewBox-scaled to fit, nodes = display name/band/status dot/players/◉,
+    edges = green open / bronze ⚿ gated / red ✖ sealed-right-now (live
+    portal telemetry, def+room-status fallback) / dashed arrow one-way;
+    click-through to room detail. **Bestiary**: reference-quality cards
+    grouped by primary room — sprite crop (middle col × down row from
+    client/assets/sprites/sprites.json meta, whole-sheet fallback, "no
+    art" placeholder), BOSS bronze cards, lore, found-in (linked, resolved
+    rank names), kit chips w/ mechanics tooltips, drops with effective %
+    (guaranteed gold), rank ladder w/ per-rank lore. **Armory**:
+    icon-atlas crops (16px cells), tier badges (T1 basic→T5 royal),
+    stats/effects, desc, full source trail. **Loot Tables**: effective-
+    drop lines, expandable weight tables (share %), used-by, nested
+    links. **Abilities**: dense reference table. **Lore**: logline hero +
+    premise + faction cards + glossary from lore.json. ALL previous
+    panels/actions preserved (charts, live map modal + click-teleport,
+    kick/teleport/summon, offline character editing w/ the 409 rule,
+    economy, logs, broadcast); `/api/status` untouched.
+  - Verified: typecheck, **709 vitest** green (9 master dump + 1 shard
+    portal telemetry + 8 lore new), live session stack on alt ports
+    (mongod 27018 scratch dbpath + master 4100 + shard portBase 4610 —
+    owner's 4000/27017 stack untouched), endpoints smoke-tested (found-in,
+    drop math, graph gates, live seal state, asset allowlist rejects
+    traversal), headless-edge screenshots READ and iterated
+    (tools/out/admin2-{overview,graph,bestiary,armory,loot,room,abilities,
+    lore}.png). Headless quirk: `--screenshot` after a hash-anchor
+    scrollIntoView leaves unpainted black bands — deep links are fine in
+    real browsers; for captures use unanchored tabs (#loot-<id> is safe:
+    it pins instead of scrolling). NOTE: the owner's RUNNING master serves
+    the old page/API until restarted.
+  - Owner feel-checks pending: sidebar grouping/order, bestiary grouping
+    (by primary room — alternative is by band), graph text size at 19
+    rooms (viewBox-scaled), whether cache_* tables should surface
+    room-links, and small sprite crops staying 1× (integer-scale rule).
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -2420,6 +2512,18 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-10 **ADMIN DASHBOARD OVERHAUL + LORE REGISTRY (uncommitted working
+  tree)** — see the decisions-log entry. The dashboard is a sidebar ops
+  console + world encyclopedia: World Graph (all 19 rooms, live seal
+  states, gate bosses), Bestiary/Armory/Loot/Abilities/Lore panels rendered
+  entirely from `/api/admin/registry/*` + `/api/admin/graph` (zero
+  hardcoded content), game-asset sprite/icon serving, global search, hash
+  deep links — all existing ops panels preserved. Lore is now DATA: mob
+  `lore` (66) + rank lore (7) + room `lore` (19) + item `desc` (78/78) +
+  `shared/lore.json` (logline/premise/factions/glossary), canon-guarded by
+  lore.test.ts. 709 vitest green; screenshots tools/out/admin2-*.png.
+  **The owner's running master serves the old dashboard until restarted.**
 
 - 2026-07-10 **PORTAL LEVEL BANDS + NAMETAG DECLUTTER shipped (uncommitted
   working tree)** — see the decisions-log entry. Every portal label now

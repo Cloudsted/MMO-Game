@@ -1,6 +1,7 @@
 {
   "id": "maw",
   "name": "The Maw",
+  "lore": "The dried sea's basin, at feeding time. The thing that drank the sea has grown too vast for its own pit and surfaces on a schedule to feed — the countdown at the crater gate IS the schedule. You fight standing on the menu.",
   "levelBand": { "min": 9, "max": 10 },
   "type": "dungeon",
   "biome": "ruin",

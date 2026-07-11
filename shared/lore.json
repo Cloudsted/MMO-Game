@@ -1,0 +1,101 @@
+{
+  "logline": "Every land has a king. None of them are men.",
+  "premise": "Generations ago the great beasts divided the world between them — nobody agrees on when, and nobody saw it happen. People call it the Dividing. Each land is shaped by its king: the fen drowns because its king dams the water with its own crowned bulk, the rift burns because the Furnace-King stokes it, the desert is a desert because something in the crater drank the sea. Civilization is down to one walled city — Greywatch, the Last Free City. 'Free' is polite: Greywatch pays. And the kings themselves pay tribute UP, to the one even kings kneel to — the First Tyrant, in the frozen high waste at the top of the world. Two years ago a hunting company nailed a board to the wall of an old tithe-counting house and started posting bounties on things nobody sane hunts. That is the Hunters' Charter — the first generation to hunt the kings back. The board is the map, trophies are proof, and every border-gate in the world opens the same way: over a king's body.",
+  "factions": [
+    {
+      "id": "charter",
+      "name": "The Hunters' Charter",
+      "blurb": "The player's outfit. Two years old, one hall, one board. Bounties, proof, testimony — and the wager that there is a third answer besides obedience and defiance. No one, anywhere, has ever felled a king. Yet."
+    },
+    {
+      "id": "council",
+      "name": "The Council of Greywatch",
+      "blurb": "The old tithe-council under a new coat of paint. It schedules the tribute — cattle south, grain east, the dead down the crypt stair — and believes payment is what keeps the walls standing. It smiles at hunters in daylight and counts tribute owed by candlelight."
+    },
+    {
+      "id": "greenhoods",
+      "name": "The Greenhood Company",
+      "blurb": "The poacher company squatting the Kingless Wood — hoods dyed green, caps dyed worse. They poach the kings' game and sell to anyone, including the kings' own creatures. They need the kings ALIVE: no kings, no black-market premium, no informer's fee. Thrace holds the wood; Grole runs the books."
+    },
+    {
+      "id": "kings",
+      "name": "The Kings",
+      "blurb": "The great beasts themselves: Grelmoss in the fen, Kaharat on the sands, Sarquun in the pit, the Furnace-King in the rift, the Pale King below — and over all of them the First Tyrant in the high waste, the one even kings kneel to. Not a court — a food chain. Tribute flows up; nothing flows down."
+    },
+    {
+      "id": "valdrenn-dead",
+      "name": "The Dead of Valdrenn",
+      "blurb": "The garrison that never stopped marching, the sentinels holding oaths to a dead king, and the king himself, left on his throne as a lesson. They want nothing — that is the horror. They want what they wanted on day nine, forever."
+    },
+    {
+      "id": "pale-court",
+      "name": "The Pale Court",
+      "blurb": "Morvane the Hollow's stitched retinue under the northern crypts. The Pale King taxes Greywatch in DEAD — that is what the crypt stair is for — and builds courtiers from the tribute. The Court is being composed, and it is not finished."
+    },
+    {
+      "id": "sekhats-court",
+      "name": "Sekhat's Court",
+      "blurb": "The withered courtiers of the sands' last king, sealed into the tomb under the Colossus, still holding ledgers of tribute paid in full. Obedience killed the sands. A mirror, not a threat — until you open the tomb."
+    },
+    {
+      "id": "ashpickers",
+      "name": "The Ashpickers",
+      "blurb": "Scavengers of the fallen capital and the tomb-robber sandpicker gangs of the Sunscour. No flag, no code, good prices. They sell maps to the Charter and the same maps to the Greenhoods, and stay beneath every king's notice."
+    },
+    {
+      "id": "aelthir",
+      "name": "Aelthir, the Unmarred",
+      "blurb": "A faction of one: the white thing that walks the Kingless Wood. It predates the kings, it initiates nothing, and it finishes everything. Even kings do not enter its wood — which is why the wood is the one place safe enough for greenhorns."
+    }
+  ],
+  "glossary": [
+    {
+      "term": "the Dividing",
+      "def": "The unfixed historical moment the great beasts took the lands. Grandmothers disagree by a century; the Charter has stopped asking. Always 'the Dividing', never 'the war' — the Nine-Day War is a different, dated thing."
+    },
+    {
+      "term": "king",
+      "def": "Common speech for the great beasts that rule the lands ('the fen's king'); the Charter's board prefers a harder word for the same thing. Every land has one. None of them are men."
+    },
+    {
+      "term": "the tribute / the tithe",
+      "def": "The payment economy the world runs on. Greywatch speech prefers 'tithe' for its own payments and 'tribute' for everyone else's. Appetite does not plateau."
+    },
+    {
+      "term": "mark",
+      "def": "A posted bounty. 'Take a mark' = accept a hunt. The board posts every mark plain: the land, the beast, and the level you'd better be."
+    },
+    {
+      "term": "proof",
+      "def": "A trophy. 'Bring the proof' = the trophy-sell loop: selling proof anywhere in Greywatch collects the bounty — the Charter reimburses the merchants."
+    },
+    {
+      "term": "the board",
+      "def": "The bounty board on the Charter Hall's porch — the room guide. 'Left column, top' is the starter door. The top row has never been claimed."
+    },
+    {
+      "term": "the stone",
+      "def": "The warm standing stone Greywatch's plaza is paved around. Those who die beyond the walls wake beside it, whole and gasping — nobody knows why. The stone keeps no luggage: your gear stays where you fell."
+    },
+    {
+      "term": "the Unreturned",
+      "def": "Those the stone kept. Their names are chiseled on the Tally Yard wall, and no pattern has ever been found. Chiseled, not spoken of."
+    },
+    {
+      "term": "the arrangement",
+      "def": "Council euphemism for the tribute schedule. Mara calls it feeding the thing that starves us."
+    },
+    {
+      "term": "the two dead kings",
+      "def": "Sekhat, who paid everything, and Vaelric, who refused once. Maera's proverb: obedience killed the sands, defiance killed the north. The Charter had better be a third thing."
+    },
+    {
+      "term": "border-gate",
+      "def": "A sealed way between lands that opens over exactly one king's body — 'the gate stands open' is the canonical phrasing when a boss death unseals one. It reseals when the guardian returns."
+    },
+    {
+      "term": "corpse-candle",
+      "def": "The cold blue bog-lights over drowned farmland; also the hidden fen road they mark. Warm light is the living's; corpse-candle green is a warning."
+    }
+  ]
+}

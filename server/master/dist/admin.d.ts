@@ -10,6 +10,24 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Collections } from "./db.js";
 import type { ShardManager } from "./shards.js";
+interface RegistryDump {
+    builtAt: number;
+    mobs: unknown[];
+    items: unknown[];
+    loot: unknown[];
+    abilities: unknown[];
+    rooms: unknown[];
+    graph: {
+        nodes: unknown[];
+        edges: unknown[];
+    };
+    spriteMeta: unknown;
+    iconMeta: unknown;
+    rarities: unknown;
+}
+/** exported for tests (registrydump.test.ts) — production goes through the cache */
+export declare function buildRegistryDump(): RegistryDump;
 /** Handles /admin* routes. Returns true when the request was handled. */
 export declare function handleAdmin(req: IncomingMessage, res: ServerResponse, url: URL, shards: ShardManager, cols: Collections, adminKey: string): Promise<boolean>;
+export {};
 //# sourceMappingURL=admin.d.ts.map

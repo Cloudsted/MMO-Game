@@ -1,6 +1,7 @@
 {
   "id": "sundering_fields",
   "name": "The Sundering Fields",
+  "lore": "Where the king's army made its stand — for nine days. Trench crescents dug facing north, a siege-beast's furrow gouged arrow-straight toward the gates, and the dead still holding formation at the mustering stones. The name was always the city's; this is where the sundering happened.",
 
   "levelBand": { "min": 11, "max": 13 },
   "type": "wilderness",

@@ -1,6 +1,7 @@
 {
   "slime": {
     "name": "Slime",
+    "lore": "Loam-fat vermin of the Kingless Wood — the first mark on the board, and the reason your XP bar starts moving. Mara pays better if the gel hasn't leaked.",
     "sprite": "slime",
     "level": 1,
     "hp": 30,
@@ -22,6 +23,7 @@
   },
   "wolf": {
     "name": "Wolf",
+    "lore": "Kingless Wood pack-hunter; poacher bait and poacher competition. The packs den where the game trails cross, and they know a straggler when they smell one.",
     "sprite": "wolf",
     "level": 3,
     "hp": 62,
@@ -43,6 +45,7 @@
   },
   "bandit": {
     "name": "Greenhood Cutthroat",
+    "lore": "Company muscle. The hood is dyed with wood-moss 'so the kings' creatures know who pays.' Brigands rob you; the Greenhoods robbed the kings — and paid them for the privilege.",
     "sprite": "bandit",
     "level": 3,
     "hp": 68,
@@ -98,6 +101,7 @@
   },
   "skeleton": {
     "name": "Skeleton",
+    "lore": "The restless dead — tithe-stock on the crypt stair at low ranks, Valdrenn's legion still holding the day-nine line at high ones. They are not at rest; they are in transit.",
     "sprite": "skeleton",
     "level": 5,
     "hp": 95,
@@ -170,6 +174,7 @@
   },
   "cacto": {
     "name": "Cacto",
+    "lore": "Sunscour ambush flora. It drinks what nothing else can find, and it is not above helping the finding along.",
     "sprite": "cacto",
     "level": 5,
     "hp": 140,
@@ -191,6 +196,7 @@
   },
   "raptor": {
     "name": "Raptor",
+    "lore": "Sunscour surface pack-hunter. The pride tolerates raptors as beaters — and the Charter pays for fewer beaters.",
     "sprite": "raptor",
     "level": 7,
     "hp": 78,
@@ -212,6 +218,7 @@
   },
   "minotaur_boss": {
     "name": "The Gravelord",
+    "lore": "The Pale King's warden-beast at the door between Greywatch's crypt and the galleries below: it keeps the living OUT and the tribute IN. The lower stair opens only over its body.",
     "sprite": "minotaur",
     "level": 9,
     "hp": 596,
@@ -243,6 +250,7 @@
   },
   "boar": {
     "name": "Bristleback Boar",
+    "lore": "Kingless Wood game — legally some king's property, practically dinner. Every tusk sold in Greywatch is technically poaching. Mara doesn't ask.",
     "sprite": "boar",
     "level": 2,
     "hp": 45,
@@ -264,6 +272,7 @@
   },
   "giant_spider": {
     "name": "Fen Weaver",
+    "lore": "The broodmother's strays, strung wherever the fen-water creeps — the March's weavers are her outliers. Do not squeeze the sac.",
     "sprite": "giant_spider",
     "level": 4,
     "hp": 85,
@@ -292,6 +301,7 @@
   },
   "bog_serpent": {
     "name": "Bog Serpent",
+    "lore": "Gloomfen flood-fauna. The king's rising water brought them, and every year the water — and the serpents — reach a finger-width further into somebody's field.",
     "sprite": "bog_serpent",
     "level": 6,
     "hp": 115,
@@ -320,6 +330,7 @@
   },
   "mantrap": {
     "name": "Strangler Bloom",
+    "lore": "The Elder Strangler's garden, wherever fen-water creeps. Each bloom is a cutting off the mother-rootstock — kill the gardener and the gardens go quiet, for a season.",
     "sprite": "mantrap",
     "level": 6,
     "hp": 155,
@@ -348,6 +359,7 @@
   },
   "elder_strangler": {
     "name": "The Elder Strangler",
+    "lore": "The mother-rootstock of every strangler bloom in the march, grown through a drowned farmstead it wears like a shell. It does not chase; the fight is walking into the garden and killing the gardener at its heart.",
     "sprite": "mantrap",
     "level": 8,
     "hp": 540,
@@ -388,6 +400,7 @@
   },
   "lizardman": {
     "name": "Fenblade Lizardman",
+    "lore": "Fen-folk who pay Grelmoss tribute in carrion and keep its dam patched. The fen's court, such as it is.",
     "sprite": "lizardman",
     "level": 10,
     "hp": 211,
@@ -412,6 +425,7 @@
   },
   "marsh_wisp": {
     "name": "Marsh Wisp",
+    "lore": "Corpse-candles over drowned farmland. They light the fen's hidden roads — follow them at your own judgment, and mind which color the light is.",
     "sprite": "marsh_wisp",
     "level": 10,
     "hp": 130,
@@ -433,6 +447,7 @@
   },
   "ash_husk": {
     "name": "Ash-Choked Husk",
+    "lore": "The Furnace-King's dead workforce, still clocking shifts on the haul-roads of the Emberfells and the rift. The shift never ends; the dead never notice.",
     "sprite": "ash_husk",
     "level": 8,
     "hp": 175,
@@ -457,6 +472,7 @@
   },
   "fire_elemental": {
     "name": "Cinder Elemental",
+    "lore": "Sparks off the stoked rift — the Furnace-King's loose embers, drifting wherever the draft takes them.",
     "sprite": "fire_elemental",
     "level": 10,
     "hp": 138,
@@ -481,6 +497,7 @@
   },
   "bone_bat": {
     "name": "Crypt Shrieker",
+    "lore": "Ossuary vermin. It nests in the grading-halls and answers the Pale King's summons like everything else down there.",
     "sprite": "bone_bat",
     "level": 10,
     "hp": 85,
@@ -505,6 +522,7 @@
   },
   "wraith": {
     "name": "Vault Wraith",
+    "lore": "Pale Court house-guard: tribute that graded 'fine.' It holds the cold vaults the way the sentinels hold Valdrenn — the office outliving the occupant.",
     "sprite": "wraith",
     "level": 13,
     "hp": 300,
@@ -514,6 +532,7 @@
     "ranks": [
       {
         "atLevel": 20,
+        "lore": "What a vault wraith becomes at the top of the world, where the tribute goes. It drifts the tribute-road like a toll that collects itself.",
         "damageMult": 0.85,
         "xpMult": 0.8075,
         "name": "Waste-Shade"
@@ -534,6 +553,7 @@
   },
   "cinder_golem_boss": {
     "name": "Furnace Golem",
+    "lore": "The forge-court's master-construct — what the rift's fires are FOR, wearing armor. Whether it is the Furnace-King itself or merely wears the office, nobody has survived asking. The Foundry gate opens only over its coals.",
     "sprite": "cinder_golem",
     "level": 14,
     "hp": 1083,
@@ -565,6 +585,7 @@
   },
   "lich_boss": {
     "name": "Morvane the Hollow",
+    "lore": "The Pale King. It taxes Greywatch in dead — the funerals are the tithe — and builds a court from the payments. Was it ever human? The bounty pays the same either way.",
     "sprite": "lich",
     "level": 15,
     "hp": 1150,
@@ -600,6 +621,7 @@
   },
   "marauder": {
     "name": "Ashpicker Marauder",
+    "lore": "Ashpicker muscle picking Valdrenn's bones. Nothing in the capital was looted the day it fell — that came after, and this is who came.",
     "sprite": "marauder",
     "level": 13,
     "hp": 290,
@@ -621,6 +643,7 @@
   },
   "gravehound": {
     "name": "Gravehound",
+    "lore": "Battlefield feeders of the Sundering Fields. The hounds ate well here once and never left; the Barrow Alpha's packs still ring her mound.",
     "sprite": "gravehound",
     "level": 13,
     "hp": 240,
@@ -642,6 +665,7 @@
   },
   "fallen_soldier": {
     "name": "Fallen Garrison Soldier",
+    "lore": "Valdrenn's army, still holding the day-nine line at the mustering stones. The garrison never stopped marching; it only stopped being alive.",
     "sprite": "fallen_soldier",
     "level": 14,
     "hp": 320,
@@ -672,6 +696,7 @@
   },
   "oathbound_sentinel": {
     "name": "Oathbound Sentinel",
+    "lore": "Vaelric's knights. The oath outlived the men, and the oath does not negotiate. Ser Osmund is their champion.",
     "sprite": "oathbound_sentinel",
     "level": 16,
     "hp": 400,
@@ -693,6 +718,7 @@
   },
   "old_wallbreaker": {
     "name": "Old Wallbreaker",
+    "lore": "The siege-beast driven against Valdrenn's gates, still yoked to its war-sledge forty years on, grazing among the men it killed. Too dumb to die, too huge to rot.",
     "sprite": "old_wallbreaker",
     "level": 14,
     "hp": 1083,
@@ -732,6 +758,7 @@
   },
   "barrow_alpha": {
     "name": "The Barrow Alpha",
+    "lore": "The gravehound pack-mother, denned in a mass barrow of the war-dead. Her howl opens the kennels — silence her mid-cry and the mound stays quiet.",
     "sprite": "gravehound",
     "level": 13,
     "hp": 560,
@@ -768,6 +795,7 @@
   },
   "ser_osmund": {
     "name": "Ser Osmund, the Gatekeeper",
+    "lore": "Champion of Valdrenn, holding the castle gatehouse against all comers forty years past the point of it. He cannot be argued past, only put down — and putting him down is a mercy.",
     "sprite": "ser_osmund",
     "level": 17,
     "hp": 1495,
@@ -804,6 +832,7 @@
   },
   "sundered_king": {
     "name": "Vaelric, the Sundered King",
+    "lore": "The second dead king. He said NO to the tribute — once, for nine days — and what the First Tyrant left of him still holds court alone. His rally is a muster-call; the oath still answers.",
     "sprite": "sundered_king",
     "level": 18,
     "hp": 2200,
@@ -858,6 +887,7 @@
   },
   "greenhood_poacher": {
     "name": "Greenhood Poacher",
+    "lore": "Company skirmisher — the green hood the whole company is named for. He shoots from cover and closes with a knife when the cover runs out.",
     "sprite": "bandit_poacher",
     "level": 3,
     "hp": 58,
@@ -922,6 +952,7 @@
   },
   "powder_brigand": {
     "name": "Powder Brigand",
+    "lore": "The company's powder-corps: Grole's people, lobbing flasks of what the sappers marched home with. Strafe — the lob leads nobody.",
     "sprite": "bandit_bombardier",
     "level": 4,
     "hp": 72,
@@ -979,6 +1010,7 @@
   },
   "bandit_enforcer": {
     "name": "Greenhood Enforcer",
+    "lore": "Company wall-of-meat. Toll collection with a face, and an iron bar to slow you down when you decline to pay.",
     "sprite": "bandit_enforcer",
     "level": 4,
     "hp": 127,
@@ -1032,6 +1064,7 @@
   },
   "hollow_cowl": {
     "name": "Hollow Cowl",
+    "lore": "The company's 'mystics.' Nobody in the company asks what's under the cowl either. It mends its kin mid-fight — hit it mid-cast and the mending never lands.",
     "sprite": "bandit_mystic",
     "level": 4,
     "hp": 74,
@@ -1086,6 +1119,7 @@
   },
   "thrace_redcap": {
     "name": "Thrace the Redcap",
+    "lore": "Captain of the Greenhoods — a man playing king in the kingless wood, which is the joke and the tragedy. His cap is dyed the traditional way. The fort gate opens over his body.",
     "sprite": "bandit_chief",
     "level": 5,
     "hp": 400,
@@ -1142,6 +1176,7 @@
   },
   "quartermaster_grole": {
     "name": "Quartermaster Grole",
+    "lore": "The company's real brains: Thrace holds the wood, Grole holds the LEDGER. His vault is shelved with tribute-grade goods addressed to creatures, and his fight is an audit. Nobody leaves owing.",
     "sprite": "bandit_quartermaster",
     "level": 7,
     "hp": 490,
@@ -1191,6 +1226,7 @@
   },
   "camp_cur": {
     "name": "Camp Cur",
+    "lore": "Company tripwire-dogs, bred in the Run's kennels. Pull the dog, pull the camp.",
     "sprite": "camp_cur",
     "level": 2,
     "hp": 40,
@@ -1246,6 +1282,7 @@
   },
   "stolen_goat": {
     "name": "Stolen Goat",
+    "lore": "Somebody's tribute-herd, diverted. The company steals from EVERYONE. It wanders; then it bolts.",
     "sprite": "stolen_goat",
     "level": 1,
     "hp": 20,
@@ -1268,6 +1305,7 @@
   },
   "restless_bones": {
     "name": "Restless Bones",
+    "lore": "Fresh tithe-stock on the crypt stair — the dead in transit, not yet sorted. They are not at rest; nothing down here is.",
     "sprite": "restless_bones",
     "level": 6,
     "hp": 40,
@@ -1311,6 +1349,7 @@
   },
   "ossuary_stitcher": {
     "name": "Ossuary Stitcher",
+    "lore": "Gallery artisan of the Pale Court. It grades the dead like cloth and sews the tribute into courtiers — the half-finished one on the master table is its work.",
     "sprite": "ossuary_stitcher",
     "level": 8,
     "hp": 140,
@@ -1369,6 +1408,7 @@
   },
   "bone_warden": {
     "name": "Bone Warden",
+    "lore": "Foreman of the sorting-house. It shelves what the stitchers grade, and it wards the doors against the living.",
     "sprite": "bone_warden",
     "level": 9,
     "hp": 368,
@@ -1388,6 +1428,7 @@
     "ranks": [
       {
         "atLevel": 12,
+        "lore": "THE Bone Warden — the foreman at its own post, beside the down-shaft the tribute rides past seeing. The Court's door is attended while it stands.",
         "boss": true,
         "hpMult": 1.45,
         "xpMult": 2.2183,
@@ -1425,6 +1466,7 @@
   },
   "grave_harrower": {
     "name": "Grave Harrower",
+    "lore": "Gallery cull-officer. Its muster-call is a shift-bell: the stock rises, the shift forms, the culling resumes.",
     "sprite": "grave_harrower",
     "level": 11,
     "hp": 298,
@@ -1482,6 +1524,7 @@
   },
   "crypt_ghoul": {
     "name": "Crypt Ghoul",
+    "lore": "Tithe-pilferer — it eats the stock. Even the Pale Court has vermin.",
     "sprite": "crypt_ghoul",
     "level": 7,
     "hp": 85,
@@ -1531,6 +1574,7 @@
   },
   "pallid_mourner": {
     "name": "Pallid Mourner",
+    "lore": "The grief the Court cannot process: a weeping nothing in an unswept chapel — one candle, benches knelt out of true. Do not touch it.",
     "sprite": "pallid_mourner",
     "level": 6,
     "hp": 25,
@@ -1546,6 +1590,7 @@
     "ranks": [
       {
         "atLevel": 13,
+        "lore": "What the weeping becomes when touched. Entering the chapel is the trap; the one candle should have been the warning.",
         "boss": true,
         "remove": [
           "punch"
@@ -1580,6 +1625,7 @@
   },
   "ember_warplate": {
     "name": "Ember Warplate",
+    "lore": "Foundry line-soldier — the weapon-tribute, armed with itself. Its captains hold the line-north floor of the works.",
     "sprite": "ember_warplate",
     "level": 12,
     "hp": 265,
@@ -1635,6 +1681,7 @@
   },
   "forge_tender": {
     "name": "Forge-Tender",
+    "lore": "Foundry maintenance-caste: it mends the line, and it mends the line-soldiers — mid-fight, if you let it.",
     "sprite": "forge_tender",
     "level": 12,
     "hp": 175,
@@ -1687,6 +1734,7 @@
   },
   "frostplate_revenant": {
     "name": "Frostplate Revenant",
+    "lore": "Frost armor in a fire land — a question every hunter asks. It stands its posts like an office, and the rime on the tribute-crates is its stamp.",
     "sprite": "frostplate_revenant",
     "level": 13,
     "hp": 330,
@@ -1707,6 +1755,7 @@
     "ranks": [
       {
         "atLevel": 15,
+        "lore": "A collector off its post — unbound from whatever schedule it kept. The rift is not its home; the cold came down from somewhere.",
         "boss": true,
         "hpMult": 1.3,
         "damageMult": 1.15,
@@ -1717,6 +1766,7 @@
       },
       {
         "atLevel": 21,
+        "lore": "The First Tyrant's tithe-collector at its true post, weighing what the kings send up. Kill one and the ledger is wrong at BOTH ends.",
         "boss": false,
         "damageMult": 0.75,
         "xpMult": 0.7641,
@@ -1740,6 +1790,7 @@
   },
   "slagback_troll": {
     "name": "Slagback Troll",
+    "lore": "Emberfells ore-eater caste. It eats raw ore and vomits the slag the fells are terraced with — generations of pours, readable like tree rings.",
     "sprite": "slagback_troll",
     "level": 10,
     "hp": 256,
@@ -1792,6 +1843,7 @@
   },
   "old_kiln": {
     "name": "The Old Kiln",
+    "lore": "The Furnace-King's oldest servant — the first machine of the fells' production line, defending its feeding-adit. Kill the kiln and, for the first time in living memory, the fells stop smoking.",
     "sprite": "slagback_troll",
     "level": 11,
     "hp": 730,
@@ -1836,6 +1888,7 @@
   },
   "forge_ward": {
     "name": "Forge-Ward",
+    "lore": "Dormant Foundry sentries — the 'statues' at the doors that aren't statues. They wake when the line is threatened, or when something on the line calls.",
     "sprite": "forge_ward",
     "level": 13,
     "hp": 400,
@@ -1883,6 +1936,7 @@
   },
   "forge_prototype": {
     "name": "Forge Prototype",
+    "lore": "A construct off the Foundry's ascending line — each frame bigger than the last, and this one walks. Ask what the line is building toward.",
     "sprite": "forge_prototype",
     "level": 14,
     "hp": 520,
@@ -1924,6 +1978,7 @@
       },
       {
         "atLevel": 17,
+        "lore": "The prototype at the line's end, woken early — magnificent and incomplete, fighting with systems that visibly misfire. On the anvils behind it: the next one, half-built.",
         "boss": true,
         "add": [
           {
@@ -1953,6 +2008,7 @@
   },
   "sandpicker": {
     "name": "Sandpicker",
+    "lore": "Ashpicker desert chapter. It robs Sekhat's tomb and sells the maps twice — once to the Charter, once to the Greenhoods.",
     "sprite": "sandpicker",
     "level": 5,
     "hp": 68,
@@ -2015,6 +2071,7 @@
   },
   "withered_courtier": {
     "name": "Withered Courtier",
+    "lore": "Sekhat's obedient court, still holding ledgers of tribute paid in full. Obedience killed the sands; the receipts survived.",
     "sprite": "withered_courtier",
     "level": 6,
     "hp": 190,
@@ -2076,6 +2133,7 @@
   },
   "duneshadow_lioness": {
     "name": "Duneshadow Lioness",
+    "lore": "Kaharat's pride — the king's huntresses. The herds Greywatch drives south every new moon end here. That's the arrangement.",
     "sprite": "duneshadow_lioness",
     "level": 7,
     "hp": 127,
@@ -2135,6 +2193,7 @@
   },
   "kaharat": {
     "name": "Kaharat, the Red Mane",
+    "lore": "The pride-king of the scoured surface — king of everything that still moves on the sand. Every herd the Council drives south feeds the pride: the arrangement, met on the hoof.",
     "sprite": "kaharat",
     "level": 8,
     "hp": 456,
@@ -2184,6 +2243,7 @@
   },
   "sekhat": {
     "name": "Sekhat the Ninth",
+    "lore": "The first dead king. He paid EVERYTHING — grain, gold, herds, finally the river itself — and it saved nothing. He walled his court into a tomb still wearing his tribute-ledgers.",
     "sprite": "sekhat",
     "level": 10,
     "hp": 900,
@@ -2226,6 +2286,7 @@
   },
   "glimmereye": {
     "name": "Glimmereye",
+    "lore": "Harmless fen-light critter. Children of the marsh-wisps, or the wisps' bait. Unclear. It stays unclear.",
     "sprite": "glimmereye",
     "level": 1,
     "hp": 8,
@@ -2248,6 +2309,7 @@
   },
   "fen_slime": {
     "name": "Fen Slime",
+    "lore": "Grelmoss's shed substance — the fen budding off its king. Where the water rises, so do they.",
     "sprite": "fen_slime",
     "level": 8,
     "hp": 145,
@@ -2301,6 +2363,7 @@
   },
   "fen_slimeling": {
     "name": "Fen Slimeling",
+    "lore": "Buds of the buds. The fen is generous that way.",
     "sprite": "fen_slime",
     "level": 6,
     "hp": 45,
@@ -2329,6 +2392,7 @@
   },
   "bloatslime": {
     "name": "Bloatslime",
+    "lore": "A fen slime that ate too well below the dam. What it has swallowed does not stay swallowed.",
     "sprite": "bloatslime",
     "level": 10,
     "hp": 330,
@@ -2375,6 +2439,7 @@
   },
   "grelmoss": {
     "name": "Grelmoss, the Crowned Mire",
+    "lore": "The fen's king and the fen's dam: its crowned bulk sits in the outflow gorge, and the country behind it drowned in a generation. Water that leaves is tribute lost. Kill the dam, and somewhere north water MOVES.",
     "sprite": "grelmoss",
     "level": 11,
     "hp": 719,
@@ -2412,6 +2477,7 @@
   },
   "aelthir": {
     "name": "Aelthir, the Unmarred",
+    "lore": "The thing even kings avoid. It predates them — possibly predates everything — it initiates nothing, and it finishes everything. Mara will not buy the horn, and Mara will not say why.",
     "sprite": "aelthir",
     "level": 8,
     "hp": 533,
@@ -2451,6 +2517,7 @@
   },
   "cinder_nightmare": {
     "name": "Cinder Nightmare",
+    "lore": "A war-horse still burning, forty years past its rider. The fires of the day the capital fell never quite went out.",
     "sprite": "cinder_nightmare",
     "level": 14,
     "hp": 330,
@@ -2470,6 +2537,7 @@
     "ranks": [
       {
         "atLevel": 17,
+        "lore": "The king's own warhorse, circling the castle at a canter it has not broken in forty years. It is not looking for a rider. It is keeping formation.",
         "boss": true,
         "add": [
           {
@@ -2499,6 +2567,7 @@
   },
   "sarquun": {
     "name": "Sarquun, the Undertide",
+    "lore": "The thing that drank the sea. Grown too vast for its own pit, it surfaces on a schedule to feed — the countdown at the crater gate IS the feeding schedule. The desert above is its receipt.",
     "sprite": "sarquun",
     "level": 9,
     "hp": 830,
@@ -2539,6 +2608,7 @@
   },
   "pale_courser": {
     "name": "Pale Courser",
+    "lore": "A pale rider-beast of the high waste, patrolling the tribute-road it was left to keep. Nothing warm has crossed it in forty years, and it means to hold the record.",
     "sprite": "pale_courser",
     "level": 20,
     "hp": 620,
@@ -2571,6 +2641,7 @@
   },
   "snow_harpy": {
     "name": "Snow Harpy",
+    "lore": "Carrion-wise and patient, it works the tribute-road for whatever the cold finishes first. Up here, that is most things.",
     "sprite": "snow_harpy",
     "level": 21,
     "hp": 500,
@@ -2604,6 +2675,7 @@
   },
   "rime_warden": {
     "name": "Rime Warden",
+    "lore": "Paired guardians at the tribute-court's gate — statues that animate, posted where every payment must pass. They fight as the pair they were carved to be; splitting them is punished.",
     "sprite": "rime_warden",
     "level": 21,
     "hp": 1262,
@@ -2642,6 +2714,7 @@
   },
   "first_tyrant": {
     "name": "The First Tyrant",
+    "lore": "The one even kings kneel to. It has no name — the board's top row reads only 'THE FIRST.' Its court is a tribute-yard: the whole world's payment, sorted and frozen, and its reinforcements arrive like deliveries. No one has ever felled it.",
     "sprite": "first_tyrant",
     "level": 24,
     "hp": 4829,

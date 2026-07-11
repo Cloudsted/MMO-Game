@@ -24,6 +24,7 @@
   "items": {
     "rusty_sword": {
       "name": "Rusty Sword",
+      "desc": "Charter issue for greenhorns — third-hand steel with one more hunt in it. Everyone's first mark falls to one of these.",
       "kind": "weapon",
       "tier": 1,
       "ability": "swing",
@@ -38,6 +39,7 @@
     },
     "iron_sword": {
       "name": "Iron Sword",
+      "desc": "Gorren's honest wood-iron. 'Out there even the rabbits belong to a king' — and this is what he arms you with anyway.",
       "kind": "weapon",
       "tier": 2,
       "ability": "swing",
@@ -52,6 +54,7 @@
     },
     "hunting_bow": {
       "name": "Hunting Bow",
+      "desc": "A poacher's tool, turned. The Greenhoods perfected the draw; the Charter pays better for it.",
       "kind": "weapon",
       "tier": 1,
       "ability": "bow_shot",
@@ -66,6 +69,7 @@
     },
     "longbow": {
       "name": "Longbow",
+      "desc": "Full-length yew for the long meadows. Kills at the range where most of the wood's problems start.",
       "kind": "weapon",
       "tier": 2,
       "ability": "bow_shot",
@@ -80,6 +84,7 @@
     },
     "fire_staff": {
       "name": "Fire Staff",
+      "desc": "Zella's stock: fire. 'A staff decides what you are.' This one decides loudly.",
       "kind": "weapon",
       "tier": 2,
       "ability": "firebolt",
@@ -94,6 +99,7 @@
     },
     "frost_staff": {
       "name": "Frost Staff",
+      "desc": "Zella's stock: frost. The slow it lays is half the argument won.",
       "kind": "weapon",
       "tier": 2,
       "ability": "frost",
@@ -108,6 +114,7 @@
     },
     "heal_staff": {
       "name": "Staff of Mending",
+      "desc": "Zella's stock: mercy. The knotted druid-wood mends what the road bites.",
       "kind": "weapon",
       "tier": 2,
       "ability": "heal",
@@ -122,6 +129,7 @@
     },
     "leather_cap": {
       "name": "Leather Cap",
+      "desc": "Boiled wood-leather. Keeps off the rain and the first mistake.",
       "kind": "armor",
       "tier": 1,
       "slot": "head",
@@ -136,6 +144,7 @@
     },
     "iron_helm": {
       "name": "Iron Helm",
+      "desc": "Gorren's wood-iron, sized for hunters who plan to be wrong occasionally.",
       "kind": "armor",
       "tier": 2,
       "slot": "head",
@@ -150,6 +159,7 @@
     },
     "leather_jerkin": {
       "name": "Leather Jerkin",
+      "desc": "Charter field-kit: light enough to run in, thick enough to matter.",
       "kind": "armor",
       "tier": 1,
       "slot": "chest",
@@ -164,6 +174,7 @@
     },
     "iron_cuirass": {
       "name": "Iron Cuirass",
+      "desc": "The plate Gorren's line used to fit on tithe-cart guards. The family improves.",
       "kind": "armor",
       "tier": 2,
       "slot": "chest",
@@ -178,6 +189,7 @@
     },
     "leather_boots": {
       "name": "Leather Boots",
+      "desc": "Road-broken and fen-proofed. Mara chalks out more names when parties wear them.",
       "kind": "armor",
       "tier": 1,
       "slot": "feet",
@@ -192,6 +204,7 @@
     },
     "iron_boots": {
       "name": "Iron Boots",
+      "desc": "Heavy going — but a strangler's grip finds less to strangle.",
       "kind": "armor",
       "tier": 2,
       "slot": "feet",
@@ -206,6 +219,7 @@
     },
     "wooden_shield": {
       "name": "Wooden Shield",
+      "desc": "Palisade oak with a company history — half of these came off Greenhoods. The Charter doesn't ask either.",
       "kind": "armor",
       "tier": 1,
       "slot": "offhand",
@@ -220,6 +234,7 @@
     },
     "iron_shield": {
       "name": "Iron Shield",
+      "desc": "A wall you can carry. Warder Bren recommends exactly this and a short memory.",
       "kind": "armor",
       "tier": 2,
       "slot": "offhand",
@@ -234,6 +249,7 @@
     },
     "lucky_locket": {
       "name": "Lucky Locket",
+      "desc": "Somebody's luck, outlived. Coins left on the stone go missing; lockets like this turn up. Nobody asks.",
       "kind": "trinket",
       "tier": 1,
       "value": 60,
@@ -245,6 +261,7 @@
     },
     "wisp_talisman": {
       "name": "Wisp Talisman",
+      "desc": "A caged corpse-candle that has stopped trying to leave. It pulls mana the way wisps pull travelers.",
       "kind": "trinket",
       "tier": 2,
       "value": 140,
@@ -256,6 +273,7 @@
     },
     "greater_amulet": {
       "name": "Greater Amulet",
+      "desc": "Fen-court work, tribute-grade. It holds a weaving the way marble holds a chisel-mark.",
       "kind": "trinket",
       "tier": 3,
       "value": 220,
@@ -267,6 +285,7 @@
     },
     "master_amulet": {
       "name": "Master Amulet",
+      "desc": "Rift work off the unstamped dock — the quality the Furnace-King keeps back. Takes a master's weaving.",
       "kind": "trinket",
       "tier": 4,
       "value": 360,
@@ -278,6 +297,7 @@
     },
     "mythic_relic": {
       "name": "Mythic Relic",
+      "desc": "Old past arguing — the ledgers have no first entry for it. Selvara won't weave over it; the ember-witch charges double and says nothing.",
       "kind": "trinket",
       "tier": 5,
       "value": 520,
@@ -289,6 +309,7 @@
     },
     "bread": {
       "name": "Bread",
+      "desc": "Mara's road-loaf. 'Bread for the road, potions for when the road bites back.'",
       "kind": "consumable",
       "value": 3,
       "stack": 10,
@@ -303,6 +324,7 @@
     },
     "health_potion": {
       "name": "Health Potion",
+      "desc": "The red half of Mara's advice — for when the road bites back.",
       "kind": "consumable",
       "value": 12,
       "stack": 10,
@@ -316,6 +338,7 @@
     },
     "mana_potion": {
       "name": "Mana Potion",
+      "desc": "Zella's brew, blue as wisp-light. Casters go through crates of it.",
       "kind": "consumable",
       "value": 12,
       "stack": 10,
@@ -329,6 +352,7 @@
     },
     "block_planks": {
       "name": "Planks",
+      "desc": "Jib's mill-planks. 'Block by block — that's how anything worth keeping gets built.'",
       "kind": "building",
       "block": "planks",
       "value": 3,
@@ -340,6 +364,7 @@
     },
     "block_log": {
       "name": "Log",
+      "desc": "Whole trunks off the Freehold's own clearing. The wood has no king to object.",
       "kind": "building",
       "block": "log",
       "value": 4,
@@ -351,6 +376,7 @@
     },
     "block_cobblestone": {
       "name": "Cobblestone",
+      "desc": "Road-stone — the same the tithe-roads were laid with. There are better uses for it now.",
       "kind": "building",
       "block": "cobblestone",
       "value": 3,
@@ -362,6 +388,7 @@
     },
     "block_stone_bricks": {
       "name": "Stone Bricks",
+      "desc": "Dressed stone to a wall-mason's gauge. Greywatch's own wall started this way.",
       "kind": "building",
       "block": "stone_bricks",
       "value": 5,
@@ -373,6 +400,7 @@
     },
     "block_thatch": {
       "name": "Thatch",
+      "desc": "Fen-reed bundles, cut dry. A roof is a flag with weatherproofing, Jib says.",
       "kind": "building",
       "block": "thatch",
       "value": 2,
@@ -384,6 +412,7 @@
     },
     "block_glass": {
       "name": "Glass",
+      "desc": "Sand-fired pane glass. A window is a wall that trusts the neighbors.",
       "kind": "building",
       "block": "glass",
       "value": 6,
@@ -395,6 +424,7 @@
     },
     "block_torch": {
       "name": "Torch",
+      "desc": "Pitch and wick. Warm light is the living's — post it and claim the dark back.",
       "kind": "building",
       "block": "torch",
       "value": 5,
@@ -406,6 +436,7 @@
     },
     "steel_sword": {
       "name": "Steel Sword",
+      "desc": "Fen-grade steel — Gorren's answer to marks past the dyke. Holds an edge through a wet week.",
       "kind": "weapon",
       "tier": 3,
       "ability": "swing",
@@ -420,6 +451,7 @@
     },
     "war_axe": {
       "name": "Fen-Cleaver Axe",
+      "desc": "Made for the fen's court: wide, heavy, and unbothered by what serpent hide does to lesser edges.",
       "kind": "weapon",
       "tier": 3,
       "ability": "cleave",
@@ -434,6 +466,7 @@
     },
     "venom_dagger": {
       "name": "Weaver's Fang",
+      "desc": "Ground from a weaver's own fang. The poison is the point; the blade is the delivery.",
       "kind": "weapon",
       "tier": 3,
       "ability": "quick_stab",
@@ -448,6 +481,7 @@
     },
     "ranger_crossbow": {
       "name": "Marsh Ranger's Crossbow",
+      "desc": "The old fen-rangers' pattern, from when the fen had rangers. Winds fast, hits like a toll.",
       "kind": "weapon",
       "tier": 3,
       "ability": "bolt_shot",
@@ -462,6 +496,7 @@
     },
     "wisp_wand": {
       "name": "Wisp Wand",
+      "desc": "A cold blue light on a stick — wisp-stuff bound to willow. What its bolt touches, slows.",
       "kind": "weapon",
       "tier": 3,
       "ability": "firebolt",
@@ -476,6 +511,7 @@
     },
     "fen_staff": {
       "name": "Staff of the Fen",
+      "desc": "Cut from something that grew below the waterline and remembers it. Zella stocks them and won't say who cuts them.",
       "kind": "weapon",
       "tier": 3,
       "ability": "greater_heal",
@@ -490,6 +526,7 @@
     },
     "emberpike": {
       "name": "Emberpike",
+      "desc": "Rift-forged on the Furnace-King's own line — a pike with a temper. Warm for weeks, like everything off the forge.",
       "kind": "weapon",
       "tier": 4,
       "ability": "thrust",
@@ -504,6 +541,7 @@
     },
     "rift_greataxe": {
       "name": "Riftwarden Greataxe",
+      "desc": "Tribute-grade rift work — the kind stamped for the wagons north. This one never made the manifest.",
       "kind": "weapon",
       "tier": 4,
       "ability": "cleave",
@@ -518,6 +556,7 @@
     },
     "gravewind_scythe": {
       "name": "Gravewind Scythe",
+      "desc": "A harrower's tool at a hunter's length. The galleries cull with these; the Charter culls back.",
       "kind": "weapon",
       "tier": 4,
       "ability": "reap",
@@ -532,6 +571,7 @@
     },
     "ashen_scepter": {
       "name": "Ashen Scepter",
+      "desc": "Ash-wood core, ember-crystal head. It throws the rift's own weather.",
       "kind": "weapon",
       "tier": 4,
       "ability": "greater_firebolt",
@@ -546,6 +586,7 @@
     },
     "tidecaller_staff": {
       "name": "Tidecaller Staff",
+      "desc": "Marble-cold, salvaged from the drowned temple. It remembers the order that kept the water honest.",
       "kind": "weapon",
       "tier": 4,
       "ability": "greater_frost",
@@ -560,6 +601,7 @@
     },
     "dwarven_arbalest": {
       "name": "Dwarven Arbalest",
+      "desc": "Pre-Dividing machine-work; nobody living makes the spring. Winds slow, argues once.",
       "kind": "weapon",
       "tier": 4,
       "ability": "bolt_shot",
@@ -574,6 +616,7 @@
     },
     "greater_health_potion": {
       "name": "Greater Health Potion",
+      "desc": "Mara's deep-country strength — brewed for marks past the dyke, priced accordingly.",
       "kind": "consumable",
       "value": 35,
       "stack": 10,
@@ -587,6 +630,7 @@
     },
     "greater_mana_potion": {
       "name": "Greater Mana Potion",
+      "desc": "The ember-witch's recipe under Zella's label. Neither woman will say whose idea it was.",
       "kind": "consumable",
       "value": 35,
       "stack": 10,
@@ -600,6 +644,7 @@
     },
     "antidote": {
       "name": "Fenleaf Antidote",
+      "desc": "Chewed fenleaf in spirit — cuts poison before poison cuts you. Standard issue past the dyke.",
       "kind": "consumable",
       "value": 20,
       "stack": 10,
@@ -613,6 +658,7 @@
     },
     "roast_boar_leg": {
       "name": "Roast Boar Leg",
+      "desc": "Poached, in both senses. Warm, heavy, and technically some king's property.",
       "kind": "consumable",
       "value": 10,
       "stack": 10,
@@ -726,6 +772,7 @@
     },
     "block_dark_bricks": {
       "name": "Dark Bricks",
+      "desc": "Deep-work brick in the crypt style. Jib stocks it and declines to say who quarries it.",
       "kind": "building",
       "block": "dark_bricks",
       "value": 6,
@@ -737,6 +784,7 @@
     },
     "block_marble": {
       "name": "Marble",
+      "desc": "Temple-grade marble, pale as the drowned order that loved it.",
       "kind": "building",
       "block": "marble",
       "value": 8,
@@ -748,6 +796,7 @@
     },
     "block_lantern": {
       "name": "Lantern",
+      "desc": "A lamplighter's lantern, wick trimmed. One lit lamp on a dark road means somebody is still paying attention.",
       "kind": "building",
       "block": "lantern",
       "value": 8,
@@ -759,6 +808,7 @@
     },
     "block_palisade": {
       "name": "Palisade",
+      "desc": "Sharpened posts, company pattern. The Greenhoods build good fences; the Charter builds them facing the other way.",
       "kind": "building",
       "block": "palisade",
       "value": 4,
@@ -770,6 +820,7 @@
     },
     "block_hay": {
       "name": "Hay Bale",
+      "desc": "Winter fodder by the bale. The tithe-pen never stays full long.",
       "kind": "building",
       "block": "hay",
       "value": 2,
@@ -781,6 +832,7 @@
     },
     "block_iron_bars": {
       "name": "Iron Bars",
+      "desc": "Honest bars. Some things are for keeping out; down the crypt stair, some were for keeping in.",
       "kind": "building",
       "block": "iron_bars",
       "value": 6,
@@ -792,6 +844,7 @@
     },
     "block_bookshelf": {
       "name": "Bookshelf",
+      "desc": "Shelving to a ledger-house gauge. The world before wrote everything down; somebody should again.",
       "kind": "building",
       "block": "bookshelf",
       "value": 10,
@@ -803,6 +856,7 @@
     },
     "kingsrend_greataxe": {
       "name": "Kingsrend Greataxe",
+      "desc": "Royal work — Valdrenn steel that remembers being a country. Gorren goes quiet when one crosses his counter.",
       "kind": "weapon",
       "tier": 5,
       "ability": "cleave",
@@ -817,6 +871,7 @@
     },
     "oathbreaker_pike": {
       "name": "Oathbreaker Pike",
+      "desc": "A sentinel's pike, its oath finally void. It held the day-nine line; now it holds yours.",
       "kind": "weapon",
       "tier": 5,
       "ability": "thrust",
@@ -831,6 +886,7 @@
     },
     "sovereign_scythe": {
       "name": "Sovereign Scythe",
+      "desc": "Court steel from the fallen capital, made for ceremony and never told the difference.",
       "kind": "weapon",
       "tier": 5,
       "ability": "reap",
@@ -845,6 +901,7 @@
     },
     "scepter_of_ruin": {
       "name": "Scepter of Ruin",
+      "desc": "A scepter off the court of the second dead king. What it commands now is ruin, which is what's left.",
       "kind": "weapon",
       "tier": 5,
       "ability": "greater_frost",

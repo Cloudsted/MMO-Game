@@ -1,6 +1,7 @@
 {
   "id": "cinderrift",
   "name": "The Cinderrift",
+  "lore": "The forge-land, stoked on purpose. A kingdom run as a furnace: fuel up from the fells, heat in the rift, product out through the Foundry gate — and a collector in frost armor comes down every season to weigh what leaves. Ysolde's cott is the one hearth that isn't the king's.",
 
   "levelBand": { "min": 11, "max": 13 },
   "type": "wilderness",

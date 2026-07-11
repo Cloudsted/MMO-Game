@@ -1,6 +1,7 @@
 {
   "id": "white_waste",
   "name": "The White Waste",
+  "lore": "The top of the world, where the tribute goes. The tithe-roads of every land converge on one white slope — cart-ruts, crate-stencils, wagon wrecks from four countries, all climbing to the tribute-court of the one even kings pay. The board's top row reads only 'THE FIRST.'",
   "levelBand": { "min": 20, "max": 24 },
   "type": "dungeon",
   "biome": "ruin",

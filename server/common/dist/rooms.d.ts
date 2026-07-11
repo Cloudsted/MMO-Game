@@ -520,6 +520,11 @@ export type LifecycleDef = z.infer<typeof LifecycleSchema>;
 export declare const RoomDefSchema: z.ZodObject<{
     id: z.ZodString;
     name: z.ZodString;
+    /** Region-identity blurb (story bible §6, 2-3 sentences) — the one place
+     *  the room narrates itself; canon-guarded like every lore field
+     *  (lore.test.ts: no naming the First Tyrant, no portal explanations,
+     *  no far door). */
+    lore: z.ZodOptional<z.ZodString>;
     type: z.ZodEnum<["hub", "wilderness", "dungeon", "building"]>;
     /** suggested character-level band (the proposal's node table). Portals
      *  pointing AT this room surface it on their labels ("Lv 8-10", colored
@@ -1173,6 +1178,7 @@ export declare const RoomDefSchema: z.ZodObject<{
             remove: boolean;
         } | undefined;
     }[];
+    lore?: string | undefined;
     levelBand?: {
         min: number;
         max: number;
@@ -1262,6 +1268,7 @@ export declare const RoomDefSchema: z.ZodObject<{
             remove?: boolean | undefined;
         } | undefined;
     }[];
+    lore?: string | undefined;
     levelBand?: {
         min: number;
         max: number;

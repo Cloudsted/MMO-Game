@@ -197,7 +197,7 @@ export declare class RoomSim {
     playerCount(): number;
     /** Sim-side live telemetry for the admin dashboard; the RoomHost stamps the
      *  process-side fields (uptime/tick timings/memory/expiry) on top. */
-    adminInfo(): Pick<RoomAdminInfo, "mobs" | "npcs" | "drops" | "projectiles" | "blockEdits" | "timeOfDay" | "players" | "ents">;
+    adminInfo(): Pick<RoomAdminInfo, "mobs" | "npcs" | "drops" | "projectiles" | "blockEdits" | "timeOfDay" | "players" | "ents" | "portals">;
     /** Admin dashboard kick: evict a player by character id (same evict +
      *  immediate-remove sequence as duplicate-login handling). */
     adminKick(characterId: string, reason: string): boolean;

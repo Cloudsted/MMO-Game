@@ -1,6 +1,7 @@
 {
   "id": "gloomfen",
   "name": "The Gloomfen",
+  "lore": "A lowland vassal-country of Valdrenn once — sluices, causeways, bell-towers, an order that kept the water honest. Then the Dividing gave it a king that understood one thing: water that leaves is tribute lost. Grelmoss sits in the outflow gorge like a living dam, and the country behind it drowned in a generation.",
 
   "levelBand": { "min": 8, "max": 10 },
   "type": "wilderness",

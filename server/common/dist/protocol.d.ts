@@ -642,6 +642,22 @@ export declare const RoomAdminInfoSchema: z.ZodObject<{
         k: string;
         n?: string | undefined;
     }>, "many">>;
+    /** LIVE portal seal state (event seals + destination status combined —
+     *  the same portalOpen() game clients see) for the dashboard's world graph.
+     *  reopenInSec present only when a downtime countdown is known. */
+    portals: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        open: z.ZodBoolean;
+        reopenInSec: z.ZodOptional<z.ZodNumber>;
+    }, "strip", z.ZodTypeAny, {
+        id: string;
+        open: boolean;
+        reopenInSec?: number | undefined;
+    }, {
+        id: string;
+        open: boolean;
+        reopenInSec?: number | undefined;
+    }>, "many">>;
 }, "strip", z.ZodTypeAny, {
     mobs: number;
     npcs: number;
@@ -665,6 +681,11 @@ export declare const RoomAdminInfoSchema: z.ZodObject<{
         maxHp: number;
         charId: string;
     }[];
+    portals?: {
+        id: string;
+        open: boolean;
+        reopenInSec?: number | undefined;
+    }[] | undefined;
     ents?: {
         x: number;
         z: number;
@@ -694,6 +715,11 @@ export declare const RoomAdminInfoSchema: z.ZodObject<{
         maxHp: number;
         charId: string;
     }[];
+    portals?: {
+        id: string;
+        open: boolean;
+        reopenInSec?: number | undefined;
+    }[] | undefined;
     ents?: {
         x: number;
         z: number;
@@ -790,6 +816,22 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
                 k: string;
                 n?: string | undefined;
             }>, "many">>;
+            /** LIVE portal seal state (event seals + destination status combined —
+             *  the same portalOpen() game clients see) for the dashboard's world graph.
+             *  reopenInSec present only when a downtime countdown is known. */
+            portals: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                id: z.ZodString;
+                open: z.ZodBoolean;
+                reopenInSec: z.ZodOptional<z.ZodNumber>;
+            }, "strip", z.ZodTypeAny, {
+                id: string;
+                open: boolean;
+                reopenInSec?: number | undefined;
+            }, {
+                id: string;
+                open: boolean;
+                reopenInSec?: number | undefined;
+            }>, "many">>;
         }, "strip", z.ZodTypeAny, {
             mobs: number;
             npcs: number;
@@ -813,6 +855,11 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
                 maxHp: number;
                 charId: string;
             }[];
+            portals?: {
+                id: string;
+                open: boolean;
+                reopenInSec?: number | undefined;
+            }[] | undefined;
             ents?: {
                 x: number;
                 z: number;
@@ -842,6 +889,11 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
                 maxHp: number;
                 charId: string;
             }[];
+            portals?: {
+                id: string;
+                open: boolean;
+                reopenInSec?: number | undefined;
+            }[] | undefined;
             ents?: {
                 x: number;
                 z: number;
@@ -877,6 +929,11 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
                 maxHp: number;
                 charId: string;
             }[];
+            portals?: {
+                id: string;
+                open: boolean;
+                reopenInSec?: number | undefined;
+            }[] | undefined;
             ents?: {
                 x: number;
                 z: number;
@@ -912,6 +969,11 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
                 maxHp: number;
                 charId: string;
             }[];
+            portals?: {
+                id: string;
+                open: boolean;
+                reopenInSec?: number | undefined;
+            }[] | undefined;
             ents?: {
                 x: number;
                 z: number;
@@ -963,6 +1025,11 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
                 maxHp: number;
                 charId: string;
             }[];
+            portals?: {
+                id: string;
+                open: boolean;
+                reopenInSec?: number | undefined;
+            }[] | undefined;
             ents?: {
                 x: number;
                 z: number;
@@ -1006,6 +1073,11 @@ export declare const ShardToMasterSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
                 maxHp: number;
                 charId: string;
             }[];
+            portals?: {
+                id: string;
+                open: boolean;
+                reopenInSec?: number | undefined;
+            }[] | undefined;
             ents?: {
                 x: number;
                 z: number;
@@ -1903,14 +1975,14 @@ export declare const MasterToShardSchema: z.ZodDiscriminatedUnion<"t", [z.ZodObj
      *  display the countdown) */
     reopenInSec: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
+    open: boolean;
     t: "roomStatus";
     roomId: string;
-    open: boolean;
     reopenInSec?: number | undefined;
 }, {
+    open: boolean;
     t: "roomStatus";
     roomId: string;
-    open: boolean;
     reopenInSec?: number | undefined;
 }>, z.ZodObject<{
     t: z.ZodLiteral<"kick">;

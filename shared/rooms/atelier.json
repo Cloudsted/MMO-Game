@@ -1,6 +1,7 @@
 {
   "id": "atelier",
   "name": "The Atelier",
+  "lore": "The Charter's drafting-slab — a bare floor where builders stamp and study structures before they're ever raised in the world. Nothing lives here, which around here is a luxury.",
   "type": "building",
   "biome": "grass",
   "wind": 0,

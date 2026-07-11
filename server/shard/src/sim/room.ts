@@ -911,7 +911,7 @@ export class RoomSim {
    *  process-side fields (uptime/tick timings/memory/expiry) on top. */
   adminInfo(): Pick<
     RoomAdminInfo,
-    "mobs" | "npcs" | "drops" | "projectiles" | "blockEdits" | "timeOfDay" | "players" | "ents"
+    "mobs" | "npcs" | "drops" | "projectiles" | "blockEdits" | "timeOfDay" | "players" | "ents" | "portals"
   > {
     let mobs = 0;
     let npcs = 0;
@@ -941,6 +941,14 @@ export class RoomSim {
       y: Math.round(s.entity.pos.y * 10) / 10,
       z: Math.round(s.entity.pos.z * 10) / 10,
     }));
+    // live portal seal state for the dashboard's world graph — the same
+    // portalOpen() combination (event seals + destination status) the game
+    // clients see, with the downtime countdown when one is known
+    const portals = this.def.portals.map((p) => {
+      const open = this.portalOpen(p);
+      const reopenInSec = open ? undefined : this.reopenInSecOf(p.target);
+      return { id: p.id, open, ...(reopenInSec !== undefined ? { reopenInSec } : {}) };
+    });
     return {
       mobs,
       npcs,
@@ -950,6 +958,7 @@ export class RoomSim {
       timeOfDay: this.timeOfDay(),
       players,
       ents,
+      portals,
     };
   }
 

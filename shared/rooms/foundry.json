@@ -1,6 +1,7 @@
 {
   "id": "foundry",
   "name": "The Foundry",
+  "lore": "The production floor the whole east road climbs toward. Officially it makes the weapon-tribute; the room itself tells another story — construct frames in ascending sizes, line after line, ending at a throne-sized one with no head. Ask what the line is building toward.",
   "levelBand": { "min": 14, "max": 16 },
   "type": "dungeon",
   "biome": "ruin",

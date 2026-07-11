@@ -155,7 +155,7 @@ export declare class ShardManager {
         defs: {
             id: string;
             name: string;
-            type: "hub" | "wilderness" | "dungeon" | "building";
+            type: "building" | "hub" | "wilderness" | "dungeon";
             biome: string;
             size: {
                 w: number;

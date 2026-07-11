@@ -1,6 +1,7 @@
 {
   "id": "dungeon",
   "name": "Sunken Crypt",
+  "lore": "Greywatch's own necropolis — and the dead ARE the tribute. The Pale King below taxes the city in bodies; the funerals are the tithe, and the dead don't stay down because they are not at rest — they are in transit. The Gravelord wards the lower stair.",
   "levelBand": { "min": 6, "max": 8 },
   "type": "dungeon",
   "biome": "dungeon",

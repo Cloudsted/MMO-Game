@@ -1,6 +1,7 @@
 {
   "id": "sundered_city",
   "name": "Valdrenn, the Fallen Capital",
+  "lore": "The city that said no. The First Tyrant didn't sack Valdrenn — it made an example of it: nothing looted, the gates simply never allowed to open again, and the king left on his throne as the receipt. Ser Osmund still holds the gatehouse, forty years past the point of it.",
   "levelBand": { "min": 14, "max": 16 },
   "type": "dungeon",
   "biome": "ruin",

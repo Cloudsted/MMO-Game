@@ -248,6 +248,10 @@ export const MobRankSchema = z.object({
    *  turns "Forge Prototype" into "The Unfinished King" without forking the
    *  def. Last applicable rank wins. */
   name: z.string().optional(),
+  /** bestiary blurb for a rank that IS a different creature in the fiction
+   *  (Waste-Shade, Tithe-Collector, the Unfinished King). Same canon rules
+   *  as MobDef.lore. Last applicable rank wins for display. */
+  lore: z.string().optional(),
   /** loot-table override: a def elevated to a room boss by a rank must not
    *  hand its guaranteed boss table to every lower-level spawn of the same
    *  def (the Bone Warden kept wraith_drops for exactly this reason before
@@ -263,6 +267,10 @@ export type MobRankDef = z.infer<typeof MobRankSchema>;
 
 export const MobDefSchema = z.object({
   name: z.string(),
+  /** One/two-sentence bestiary blurb in the story bible's voice (§6/§7 story
+   *  slots). Canon-guarded: see lore.test.ts — no line may name the First
+   *  Tyrant, explain a portal, or open the far door. */
+  lore: z.string().optional(),
   sprite: z.string(),
   level: z.number().int(),
   hp: z.number(),
@@ -442,6 +450,37 @@ const ItemsFileSchema = z.object({
   items: z.record(z.string(), ItemDefSchema),
 });
 
+/**
+ * shared/lore.json — the world's story spine as DATA: the logline, the
+ * premise paragraph, the factions, and the glossary. One source of truth for
+ * every surface that narrates the world (game text, admin dashboard, any
+ * future web page) — nothing re-hardcodes these strings. Authored from the
+ * story bible (docs/story-bible.md §1/§5/§11) and canon-guarded like every
+ * other lore field (lore.test.ts).
+ */
+export const LoreFactionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  blurb: z.string(),
+});
+export type LoreFaction = z.infer<typeof LoreFactionSchema>;
+
+export const LoreGlossaryEntrySchema = z.object({
+  term: z.string(),
+  def: z.string(),
+});
+export type LoreGlossaryEntry = z.infer<typeof LoreGlossaryEntrySchema>;
+
+export const LoreFileSchema = z.object({
+  /** the world in one line (bible §1) */
+  logline: z.string(),
+  /** the world in one paragraph (bible §1, condensed) */
+  premise: z.string(),
+  factions: z.array(LoreFactionSchema).min(1),
+  glossary: z.array(LoreGlossaryEntrySchema).min(1),
+});
+export type LoreFile = z.infer<typeof LoreFileSchema>;
+
 // ---------- service ----------
 
 export class RegistryService {
@@ -451,6 +490,7 @@ export class RegistryService {
   mobs!: Record<string, MobDef>;
   loot!: Record<string, LootTable>;
   modifiers!: Record<string, ModifierDef>;
+  lore!: LoreFile;
 
   constructor() {
     this.reload();
@@ -464,6 +504,7 @@ export class RegistryService {
     const mobs = z.record(z.string(), MobDefSchema).parse(readJsonFile(resolve(SHARED_DIR, "mobs.json")));
     const loot = z.record(z.string(), LootTableSchema).parse(readJsonFile(resolve(SHARED_DIR, "loot.json")));
     const modifiers = z.record(z.string(), ModifierDefSchema).parse(readJsonFile(resolve(SHARED_DIR, "modifiers.json")));
+    const lore = LoreFileSchema.parse(readJsonFile(resolve(SHARED_DIR, "lore.json")));
 
     // cross-reference validation: fail fast on dangling ids
     for (const [id, item] of Object.entries(itemsFile.items)) {
@@ -574,6 +615,7 @@ export class RegistryService {
     this.mobs = mobs;
     this.loot = loot;
     this.modifiers = modifiers;
+    this.lore = lore;
   }
 
   /** Modifier ids rollable on an item kind (optionally curses/perks only). */

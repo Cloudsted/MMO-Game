@@ -133,8 +133,17 @@ console; mongod writes to `logs/mongod.log`. Grep the stack log for `ERROR`,
 one-liners deliberately so tests can grep them.
 
 **Admin panel**: `http://127.0.0.1:4000/admin` (ADMIN_KEY from .env, entered
-in-page) — live shard/room/player table, per-room restart buttons, master
-log tail. Handy for eyeballing the stack during load tests without grepping.
+in-page) — sidebar ops console + world encyclopedia: Overview (telemetry,
+history charts), World Graph (all rooms + LIVE portal seal states — the
+fastest way to check which border-gates are open), Rooms detail, Bestiary/
+Armory/Loot Tables/Abilities/Lore (rendered from `/api/admin/registry/*` —
+what the registries ACTUALLY resolve to: found-in levels, effective drop %,
+gate bosses), plus Players/Characters/Accounts/Economy/Logs/Actions. Hash
+deep links (`#bestiary-<mobId>`, `#loot-<tableId>`, `#rooms-<roomId>`) and
+a global search. Headless screenshots: the CLAUDE.md msedge recipe works
+per-tab (`.../admin?key=<KEY>#graph`); anchor deep links can leave black
+scroll bands under `--headless=old` — capture unanchored tabs (exception:
+`#loot-<id>` pins instead of scrolling, so it captures fine).
 
 ## Layer 3 — Client visual verification (the screenshot loop)
 

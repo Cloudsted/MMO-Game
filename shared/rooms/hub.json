@@ -1,6 +1,7 @@
 {
   "id": "hub",
   "name": "Greywatch",
+  "lore": "The Last Free City — the one wall left, paved around a warm standing stone no one has ever dared move. 'Free' is polite: Greywatch pays — cattle south, grain east, its dead down the crypt stair. Two years ago the Charter nailed a bounty board to the old tithe-counting house and started hunting back.",
   "type": "hub",
   "biome": "grass",
   "wind": 0.7,

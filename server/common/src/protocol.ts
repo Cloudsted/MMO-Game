@@ -169,6 +169,12 @@ export const RoomAdminInfoSchema = z.object({
   ents: z
     .array(z.object({ k: z.string(), x: z.number(), z: z.number(), n: z.string().optional() }))
     .optional(),
+  /** LIVE portal seal state (event seals + destination status combined —
+   *  the same portalOpen() game clients see) for the dashboard's world graph.
+   *  reopenInSec present only when a downtime countdown is known. */
+  portals: z
+    .array(z.object({ id: z.string(), open: z.boolean(), reopenInSec: z.number().optional() }))
+    .optional(),
 });
 export type RoomAdminInfo = z.infer<typeof RoomAdminInfoSchema>;
 
