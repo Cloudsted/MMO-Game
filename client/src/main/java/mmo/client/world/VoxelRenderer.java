@@ -259,6 +259,7 @@ public final class VoxelRenderer {
             shader.setUniformf("u_shadowTexel", shadows.texelWorld());
             shader.setUniformf("u_shadowRange", shadows.depthRange());
             shader.setUniformf("u_shadowPix", 1f / shadows.mapRes()); // one texel in UV units (PCF taps)
+            shader.setUniformf("u_entShadowPix", 1f / shadows.entMapRes()); // entity-map texel (bilinear tap)
         } else {
             shader.setUniformf("u_shadowDim", 1f);
         }

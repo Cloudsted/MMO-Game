@@ -45,6 +45,7 @@ uniform vec3 u_lightDir;     // FROM light TOWARD ground (quantized shadow dir)
 uniform float u_shadowTexel; // one shadow-map texel in world meters
 uniform float u_shadowRange; // light-camera far-near in meters
 uniform float u_shadowPix;   // one world-map texel in UV units (1/res)
+uniform float u_entShadowPix; // one ENTITY-map texel in UV units (half-res map)
 uniform float u_sun;        // 0 night .. 1 day
 uniform float u_nightLight; // per-room multiplier on the night skylight floor
 uniform float u_fullbright; // glow pass: skip lighting entirely
@@ -54,6 +55,48 @@ uniform vec2 u_fogRange;
 
 float unpackDepth(vec4 c) {
     return dot(c, vec4(1.0, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 16581375.0));
+}
+
+// BILINEAR-WEIGHTED PCF TAP (shadow anti-aliasing). Unpacks the FOUR texels
+// around the sample point, compares each against ref (binary), and blends
+// the COMPARE RESULTS by the sub-texel position. Never filter the packed
+// depths themselves — RGBA8-packed depth is not linearly filterable; this
+// is the classic emulation of hardware PCF. The payoff: a tap is a
+// CONTINUOUS function of the sample point, so shadow edges become a smooth
+// exactly-one-texel ramp instead of a texel staircase, and sub-pixel camera
+// motion can no longer snap a tap between texels (the wave-5 residual
+// shimmer channel). pix = one texel of THIS map in UV units.
+float litBilin(sampler2D map, vec2 uv, float pix, float ref) {
+    vec2 t = uv / pix - 0.5;
+    vec2 b = floor(t);
+    vec2 f = t - b;
+    vec2 c = (b + 0.5) * pix;
+    float s00 = step(ref, unpackDepth(texture2D(map, c)));
+    float s10 = step(ref, unpackDepth(texture2D(map, c + vec2(pix, 0.0))));
+    float s01 = step(ref, unpackDepth(texture2D(map, c + vec2(0.0, pix))));
+    float s11 = step(ref, unpackDepth(texture2D(map, c + vec2(pix, pix))));
+    return mix(mix(s00, s10, f.x), mix(s01, s11, f.x), f.y);
+}
+
+// Footprint-integrating lit fraction over the WORLD map: at the near floor
+// (spreadTex == 1) a SINGLE bilinear tap — a tight 1-texel smooth edge,
+// crisper than the old 3x3 binary staircase; beyond it, 3x3 bilinear taps
+// at spacing (spreadTex-1) texels with tent weights (1-2-1)^2/16, which
+// converges EXACTLY to the single tap as the spacing goes to 0 (no visible
+// regime seam — the branch below is purely a fetch-count shortcut).
+float litFraction(vec2 uv, float spreadTex, float ref) {
+    float h = (spreadTex - 1.0) * u_shadowPix; // tap spacing in UV; 0 at floor
+    if (h < u_shadowPix * 0.25) {
+        return litBilin(u_shadowMap, uv, u_shadowPix, ref);
+    }
+    float acc = 0.0;
+    for (int oy = -1; oy <= 1; oy++) {
+        for (int ox = -1; ox <= 1; ox++) {
+            float w = (2.0 - abs(float(ox))) * (2.0 - abs(float(oy)));
+            acc += w * litBilin(u_shadowMap, uv + vec2(float(ox), float(oy)) * h, u_shadowPix, ref);
+        }
+    }
+    return acc / 16.0;
 }
 
 void main() {
@@ -103,13 +146,9 @@ void main() {
         float dspreadTex = dspread / u_shadowPix;
         float dbias = min(0.02 + (1.5 + 2.4 * max(dspreadTex - 1.5, 0.0)) * u_shadowTexel * dtanT, 3.0);
         float dref = dspos.z - dbias / u_shadowRange;
-        float dlit = 0.0;
-        for (int oy = -1; oy <= 1; oy++)
-            for (int ox = -1; ox <= 1; ox++)
-                dlit += step(dref, unpackDepth(texture2D(u_shadowMap,
-                    dspos.xy + vec2(float(ox), float(oy)) * dspread)));
+        float dlit = litFraction(dspos.xy, dspreadTex, dref);
         gl_FragColor = vec4(clamp((dspread / u_shadowPix - 1.0) / 8.0, 0.0, 1.0),
-            dlit / 9.0, clamp(dbias / 3.0, 0.0, 1.0), 1.0);
+            dlit, clamp(dbias / 3.0, 0.0, 1.0), 1.0);
         return;
     }
     if (u_shadowDebug > 0.5) {
@@ -150,20 +189,23 @@ void main() {
             vec3 spos = sc.xyz * 0.5 + 0.5; // ortho: w == 1
             if (spos.x > 0.0 && spos.x < 1.0 && spos.y > 0.0 && spos.y < 1.0 && spos.z < 1.0) {
                 float tanT = min(sqrt(max(1.0 - ndl * ndl, 0.0)) / ndl, 8.0);
-                // FOOTPRINT-SCALED 3x3 PCF. The cached map is bit-identical
-                // between sun steps, so distant shimmer under camera motion
-                // is pure SAMPLING aliasing: at range one screen pixel spans
-                // MANY nearest-filtered texels and a single binary tap
-                // re-rolled that coin every sub-pixel camera move. Nine
-                // compares spread over the pixel's ACTUAL map footprint
-                // estimate the footprint's lit FRACTION — the stable quantity
-                // under camera motion. The no-jitter map cache is untouched;
-                // only how it is SAMPLED changed. The footprint estimate is
-                // the ONE remaining screen-space-derivative input; its
-                // distance-scaled clamp stays (legit footprints GROW with
-                // minification, so the cap never binds the far field) as
-                // insurance against seam-quad fwidth spikes mis-widening the
-                // kernel and mis-raising the slope bias.
+                // FOOTPRINT-SCALED, BILINEAR-WEIGHTED PCF (litFraction /
+                // litBilin above). The cached map is bit-identical between
+                // sun steps, so all edge aliasing is pure SAMPLING: close up
+                // a binary tap grid quantizes the edge to map texels (stair-
+                // steps), at range one screen pixel spans MANY texels and
+                // point taps re-roll their texel pick every sub-pixel camera
+                // move (shimmer). Bilinear-blended compare results make each
+                // tap continuous in the sample position — near edges become
+                // ONE smooth texel of gradient (tight by design: this is a
+                // crisp blocky world, AA'd not soft), far footprints
+                // integrate to a stable lit fraction. The no-jitter map
+                // cache is untouched; only how it is SAMPLED changed. The
+                // footprint estimate is the ONE remaining screen-space-
+                // derivative input; its distance-scaled clamp stays (legit
+                // footprints GROW with minification, so the cap never binds
+                // the far field) as insurance against seam-quad fwidth
+                // spikes mis-widening the kernel and mis-raising the bias.
                 vec2 fpUv = fwidth(spos.xy);
                 float spread = clamp(0.6 * max(fpUv.x, fpUv.y),
                     u_shadowPix, u_shadowPix * (1.0 + v_dist * 0.25));
@@ -179,22 +221,24 @@ void main() {
                 float spreadTex = spread / u_shadowPix;
                 float biasM = min(0.02 + (1.5 + 2.4 * max(spreadTex - 1.5, 0.0)) * u_shadowTexel * tanT, 3.0);
                 float ref = spos.z - biasM / u_shadowRange;
-                float lit = 0.0;
-                for (int oy = -1; oy <= 1; oy++) {
-                    for (int ox = -1; ox <= 1; ox++) {
-                        lit += step(ref, unpackDepth(texture2D(u_shadowMap,
-                            spos.xy + vec2(float(ox), float(oy)) * spread)));
-                    }
-                }
-                float sunFrac = lit / 9.0;
+                // Anti-aliased lit fraction (litFraction above): bilinear-
+                // weighted compares kill both the close-up texel staircase
+                // and the tap-snap component of distant shimmer. The bias
+                // formula is UNCHANGED: the new kernel's farthest fetched
+                // texel ((spreadTex-1)*1.41 + 1.41 texels) is strictly
+                // closer than the old kernel's at every spreadTex, so the
+                // empirically verified no-acne margin only grows.
+                float sunFrac = litFraction(spos.xy, spreadTex, ref);
                 // entity sprite shadows only within 64 m of the camera: the
                 // per-frame half-res entity map re-projects every frame, so
                 // its distant edges crawl with entity animation — and a
                 // sprite's shadow is sub-pixel out there anyway. Entities
                 // only exist inside the interest radius, so nothing visible
                 // is lost; the far field stops sampling the crawling map.
+                // Bilinear-weighted like the world taps (the half-res map's
+                // coarser texels stair-stepped twice as hard).
                 if (v_dist < 64.0) {
-                    sunFrac = min(sunFrac, step(ref, unpackDepth(texture2D(u_entShadowMap, spos.xy))));
+                    sunFrac = min(sunFrac, litBilin(u_entShadowMap, spos.xy, u_entShadowPix, ref));
                 }
                 shadowMul = mix(effDim, 1.0, sunFrac);
             }

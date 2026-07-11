@@ -209,7 +209,11 @@ show their block tile).
     and lit faces compare with a slope-scaled bias in METERS
     (`0.02 + max(spreadTexels,1.5)-ish·texel·tanθ` with exact tanθ; texel
     size and far−near passed as uniforms) so edges stay within ~2 texels
-    of the caster at every hour. Crossed plants are flagged thin/double-
+    of the caster at every hour. **Sampling is bilinear-weighted PCF since
+    the 2026-07-11 shadow-AA batch** (compare results blended, never packed
+    depths): one bilinear tap at the near floor (smooth 1-texel edges),
+    3×3 tent-weighted bilinear taps at footprint spacing beyond it — see
+    that decisions-log entry. Crossed plants are flagged thin/double-
     sided via a br=1.5 vertex sentinel (band 0; the shader keeps the
     derivative normal for them, uses |ndl|, clamps br back to 0.95).
     Entities/viewmodel keep voxel-light tint + blob circles (unchanged by
@@ -2945,6 +2949,76 @@ show their block tile).
     format + separable blur over the cached map) — not worth it until an
     owner report survives this fix.
 
+- 2026-07-11 **SHADOW ANTI-ALIASING — bilinear-weighted PCF** (owner:
+  "remove the aliasing from the shadows... keep the bug fixes... keep the
+  crisp look"). The wave-3/5 sampler did BINARY compares at point taps —
+  close up the edge quantized to map texels (stair-steps + terraced 1/9
+  lit-fraction bands), at range every sub-pixel camera move re-picked
+  texels (the tap-snap shimmer channel). All in `voxel.frag`; ShadowMap/
+  VoxelRenderer only grew an `entMapRes()` accessor + `u_entShadowPix`
+  uniform. Ladder rungs (a)+(b) shipped; ESM (c) NOT escalated.
+  - **`litBilin(map, uv, pix, ref)`**: unpacks the 4 texels around the
+    sample point, compares each against ref (binary), bilinearly blends
+    the COMPARE RESULTS by sub-texel position — never the packed depths
+    (RGBA8-packed depth is not linearly filterable). A tap is now a
+    CONTINUOUS function of the sample point.
+  - **`litFraction(uv, spreadTex, ref)`**: at the near spread floor
+    (spreadTex==1, everything within ~15-30 m) a SINGLE bilinear tap —
+    a smooth exactly-1-TEXEL edge ramp, TIGHTER than the old 3×3 binary
+    staircase (~3 texels), so close-ups got crisper AND smooth; beyond
+    the floor, 3×3 bilinear taps at spacing (spreadTex−1) texels with
+    tent weights (1-2-1)²/16 — kernel support ≈ 2·spreadTex−1 texels
+    (old: point taps at ±spreadTex), converging EXACTLY to the single
+    tap as spacing→0, so there is no regime seam (the `h < 0.25 texel`
+    branch is purely a fetch-count shortcut). Entity map: same bilinear
+    tap with ITS texel size (u_entShadowPix — the half-res map's coarser
+    texels stair-stepped twice as hard), still inside the 64 m gate.
+  - **Bias formula UNTOUCHED** (base 1.5 + 2.4/extra-texel slope, caps,
+    exact normals, facing-away branch, LOD ease 0.78@48-144 m all as
+    wave 5): the new kernel's farthest fetched texel ((spreadTex−1)·1.41
+    + 1.41) is strictly closer than the old kernel's at every spreadTex,
+    so the verified no-acne margin only grows and the close-up contract
+    is bit-compatible. Debug mode 2 mirrors the new path (G = the AA'd
+    lit fraction; flat purple facing-away ramp unchanged).
+  - **Cost**: near pixels 4 depth unpacks (was 9 — cheaper), far pixels
+    36, entity +4 within 64 m; 75-76 fps on every verification frame
+    (vsync-bound, unchanged from wave 5).
+  - **Verified** (live session stack 4150/4710+/27019 on 127.0.0.1 —
+    loopback NOT fenced this session; owner's 4000 stack untouched;
+    before/after = shader-file-swapped builds, byte-identical staging,
+    Sunscour colonnade bench (235,264) @ 07:07): CLOSE-UP crops — old
+    terraced double-band stair-stepped edges → new single tight smooth
+    ramp, penumbra ~1 texel near / ~footprint-width far (tools/out/
+    shadowaa-edge-{old,new}.png, shadowaa-mid-{old,new}.png); SHIMMER
+    bench (MMO_SHIMMER_TEST, relative-contrast metric, shadows-OFF
+    floors): mid-field shadow-attributable excess **midground 56→24
+    (−57%), colshadow 43→8 (−81%)**; far-LOD-zone ROI flat (140→134) —
+    at 0.78 far contrast the relative threshold can't see shadow flips
+    there at all, that channel is silhouette+texture floor (see the
+    LESSONS addendum); OFF-floors of old and new builds count identical
+    flips in unpolluted ROIs (962==962, 310==310) — the decode-
+    correctness proof re-run. Noon dot canary CLEAN at the owner's exact
+    spot (376.7,87.5 @ 11:58 — dotscan: 14 stable structural slivers,
+    zero re-rolling acne; noon shadows hug post footings). Leaf dapple
+    (oasis palms) smooth; entity self-shadow smooth on the Colossus
+    plinth; MMO_DEBUG_SHADOW=1/2 + MMO_DEBUG_NO_SHADOWS +
+    MMO_DEBUG_NO_WORLD_SHADOWS all functional (shadowaa-dbg{1,2}.png,
+    shadowaa-noon-canary.png, shadowaa-leafdapple.png,
+    shadowaa-entshadow.png, shadowaa-shim-*.png).
+  - **NOT escalated to ESM (rung c)**: the close-up bar is met at rung
+    (a)+(b), and the residual far-field sparkle is the nearest-filter
+    texture-resample floor (out of scope — the owner wants texture
+    crispness kept). ESM would add a new packed format + separable blur
+    over the cached map + both shader paths for a channel the metric
+    shows is not shadow-owned. Revisit only if a far-shimmer report
+    survives THIS fix.
+  - Owner feel-checks: near-edge sharpness (deliberately TIGHTER than
+    before — a 1-texel ramp instead of a 3-texel staircase; if it now
+    reads too sharp the knob is the near tap count, not a blur), the
+    mid-range penumbra narrowing (the old kernel's double-width spread
+    is gone), and whether far shadows still read soft enough under the
+    unchanged 0.78 LOD ease.
+
 ## Conventions
 
 - **Protocol**: JSON `{t:"type", ...}` everywhere. All encode/decode goes
@@ -3031,6 +3105,17 @@ Quick reference only — the stories behind these (and more) live in
   27017 (`Get-NetTCPConnection -LocalPort 27017`) before assuming data loss.
 
 ## Current state
+
+- 2026-07-11 **SHADOW ANTI-ALIASING shipped (uncommitted working tree)** —
+  see the decisions-log entry. Shadow sampling is bilinear-weighted PCF now:
+  close-up edges are a smooth exactly-1-texel ramp (tighter than the old
+  3×3 binary staircase — crisper AND anti-aliased), far footprints
+  integrate through 3×3 tent-weighted bilinear taps, the entity map gets
+  its own bilinear tap (u_entShadowPix). Bias contract / exact normals /
+  map cache / LOD ease all untouched; mid-field shimmer excess −57%/−81%
+  on the bench; 75-76 fps. Files: voxel.frag, ShadowMap.java (entMapRes),
+  VoxelRenderer.java (one uniform). Screenshots tools/out/shadowaa-*.png.
+  **The client changed — relaunch run-client.cmd.**
 
 - 2026-07-11 **WAVE 3 (uncommitted working tree): per-cell light overrides +
   the Sunscour tomb lit + distant shadow shimmer** — see the decisions-log

@@ -906,6 +906,20 @@ of a feature), the feature-OFF runs of old and new builds must count
 IDENTICAL flips — shim5-offold == shim5-offnew to the pixel was the proof
 that the br face-banding changed nothing outside the shadow path.
 
+**Addendum 2 (shadow-AA batch): put shimmer ROIs in the MID-field, and know
+what a count metric can and cannot see.** Two ways the same metric read
+dead-flat across a real fix before the ROIs moved: (1) inside the far-LOD
+zone (48-144 m ease toward 0.78) the shadow's own contrast sits BELOW the
+0.28 relative threshold — far ROIs count only silhouette/texture crawl no
+matter what the sampler does, so "no change" there is expected, not a
+verdict; (2) a threshold COUNT saturates on edge length — an anti-aliasing
+change turns full-contrast random tap-snap flips into deterministic
+sub-pixel edge tracking, but the boundary row still crosses the threshold
+in both builds, so edge pixels count the same. The measurable signal lives
+in the mid-field (full 0.45 contrast, texels ~1-3 px): there the AA fix
+showed −57% and −81% excess. The close-up story is only visible in zoom
+crops — pair them with the numbers instead of chasing a single scalar.
+
 ## The agent-restarted mongod comes back FENCED and blocks every future boot
 - **Symptom:** `npm run dev` fails with "MongoDB never came up on port 27017" forever, while `Get-NetTCPConnection` clearly shows a mongod LISTENING on 27017; a second mongod started by dev.mjs dies on the locked `logs/mongod.log`. Meanwhile `curl 127.0.0.1:<any-port>` from the session TIMES OUT instead of getting connection-refused.
 - **Cause:** the Claude session sandbox silently drops IPv4 loopback for its whole process tree (even with sandbox-disable flags, and for system processes it re-parents). A batch agent killed the owner's mongod and "restored" it from inside that fence — the revived mongod holds the dbpath/log locks and is visible in the OS connection table, but is unreachable to every normal process. Every subsequent stack boot then fails both ways: can't reach the fenced mongod, can't start a fresh one over its locks.

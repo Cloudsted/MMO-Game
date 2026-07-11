@@ -211,6 +211,12 @@ public class ShadowMap {
         return fbo.getWidth();
     }
 
+    /** Entity-map resolution in texels (half the world map, floor 256) —
+     *  the shader's bilinear entity tap needs this map's own texel size. */
+    public int entMapRes() {
+        return entityFbo.getWidth();
+    }
+
     /** Light-camera depth range (far - near) in meters — converts metric
      *  shadow biases into normalized depth units in the shader. */
     public float depthRange() {
