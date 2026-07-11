@@ -13,6 +13,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
+import mmo.client.audio.AudioEngine;
+import mmo.client.util.ClientSettings;
 import mmo.client.util.GameConstants;
 import mmo.client.util.ItemRegistry;
 import mmo.client.world.BlockRegistry;
@@ -80,7 +82,7 @@ public class GameUi {
         return tier >= 0 && tier < ROMAN.length ? ROMAN[tier] : String.valueOf(tier);
     }
 
-    public enum Window { NONE, INVENTORY, DIALOG, GOD }
+    public enum Window { NONE, INVENTORY, DIALOG, GOD, PAUSE, SETTINGS }
 
     /** Equipment slot order — mirrors the server's EQUIP_SLOTS exactly. */
     public static final String[] EQUIP_SLOTS = { "head", "chest", "legs", "feet", "offhand" };
@@ -157,8 +159,31 @@ public class GameUi {
     private final long[] slotBusyUntil = new long[8];
     private final long[] slotBusyFrom = new long[8];
 
-    // inventory drag (click-to-pick, click-to-place)
+    // inventory carry (Minecraft-style: LMB picks the stack ONTO THE CURSOR,
+    // LMB places/swaps/merges; the item stays in its source slot server-side
+    // until the placing invMove lands)
     private int carrying = -1;
+
+    // ---- pause menu / settings (Esc with nothing open) ----
+    /** WorldScreen wires this to the return-to-login flow. */
+    public Runnable logoutAction;
+    private AudioEngine audio;
+    private ClientSettings settings;
+    private final Rectangle pauseResumeRect = new Rectangle();
+    private final Rectangle pauseSettingsRect = new Rectangle();
+    private final Rectangle pauseLogoutRect = new Rectangle();
+    private final Rectangle settingsBackRect = new Rectangle();
+    /** audio sliders: visual track + a taller forgiving hit box, per channel */
+    private static final String[] SLIDER_LABELS = { "Master", "Music", "Ambience", "SFX" };
+    private final Rectangle[] sliderTracks = new Rectangle[4];
+    private final Rectangle[] sliderHits = new Rectangle[4];
+    private int draggingSlider = -1;
+
+    /** Pause-menu settings plumbing: live volume application + persistence. */
+    public void setAudioSettings(AudioEngine audio, ClientSettings settings) {
+        this.audio = audio;
+        this.settings = settings;
+    }
 
     // hotbar-select name popup (Minecraft-style): the selected item's name
     // shows centered above the hp/mana bars, rarity-colored, held ~1.5 s
@@ -195,7 +220,12 @@ public class GameUi {
     private final Texture icons;
     private final int iconCols;
     private Texture minimap;
+    private final TextureRegion minimapRegion = new TextureRegion();
     private float minimapWorldW = 1, minimapWorldH = 1;
+    /** minimap widget: FIXED panel size (virtual px) in every room */
+    private static final int MM_PANEL = 200;
+    /** zoom mode: world blocks across the panel — 200/50 = exactly 4 px/block */
+    private static final int MM_VIEW = 50;
     private final GlyphLayout layout = new GlyphLayout();
     private final Vector3 tmp = new Vector3();
 
@@ -222,6 +252,11 @@ public class GameUi {
     private final int debugHoverSlot;
     /** test hook: MMO_HOVER_EFFECT=<n> pins the tooltip to status effect n */
     private final int debugHoverEffect;
+    /** test hook: MMO_CARRY_SLOT=<n> picks inventory slot n onto the cursor
+     *  once the inventory opens (clicks can't be injected either); the carried
+     *  icon pins near panel center since a background window has no cursor */
+    private final int debugCarrySlot;
+    private boolean carryHookFired = false;
 
     // virtual HUD canvas (WorldScreen.applyHudViewport): the UI draws at
     // fixed design sizes in vw x vh and is integer-upscaled to the window
@@ -255,6 +290,16 @@ public class GameUi {
             try { hoverFx = Integer.parseInt(envFx.trim()); } catch (NumberFormatException ignored) {}
         }
         debugHoverEffect = hoverFx;
+        int carry = -1;
+        String envCarry = System.getenv("MMO_CARRY_SLOT");
+        if (envCarry != null) {
+            try { carry = Integer.parseInt(envCarry.trim()); } catch (NumberFormatException ignored) {}
+        }
+        debugCarrySlot = carry;
+        for (int i = 0; i < 4; i++) {
+            sliderTracks[i] = new Rectangle();
+            sliderHits[i] = new Rectangle();
+        }
     }
 
     // ---------- server state ingestion ----------
@@ -479,6 +524,7 @@ public class GameUi {
         // nearest, like every other pixel surface — linear sampling smeared
         // the block colors when the panel size wasn't a texel multiple
         minimap.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        minimapRegion.setRegion(minimap); // zoom mode re-crops this per frame
         pm.dispose();
     }
 
@@ -498,10 +544,29 @@ public class GameUi {
     }
 
     public void closeWindow() {
+        if (window == Window.SETTINGS && settings != null) settings.save();
         window = Window.NONE;
         carrying = -1;
         shopOpen = false;
         draggingScroll = null;
+        draggingSlider = -1;
+    }
+
+    /** Esc with nothing open: the pause menu (WorldScreen routes it). */
+    public void openPause() {
+        window = Window.PAUSE;
+    }
+
+    /** Esc while a window is open: settings backs out to the pause menu
+     *  (saving), everything else closes. */
+    public void escapeWindow() {
+        if (window == Window.SETTINGS) {
+            if (settings != null) settings.save();
+            draggingSlider = -1;
+            window = Window.PAUSE;
+        } else {
+            closeWindow();
+        }
     }
 
     public void focusChat() {
@@ -509,7 +574,9 @@ public class GameUi {
         chatInput.setLength(0);
     }
 
-    /** Printable chars while the chat line is focused. */
+    /** Printable chars while the chat line is focused. Esc is deliberately
+     *  NOT handled here — WorldScreen's Esc router unfocuses chat first, so
+     *  one press can't both unfocus chat AND open the pause menu. */
     public boolean keyTyped(char c) {
         if (!chatFocus) return false;
         if (c == '\b') {
@@ -517,8 +584,6 @@ public class GameUi {
         } else if (c == '\r' || c == '\n') {
             String text = chatInput.toString().trim();
             if (!text.isEmpty()) net.send(mmo.client.net.Protocol.chat(text));
-            chatFocus = false;
-        } else if (c == 27) { // esc
             chatFocus = false;
         } else if (c >= 32 && chatInput.length() < 240) {
             chatInput.append(c);
@@ -532,6 +597,32 @@ public class GameUi {
         float y = vh - syTopDown / (float) uiScale;
         float x = sx / (float) uiScale;
         boolean right = button == 1;
+
+        if (window == Window.PAUSE) {
+            if (pauseResumeRect.contains(x, y)) closeWindow();
+            else if (pauseSettingsRect.contains(x, y)) window = Window.SETTINGS;
+            else if (pauseLogoutRect.contains(x, y) && logoutAction != null) {
+                if (settings != null) settings.save();
+                logoutAction.run();
+            }
+            return true;
+        }
+
+        if (window == Window.SETTINGS) {
+            if (settingsBackRect.contains(x, y)) {
+                if (settings != null) settings.save();
+                window = Window.PAUSE;
+                return true;
+            }
+            for (int i = 0; i < 4; i++) {
+                if (sliderHits[i].contains(x, y)) {
+                    draggingSlider = i;
+                    dragSliderTo(i, x);
+                    return true;
+                }
+            }
+            return true;
+        }
 
         if (window == Window.GOD) {
             for (int i = 0; i < godRects.size(); i++) {
@@ -613,11 +704,13 @@ public class GameUi {
         }
 
         if (window == Window.INVENTORY) {
-            // paper-doll: RMB a worn piece = unequip; LMB while carrying a
-            // matching wearable = equip it there
+            boolean shift = Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.SHIFT_LEFT)
+                || Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.SHIFT_RIGHT);
+            // paper-doll: RMB (or shift-click) a worn piece = unequip; LMB
+            // while carrying a matching wearable = equip it there
             for (int i = 0; i < 5; i++) {
                 if (!equipRects[i].contains(x, y)) continue;
-                if (right) {
+                if (right || (shift && carrying < 0)) {
                     if (equipment[i] != null) net.send(mmo.client.net.Protocol.equipSlotUnequip(EQUIP_SLOTS[i]));
                 } else if (carrying >= 0 && slots[carrying] != null) {
                     if (equipSlotIndexFor(reg.item(slots[carrying].item)) == i) {
@@ -629,7 +722,14 @@ public class GameUi {
             }
             for (int i = 0; i < 24; i++) {
                 if (!slotRects[i].contains(x, y)) continue;
+                // shift-click quick-move: hotbar row <-> main grid (wearables
+                // prefer their empty paper-doll slot) — Minecraft-style
+                if (shift && !right && carrying < 0) {
+                    if (slots[i] != null) quickMove(i);
+                    return true;
+                }
                 if (right) {
+                    if (carrying >= 0) return true; // no qty split on the wire: RMB can't place one
                     Stack s = slots[i];
                     if (s != null) {
                         ItemRegistry.Item def = reg.item(s.item);
@@ -643,6 +743,8 @@ public class GameUi {
                     }
                     return true;
                 }
+                // LMB: pick the stack onto the cursor / place / swap / merge
+                // (the server's invMove merges same unrolled stacks, else swaps)
                 if (carrying < 0) {
                     if (slots[i] != null) carrying = i;
                 } else {
@@ -663,12 +765,50 @@ public class GameUi {
         return false;
     }
 
+    /** Shift-click quick-move between the hotbar row (0-7) and the main grid
+     *  (8-23): tops up an existing same stack first, else the first empty
+     *  slot. One invMove per click — a full merge target can leave a
+     *  remainder behind (the wire has no qty-split; click again). Wearables
+     *  with an EMPTY paper-doll slot equip instead. */
+    private void quickMove(int i) {
+        Stack s = slots[i];
+        if (s == null) return;
+        ItemRegistry.Item def = reg.item(s.item);
+        int eqIdx = equipSlotIndexFor(def);
+        if (eqIdx >= 0 && equipment[eqIdx] == null) {
+            net.send(mmo.client.net.Protocol.equipSlot(EQUIP_SLOTS[eqIdx], i));
+            return;
+        }
+        int lo = i < 8 ? 8 : 0, hi = i < 8 ? 24 : 8;
+        // stackables never carry rolls (mint rule), so the server merge takes
+        if (def != null && def.stack > 1) {
+            for (int j = lo; j < hi; j++) {
+                Stack t = slots[j];
+                if (t != null && t.item.equals(s.item) && s.rarity.equals(t.rarity) && t.qty < def.stack) {
+                    net.send(mmo.client.net.Protocol.invMove(i, j));
+                    return;
+                }
+            }
+        }
+        for (int j = lo; j < hi; j++) {
+            if (slots[j] == null) {
+                net.send(mmo.client.net.Protocol.invMove(i, j));
+                return;
+            }
+        }
+    }
+
     /** Mouse release routed from WorldScreen — completes a DRAG with the
      *  carried stack: released on another slot = move, released outside the
      *  inventory panel = drop on the ground. Releasing on the pickup slot (a
      *  plain click) or on the panel background keeps carrying, so the
      *  click-then-click placement mode still works. Returns consumed. */
     public boolean release(int sx, int syTopDown, int button) {
+        if (button == 0 && draggingSlider >= 0) { // finish a slider drag: persist
+            draggingSlider = -1;
+            if (settings != null) settings.save();
+            return true;
+        }
         if (button == 0 && draggingScroll != null) { // finish a scrollbar drag
             draggingScroll = null;
             return true;
@@ -724,8 +864,12 @@ public class GameUi {
     }
 
     /** Mouse drag routed from WorldScreen while a window is open — moves a
-     *  grabbed scrollbar thumb. Returns consumed. */
+     *  grabbed scrollbar thumb or settings slider. Returns consumed. */
     public boolean drag(int sx, int syTopDown) {
+        if (draggingSlider >= 0) {
+            dragSliderTo(draggingSlider, sx / (float) uiScale);
+            return true;
+        }
         if (draggingScroll == null) return false;
         dragScrollTo(draggingScroll, vh - syTopDown / (float) uiScale);
         return true;
@@ -777,6 +921,40 @@ public class GameUi {
         float ty = MathUtils.clamp(my - r.grabDy, r.view.y, r.view.y + span);
         r.scroll = r.max() * (1f - (ty - r.view.y) / span);
         r.clamp();
+    }
+
+    // ---------- settings audio sliders ----------
+
+    private float sliderValue(int i) {
+        if (settings == null) return 1f;
+        return switch (i) {
+            case 0 -> settings.masterVol;
+            case 1 -> settings.musicVol;
+            case 2 -> settings.ambienceVol;
+            default -> settings.sfxVol;
+        };
+    }
+
+    /** Set channel i (0..3) to v and apply it to the live audio engine. */
+    private void setSliderValue(int i, float v) {
+        if (settings == null) return;
+        v = MathUtils.clamp(v, 0f, 1f);
+        switch (i) {
+            case 0 -> settings.masterVol = v;
+            case 1 -> settings.musicVol = v;
+            case 2 -> settings.ambienceVol = v;
+            default -> settings.sfxVol = v;
+        }
+        if (audio != null) {
+            audio.setVolumes(settings.masterVol, settings.musicVol, settings.ambienceVol, settings.sfxVol);
+        }
+    }
+
+    /** Click/drag on slider i's track: value follows the mouse x. */
+    private void dragSliderTo(int i, float mx) {
+        Rectangle t = sliderTracks[i];
+        if (t.width <= 0) return;
+        setSliderValue(i, (mx - t.x) / t.width);
     }
 
     /** Pixel-exact scissor around a virtual-canvas rect (the HUD ortho maps
@@ -878,21 +1056,52 @@ public class GameUi {
             }
         }
 
-        // minimap panel: drawn at an exact integer texel scale (1 world block
-        // = N whole pixels) so the map can't smear and dots sit on true cells
-        float mmWorldMax = Math.max(minimapWorldW, minimapWorldH);
-        float mmSize = mmWorldMax <= 172 ? Math.max(1, (int) (172f / mmWorldMax)) * mmWorldMax : 172;
+        // minimap: FIXED-size panel (MM_PANEL virtual px) in every room.
+        // Rooms that fit at an integer texel scale draw whole (centered,
+        // letterboxed on the panel background); larger rooms show a zoomed
+        // MM_VIEW-block crop centered on the player at an exact integer
+        // 4 px/block — outside the room = dark void, the player arrow stays
+        // centered, and a big world never fits on the map (go explore it).
+        float mmSize = MM_PANEL;
         float mmX = w - mmSize - 12, mmY = h - mmSize - 12;
-        shapes.setColor(0.06f, 0.06f, 0.09f, 0.75f);
+        float mmWorldMax = Math.max(minimapWorldW, minimapWorldH);
+        boolean mmFit = mmWorldMax <= MM_PANEL;
+        float mmScale, mmBaseX, mmBaseY; // world (x,z) -> panel (baseX + x*s, baseY - z*s)
+        if (mmFit) {
+            mmScale = Math.max(1, (int) (MM_PANEL / mmWorldMax)); // integer texels only
+            mmBaseX = mmX + MathUtils.floor((MM_PANEL - minimapWorldW * mmScale) / 2f);
+            mmBaseY = mmY + mmSize - MathUtils.floor((MM_PANEL - minimapWorldH * mmScale) / 2f);
+        } else {
+            mmScale = MM_PANEL / (float) MM_VIEW; // 200/50 = exactly 4 px/block
+            mmBaseX = mmX - (selfX - MM_VIEW / 2f) * mmScale;
+            mmBaseY = mmY + mmSize + (selfZ - MM_VIEW / 2f) * mmScale;
+        }
+        shapes.setColor(0.06f, 0.06f, 0.09f, 0.82f);
         shapes.rect(mmX - 3, mmY - 3, mmSize + 6, mmSize + 6);
         shapes.end();
 
         // ---- batch pass: minimap texture, icons, text ----
         batch.begin();
         // NOTE: the (srcX,srcY,flipX,flipY) draw overload silently rendered
-        // nothing here — the plain overload draws the pixmap top-row-north,
-        // which is exactly the orientation the dot math expects
-        if (minimap != null) batch.draw(minimap, mmX, mmY, mmSize, mmSize);
+        // nothing here — plain texture/region draws render the pixmap
+        // top-row-north, which is exactly the orientation the dot math expects
+        if (minimap != null) {
+            if (mmFit) { // whole room at an integer texel scale, centered
+                batch.draw(minimap, mmBaseX, mmBaseY - minimapWorldH * mmScale,
+                    minimapWorldW * mmScale, minimapWorldH * mmScale);
+            } else { // player-centered crop; only the in-room part draws (rest = void)
+                float x0 = selfX - MM_VIEW / 2f, z0 = selfZ - MM_VIEW / 2f;
+                float xa = Math.max(0, x0), xb = Math.min(minimapWorldW, x0 + MM_VIEW);
+                float za = Math.max(0, z0), zb = Math.min(minimapWorldH, z0 + MM_VIEW);
+                if (xb > xa && zb > za) {
+                    minimapRegion.setRegion(xa / minimapWorldW, za / minimapWorldH,
+                        xb / minimapWorldW, zb / minimapWorldH);
+                    batch.draw(minimapRegion,
+                        mmBaseX + xa * mmScale, (mmBaseY - za * mmScale) - (zb - za) * mmScale,
+                        (xb - xa) * mmScale, (zb - za) * mmScale);
+                }
+            }
+        }
         // hotbar icons
         for (int i = 0; i < 8; i++) {
             Stack s = slots[i];
@@ -1023,22 +1232,27 @@ public class GameUi {
         batch.end();
 
         // ---- minimap dots + self arrow (shapes over the texture) ----
+        // every marker goes through the SAME world->panel mapping as the
+        // texture (fit or zoom crop) and clips to the widget
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         for (float[] dot : mapDots) {
-            float dx = mmX + dot[0] / minimapWorldW * mmSize;
-            float dy = mmY + mmSize - dot[1] / minimapWorldH * mmSize;
+            float dx = mmBaseX + dot[0] * mmScale;
+            float dy = mmBaseY - dot[1] * mmScale;
+            if (dx < mmX + 3 || dx > mmX + mmSize - 3 || dy < mmY + 3 || dy > mmY + mmSize - 3) continue;
             shapes.setColor(dot[2] > 1.5f ? Color.YELLOW : dot[2] > 0.5f ? Color.RED : Color.WHITE);
-            shapes.circle(dx, dy, 2.2f);
+            shapes.circle(dx, dy, 2.4f);
         }
         for (float[] p : portalDots) {
-            float dx = mmX + p[0] / minimapWorldW * mmSize;
-            float dy = mmY + mmSize - p[1] / minimapWorldH * mmSize;
+            float dx = mmBaseX + p[0] * mmScale;
+            float dy = mmBaseY - p[1] * mmScale;
+            if (dx < mmX + 4 || dx > mmX + mmSize - 4 || dy < mmY + 4 || dy > mmY + mmSize - 4) continue;
             shapes.setColor(0.3f, 0.95f, 1f, 1f);
-            shapes.circle(dx, dy, 3.4f);
+            shapes.circle(dx, dy, 3.6f);
         }
         {
-            float px = mmX + selfX / minimapWorldW * mmSize;
-            float py = mmY + mmSize - selfZ / minimapWorldH * mmSize;
+            // zoom mode: the arrow sits at the exact panel center by construction
+            float px = mmBaseX + selfX * mmScale;
+            float py = mmBaseY - selfZ * mmScale;
             float dx = MathUtils.sin(selfYaw), dy = -MathUtils.cos(selfYaw);
             shapes.setColor(0.4f, 1f, 0.4f, 1f);
             shapes.triangle(
@@ -1049,12 +1263,47 @@ public class GameUi {
         shapes.end();
 
         // ---- windows ----
+        // test hook: pick a stack onto the cursor once the inventory is open
+        if (debugCarrySlot >= 0 && !carryHookFired && window == Window.INVENTORY
+            && carrying < 0 && debugCarrySlot < 24 && slots[debugCarrySlot] != null) {
+            carrying = debugCarrySlot;
+            carryHookFired = true;
+        }
         if (window == Window.INVENTORY) renderInventory(batch, shapes, font, w, h);
         else if (window == Window.DIALOG) renderDialog(batch, shapes, font, w, h);
         else if (window == Window.GOD) renderGod(batch, shapes, font, w, h);
+        else if (window == Window.PAUSE) renderPause(batch, shapes, font, w, h);
+        else if (window == Window.SETTINGS) renderSettings(batch, shapes, font, w, h);
         if (dead) renderDeath(batch, shapes, font, w, h);
         renderTooltip(batch, shapes, font, w, h);
+        renderCarried(batch, font); // the picked-up stack rides the cursor, topmost
         Gdx.gl.glDisable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
+    }
+
+    /** Minecraft-style carried stack: the picked-up item renders attached to
+     *  the cursor, above every window (its source slot draws empty). */
+    private void renderCarried(SpriteBatch batch, BitmapFont font) {
+        if (window != Window.INVENTORY || carrying < 0 || slots[carrying] == null) return;
+        float mx, my;
+        if (carryHookFired && debugCarrySlot == carrying) {
+            // unattended shot: a background window has no cursor — pin on the
+            // panel's title-row background, clearly floating over no slot
+            mx = invPanel.x + invPanel.width - 90;
+            my = invPanel.y + invPanel.height - 26;
+        } else {
+            mx = Gdx.input.getX() / (float) uiScale;
+            my = vh - Gdx.input.getY() / (float) uiScale;
+        }
+        Stack s = slots[carrying];
+        batch.begin();
+        drawIcon(batch, s.item, mx - 16, my - 16, 32);
+        if (s.qty > 1) {
+            font.getData().setScale(0.5f);
+            font.setColor(Color.WHITE);
+            font.draw(batch, String.valueOf(s.qty), mx + 6, my - 6);
+            font.getData().setScale(1f);
+        }
+        batch.end();
     }
 
     /** Thin colored wear bar over a slot when an item has lost durability. */
@@ -1087,6 +1336,8 @@ public class GameUi {
      *  cursor is free, and shop buy rows (base stats). */
     private void renderTooltip(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, int w, int h) {
         if (dead) return;
+        if (window == Window.INVENTORY && carrying >= 0) return; // stack on the cursor: no tooltips
+        if (window == Window.PAUSE || window == Window.SETTINGS) return;
         float mx = Gdx.input.getX() / (float) uiScale, my = vh - Gdx.input.getY() / (float) uiScale;
         Stack hovered = null;
         String shopItem = null;
@@ -1361,24 +1612,34 @@ public class GameUi {
     }
 
     private void renderInventory(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, int w, int h) {
+        // Minecraft-style layout: paper-doll column on the left, the MAIN
+        // GRID (slots 8-23, 8 wide x 2 rows) on top, and the HOTBAR ROW
+        // (slots 0-7) visually separated at the bottom — mirroring the real
+        // hotbar, so "what's on my bar" is legible inside the window.
         float cell = 52, gap = 6;
-        int cols = 6, rows = 4;
-        float eqCell = 40, eqGap = 5; // paper-doll column, left of the grid
+        int cols = 8;
+        float eqCell = 48, eqGap = 6; // paper-doll column, left of the grid
         float gw = cols * cell + (cols - 1) * gap;
-        float gh = rows * cell + (rows - 1) * gap;
-        float gridX = 14 + eqCell + 14; // panel-local grid origin
+        float eqH = 5 * eqCell + 4 * eqGap;
+        float gridX = 16 + eqCell + 16; // panel-local grid origin
         // whole-pixel panel origin: fractional centering makes the icons
         // round against the slot squares (see hotbar note)
-        float pw = gw + gridX + 18, ph = gh + 96;
+        float pw = gridX + gw + 16, ph = eqH + 54 + 40;
         float px = MathUtils.floor(w / 2f - pw / 2f), py = MathUtils.floor(h / 2f - ph / 2f);
         invPanel.set(px, py, pw, ph); // drag-release outside this = drop
+        float contentTop = py + ph - 54;
+        // the grid stack (2 rows + separated hotbar) centers against the
+        // taller paper-doll column
+        float stackH = 3 * cell + gap + 18;
+        float gridTop = contentTop - MathUtils.floor((eqH - stackH) / 2f);
+        float hotY = gridTop - stackH; // hotbar row's slot bottom edge
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         panel(shapes, px, py, pw, ph);
         // equipment slots (head/chest/legs/feet/offhand, top-down)
         for (int i = 0; i < 5; i++) {
-            float x = px + 14;
-            float y = py + ph - 60 - eqCell - i * (eqCell + eqGap);
+            float x = px + 16;
+            float y = contentTop - eqCell - i * (eqCell + eqGap);
             equipRects[i].set(x, y, eqCell, eqCell);
             shapes.setColor(0.14f, 0.2f, 0.18f, 1f);
             shapes.rect(x, y, eqCell, eqCell);
@@ -1387,21 +1648,29 @@ public class GameUi {
                 Color rc = reg.rarityColor(s.rarity);
                 shapes.setColor(rc.r, rc.g, rc.b, 0.85f);
                 shapes.rect(x, y, eqCell, 3);
-                drawDurabilityBar(shapes, s, x + 4, y + 5, eqCell - 8);
+                drawDurabilityBar(shapes, s, x + 5, y + 5, eqCell - 10);
             }
         }
+        // separator strip above the hotbar row
+        shapes.setColor(0.35f, 0.32f, 0.24f, 1f);
+        shapes.rect(px + gridX, hotY + cell + 8, gw, 2);
         for (int i = 0; i < 24; i++) {
-            int c = i % cols, r = i / cols;
-            float x = px + gridX + c * (cell + gap);
-            float y = py + ph - 60 - (r + 1) * cell - r * gap;
+            float x, y;
+            if (i < 8) { // hotbar row at the bottom
+                x = px + gridX + i * (cell + gap);
+                y = hotY;
+            } else { // main grid: two rows of eight
+                int c = (i - 8) % cols, r = (i - 8) / cols;
+                x = px + gridX + c * (cell + gap);
+                y = gridTop - cell - r * (cell + gap);
+            }
             slotRects[i].set(x, y, cell, cell);
-            boolean hotbarRow = i < 8;
-            shapes.setColor(0.18f, 0.18f, hotbarRow ? 0.3f : 0.22f, 1f);
-            if (i == carrying) shapes.setColor(0.5f, 0.45f, 0.2f, 1f);
+            shapes.setColor(0.18f, 0.18f, i < 8 ? 0.3f : 0.22f, 1f);
+            if (i == carrying) shapes.setColor(0.3f, 0.28f, 0.22f, 1f); // stack is on the cursor
             if (i == held) shapes.setColor(0.35f, 0.32f, 0.14f, 1f);
             shapes.rect(x, y, cell, cell);
             Stack s = slots[i];
-            if (s != null) {
+            if (s != null && i != carrying) {
                 Color rc = reg.rarityColor(s.rarity);
                 shapes.setColor(rc.r, rc.g, rc.b, 0.85f);
                 shapes.rect(x, y, cell, 3);
@@ -1412,15 +1681,18 @@ public class GameUi {
 
         batch.begin();
         font.setColor(1f, 0.95f, 0.8f, 1f);
-        font.draw(batch, "Inventory   —   " + gold + "g", px + gridX, py + ph - 16);
+        font.draw(batch, "Inventory   —   " + gold + "g", px + gridX, py + ph - 20);
         font.getData().setScale(0.5f);
         font.setColor(0.7f, 0.7f, 0.75f, 1f);
-        font.draw(batch, "1-8 = hotbar · LMB move · RMB use/equip · drag out / Q = drop", px + gridX, py + 24);
+        font.draw(batch, "LMB pick up / place · shift-click quick-move · RMB use/equip · drag out or Q = drop", px + 16, py + 24);
+        // hotbar slot numbers, mirroring the HUD bar
+        font.setColor(1f, 1f, 1f, 0.45f);
+        for (int i = 0; i < 8; i++) font.draw(batch, String.valueOf(i + 1), slotRects[i].x + 4, slotRects[i].y + cell - 4);
         font.getData().setScale(1f);
         for (int i = 0; i < 5; i++) {
             Stack s = equipment[i];
             if (s != null) {
-                drawIcon(batch, s.item, equipRects[i].x + 8, equipRects[i].y + 8, 24);
+                drawIcon(batch, s.item, equipRects[i].x + 8, equipRects[i].y + 8, 32);
             } else {
                 font.getData().setScale(0.5f);
                 font.setColor(0.5f, 0.55f, 0.52f, 0.9f);
@@ -1431,7 +1703,7 @@ public class GameUi {
         }
         for (int i = 0; i < 24; i++) {
             Stack s = slots[i];
-            if (s == null) continue;
+            if (s == null || i == carrying) continue; // carried stack rides the cursor
             drawIcon(batch, s.item, slotRects[i].x + 10, slotRects[i].y + 10, 32);
             if (s.qty > 1) {
                 font.getData().setScale(0.5f);
@@ -1444,10 +1716,10 @@ public class GameUi {
     }
 
     private void renderDialog(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, int w, int h) {
-        float pw = enchantOpen ? 600 : (shopOpen ? 560 : 460);
+        float pw = enchantOpen ? 700 : (shopOpen ? 680 : 580);
         // the weave panel is taller than the 540 minimum canvas — clamp and
         // let its offer list scroll instead of spilling off-screen
-        float ph = enchantOpen ? Math.min(540, h - 16) : (shopOpen ? 420 : 200);
+        float ph = enchantOpen ? Math.min(560, h - 16) : (shopOpen ? Math.min(470, h - 16) : 280);
         float px = MathUtils.floor(w / 2f - pw / 2f), py = MathUtils.floor(h / 2f - ph / 2f);
         shopRowRects.clear();
         enchantRowRects.clear();
@@ -1458,15 +1730,15 @@ public class GameUi {
         // the shapes pass can clip row backgrounds and draw the scrollbar
         float topY = py + ph - 88; // enchant offer-list anchor (top row's base)
         if (enchantOpen) {
-            enchantScroll.view.set(px + 12, py + 64, pw / 2f - 18, (topY + 30) - (py + 64));
-            enchantScroll.contentH = enchantOffers.size() * 34f;
+            enchantScroll.view.set(px + 12, py + 64, pw / 2f - 18, (topY + 34) - (py + 64));
+            enchantScroll.contentH = enchantOffers.size() * 38f;
             enchantScroll.clamp();
         } else if (shopOpen) {
-            shopScroll.view.set(px + 12, py + 44, pw / 2f - 20, ph - 104);
-            shopScroll.contentH = shopEntries.size() * 34f + 6f;
+            shopScroll.view.set(px + 12, py + 50, pw / 2f - 20, ph - 102);
+            shopScroll.contentH = shopEntries.size() * 40f + 6f;
             shopScroll.clamp();
         } else {
-            dialogScroll.view.set(px + 12, py + 44, pw - 24, ph - 90);
+            dialogScroll.view.set(px + 12, py + 54, pw - 24, ph - 104);
             float total = 4;
             font.setColor(0.92f, 0.92f, 0.92f, 1f); // color before setText
             for (String line : dialogLines) {
@@ -1480,7 +1752,7 @@ public class GameUi {
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         panel(shapes, px, py, pw, ph);
         // buttons
-        float btnW = 110, btnH = 26;
+        float btnW = 130, btnH = 34;
         closeRect = new Rectangle(px + pw - btnW - 12, py + 10, btnW, btnH);
         shapes.setColor(0.3f, 0.2f, 0.2f, 1f);
         shapes.rect(closeRect.x, closeRect.y, btnW, btnH);
@@ -1506,7 +1778,7 @@ public class GameUi {
             shapes.flush();
             scissorOn(enchantScroll.view);
             for (int i = 0; i < enchantOffers.size(); i++) {
-                Rectangle row = new Rectangle(px + 14, topY - i * 34 + enchantScroll.scroll, pw / 2f - 34, 30);
+                Rectangle row = new Rectangle(px + 14, topY - i * 38 + enchantScroll.scroll, pw / 2f - 34, 34);
                 enchantRowRects.add(row);
                 shapes.setColor(0.2f, 0.16f, 0.28f, 1f);
                 shapes.rect(row.x, row.y, row.width, row.height);
@@ -1514,12 +1786,13 @@ public class GameUi {
             shapes.flush();
             scissorOff();
             drawScrollbar(shapes, enchantScroll);
-            // right: your gear (click one as the target)
-            float cell = 40, gap = 4;
+            // right: your gear (click one as the target) — anchored 20 px
+            // below the offer anchor so the bigger cells clear the header
+            float cell = 46, gap = 5;
             for (int i = 0; i < 24; i++) {
                 int c = i % 4, r = i / 4;
                 float x = px + pw / 2f + 14 + c * (cell + gap);
-                float y = topY - r * (cell + gap);
+                float y = topY - 20 - r * (cell + gap);
                 slotRects[i].set(x, y, cell, cell);
                 boolean eligible = enchantEligible(slots[i]);
                 boolean equippable = isEquippableStack(slots[i]);
@@ -1551,7 +1824,7 @@ public class GameUi {
             shapes.flush();
             scissorOn(shopScroll.view);
             for (int i = 0; i < shopEntries.size(); i++) {
-                Rectangle row = new Rectangle(px + 14, py + ph - 96 - i * 34 + shopScroll.scroll, pw / 2f - 34, 30);
+                Rectangle row = new Rectangle(px + 14, py + ph - 92 - i * 40 + shopScroll.scroll, pw / 2f - 34, 36);
                 shopRowRects.add(row);
                 shapes.setColor(0.16f, 0.18f, 0.24f, 1f);
                 shapes.rect(row.x, row.y, row.width, row.height);
@@ -1560,11 +1833,11 @@ public class GameUi {
             scissorOff();
             drawScrollbar(shapes, shopScroll);
             // inventory mini-grid for selling (right half)
-            float cell = 40, gap = 4;
+            float cell = 46, gap = 5;
             for (int i = 0; i < 24; i++) {
                 int c = i % 4, r = i / 4;
                 float x = px + pw / 2f + 14 + c * (cell + gap);
-                float y = py + ph - 96 - r * (cell + gap);
+                float y = py + ph - 102 - r * (cell + gap);
                 slotRects[i].set(x, y, cell, cell);
                 shapes.setColor(0.18f, 0.18f, 0.22f, 1f);
                 shapes.rect(x, y, cell, cell);
@@ -1594,7 +1867,7 @@ public class GameUi {
                 EnchantOffer o = enchantOffers.get(i);
                 Rectangle row = enchantRowRects.get(i);
                 ItemRegistry.Modifier m = reg.modifiers.get(o.id);
-                if (m != null) drawIconCell(batch, m.iconCol, m.iconRow, row.x + 5, row.y + 7, 16);
+                if (m != null) drawIconCell(batch, m.iconCol, m.iconRow, row.x + 6, row.y + 8, 18);
                 font.getData().setScale(0.5f);
                 String label, sub;
                 boolean bright;
@@ -1619,9 +1892,9 @@ public class GameUi {
                     else { sub = price + "g"; bright = true; }
                 }
                 font.setColor(bright ? 0.96f : 0.55f, bright ? 0.92f : 0.5f, bright ? 1f : 0.6f, 1f);
-                font.draw(batch, label, row.x + 26, row.y + 24);
+                font.draw(batch, label, row.x + 30, row.y + 27);
                 font.setColor(bright ? 0.75f : 0.5f, bright ? 0.85f : 0.45f, bright ? 0.7f : 0.55f, 1f);
-                font.draw(batch, sub, row.x + 26, row.y + 11);
+                font.draw(batch, sub, row.x + 30, row.y + 13);
                 font.getData().setScale(1f);
             }
             batch.flush();
@@ -1629,7 +1902,7 @@ public class GameUi {
             for (int i = 0; i < 24; i++) {
                 Stack s = slots[i];
                 if (s == null) continue;
-                drawIcon(batch, s.item, slotRects[i].x + 8, slotRects[i].y + 8, 24);
+                drawIcon(batch, s.item, slotRects[i].x + 9, slotRects[i].y + 9, 28);
             }
             if (!enchantRemoveRects.isEmpty() && target != null) {
                 font.getData().setScale(0.5f);
@@ -1655,7 +1928,7 @@ public class GameUi {
             batch.flush();
             scissorOn(dialogScroll.view);
             font.setColor(0.92f, 0.92f, 0.92f, 1f);
-            float ly = py + ph - 46 + dialogScroll.scroll;
+            float ly = py + ph - 50 + dialogScroll.scroll;
             for (String line : dialogLines) {
                 layout.setText(font, "\"" + line + "\"", font.getColor(), pw - 40, com.badlogic.gdx.utils.Align.left, true);
                 font.draw(batch, layout, px + 14, ly);
@@ -1673,40 +1946,37 @@ public class GameUi {
                 ShopEntry e = shopEntries.get(i);
                 ItemRegistry.Item def = reg.item(e.item);
                 Rectangle row = shopRowRects.get(i);
-                drawIcon(batch, e.item, row.x + 4, row.y + 3, 24);
+                drawIcon(batch, e.item, row.x + 4, row.y + 4, 28);
                 boolean affordable = gold >= e.price;
                 // name left in its column, cost RIGHT-aligned in a fixed
                 // column so the prices line up whatever the name's length
                 // (color before setText — GlyphLayout bakes it)
                 font.setColor(affordable ? 1f : 0.6f, affordable ? 1f : 0.4f, affordable ? 1f : 0.4f, 1f);
-                font.draw(batch, def != null ? def.name : e.item, row.x + 34, row.y + 21);
+                font.draw(batch, def != null ? def.name : e.item, row.x + 38, row.y + 24);
                 font.setColor(affordable ? 1f : 0.7f, affordable ? 0.85f : 0.4f, affordable ? 0.35f : 0.35f, 1f);
                 layout.setText(font, e.price + "g");
-                font.draw(batch, layout, row.x + row.width - 8 - layout.width, row.y + 21);
+                font.draw(batch, layout, row.x + row.width - 8 - layout.width, row.y + 24);
             }
             batch.flush();
             scissorOff();
             for (int i = 0; i < 24; i++) {
                 Stack s = slots[i];
                 if (s == null) continue;
-                drawIcon(batch, s.item, slotRects[i].x + 8, slotRects[i].y + 8, 24);
+                drawIcon(batch, s.item, slotRects[i].x + 9, slotRects[i].y + 9, 28);
                 if (s.qty > 1) {
                     font.getData().setScale(0.5f);
                     font.setColor(Color.WHITE);
-                    font.draw(batch, String.valueOf(s.qty), slotRects[i].x + 26, slotRects[i].y + 13);
+                    font.draw(batch, String.valueOf(s.qty), slotRects[i].x + 30, slotRects[i].y + 14);
                     font.getData().setScale(1f);
                 }
             }
         }
-        font.setColor(1f, 0.8f, 0.8f, 1f);
-        font.draw(batch, "Close [Esc]", closeRect.x + 18, closeRect.y + 19);
+        drawButtonLabel(batch, font, closeRect, "Close [Esc]", new Color(1f, 0.8f, 0.8f, 1f));
         if (shopToggleRect != null) {
-            font.setColor(0.8f, 1f, 0.85f, 1f);
-            font.draw(batch, shopOpen ? "Talk" : "Shop", shopToggleRect.x + 34, shopToggleRect.y + 19);
+            drawButtonLabel(batch, font, shopToggleRect, shopOpen ? "Talk" : "Shop", new Color(0.8f, 1f, 0.85f, 1f));
         }
         if (enchantToggleRect != null) {
-            font.setColor(0.9f, 0.8f, 1f, 1f);
-            font.draw(batch, enchantOpen ? "Talk" : "Enchant", enchantToggleRect.x + 18, enchantToggleRect.y + 19);
+            drawButtonLabel(batch, font, enchantToggleRect, enchantOpen ? "Talk" : "Enchant", new Color(0.9f, 0.8f, 1f, 1f));
         }
         batch.end();
     }
@@ -1745,7 +2015,7 @@ public class GameUi {
         labels.add("reload reg");
         godActions.add(() -> net.send(mmo.client.net.Protocol.chat("/reload")));
 
-        float bw = 150, bh = 22, gap = 5;
+        float bw = 170, bh = 26, gap = 5;
         int perCol = (int) ((h - 140) / (bh + gap));
         float px = 12, py = h - 60;
 
@@ -1768,9 +2038,126 @@ public class GameUi {
         for (int i = 0; i < labels.size(); i++) {
             Rectangle r = godRects.get(i);
             font.setColor(0.95f, 0.95f, 1f, 1f);
-            font.draw(batch, labels.get(i), r.x + 6, r.y + 17);
+            font.draw(batch, labels.get(i), r.x + 7, r.y + 19);
         }
         font.getData().setScale(1f);
+        batch.end();
+    }
+
+    // ---------- pause menu + settings ----------
+
+    /** Filled menu button, hover-highlighted (danger = warm tint). */
+    private void drawMenuButton(ShapeRenderer shapes, Rectangle r, float mx, float my, boolean danger) {
+        boolean hot = r.contains(mx, my);
+        if (danger) shapes.setColor(hot ? 0.44f : 0.32f, hot ? 0.2f : 0.17f, hot ? 0.18f : 0.16f, 1f);
+        else shapes.setColor(hot ? 0.3f : 0.22f, hot ? 0.34f : 0.26f, hot ? 0.46f : 0.36f, 1f);
+        shapes.rect(r.x, r.y, r.width, r.height);
+    }
+
+    /** Centered button label (color set BEFORE setText — GlyphLayout bakes it). */
+    private void drawButtonLabel(SpriteBatch batch, BitmapFont font, Rectangle r, String text, Color c) {
+        font.setColor(c);
+        layout.setText(font, text);
+        font.draw(batch, layout,
+            MathUtils.floor(r.x + r.width / 2f - layout.width / 2f),
+            MathUtils.floor(r.y + r.height / 2f + layout.height / 2f));
+    }
+
+    /** Esc menu: Resume / Settings / Log Out over a dimmed world. The game
+     *  does NOT pause (it's an MMO) — this is an overlay. */
+    private void renderPause(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, int w, int h) {
+        // SpriteBatch.end() disables GL_BLEND — without this the dim rect
+        // OVERWRITES the frame black instead of darkening it
+        Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
+        float mx = Gdx.input.getX() / (float) uiScale, my = vh - Gdx.input.getY() / (float) uiScale;
+        float pw = 400, ph = 330;
+        float px = MathUtils.floor(w / 2f - pw / 2f), py = MathUtils.floor(h / 2f - ph / 2f);
+        float bw = 320, bh = 48, gap = 16;
+        float bx = MathUtils.floor(w / 2f - bw / 2f);
+        float by = py + ph - 104;
+        pauseResumeRect.set(bx, by, bw, bh);
+        pauseSettingsRect.set(bx, by - (bh + gap), bw, bh);
+        pauseLogoutRect.set(bx, by - 2 * (bh + gap), bw, bh);
+
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        shapes.setColor(0f, 0f, 0f, 0.45f);
+        shapes.rect(0, 0, w, h);
+        panel(shapes, px, py, pw, ph);
+        drawMenuButton(shapes, pauseResumeRect, mx, my, false);
+        drawMenuButton(shapes, pauseSettingsRect, mx, my, false);
+        drawMenuButton(shapes, pauseLogoutRect, mx, my, true);
+        shapes.end();
+
+        batch.begin();
+        font.setColor(1f, 0.95f, 0.8f, 1f);
+        layout.setText(font, "Game Menu");
+        font.draw(batch, layout, MathUtils.floor(w / 2f - layout.width / 2f), py + ph - 24);
+        drawButtonLabel(batch, font, pauseResumeRect, "Resume", new Color(0.9f, 0.95f, 1f, 1f));
+        drawButtonLabel(batch, font, pauseSettingsRect, "Settings", new Color(0.9f, 0.95f, 1f, 1f));
+        drawButtonLabel(batch, font, pauseLogoutRect, "Log Out", new Color(1f, 0.85f, 0.8f, 1f));
+        font.getData().setScale(0.5f);
+        font.setColor(0.65f, 0.65f, 0.7f, 1f);
+        layout.setText(font, "The world keeps running - Esc resumes");
+        font.draw(batch, layout, MathUtils.floor(w / 2f - layout.width / 2f), py + 26);
+        font.getData().setScale(1f);
+        batch.end();
+    }
+
+    /** Settings page: audio channel sliders (Master/Music/Ambience/SFX),
+     *  0-100%, drag or click-to-set, applied live, saved on release/close. */
+    private void renderSettings(SpriteBatch batch, ShapeRenderer shapes, BitmapFont font, int w, int h) {
+        Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND); // see renderPause
+        float mx = Gdx.input.getX() / (float) uiScale, my = vh - Gdx.input.getY() / (float) uiScale;
+        float pw = 540, ph = 390;
+        float px = MathUtils.floor(w / 2f - pw / 2f), py = MathUtils.floor(h / 2f - ph / 2f);
+        float trackW = 260, trackH = 10;
+        float trackX = px + 176;
+        float rowY0 = py + ph - 130; // first slider row's center line
+        float rowGap = 56;
+        settingsBackRect.set(MathUtils.floor(w / 2f - 80), py + 22, 160, 40);
+
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        shapes.setColor(0f, 0f, 0f, 0.45f);
+        shapes.rect(0, 0, w, h);
+        panel(shapes, px, py, pw, ph);
+        for (int i = 0; i < 4; i++) {
+            float cy = rowY0 - i * rowGap;
+            sliderTracks[i].set(trackX, cy - trackH / 2f, trackW, trackH);
+            sliderHits[i].set(trackX - 8, cy - 16, trackW + 16, 32);
+            float v = sliderValue(i);
+            shapes.setColor(0.04f, 0.04f, 0.07f, 1f); // track
+            shapes.rect(trackX - 1, cy - trackH / 2f - 1, trackW + 2, trackH + 2);
+            shapes.setColor(0.72f, 0.6f, 0.3f, 1f); // fill up to the value
+            shapes.rect(trackX, cy - trackH / 2f, trackW * v, trackH);
+            boolean hot = draggingSlider == i || sliderHits[i].contains(mx, my);
+            shapes.setColor(hot ? 1f : 0.85f, hot ? 0.92f : 0.78f, hot ? 0.6f : 0.5f, 1f); // knob
+            shapes.rect(MathUtils.floor(trackX + trackW * v - 3), cy - 11, 6, 22);
+        }
+        drawMenuButton(shapes, settingsBackRect, mx, my, false);
+        shapes.end();
+
+        batch.begin();
+        font.setColor(1f, 0.95f, 0.8f, 1f);
+        layout.setText(font, "Settings");
+        font.draw(batch, layout, MathUtils.floor(w / 2f - layout.width / 2f), py + ph - 24);
+        font.getData().setScale(0.5f);
+        font.setColor(0.7f, 0.75f, 0.85f, 1f);
+        font.draw(batch, "AUDIO", px + 28, rowY0 + 40);
+        font.getData().setScale(1f);
+        for (int i = 0; i < 4; i++) {
+            float cy = rowY0 - i * rowGap;
+            font.setColor(0.9f, 0.9f, 0.95f, 1f);
+            font.draw(batch, SLIDER_LABELS[i], px + 28, cy + 7);
+            font.setColor(1f, 0.9f, 0.6f, 1f);
+            layout.setText(font, Math.round(sliderValue(i) * 100) + "%");
+            font.draw(batch, layout, trackX + trackW + 18, cy + 7);
+        }
+        font.getData().setScale(0.5f);
+        font.setColor(0.65f, 0.65f, 0.7f, 1f);
+        layout.setText(font, "Changes apply instantly and save automatically");
+        font.draw(batch, layout, MathUtils.floor(w / 2f - layout.width / 2f), py + 78);
+        font.getData().setScale(1f);
+        drawButtonLabel(batch, font, settingsBackRect, "Back", new Color(0.9f, 0.95f, 1f, 1f));
         batch.end();
     }
 

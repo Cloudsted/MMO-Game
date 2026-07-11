@@ -66,6 +66,22 @@ public class AudioEngine {
     /** sprite name -> {idle, attack, hurt, die} manifest groups (nullable) */
     private final Map<String, String[]> mobVocals = new HashMap<>();
 
+    // user channel volumes (pause-menu sliders, 0..1; master scales all).
+    // Applied LIVE: one-shots at play time, music/ambient re-set every update.
+    private float masterVol = 1f, musicVol = 1f, ambienceVol = 1f, sfxVol = 1f;
+
+    /** Pause-menu sliders: apply channel volumes live (values 0..1). */
+    public void setVolumes(float master, float music, float ambience, float sfxV) {
+        masterVol = MathUtils.clamp(master, 0f, 1f);
+        musicVol = MathUtils.clamp(music, 0f, 1f);
+        ambienceVol = MathUtils.clamp(ambience, 0f, 1f);
+        sfxVol = MathUtils.clamp(sfxV, 0f, 1f);
+        if (audioLog) {
+            Gdx.app.log("audio", String.format("volumes master=%.2f music=%.2f ambience=%.2f sfx=%.2f",
+                masterVol, musicVol, ambienceVol, sfxVol));
+        }
+    }
+
     // listener state (the camera)
     private float lx, ly, lz, lyaw;
     /** occlusion source; null = no occlusion (menus, between transfers) */
@@ -230,7 +246,7 @@ public class AudioEngine {
             if (idx >= d.last) idx++;
         }
         d.last = idx;
-        float v = vol * d.vol;
+        float v = vol * d.vol * masterVol * sfxVol; // user channel sliders (logged, so MMO_AUDIO_LOG proves live application)
         if (d.volVar > 0) v *= 1f + MathUtils.random(-d.volVar, d.volVar);
         float pitch = d.pitch + MathUtils.random(-d.pitchVar, d.pitchVar);
         if (audioLog) {
@@ -338,16 +354,18 @@ public class AudioEngine {
 
     public void update(float dt) {
         if (muted) return;
-        // ambient crossfade
+        // ambient crossfade; volumes re-applied EVERY frame so the pause-menu
+        // sliders take effect live on an already-playing bed/track
         if (fadeT < 1f) {
             fadeT = Math.min(1f, fadeT + dt / CROSSFADE_S);
-            if (ambientIn != null) ambientIn.setVolume(AMBIENT_VOL * fadeT);
             if (ambientOut != null) {
-                ambientOut.setVolume(AMBIENT_VOL * (1f - fadeT));
                 if (fadeT >= 1f) ambientOut.stop();
             }
         }
+        if (ambientIn != null) ambientIn.setVolume(AMBIENT_VOL * fadeT * ambienceVol * masterVol);
+        if (ambientOut != null && fadeT < 1f) ambientOut.setVolume(AMBIENT_VOL * (1f - fadeT) * ambienceVol * masterVol);
         // music: long gaps between tracks (streamed, disposed after each)
+        if (musicNow != null) musicNow.setVolume(MUSIC_VOL * musicVol * masterVol);
         if (musicContext != null && musicCounts.containsKey(musicContext)) {
             if (musicNow == null) {
                 musicGap -= dt;
@@ -355,7 +373,7 @@ public class AudioEngine {
                     int n = musicCounts.get(musicContext);
                     String path = "assets/audio/music/" + musicContext + "_" + MathUtils.random(1, n) + ".ogg";
                     musicNow = Gdx.audio.newMusic(Gdx.files.internal(path));
-                    musicNow.setVolume(MUSIC_VOL);
+                    musicNow.setVolume(MUSIC_VOL * musicVol * masterVol);
                     musicNow.setOnCompletionListener((m) -> {
                         m.dispose();
                         musicNow = null;

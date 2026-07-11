@@ -57,14 +57,21 @@ in building rooms, otherwise punch), 1-8 or **scroll wheel** select the
 hotbar slot (selection only — nothing consumes on select), **Q drops 1
 from the selected hotbar stack (Ctrl+Q the whole stack); dragging a stack
 out of the inventory window also drops it**, E interact
-(portal > loot > NPC), I/Tab inventory (**RMB armor/trinkets equips them
-into the paper-doll column; RMB a worn piece unequips; drag onto its slot
-also works**), Enter chat (`/g ` global; admins:
+(portal > loot > NPC), I/Tab inventory (**Minecraft-style: LMB picks the
+stack onto the cursor / places / swaps / merges, shift-click quick-moves
+between the main grid and the hotbar row (wearables with an empty
+paper-doll slot equip), RMB armor/trinkets equips them into the paper-doll
+column; RMB a worn piece unequips; drag onto its slot also works; the
+hotbar row renders inside the window, separated at the bottom**), Enter
+chat (`/g ` global; admins:
 `/give /gold /tp /spawnmob <mob> [n] [level] /time /level /reload /clearblocks /expire
 /enchant /room /prefab`),
 G god panel (admin), R respawn when dead (hub: portal-stone spawn; elsewhere:
 transfer back to Greywatch), **H return to the hub from anywhere** (alive,
-no window open), Esc close window / release mouse.
+no window open), **Esc close window / chat; with nothing open it opens the
+PAUSE MENU** (Resume / Settings with live audio sliders Master·Music·
+Ambience·SFX persisted to `~/.fantasy-mmo/settings.json` / Log Out; the
+world keeps running — it's an overlay, and the death screen wins over it).
 Every item renders in the hand (held sprite = its icon cell; block items
 show their block tile).
 
@@ -2529,6 +2536,49 @@ show their block tile).
     view-guarded so half-scrolled rows can't be clicked.
   - Owner feel-checks: wheel speed (~1 row/notch), thumb width/tint, popup
     timing vs a full status-effect row, gold cost color.
+
+- 2026-07-11 **WAVE 2 CLIENT UI REWORK: pause menu + settings, zooming
+  minimap, Minecraft inventory, larger menus** (client-only + TESTING.md;
+  screenshots tools/out/ui2-*.png, all read + iterated live).
+  - **Pause menu** (GameUi Window.PAUSE/SETTINGS): Esc router = chat
+    unfocus → close window (Settings backs to Pause, saving) → open Pause;
+    dead = death screen wins. Overlay over the LIVE game (dimmed; MMOs
+    don't pause). Resume / Settings / Log Out (clean `leave` →
+    LoginScreen). **Settings = 4 audio sliders** (Master/Music/Ambience/
+    SFX, live-applied): `AudioEngine.setVolumes` — one-shots scale at play
+    (the scaled value is what MMO_AUDIO_LOG prints), music/ambient
+    re-applied every update() so drags take effect mid-track. Persisted in
+    **`<user home>/.fantasy-mmo/settings.json`** via new
+    `util/ClientSettings.java` (BOM-tolerant read, UTF-8-no-BOM write,
+    corrupt → defaults). Hooks: MMO_UI=pause|settings, MMO_SET_VOLUMES.
+    TRAP paid: SpriteBatch.end() disables GL_BLEND — the dim-rect pass
+    must re-enable blend or it paints the frame black.
+  - **Minimap**: fixed **200×200** virtual-px panel in every room. Big
+    rooms = a **50-block view span at exactly 4 px/block** (integer texel
+    scale), crop centered on the player via a per-frame TextureRegion UV
+    sub-rect, out-of-room = panel void, player arrow always center. Rooms
+    ≤ view span draw whole at floor(200/maxDim) integer scale, letterboxed
+    (atelier 1x, maw 2x). Dots/portals/arrow share ONE world→panel mapping
+    and clip to the widget. Nearest + integer scales throughout.
+  - **Inventory Minecraft-style**: LMB picks the stack ONTO THE CURSOR
+    (icon+qty ride the mouse, topmost; tooltips suppressed while
+    carrying), LMB places/swaps/merges; **shift-click quick-moves**
+    hotbar↔grid (top-up first, else first empty; wearables equip to an
+    empty paper-doll slot; shift-click worn gear unequips); RMB use/equip
+    kept; drag-out/click-outside drop kept; RMB-while-carrying = no-op.
+    Hotbar row (slots 0-7) renders INSIDE the window bottom, numbered,
+    held-highlighted. **Wire gap (deferred, recommend later)**: `invMove
+    {from,to}` carries no qty — RMB-place-one / RMB-pickup-half can't be
+    expressed; needs an optional qty or an invSplit message server-side.
+    Hook: MMO_CARRY_SLOT stages a carried stack for screenshots.
+  - **Larger menus**: inventory 554×358 (48px paper-doll cells), dialog
+    580×280, shop 680×470 (40px rows/28px icons), weave 700 wide (38px
+    rows), god panel 170×26 buttons. Wave-1 ScrollRegion verified in the
+    resized shop/weave incl. the 960×540 minimum canvas.
+  - Owner feel-checks: Esc routing in real play, slider drag feel + live
+    volume by ear, pick/place/merge + shift-click cadence, carried icon
+    tracking a real cursor, minimap pan while running + whether 50 blocks
+    is the right zoom span, Log Out on a human (non-autologin) client.
 
 ## Conventions
 

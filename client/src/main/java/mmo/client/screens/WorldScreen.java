@@ -168,7 +168,6 @@ public class WorldScreen extends ScreenAdapter {
     private float accumDX = 0, accumDY = 0;
     private int lastMouseX, lastMouseY;
     private boolean haveMouseBaseline = false;
-    private boolean manualCursorFree = false; // ESC released the mouse on purpose
 
     private int selfId = -1;
     /** own sprite name (welcome message) — casts the local player's shadow
@@ -266,6 +265,9 @@ public class WorldScreen extends ScreenAdapter {
         ui = new GameUi(socket::sendSafe, game.items);
         ui.setEnchantPricing(game.constants);
         ui.admin = game.master.roles.contains("admin");
+        // pause-menu plumbing: live audio sliders + the Log Out button
+        ui.setAudioSettings(game.audio, game.settings);
+        ui.logoutAction = () -> Gdx.app.postRunnable(this::logout);
 
         // sun + moon: chunky pixel-art discs (generated; nearest-filtered)
         sunTexture = makeCelestial(true);
@@ -335,7 +337,6 @@ public class WorldScreen extends ScreenAdapter {
                 if (ui.anyWindowOpen() || !Gdx.input.isCursorCatched()) {
                     boolean consumed = ui.click(x, y, button);
                     if (consumed) game.audio.play("click");
-                    if (!consumed && !ui.anyWindowOpen()) manualCursorFree = false; // click back into the world
                     return true;
                 }
                 if (button == 0) tryAttack();
@@ -393,6 +394,8 @@ public class WorldScreen extends ScreenAdapter {
                     String uiHook = System.getenv("MMO_UI");
                     if ("inventory".equals(uiHook)) ui.window = GameUi.Window.INVENTORY;
                     else if ("god".equals(uiHook)) ui.window = GameUi.Window.GOD;
+                    else if ("pause".equals(uiHook)) ui.window = GameUi.Window.PAUSE;
+                    else if ("settings".equals(uiHook)) ui.window = GameUi.Window.SETTINGS;
                     else if ("talk".equals(uiHook) || "shop".equals(uiHook) || "enchant".equals(uiHook)) pendingTalkHook = uiHook;
                     String encTgt = System.getenv("MMO_ENCHANT_TARGET");
                     if (encTgt != null) try { ui.debugEnchantTarget = Integer.parseInt(encTgt.trim()); } catch (NumberFormatException ignored) {}
@@ -929,6 +932,17 @@ public class WorldScreen extends ScreenAdapter {
         t.start();
     }
 
+    /** Pause-menu Log Out: clean leave, back to the login screen. (An
+     *  MMO_AUTOLOGIN launch will immediately log back in — human use only.) */
+    private void logout() {
+        if (leaving) return;
+        leaving = true;
+        socket.sendSafe(Protocol.leave());
+        socket.close();
+        game.setScreen(new LoginScreen(game));
+        dispose();
+    }
+
     // ---------- input + prediction ----------
 
     private boolean movingNow = false;
@@ -1152,14 +1166,17 @@ public class WorldScreen extends ScreenAdapter {
     private void updateInput(float dt) {
         boolean uiOpen = ui.anyWindowOpen();
 
+        // Esc router: chat unfocus > window close (settings backs out to the
+        // pause menu) > the PAUSE MENU. When dead the death screen wins — Esc
+        // does nothing so it can't fight the respawn prompt.
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             if (ui.chatFocus) ui.chatFocus = false;
-            else if (ui.window != GameUi.Window.NONE) ui.closeWindow();
-            else manualCursorFree = !manualCursorFree;
+            else if (ui.window != GameUi.Window.NONE) ui.escapeWindow();
+            else if (!ui.dead) ui.openPause();
         }
 
-        // cursor state follows UI state
-        boolean wantCaught = !ui.anyWindowOpen() && !manualCursorFree && !leaving;
+        // cursor state follows UI state (any open window frees the mouse)
+        boolean wantCaught = !ui.anyWindowOpen() && !leaving;
         if (wantCaught != Gdx.input.isCursorCatched()) {
             Gdx.input.setCursorCatched(wantCaught);
             haveMouseBaseline = false;
