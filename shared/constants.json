@@ -27,7 +27,7 @@
     "meleeVerticalReach": 2,
     "attackBufferMs": 200,
     "hpRegenPerSec": 2,
-    "manaRegenPerSec": 3,
+    "manaRegenPerSec": 0.5,
     "regenDelayAfterDamageMs": 5000,
     "lootLockMobMs": 30000,
     "lootLockDeathMs": 180000,
